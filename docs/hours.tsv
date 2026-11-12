@@ -35,3 +35,5 @@ date	bet	phase	agent_id	model	role	kind	start	end	hours	source
 2026-11-12	Step F1 builder: core pin, patches, build script, configure	phase-1	a85f3abcf6d608824	sonnet	builder	agent	18:48	19:03	0.25	agent duration 883 s
 2026-11-12	Phase 2 plan revision 2	phase-2	a4bcf09ec00640830	opus	planner	agent	19:01	19:13	0.19	agent duration 700 s
 2026-11-12	Phase 1 as-built review docs/reviews/phase-1-as-built.md	phase-1	a9d6a1a04a7ae2c40	opus	reviewer	agent	18:59	19:14	0.24	agent duration 868 s
+2026-11-12	Phase 2 fix check after review 2	phase-2	a37dca8c056570872	sonnet	reviewer	agent	19:15	19:16	0.02	agent duration 57 s
+2026-11-12	builder reports, review routing, plan commits	phase-1	main	opus	main	process	18:49	19:16	0.20	session clock, main-loop share

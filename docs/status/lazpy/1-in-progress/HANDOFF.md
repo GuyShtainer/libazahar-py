@@ -9,13 +9,12 @@ the next session needs to act now, and points at the rest. Goals, rules, decisio
 ## Running now
 | What | Where | Agent id | It stops when |
 |---|---|---|---|
-| laz-200: check that each Phase 2 review-2 fix is in the plan text (sonnet, read-only) | this repo | a37dca8c056570872 | one line per finding and a verdict |
 | laz-110: step F1, our core's pin, patches, options profile, build script; configure and planted reds only, no build (sonnet) | ../libazahar-py-f1 (step-f1) | a85f3abcf6d608824 | fixing F1-S1 and nice items from the as-built review (mergeable as is); then the integration run |
 | laz-120: step A, host library and azhost CLI, gate-a (sonnet) | ../libazahar-py-a (step-a) | a4e8c6931d1122bf4 | fixing A-X1, A-X2, A-S1..S5 and nice items; then the integration run |
 | laz-130: step B, test app and checker, gate-b (sonnet) | ../libazahar-py-b (step-b) | ab76e8c1f445db1b3 | fixing B-X1, B-S1..S4 and nice items; then the integration run |
 
 ## Next steps, in order
-1. Phase 2 revision 2 running (above): commit it, check each review-2 fix is in the text (no third loop).
+1. Phase 2's plan is final (5f77e28; fix check all DONE, item 200's notes). C and D build after Phase 1 merges.
 2. Phase 1 builders fixing the as-built review's lists (`docs/reviews/phase-1-as-built.md`); a short re-check of the
    fixed items (resume `a9d6a1a04a7ae2c40`), then branch commits, the integration run on `int-1`, the merge to main, then the
    core build in MAIN and its waiter. Every step is in `docs/plans/phase-1.md` "Merge and launch".

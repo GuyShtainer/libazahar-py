@@ -49,3 +49,7 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   4.6 h. Frozen sizes: batch 3348, result 304, stats 240, layout 6452 (AZH_MAX_FIELDS 160). Still from Phase 1:
   log.c writes the core's line literally; optionally a getter for an option's current value. PLAN.md's state-boot
   line now says sha256, not program id (P4).
+- Fix check after review 2 (a37dca8c056570872, 19:16): all 26 findings DONE in the plan text (S5 as moved to Phase
+  1), no "be woken" and no checkpoint wait left in the briefs. Verdict: ready to build. Two loose-but-stated points:
+  X1's synthetic cases live in test_msg.c, not messages.txt rows; a1's window is "planned frame plus 0 to 3" (a2
+  holds the tight rule). Phase 2's plan is final; C and D build after Phase 1 merges.
