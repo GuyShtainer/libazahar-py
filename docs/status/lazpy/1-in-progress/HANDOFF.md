@@ -11,7 +11,7 @@ the next session needs to act now, and points at the rest. Goals, rules, decisio
 |---|---|---|---|
 | laz-110: step F1, our core's pin, patches, options profile, build script; configure and planted reds only, no build (sonnet) | ../libazahar-py-f1 (step-f1) | a85f3abcf6d608824 | report; then the as-built review |
 | laz-120: step A, host library and azhost CLI, gate-a (sonnet) | ../libazahar-py-a (step-a) | a4e8c6931d1122bf4 | report; then the as-built review |
-| laz-130: step B, test app and checker, gate-b (sonnet) | ../libazahar-py-b (step-b) | ab76e8c1f445db1b3 | report; then the as-built review |
+| laz-130: step B, test app and checker, gate-b (sonnet) | ../libazahar-py-b (step-b) | ab76e8c1f445db1b3 | reported 18:57, gate-b 14/14 PASS (fe2), uncommitted; waits for the as-built review |
 | laz-200: Phase 2 plan review 2 (opus, fresh), writes `docs/reviews/` (phase-2-review-2.md) only | this repo | a9a87f41abaabc096 | review written, then revision 2 by `a4bcf09ec00640830` |
 
 ## Next steps, in order
