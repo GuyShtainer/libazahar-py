@@ -77,3 +77,12 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
 - From Phase 3 review 1 ("What Phase 2 must change"), taken into D before merge: host_paths honours LAZ_CORE
   through _paths.core_path() and prints core and kind; lazpy_core / stock_core fixtures; the worker's nice is
   "at least 10" (os.nice adds); state.c:395 accepts 2 <= abi <= AZH_ABI_VERSION; USING.md says wall_ms_mean.
+- D fixes (ac94c1b1d3eddad30, 21:01): full suite 69 passed in 68 s, 0 skipped, 0 xfailed, header kind=stock; new
+  state-times t_core_start=0.43 t_boot=4.98 t_state=1.55 ratio=0.311 fixed_ratio=0.245 (drain_ms=440.5
+  unserialize_ms=595.6); t_state < 2.5 s asserted; test_newer_abi_refused added; state.c accepts abi 2 to
+  AZH_ABI_VERSION; worker nice raised to 10 only when lower; host_paths uses _paths.core_path() (LAZ_CORE wins),
+  report header core= kind=, fixtures stock_core and lazpy_core (lazpy_core unused so far: c4 needs the stock
+  core, so it takes stock_core). On our core (LAZ_CORE set) test_c_checks gave 9 passed, 1 failed: test_f_guest_exit
+  (test_c_checks.py:183): stopped_by "guest_exited" but the Emulator stayed open, since our core's host survives
+  a guest exit. Main-loop ruling 21:02 (reversible default, phase-d.md 4.4 said "closed" for exit 10 only): one
+  rule on both cores, a guest_exited result closes the Emulator; sent to the builder.

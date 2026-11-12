@@ -9,7 +9,7 @@ the next session needs to act now, and points at the rest. Goals, rules, decisio
 ## Running now
 | What | Where | Agent id | It stops when |
 |---|---|---|---|
-| laz-220: step D fixes (Guy's 2.5 s state-boot bound; LAZ_CORE fixtures, nice at least 10, abi range; sonnet), ends with "D fixes done" | ../libazahar-py-d (step-d over c1e614e) | ac94c1b1d3eddad30 | report; then commit, the opus as-built review of D, merge |
+| laz-220: step D guest-exit fix (a guest_exited result closes the Emulator on both cores; sonnet), ends with "D exit fix done" | ../libazahar-py-d (step-d over c1e614e) | ac94c1b1d3eddad30 | report; then commit, the opus as-built review of D, merge |
 | laz-300: Phase 3 plan revision 1 (opus, fresh author): edits `docs/plans/` (phase-3, e, f2, g) only | this repo | a848bdbe41c898002 | revision written; then review 2 |
 | laz-400: Phase 4 plan review 1 (opus): writes `docs/reviews/` (phase-4-review-1.md) only | this repo | ab421b8f1945fcdfa | review written; then revision 1 |
 

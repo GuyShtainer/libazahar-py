@@ -56,3 +56,5 @@ date	bet	phase	agent_id	model	role	kind	start	end	hours	source
 2026-11-12	Phase 3 plan review 1	phase-3	ab3db82a4ace714b2	opus	reviewer	agent	19:53	20:10	0.28	agent duration 1001 s
 2026-11-12	Step D3 finish builder	phase-2	ac94c1b1d3eddad30	sonnet	builder	agent	20:05	20:10	0.08	agent duration 289 s
 2026-11-12	Phase 4 plan revision 0: phase-4, h, i	phase-4	a867570428c4f7738	opus	planner	agent	20:00	20:20	0.33	agent duration 1171 s
+2026-11-12	Step D fixes: 2.5 s bound, LAZ_CORE fixtures, nice, abi range	phase-2	ac94c1b1d3eddad30	sonnet	builder	agent	20:59	21:01	0.04	agent duration 151 s
+2026-11-12	Guy questions, three reports routed, rulings recorded, keys-off build script	phase-2	main	opus	main	process	20:04	21:02	0.25	session clock (includes waiting on Guy)
