@@ -1,44 +1,44 @@
 # Phase 1, foundation: the index (item laz-100)
 
-Opus phase plan, 2026-11-12, revision 1 (after `docs/reviews/phase-1-review-1.md`), **draft for the second opus
-review loop; nothing is built until it passes.** Three steps, each with its own brief for one sonnet builder in its
-own worktree:
+Opus phase plan, 2026-11-12, revision 2 (after `docs/reviews/phase-1-review-1.md` and `phase-1-review-2.md`). Review
+2's verdict: ready to build after this revision, no third loop. Three steps, each with its own brief for one sonnet
+builder in its own worktree:
 
 | Step | Item | Brief | What it delivers | Hours |
 |---|---|---|---|---|
-| F1 | laz-110 | `docs/plans/phase-f1.md` | our core's pin, patch stack, options profile and `tools/build-core.sh`; the first full core build started detached | 0.8 |
+| F1 | laz-110 | `docs/plans/phase-f1.md` | our core's pin, patch stack, options profile and `tools/build-core.sh`, configured and its reds shown; the build itself is started by the main loop in MAIN after the review | 0.75 |
 | A | laz-120 | `docs/plans/phase-a.md` | `build/libazhost.dylib` and `build/azhost` (boot, run frames, two-screen PNGs, options profile, version check, boot errors) | 1.15 |
-| B | laz-130 | `docs/plans/phase-b.md` | `build/testapp.3dsx` (markers, per-frame log, record, break/exit/ready/busy-boot modes) and its checker | 0.9 |
+| B | laz-130 | `docs/plans/phase-b.md` | `build/testapp.3dsx` (markers, per-frame log, record, break/exit/ready/busy-boot modes) and its checker with `read_png_rgba` | 0.9 |
+
+MAIN = `/Users/guyshtainer/VSCodeProjects/3ds-toolkit/projects/libazahar-py`, the main checkout.
 
 ## Hours
 
-Builders: F1 0.6, A 0.95, B 0.7. One opus diff review for all three steps (a single big lane, Guy's "consolidate
-expensive" rule) plus the commits: about 0.6 h, split 0.2 per step in the table. **Phase 1: 2.85 h** of agent time
-(PLAN.md: 3.25 h; revision 0: 3.55 h). If the main loop prefers one review per step (0.35 each), the steps are
-1.0 / 1.3 / 1.05 h and the phase 3.35 h. F1's detached build is machine time, not booked (15-25 min quiet, 40-90 min
-at today's load).
+Builders: F1 0.55, A 0.95, B 0.7. One opus as-built review for all three steps (one big lane) plus the commits:
+about 0.6 h, split 0.2 per step in the table. **Phase 1: 2.8 h** of agent time (PLAN.md 3.25; revision 1: 2.85). The
+main loop's own work (the integration run, the launch in MAIN, the waiter) is about 0.2 h of its time. F1's
+detached build is machine time, not booked (15-25 min quiet, 40-90 min at load 60-90).
 
 ## Order
 
-All three start together (independent files, independent worktrees). F1's builder ends after configure and the
-detached launch; the build keeps running. B uses `prototype/fe2.c` as its runner, so it does not wait for A. Nothing
-in Phase 1 needs our core: A and B run on the stock core; our core's own gate is step F2 (Phase 3). The one review
-starts when A and B have both reported (F1 reports first and waits; its merge is not urgent, F2 is in Phase 3).
+All three builders start together (independent files, independent worktrees). F1 ends after configure and its reds;
+it starts no build. B uses `prototype/fe2.c` as its runner, so it does not wait for A. Nothing in Phase 1 needs our
+core: A and B run on the stock core; our core's own gate is step F2 (Phase 3). The as-built review starts when A and B
+have both reported (F1 reports first and waits). The core build starts in MAIN after the review passes and the
+integration run is green, while nobody times frames (the build is not on the critical path: F2 waits for Phase 2).
 
 ## Before the launch (main loop)
 
-1. The second review passes; commit the four plan files; `python3 -I tools/mkmap.py && python3 -I tools/map_check.py`
-   (docs/plans/ is new).
-2. `dl/` is already in fetch.sh's layout (`dl/azahar/` holds the zip and the dylib; done 2026-11-12). Run
-   `tools/fetch.sh` once more in MAIN so `dl/libretro-headers/`, `dl/vulkan-headers/` and the `vendor/` stamp exist
-   for the worktrees to copy.
+1. Commit the four plan files; `python3 -I tools/mkmap.py && python3 -I tools/map_check.py` (docs/plans/ is new).
+2. `dl/` is in fetch.sh's layout and `dl/libretro-headers/`, `dl/vulkan-headers/` and
+   `vendor/include/.vulkan-headers-1.4.368` exist in MAIN (done 2026-11-12; review 2 N12).
 3. Worktrees at main (check `git worktree list` and a case-insensitive name clash first):
    `git worktree add -b step-f1 ../libazahar-py-f1 main`, likewise `step-a` / `../libazahar-py-a` and `step-b` /
    `../libazahar-py-b`. Dispatch without isolation, cwd in the worktree.
 4. Move items 110, 120, 130 from `2-next/` to `1-in-progress/` with their "Running now" rows; book hours rows.
    Builders never edit item files (their notes come back in the report), so the move on main cannot conflict.
-5. No installs are needed (checked: devkitPro, CMake 4.3.4, ninja, Xcode 26.3, spirv-opt, shellcheck, Python 3.14).
-   No Guy decision blocks the launch.
+5. No installs are needed (devkitPro, CMake 4.3.4, ninja, Xcode 26.3, spirv-opt, shellcheck, Python 3.14). No Guy
+   decision blocks the launch.
 
 ## File ownership (no two builders edit the same file)
 
@@ -47,62 +47,133 @@ starts when A and B have both reported (F1 reports first and waits; its merge is
 | F1 | `core/` (PIN, patches/, options-lazpy.txt, README.md), `tools/build-core.sh`, `tools/untar_checked.py` |
 | A | top-level `Makefile`, `host/` (all), `tests/gate-a.sh`, `tests/test_version.c` |
 | B | `testapp/` (all, including `testapp/Makefile` and `testapp/README.md`), `tests/check_testapp.py`, `tests/gate-b.sh` |
-| main loop only | `.gitignore`, `docs/map/*` (incl. `runners.md`), root `README.md` (nobody this round), `docs/PLAN.md`, `docs/plans/*`, `docs/hours.tsv`, the handoff, every item file |
+| main loop only | `.gitignore`, `docs/map/*` (incl. `code.md`, `tools.md`, `runners.md`), root `README.md` (nobody this round), `docs/PLAN.md`, `docs/plans/*`, `docs/reviews/*`, `docs/hours.tsv`, the handoff, every item file |
 
 `tests/` is shared as a folder only; each file in it has one owner.
 
-## Merge plan
+## Merge and launch (main loop)
 
-1. F1 reports first. The main loop then starts one background waiter in F1's worktree: a bounded loop on
-   `build-core/build.exit` (at most 3 h, 60 s polls, no `pgrep`), which reads the exit code when the file appears.
-2. When A and B have reported, the one opus diff review covers the three worktree diffs (each brief's section 10).
-3. Commit each step from its branch with exact paths and `git diff --cached --stat` checked; merge into main in any
-   order (no shared files). Paste each report's "Lessons and notes" block into its item.
-4. `.gitignore` additions, merged once by the main loop: F1 `*.tar.xz`, `*.tar.gz`, `*.orig`, `*.rej`; A `*.plist`,
-   `*.dSYM/`; B `*.elf`, `*.smdh`, `*.shbin`, `*.lst`, `*.map`. (`build-core/` and `testapp/build/` are already
-   covered by `build-*/` and `build/`.)
-5. `docs/map/runners.md` gets the run blocks from A's and B's reports and F1's build command; then mkmap and map_check.
-6. After A and B are on main: a real `git clone` of main into a temp folder, `dl/` and `vendor/` copied in, then
-   `make && PATH=/opt/devkitpro/devkitARM/bin:/opt/devkitpro/tools/bin:$PATH make testapp` (the clone has no
-   `build/`), then `tests/gate-a.sh build/testapp.3dsx` and `RUNNER=azhost tests/gate-b.sh`. Both outputs become the
-   items' Evidence.
-7. F1's worktree stays until the build has exited (the waiter fired), and the dylib and `build-core/build.log` are
-   copied into MAIN's `build-core/`; `git status --porcelain` empty before `git worktree remove`.
+1. **Reports.** F1 reports first, then A and B. Nothing is committed yet.
+2. **The as-built review** (one opus lane, read-only on the three worktrees). It works through the three briefs'
+   section 10 checklists in order (F1, A, B) and writes its findings to `docs/reviews/phase-1-as-built.md` in MAIN
+   as it goes (agent-limit hygiene). Each fix goes back to the owning builder by SendMessage; the reviewer then
+   re-checks only the changed items.
+3. **Branch commits.** In each worktree the main loop commits the step's own files on its branch (exact paths, then
+   `git diff --cached --stat`), and checks `git diff --cached --name-only` holds no `.png`, `.3dsx`, `.elf`, `.log`,
+   `.dylib`, `.tar*` or `.zip` (review 2 N7; these live in ignored folders, so this is a net).
+4. **Integration run, before main.** A throwaway branch: `git -C MAIN branch int-1 main`, a worktree for it, `git
+   merge --no-ff step-a step-b` there (no shared files, so no conflicts). Then a real clone of that branch into
+   `$(mktemp -d)`, with `vendor/` and only `dl/azahar`, `dl/moltenvk`, `dl/libretro-headers`, `dl/vulkan-headers`
+   symlinked from MAIN (review 2 S8); in the clone: `make && PATH=/opt/devkitpro/devkitARM/bin:/opt/devkitpro/tools/
+   bin:$PATH make testapp`, then `tests/gate-a.sh build/testapp.3dsx` and `RUNNER=azhost tests/gate-b.sh`, nice'd,
+   one at a time. A failure goes to the owning builder by SendMessage (A for gate-a and the azhost interface, B for
+   its app and checker); it fixes in its worktree, the main loop recommits on the step branch and repeats this step.
+   Both outputs become the items' Evidence.
+5. **Main.** Merge `step-a`, `step-b` and `step-f1` into main. In the same pass the main loop commits:
+   - `.gitignore`: F1 `*.tar.xz`, `*.tar.gz`, `*.orig`, `*.rej`; A `*.plist`, `*.dSYM/`; B `*.elf`, `*.smdh`,
+     `*.shbin`, `*.lst`, `*.map` (`build-core/` and `testapp/build/` are already covered by `build-*/` and `build/`);
+   - `docs/map/code.md`: one line each for `core/`, `host/`, `testapp/`, `tests/` and the top-level `Makefile`;
+     `docs/map/tools.md`: `tests/` (gate-a.sh, gate-b.sh, check_testapp.py), `tools/build-core.sh`,
+     `tools/untar_checked.py` (map_check.py:7-9 fails without them; each report gives its lines); `docs/map/runners.md`:
+     the run blocks from A's and B's reports and F1's build command;
+   - each report's "Lessons and notes" block into its item, Evidence lines, items 120 and 130 to done, 110 to done
+     (its gate is configure plus the reds; the build's result is F2's), hours rows;
+   - then `python3 -I tools/mkmap.py && python3 -I tools/status_check.py --strict-handoff && python3 -I
+     tools/map_check.py`, and the progress page.
+6. **The core build, in MAIN.** MAIN already holds `dl/azahar-src/src.tar.xz`. From MAIN's root:
+   `nice -n 10 tools/build-core.sh --detach`; check `kill -0 "$(cat build-core/build.pid)"` and read the first lines
+   of `build-core/build.log` once. Start one background waiter in MAIN (a bounded loop, at most 3 h, 60 s polls,
+   no `pgrep`): each poll, if `build-core/build.exit` exists, print its code and exit; else if `kill -0
+   "$(cat build-core/build.pid)"` fails, print "build died without an exit code" and exit at once (an OOM kill or
+   SIGKILL in the LTO link leaves no exit file). The waiter's exit wakes the main loop, which books the result for
+   F2. The build directory `build-core/build` stays in MAIN, so a later patch fix recompiles only the patched files.
+7. **Clean up.** `git status --porcelain` empty in each step worktree and the integration worktree, then `git worktree
+   remove` all four; delete `int-1` (and the step branches once merged).
 
 ## Interfaces for Phase 2
 
-Phase 2's plan (`docs/plans/phase-2.md` section 5) lists what it assumes from Phase 1. After this revision, every
-row holds except these differences, which Phase 2's revision should absorb:
-- **A9, the crop:** A now creates `host/crop.c` itself (pure, no Vulkan), so C does not move it; C may still edit it
-  only if A's signature does not fit, and then it owns that change.
-- **A14, savestate symbols:** A's `core.c` already loads all 25 `retro_*` symbols, including the three serialize
-  ones; D adds no `dlsym` lines.
-- **A17, error names:** A's code -2 is `AZH_E_ORDER` (call order), and A's header already reserves
-  `AZH_E_SAVESTATE = -10`; C1 does not add it.
-- **A1, raw shots:** `AZH_FMT_RAW` is in the header, but A returns `AZH_E_UNSUPPORTED` for it; the map's pixel area
-  exists and stays zero. Raw shots are D's (their first user); Phase 2's table should say so.
-- **A3, `n`:** now stated: `n` counts input records of `AZH_INPUT_INTS` (7) int32, as Phase 2 assumed.
-- **A12, MoltenVK:** now stated: the library reads `LAZ_MVK`; `azhost --mvk` only sets it. As Phase 2 assumed.
-- **Options:** `azh_set_option` validates against the registered keys at once (`AZH_E_ARG` at set time, not at
-  boot), because SET_VARIABLES arrives inside `azh_open`.
-- **`azhost info` is cut:** the core name and version are in host.log on every boot; F2 uses `nm -gU`.
-- **Tests:** A adds `tests/test_version.c` and `make test-version`; C's `make test-host` may absorb it (A owns it in
-  Phase 1; C may take it over).
-- **B3, `v`:** in 3D mode `v = C3D_FrameCounter(0)` and restarts at citro3d's start; `v` is only meaningful in 2D.
-  B's gate reports `v` jumps without failing (one `v` per frame stays C(d)'s check). The `booted` line gains
-  `sum=%08lx`.
-- **B4, loop order:** 2D as Phase 2 assumed; 3D is `C3D_FrameBegin(SYNCDRAW)` (it waits for the VBlank), then
-  `hidScanInput`, record, log, draw, `C3D_FrameEnd(0)`, so input is still sampled right after a VBlank.
-- **B5, svcBreak, resolved as Phase 2 asks:** the app logs `break f=N`, calls `svcBreak` and runs on (`f=N+1`
-  follows).
-- **B6, busy boot, resolved as Phase 2 asks:** boot frames spin a bounded busy loop until the vblank counter moves, no
-  VBlank wait; `boot_frames` up to 10,000 (D's 6,000 fits).
-- **B8, PNG filters:** `tests/check_testapp.py` decodes filter-0 PNGs only and fails loudly on others. If step E's
-  PNG tuning adds filters, E extends the decoder.
+Checked against `docs/plans/phase-2.md` section 5, `phase-c.md` and `phase-d.md` (revision 1, commit c54a7dd). Every
+row of Phase 2's table now holds as written in Phase 1's briefs, including the five it marked "R2":
+- **A4:** `azh_boot` runs no `retro_run`; the NULL-first-frame check is made on the first `retro_run` of the first
+  batch (`AZH_E_BOOT` from `azh_run`); every `retro_run` since boot counts toward the absolute frame (phase-a
+  section 3).
+- **A18:** `AZH_FMT_RAW` returns `AZH_E_UNSUPPORTED` until step C (C2 implements it; phase-a section 3).
+- **A19:** the readback runs after `retro_run` returns on shot frames, and `azh_shot` reads back the last frame after
+  a batch; `set_image` copies the image handle, which stays valid until the core's next `wait_sync_index`, inside the
+  next `retro_run` (phase-a section 2).
+- **abi_layout:** `azh_abi_layout` and `azh_error` work in any state, before `azh_open` too (D's `test_abi.py`).
+- **B10:** the app never exits on a button, START included; it leaves only on `aptMainLoop()` false, `exit_at` or the
+  frame cap (phase-b section 3).
+- **B11:** `tests/check_testapp.py` exposes `read_png_rgba(path) -> (width, height, rgba_bytes)`, RGB expanded to
+  RGBA, raising `ValueError` on unsupported PNGs, the CLI behind `if __name__ == "__main__":` (phase-b section 4).
+
+Earlier rows that still hold from revision 1: A9 (`crop.c` is A's, pure), A14 (all 25 `retro_*` symbols loaded),
+A17 (`AZH_E_ORDER` -2, `AZH_E_SAVESTATE` -10 reserved), A3 (`n` counts records), A12 (`LAZ_MVK`), A13 (validation
+at `azh_set_option`), no `azhost info`, `tests/test_version.c` (A's; C may take it over), B3 (`v` is 2D only;
+`booted ... sum=`), B4 (3D loop order), B5 (break runs on), B6 (busy boot), B8 (filter-0 PNGs only; step E extends
+the decoder if it adds filters). A6: the state struct holds the sysdir already (the env callback needs it), so C1
+has nothing to add there.
+
+What Phase 2 should change or note:
+- **Importing `check_testapp`:** `python3 -I` implies `-P` (Python 3.11+), so the script's own folder is *not* on
+  `sys.path`. `tests/testapp_log.py` and D's tests must insert the absolute `tests/` path themselves (or run under
+  pytest's rootdir handling) before `import check_testapp`.
+- **The record layout** (for step G, Phase 3): 32 bytes, no padding; offsets magic 0, frame 4, vblank 8, keys 12,
+  tx 16, ty 18, cx 20, cy 22, tick 24 (phase-b section 3).
+- **Debug text on the stock core** (review 2 N11): the stock core does forward `svcOutputDebugString` at
+  `RETRO_LOG_DEBUG`; only the host's info threshold hides it. So C's "debug-text stop on our core only" is a speed
+  choice, not a necessity; C may say so or allow it on stock with `LAZ_LOG_LEVEL=debug`.
+- **The core build** now starts in MAIN after Phase 1's merge, not during Phase 1; F2's input is MAIN's
+  `build-core/azahar_lazpy_libretro.dylib` and `build-core/build.log` (no copy from a worktree).
 
 PLAN.md notes from review 1 (recorded only; PLAN stays as it is): PLAN 2.6's "retro_load_game returns false for a
 non-3DS file" holds only for loaders that read a header early (N12, S1); PLAN 2.4's "SD writes run on host threads
 (file.cpp:240)" is wrong for SD files, which write synchronously (N5).
+
+## Changes from review 2
+
+| Finding | Outcome |
+|---|---|
+| X1 Interfaces for Phase 2 incomplete | done: A4, A18 (RAW until C), B10, B11 and the any-state `azh_abi_layout`/`azh_error` rule in phase-a/phase-b and above |
+| X2 `laz_record` 40 bytes | done: `pad[2]` dropped; 32 bytes, `tick` at 24, both asserted; step G's offsets listed |
+| S1 F1's build before review | done: F1 stops after configure and the reds; the main loop runs `--detach` in MAIN after the review and the integration run ("Merge and launch" 6); the old worktree-keeping step is gone; the incremental-rebuild note in phase-f1 section 4 |
+| S2 Movie check order | done: the Movie check is step 2, before any patch; no hand edit of 0000 |
+| S3 waiter vs a killed build | done: the waiter checks `kill -0` on every poll; the script traps `EXIT INT TERM HUP` |
+| S4 no-window check vacuous | done: its own 3000-frame run, `kill -0` before and after `lsappinfo` |
+| S5 readback sync | done: mutex, wait idle, barrier, copy, barrier back, submit, wait; no semaphores from the core |
+| S6 map edits | done: code.md and tools.md lines in "Merge and launch" 5; each report gives its lines |
+| S7 cross-step gates before main | done: the integration branch `int-1` and its clone run ("Merge and launch" 4); failures go back by SendMessage |
+| S8 `dl/` copied twice | done: only the four needed `dl/` folders and `vendor/`, symlinked, in both the clone and gate-a's copy |
+| S9 2D markers vs `boot_frames` | done: drawn in the first two main-loop frames after the busy boot |
+| N1 `.def` notice placement | done: after line 2 |
+| N2 deployment target, `cd "$ROOT"` | done |
+| N3 full or relative paths | done: relative, as the sample shows |
+| N4 CMakeLists.txt:431 fact | done: corrected in phase-f1 section 2; externals' build time noted |
+| N5 0006 also on `retro_reset` | done: noted, F2 decides |
+| N6 `-isystem vendor` | done |
+| N7 build outputs in the diff | done: the `--cached --name-only` net in "Merge and launch" 3 |
+| N8 default SMDH icon | done: in B's report for Phase I's audit |
+| N9 no `timeout` on macOS | done: background pid plus a bounded `kill -0` loop, in B and in F1's configure wait |
+| N10 slow rerun inside the script | done |
+| N11 stock core forwards debug text | done: phase-b section 2 and "What Phase 2 should change" |
+| N12 header step already done | done: "Before the launch" 2 marked done |
+| As-built review conditions | done: checklists in order, findings to disk as it goes, fixes by SendMessage, re-check only changed items |
+| Hour-saving "symlink `dl/` and `vendor/`" | done (S8) |
+| Phase 2's asks (item 100's notes): no exit on START, `read_png_rgba`, RAW until C, `azh_boot` runs no `retro_run`, abi_layout before open | all done (X1) |
+
+Declined: none.
+
+Hour-saving pass of this revision (Guy's rule), per step:
+- F1: the Movie check first (no patch rewritten, one checkpoint rerun fewer); no launch by the builder; the build
+  later in MAIN keeps its build directory, so any F2 fix is an incremental rebuild, not 15-90 min. Online: a
+  prebuilt core with our patches does not exist (our patches are ours), so there is nothing to download instead.
+- A: `dl/` and `vendor/` symlinked in the gate copy (about 100 MB not copied per gate run); check 4's own short run
+  instead of a longer wait. Considered and kept: our own 60-line PNG writer over vendoring `stb_image_write.h` (a
+  1,700-line header to audit for one function).
+- B: `read_png_rgba` serves Phase 2 too, so C and D write no decoder; the slow-run rerun inside the script saves a
+  main-loop judgement and a rerun by hand.
+- Phase: the integration run on a throwaway branch catches A/B mismatches before main, where a fix would cost a
+  revert commit; one review lane, as before.
 
 ## Changes from review 1
 

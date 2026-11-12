@@ -1,7 +1,7 @@
 # Phase 1, step B: the test app (item laz-130)
 
-Opus step plan, 2026-11-12, revision 1 (after `docs/reviews/phase-1-review-1.md`), **draft for Phase 1's second
-opus review loop. Nobody builds from it until the reviews pass and the main loop launches the step.** Index, and what
+Opus step plan, 2026-11-12, revision 2 (after `docs/reviews/phase-1-review-1.md` and `phase-1-review-2.md`), **the
+plan to build from once the main loop launches the step.** Index, and what
 changed in this revision: `docs/plans/phase-1.md`. For one sonnet builder in its own git worktree. It refines
 `docs/PLAN.md`'s "Phase B" paragraph of section 3; where they disagree on a goal, PLAN.md wins and the builder stops
 and reports. Phase 2 (`docs/plans/phase-2.md` section 5) uses the control keys, log lines and markers of section 3;
@@ -26,7 +26,7 @@ CPU busy (it stands in for Gen3D's world build).
 
 Gate (PLAN.md section 3, "Phase B"), made concrete. Step A's `azhost` does not exist in this worktree (A is built in
 parallel), so the runner here is the tracked prototype `prototype/fe2.c`; the main loop reruns the same checks with
-`RUNNER=azhost` after the merge (section 8). All of it is `tests/gate-b.sh`, one `PASS`/`FAIL` line per check,
+`RUNNER=azhost` on its integration branch (section 8). All of it is `tests/gate-b.sh`, one `PASS`/`FAIL` line per check,
 non-zero exit on any FAIL:
 1. **Zero warnings.** `make -C testapp` (with the PATH of section 2) exits 0, its log has no `warning`, and
    `build/testapp.3dsx` exists. A host compile of the pure-C files passes: `cc -std=c11 -Wall -Wextra -Werror
@@ -50,8 +50,13 @@ non-zero exit on any FAIL:
    - `ready_at=60`: a `ready f=60 ...` line, and per-frame lines continue past 60.
    - `boot_frames=90`: a `booted f=90 ...` line, the first per-frame line is `f=91`, and (one 15 s run with shots)
      both 2D shots still pass `--mode 2d`.
+   - In every run the app is still running at the end unless `exit_at` was set (no exit on a button).
 6. **Planted red.** Once, run the markers check with `--expect-shift 1` (it shifts every expected pixel by one) and see
    it FAIL; then the real run passes again.
+
+Waits: macOS has no `timeout` (shell rule 3), so each fe2 or azhost run is a background pid with a bounded `kill -0`
+loop (seconds plus 120). On `FAIL slow: frames=<n>` (fewer than 600 frames in a shot run) the script itself reruns
+that check once with `SECS=40` before failing, so the main loop's rerun needs no judgement.
 
 ## 2. Facts checked for this plan (reviewers: verify these)
 
@@ -94,9 +99,10 @@ Azahar 2126.2 (SRC = MAIN's `dl/azahar-src/unpacked/azahar-unified-source-2126.2
   (`fs_user.cpp:70`, `file.cpp:288, 317`). So: open the log once, never close and reopen it per line, write each line
   with `FSFILE_Write(..., FS_WRITE_FLUSH)` at a running offset; the line is on the host at once, even if the run is
   cut off. (newlib's `fflush` path is not checked; do not use stdio for the log.)
-- `src/core/hle/kernel/svc.cpp:1170-1190`: `OutputDebugString` logs the string at **debug** level only
-  (`LOG_DEBUG(Debug_Emulated, ...)`), so the stock core's info-level log does not show it. B still calls it (step C's
-  debug-text stop uses our core, whose patch 0004 lifts that class to debug); B's gate does not check it.
+- `src/core/hle/kernel/svc.cpp:1170-1190`: `OutputDebugString` logs the string at **debug** level
+  (`LOG_DEBUG(Debug_Emulated, ...)`). The stock core does forward it: its filter is Debug (citra_libretro.cpp:59) and
+  the backend maps Debug to `RETRO_LOG_DEBUG` (backend.cpp:79-81); only the host's info threshold hides it. Our core
+  (patch 0004) keeps only that class at debug, which is cheaper. B calls it; B's gate does not check it.
 - svcBreak: `SVC::Break` (svc.cpp:1148-1166) logs and calls `Core::LogException`, which sets status 14 and returns
   (exception_handler.cpp:142); `RunLoop` resets the status (core.cpp:111). **The guest runs on** after svcBreak
   returns; the app does nothing special after it.
@@ -124,7 +130,7 @@ nice -n 10 build/azhost run build/testapp.3dsx --sys <run>/sys --out <run>/out -
 Its shots are `<run>/out/shot_000300_top.png` / `_bottom.png` (and `000600`), split 400x240 and 320x240, written
 with filter 0; the frame count is `frames=<n>` on stdout; the log is `<run>/sys/Azahar/sdmc/testapp/log.txt`. The
 event runs use `--frames 600` with no shots. That branch of `gate-b.sh` is written by B and run first by the main
-loop after the merge.
+loop on its integration branch (A and B merged, before main).
 
 The frame layout at resolution factor 1 (PLAN 2.2, spike 1): top at (0,0) 400x240, bottom at (40,240) 320x240 in a
 400x480 frame; x 0-39 and 360-399 of rows 240-479 are black (the layout background, settings.h:608-610).
@@ -151,6 +157,10 @@ callback (an atomic `uint32_t` increment, registered once at start) is the only 
 buffer checksum goes in the `booted` line so the loop cannot be optimised away. (Assumption B4: libctru's GSP event
 thread, priority 0x1A, preempts the spinning main thread, priority 0x30, so the counter still moves.)
 
+**The app never exits on a button, START included** (Phase 2's gate presses START). It leaves only on `aptMainLoop()`
+false, at `exit_at`, or at the frame cap; no code from the devkitPro examples' `if (kDown & KEY_START) break;` is
+added.
+
 Markers: 8x8 solid squares, background `#202020`. Only the top screen carries anything else (the 3D triangle and a
 3x5-pixel frame counter at the top screen's centre, drawn with our own digit glyphs), always at least 16 pixels from
 every marker; the bottom screen is background plus its four markers only.
@@ -167,8 +177,9 @@ citro2d axis-aligned rectangles at integer coordinates render without blending a
 nearest-neighbour sampling, core_settings.cpp:1139); if not, the builder reports the largest channel difference seen
 and the reviewers decide; the 2D check never loosens.
 
-2D drawing: clear each of the two framebuffers to the background and draw the markers once (the first two frames,
-one per buffer); after that redraw only the counter digits each frame. 3D: citro3d and citro2d draw everything each
+2D drawing: clear each of the two framebuffers to the background and draw the markers once, in the first two
+main-loop frames after the busy boot (f = boot_frames + 1 and f = boot_frames + 2, one per buffer; with no busy boot,
+f = 1 and 2); after that redraw only the counter digits each frame. The busy boot itself draws nothing new. 3D: citro3d and citro2d draw everything each
 frame, as usual.
 
 Log lines (`sdmc:/testapp/log.txt`; at start create `/testapp` (an already-exists result counts as success), open
@@ -186,11 +197,14 @@ Every argument is cast to its format's own type (`(unsigned long)rec->frame`, `(
 stays pure C and compiles warning-free on both devkitARM and the Mac.
 
 The record (for step G's memory reads): `typedef struct { uint32_t magic, frame, vblank, keys; uint16_t tx, ty;
-int16_t cx, cy; uint64_t tick; uint32_t pad[2]; } laz_record;` with `magic = 0x4C415A52` ("LAZR"),
-`_Static_assert(sizeof(laz_record) == 32, ...)`; one global instance and one `malloc`'d copy (checked, freed at exit),
+int16_t cx, cy; uint64_t tick; } laz_record;` with `magic = 0x4C415A52` ("LAZR"),
+`_Static_assert(sizeof(laz_record) == 32, ...)` and `_Static_assert(offsetof(laz_record, tick) == 24, ...)` (true on
+AAPCS and arm64: `tick` is 8-aligned at 24, no padding). Step G reads these offsets: magic 0, frame 4, vblank 8,
+keys 12, tx 16, ty 18, cx 20, cy 22, tick 24; one global instance and one `malloc`'d copy (checked, freed at exit),
 both updated with the same values every frame before the log line.
 
-Main loop per frame, bounded (`f` up to 100,000,000, then exit; it also leaves on `aptMainLoop()` false):
+Main loop per frame, bounded (`f` up to 100,000,000, then exit; it also leaves on `aptMainLoop()` false; never on a
+button):
 - 2D: `hidScanInput`; fill the record; write the log line; events; draw; `gfxFlushBuffers`, `gfxSwapBuffers`;
   `gspWaitForVBlank0()`. So input is sampled right after a VBlank.
 - 3D: `C3D_FrameBegin(C3D_FRAME_SYNCDRAW)` (it waits for the VBlank); `hidScanInput`; fill the record; write the log
@@ -205,14 +219,14 @@ Main loop per frame, bounded (`f` up to 100,000,000, then exit; it also leaves o
 | `testapp/README.md` | three lines: what it is, GPLv3, `make -C testapp` (inside B's folder; not the root README) |
 | `testapp/source/main.c` | init (gfx, the vblank callback, fs, hid), read control, the busy boot, the main loop, exit |
 | `testapp/source/control.c`, `control.h` | pure C (`<stdint.h>`, `<string.h>` only): parse the control text into a struct |
-| `testapp/source/record.c`, `record.h` | pure C (plus `<stdio.h>` for `snprintf`): the record type, fill and format-a-log-line helpers into a caller buffer |
+| `testapp/source/record.c`, `record.h` | pure C (plus `<stdio.h>` for `snprintf` and `<stddef.h>` for `offsetof`): the record type, fill and format-a-log-line helpers into a caller buffer |
 | `testapp/source/draw2d.c`, `draw2d.h` | BGR8 pixel, rectangle, the markers, background, the digit counter |
 | `testapp/source/font.c`, `font.h` | our own 3x5 glyphs for 0-9 (15-bit masks) |
 | `testapp/source/scene3d.c`, `scene3d.h` | citro3d init, one triangle, citro2d markers on both screen targets, exit |
 | `testapp/source/vshader.v.pica` | our own minimal pass-through vertex shader (position by a projection uniform, colour) |
 | `testapp/source/sdlog.c`, `sdlog.h` | the SD archive (`FSUSER_OpenArchive` SDMC), `/testapp` creation, the log opened once and written line by line with flush, closed at exit; reading `control.txt` |
 | `testapp/tests/host_test.c` | host test of control parsing (good keys, unknown key, out-of-range value, comment, no file) and the record size and line format; prints `host_test ok` |
-| `tests/check_testapp.py` | stdlib only (`zlib`, `struct`): the filter-0 PNG decode, the `markers`, `log` and `event` subcommands; runs with `python3 -I`; under about 150 lines |
+| `tests/check_testapp.py` | stdlib only (`zlib`, `struct`), runs with `python3 -I`, under about 170 lines. A public function `read_png_rgba(path: str) -> tuple[int, int, bytes]` returning (width, height, RGBA bytes, row-major, RGB expanded to RGBA with alpha 255): the filter-0 decoder, raising `ValueError` on any other filter, colour type or bit depth; Phase 2 imports it (`tests/` on `sys.path`), never copies it. The `markers`, `log` and `event` subcommands sit behind `if __name__ == "__main__":`, so importing runs nothing |
 | `tests/gate-b.sh` | section 1's gate: POSIX `sh`, `set -eu`, ShellCheck clean, under about 100 lines; `RUNNER=fe2` (default) or `RUNNER=azhost` (section 2's azhost line and the split-PNG checker form) |
 
 No item files: notes go in the report's "Lessons and notes" block (section 8).
@@ -255,7 +269,7 @@ Everything outside section 4. In particular the top-level `Makefile`, `host/`, `
 it), `.gitignore`, `docs/map/*`, the root `README.md`, `docs/PLAN.md`, `docs/plans/*`, `docs/hours.tsv`, the
 handoff, every item file, and MAIN (read and copy only).
 
-## 8. The builder's report, and what the main loop does after the merge
+## 8. The builder's report, and what the main loop does on the integration branch
 
 Report: the gate output (and the red); the measured boot offset (B1) per run and `vjumps`; whether 3D markers came
 out exact (B3); whether the busy boot hit its cap (B4) and its wall time for 90 frames; the `.3dsx` size; line counts
@@ -266,30 +280,34 @@ loop: `*.elf`, `*.smdh`, `*.shbin`, `*.lst`, `*.map` (devkitPro build outputs; `
 PATH=/opt/devkitpro/devkitARM/bin:/opt/devkitpro/tools/bin:$PATH make -C testapp   # build/testapp.3dsx
 tests/gate-b.sh                       # step B's gate (fe2); RUNNER=azhost tests/gate-b.sh after step A
 ```
-Last, a block headed `Lessons and notes` for the main loop to paste into item laz-130.
+The map lines for the main loop (one each): `testapp/` for `docs/map/code.md`, `tests/gate-b.sh` and
+`tests/check_testapp.py` for `docs/map/tools.md`. For Phase I's licence audit: the SMDH takes libctru's
+`default_icon.png` when no icon is given (simple_tri Makefile :28-32, :140-150, zlib licence), so the shipped
+`.3dsx` carries it. Last, a block headed `Lessons and notes` for the main loop to paste into item laz-130.
 
-After A and B both merge, the main loop runs `RUNNER=azhost tests/gate-b.sh` once (it needs A's `build/azhost`; A's
+On its integration branch (A and B merged, before main; phase-1.md "Merge and launch" 4), the main loop runs `RUNNER=azhost tests/gate-b.sh` once (it needs A's `build/azhost`; A's
 top-level `make testapp` delegates to `testapp/Makefile`) and books it as B's evidence.
 
 ## 9. Hours (agent wall time)
 
 Builder 0.7 h (Makefile and 2D 0.15, control and host test 0.1, log and record 0.15, 3D 0.15, events and busy boot
-0.1, checker and gate 0.05 with the filter-0 decoder), plus its share of the one opus diff review for Phase 1 and the
-commit (about 0.2 h, `docs/plans/phase-1.md` section "Hours"): **0.9 h** (PLAN.md: 1.0). The gate's seven fe2 runs
+0.1, checker and gate 0.05 with the filter-0 decoder; review 2's additions are a few lines each), plus its share of
+the one as-built review and the commit (about 0.2 h, `docs/plans/phase-1.md` "Hours"): **0.9 h** (PLAN.md: 1.0). The gate's seven fe2 runs
 are about 1.5 minutes of wall time at today's load.
 
 ## 10. Review checklist (the opus diff review)
 
 1. Behaviour matches section 3: control keys, defaults, ranges, the error line; the marker table exact; the bottom
-   screen carries only markers; the log line formats exact with every argument cast; the record 32 bytes with its
-   magic; both addresses logged at start.
+   screen carries only markers; the log line formats exact with every argument cast; the record 32 bytes, `tick` at
+   24, its magic; both addresses logged at start; no exit on any button; 2D markers drawn in the first two frames
+   after the busy boot.
 2. The log is opened once; each line is one `FSFILE_Write` with `FS_WRITE_FLUSH`; no stdio for the log; offsets
    advance correctly; an existing `/testapp` is not an error.
 3. `break_at` calls `svcBreak(USERBREAK_ASSERT)` and the loop goes on; `exit_at` returns from `main` after
    `gfxExit()`, no `svcExitProcess`; `boot_frames` spins busy (bounded) with no VBlank wait and no per-frame line.
 4. Our vblank callback is never registered after `C3D_Init`; 3D mode uses `C3D_FrameBegin(C3D_FRAME_SYNCDRAW)` /
    `C3D_FrameEnd(0)` with no extra VBlank wait, and `v = C3D_FrameCounter(0)`.
-5. Pure-C files include only `<stdint.h>`/`<string.h>` (and `<stdio.h>` in record.c) and compile on the host with
+5. Pure-C files include only `<stdint.h>`/`<string.h>` (and `<stdio.h>`, `<stddef.h>` in record.c) and compile on the host with
    `-Werror`.
 6. C rules: no goto/recursion/setjmp; bounded loops; every `Result` checked; functions under about 60 lines; asserts;
    one function-pointer use (the 2D vblank callback), documented.
@@ -297,7 +315,9 @@ are about 1.5 minutes of wall time at today's load.
    shared font use.
 8. Makefile: `.3dsx` only, `-Wall -Wextra -Werror`, `-isystem` for library headers, output in `build/`, no edits
    outside `testapp/`.
-9. Checker and gate: stdlib only, `-I`, filter-0 decoder that refuses others, both frame shapes, the planted red
-   shown; ShellCheck clean, bounded waits, one emulator at a time, kills only its own pid, the slow-run message, the
-   azhost branch matches A's interface.
+9. Checker and gate: stdlib only, `-I`, `read_png_rgba` with the stated signature and importable with no side
+   effects, filter-0 decoder that refuses others, both frame shapes, the planted red shown; ShellCheck clean, no
+   `timeout` (background pid plus a bounded `kill -0` loop), one emulator at a time, kills only its own pid, the
+   slow-run rerun at `SECS=40` inside the script, the azhost branch matches A's interface.
+
 10. Nothing in the diff that is a build output (`.3dsx`, `.elf`, `.smdh`, `.shbin`, PNGs, logs).

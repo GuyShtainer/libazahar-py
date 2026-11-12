@@ -9,7 +9,6 @@ the next session needs to act now, and points at the rest. Goals, rules, decisio
 ## Running now
 | What | Where | Agent id | It stops when |
 |---|---|---|---|
-| laz-100: Phase 1 plan revision 2 (opus, the plan's author), edits `docs/plans/` (phase-1, f1, a, b) only | this repo | ad1f072f69021fa61 | revised plan, then the Phase 1 builders |
 | laz-200: Phase 2 plan review 2 (opus, fresh), writes `docs/reviews/` (phase-2-review-2.md) only | this repo | a9a87f41abaabc096 | review written, then revision 2 by `a4bcf09ec00640830` |
 
 ## Next steps, in order

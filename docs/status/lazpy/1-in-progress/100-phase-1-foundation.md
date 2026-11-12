@@ -48,3 +48,5 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   takes X1 (Interfaces for Phase 2 incomplete), X2 (`laz_record` is 40 bytes, not 32), S1 (F1 stops after configure;
   main loop builds detached in the main checkout), S3/S4 (liveness checks), S5 (wait-idle under the queue mutex) and
   S7 (cross-step gates on a throwaway merge). No third review loop.
+- Revision 2: every review-2 finding and Phase 2's five asks taken, none declined. F1 0.75 h, A 1.15 h, B 0.9 h,
+  phase 2.8 h; main-loop integration about 0.2 h. Launch and merge order: `docs/plans/phase-1.md` "Merge and launch".

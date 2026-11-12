@@ -1,7 +1,7 @@
 # Phase 1, step A: the host library (item laz-120)
 
-Opus step plan, 2026-11-12, revision 1 (after `docs/reviews/phase-1-review-1.md`), **draft for Phase 1's second
-opus review loop. Nobody builds from it until the reviews pass and the main loop launches the step.** Index, and what
+Opus step plan, 2026-11-12, revision 2 (after `docs/reviews/phase-1-review-1.md` and `phase-1-review-2.md`), **the
+plan to build from once the main loop launches the step.** Index, and what
 changed in this revision: `docs/plans/phase-1.md`. For one sonnet builder in its own git worktree. It refines
 `docs/PLAN.md` sections 2.1, 2.2, 2.4, 2.6 and the "Phase A" paragraph of section 3; where they disagree on a goal,
 PLAN.md wins and the builder stops and reports. Phase 2's plan (`docs/plans/phase-2.md` section 5) builds on the
@@ -27,9 +27,11 @@ Gate (PLAN.md section 3, "Phase A"), made concrete. All of it is `tests/gate-a.s
 makes `$1` absolute, then `COPY=$(mktemp -d "${TMPDIR:-/tmp}/lazpy-gate-a.XXXXXX")`, removed by a `trap` on exit
 unless `KEEP=1`. Checks 2-6 all run inside `$COPY` (its `build/azhost`, its `runs/`):
 1. **Fresh copy.** Agents never commit, so "a fresh clone" is emulated: every tracked and new non-ignored file of
-   the worktree (`git ls-files -z --cached --others --exclude-standard`) is copied by tar into `$COPY`, plus `dl/`
-   and `vendor/` by `cp -R`. In `$COPY`, `tools/fetch.sh` prints, before its blank line and "Done." block, only lines
-   starting `have   `. (The main loop reruns the gate in a real `git clone` after the commit.)
+   the worktree (`git ls-files -z --cached --others --exclude-standard`) is copied by tar into `$COPY`; `vendor/`
+   and the four `dl/` folders the host needs (`dl/azahar`, `dl/moltenvk`, `dl/libretro-headers`,
+   `dl/vulkan-headers`) are symlinked in (`ln -s`, no copy; fetch.sh only reads them when all are present), never
+   `dl/azahar-src`. In `$COPY`, `tools/fetch.sh` prints, before its blank line and "Done." block, only lines
+   starting `have   `. (The main loop reruns the gate in a real `git clone` of its integration branch, phase-1.md "Merge and launch" 4.)
 2. **Zero warnings.** In `$COPY`: `make check && make && make test-version`, output to a log; `grep -ci warning
    <log>` is 0; all three exit 0, and `test-version` prints `test-version ok`.
 3. **Two screens.** `nice -n 10 build/azhost run <app> --sys runs/g/sys --out runs/g/out --frames 600 --shot
@@ -37,9 +39,11 @@ unless `KEEP=1`. Checks 2-6 all run inside `$COPY` (its `build/azhost`, its `run
    `shot_000600_bottom.png`; each top PNG's IHDR reads 400 x 240 and each bottom 320 x 240 (read by a 5-line
    `python3 -I` IHDR check, not `file`). `host.log` has the core name and version line and the 32 effective option
    lines.
-4. **No window.** While that run is alive (started in the background, checked once its `host.map` heartbeat at
-   offset 16 is above 0, read by `python3 -I`; a bounded wait of at most 120 s inside the script),
-   `lsappinfo list | grep -E "pid = <pid>( |$)"` prints nothing.
+4. **No window.** Its own run, `--frames 3000` and no shots, started in the background (a light app finishes 600
+   frames in seconds, so check 3's run would end before the check). Once its `host.map` heartbeat at offset 16 is
+   above 0 (read by `python3 -I`; a bounded wait of at most 120 s), `kill -0 <pid>` must succeed, then
+   `lsappinfo list | grep -E "pid = <pid>( |$)"` must print nothing, then `kill -0 <pid>` must succeed again; a
+   failed `kill -0` is `FAIL run ended before the check`. Then the script waits for the run to end (bounded).
 5. **Boot failures.** `azhost run /nonexistent/x.3dsx ...` and `azhost run runs/g/bad.3dsx ...` (a text file) each
    exit 3 (`AZH_EXIT_BOOT`) and print a line starting `BootError:` on stderr. The two take different paths (section
    2): the missing file fails in `retro_load_game`, the text file inside `context_reset`.
@@ -53,7 +57,7 @@ The gate's app: Phase B's test app does not exist yet in this worktree. Use a co
 `/Users/guyshtainer/VSCodeProjects/3ds-toolkit/projects/Gen3D/Gen3D.3dsx` (read-only; copy it into `runs/a-gate/`
 first, because another session may rebuild it; its menu shows "CHOOSE TWO GAMES / No games found" with no SD data,
 spike 1). The Gen3D path appears in no file you create (rules.md 8: a test fixture, not a dependency); never commit
-the app or its shots (`runs/` and `*.3dsx` are ignored). After A and B merge, the main loop reruns the gate with
+the app or its shots (`runs/` and `*.3dsx` are ignored). On the integration branch (A and B merged, before main), the main loop reruns the gate with
 `build/testapp.3dsx`.
 
 ## 2. Facts checked for this plan (reviewers: verify these)
@@ -104,6 +108,15 @@ Vulkan (SRC):
 - The interface we hand back is `struct retro_hw_render_interface_vulkan` (`vendor/libretro_vulkan.h`, version 5 at
   :29): fill it with designated initializers, not fe2's positional list. Its `.handle` must be non-NULL (point it at
   the state struct): the core calls `wait_sync_index`/`get_sync_index` only when it is (libretro_vk.cpp:643, 649).
+- `set_image`'s image struct pointer is valid only until `retro_video_refresh_t` returns (`vendor/libretro_vulkan.h:
+  341-342`), so `set_image` copies the `VkImage` (from `create_info.image`), the layout and the queue family into the
+  state struct, never the pointer. The image itself stays alive until the core's next `wait_sync_index`
+  (:353-362), which comes inside the next `retro_run`, so reading it back after `retro_run` returns, or later from
+  `azh_shot`, is safe.
+- The core passes no semaphores (`set_image(handle, &img, 0, nullptr, qf)`, libretro_vk.cpp:707). fe2 works only
+  because it waits for the device under the queue mutex before the copy (fe2.c:117). The readback rule: lock the
+  queue mutex; `vkQueueWaitIdle` (or `vkDeviceWaitIdle`); record a barrier from the image's layout to
+  `TRANSFER_SRC_OPTIMAL`, the copy to the buffer, a barrier back; submit; `vkQueueWaitIdle`; unlock.
 - `retro_get_system_av_info` reports a max geometry of 7200 x 4800 (environment.cpp:315-316, side by side at 10x), so
   the readback buffer is sized from the first HW frame's `w x h` (400f x 480f), not from the max; a later larger frame
   frees it and makes a bigger one; both sizes are logged.
@@ -183,7 +196,7 @@ enum { AZH_OK = 0, AZH_E_ARG = -1, AZH_E_ORDER = -2 /* call order */, AZH_E_CORE
 enum { AZH_EXIT_OK = 0, AZH_EXIT_USAGE = 2, AZH_EXIT_BOOT = 3, AZH_EXIT_CORE = 4, AZH_EXIT_VULKAN = 5,
        AZH_EXIT_IO = 6, AZH_EXIT_GUEST_EXITED = 10, AZH_EXIT_GUEST_ERROR = 11 };     /* azhost and worker exits */
 enum { AZH_SCREEN_TOP = 1, AZH_SCREEN_BOTTOM = 2, AZH_SCREEN_BOTH = 3 };
-enum { AZH_FMT_PNG = 0, AZH_FMT_RAW = 1 };    /* RAW = RGBA8 into the map's pixel area; AZH_E_UNSUPPORTED until D */
+enum { AZH_FMT_PNG = 0, AZH_FMT_RAW = 1 };    /* RAW = RGBA8 into the map's pixel area; AZH_E_UNSUPPORTED until C */
 enum { AZH_STOP_FRAMES = 0, AZH_STOP_SD_TEXT = 1, AZH_STOP_DEBUG_TEXT = 2, AZH_STOP_GUEST_BREAK = 3,
        AZH_STOP_GUEST_EXITED = 4, AZH_STOP_GUEST_ERROR = 5, AZH_STOP_WALL_LIMIT = 6 };   /* C fills 1-6 */
 #define AZH_MAX_SHOTS 64
@@ -220,6 +233,13 @@ int azh_abi_layout(azh_layout *out);
 const char *azh_error(void);
 ```
 Call order is checked (`AZH_E_ORDER`): open, then options, then boot, then run/shot/stats in any order, then close.
+Two exceptions work in any state, before `azh_open` too: `azh_abi_layout` (Phase 2's ctypes check calls it alone)
+and `azh_error`.
+
+`azh_boot` calls `retro_load_game` and lets the core's `context_reset` run (the host's Vulkan setup and
+`System::Load`, PLAN 2.6); it runs **no** `retro_run`. The NULL-first-frame check is made on the first `retro_run` of
+the first batch: a NULL or 0x0 frame there makes `azh_run` return `AZH_E_BOOT` (`BootError:` from azhost). Every
+`retro_run` since boot counts toward the absolute frame number, batch or not.
 
 `azh_open(core, sysdir, log, mapfile)` order: open the log and the map; `dlopen` the core and fill the `retro_*`
 table (all 25 symbols of `libretro.osx.def`, including `retro_serialize_size`, `retro_serialize` and
@@ -235,8 +255,8 @@ The mapped file `host.map` (created by `azh_open`, fixed size, little-endian; of
 store, +1 after every `retro_run`); 24 i32 stop code (0 running); 28 i32 message length; 32 char[1024] last core
 message (every SET_MESSAGE is copied there); 1056 u32 x4 top w, top h, bottom w, bottom h; 1072 i64 frame of the
 pixels; bytes 1080-4095 free for step C; 4096 pixels, top RGBA 400x240 then bottom RGBA 320x240 (691,200 bytes);
-total 695,296. A creates the whole file at that size; the pixel area stays zero until step D implements
-`AZH_FMT_RAW` (factor 1 only).
+total 695,296. A creates the whole file at that size; the pixel area stays zero until step C implements
+`AZH_FMT_RAW` (factor 1 only), reusing A's readback path.
 
 `azhost` (PLAN 2.2: it calls the same functions; no Python CLI). One subcommand:
 ```
@@ -266,8 +286,8 @@ every boot (no `info` subcommand; F2 checks our core's symbols with `nm -gU`).
 | `host/core.c` | `dlopen` (RTLD_NOW\|RTLD_LOCAL), the `retro_*` table by explicit `dlsym` lines, system info and the version check, init, load_game, unload, deinit |
 | `host/env.c` | the environment callback: a `switch` that hands each id group to one small function (section 2's table); the SET_MESSAGE capture; the boot-failure flag |
 | `host/options.c` | the option store: copies of the core's registered keys and values (from SET_VARIABLES), set with validation, GET_VARIABLE lookup, logging the effective set at boot |
-| `host/vk.c` | MoltenVK `dlopen`, the Vulkan proc table loaded once (named fields assigned by explicit `vkGet*ProcAddr` calls, each checked; no token pasting, C rule 8), instance creation, `create_device`, the render interface (non-NULL `.handle`, set_image, queue lock and unlock as a mutex, the rest as fe2), and the readback: one host-visible buffer, one command pool and one command buffer, sized from the first HW frame and reused (grown once if a frame is larger); every `VkResult` checked |
-| `host/frame.c` | the video callback (HW frame: note it and, on shot frames, read back; software XRGB8888: copy rows with the pitch); alpha 255 |
+| `host/vk.c` | MoltenVK `dlopen`, the Vulkan proc table loaded once (named fields assigned by explicit `vkGet*ProcAddr` calls, each checked; no token pasting, C rule 8), instance creation, `create_device`, the render interface (non-NULL `.handle`; `set_image` copies the image handle, layout and queue family, never the pointer; queue lock and unlock as a mutex; the rest as fe2), and the readback of the last image by section 2's sync rule: one host-visible buffer, one command pool and one command buffer, sized from the first HW frame and reused (grown if a frame is larger); every `VkResult` checked |
+| `host/frame.c` | the video callback (HW frame: note its size and that a valid image exists; software XRGB8888: copy rows with the pitch into a host buffer); the readback itself runs after `retro_run` returns (run.c, on shot frames) or from `azh_shot` (the last frame); alpha 255 |
 | `host/crop.c` | pure (`<stdint.h>`, `<string.h>`): the crop of a frame into top and bottom, scaled by the factor, with the frame-size check; no Vulkan, so Phase 2's unit tests link it alone |
 | `host/png.c` | pure (zlib only): the PNG writer, filter 0 rows, `compress2` (level 6 for now; step E tunes), CRC table built in an init call, chunks written by small functions (no macros) |
 | `host/hostmap.c` | create, `ftruncate`, `mmap` and `munmap` the map; heartbeat, stop code, message |
@@ -284,7 +304,8 @@ every boot (no `info` subcommand; F2 checks our core's symbols with `nm -gU`).
 No item files: notes go in the report's "Lessons and notes" block (section 8).
 
 `Makefile` (A owns the top-level one): `CC = clang`; `CFLAGS = -std=c11 -O2 -g -Wall -Wextra -Werror -Wshadow
--Wstrict-prototypes -Wmissing-prototypes -I vendor -I vendor/include`; targets `all` (default: `build/libazhost.dylib`
+-Wstrict-prototypes -Wmissing-prototypes -isystem vendor -isystem vendor/include` (third-party headers can never
+fail `-Werror` or the zero-warning grep); targets `all` (default: `build/libazhost.dylib`
 with `-dynamiclib -install_name @rpath/libazhost.dylib -lz -lpthread` and the exports list; `build/azhost` linked to
 it with `-Wl,-rpath,@loader_path`), `check` (`clang --analyze -Xclang -analyzer-werror -Xanalyzer
 -analyzer-output=text $(CFLAGS) -o /dev/null` once per `host/*.c`, so no `.plist` files appear; clang 17 accepts
@@ -318,7 +339,8 @@ file statics.
    Boot the gate app once for 600 frames, nice'd. Look at both PNGs with the Read tool (never `open`): top shows the
    Gen3D menu, bottom its buttons. Checkpoint: check 3 passes by hand.
 4. Boot failures: run the missing file and the text file (the text file is the SET_MESSAGE-during-`context_reset`
-   case; plant nothing else). Checkpoint: check 5.
+   case; plant nothing else). Checkpoint: check 5; `azh_abi_layout` and `azh_error` answer before `azh_open` (the
+   scratch driver of step 2).
 5. `make check` clean (fix every analyzer finding, do not silence it); `tests/gate-a.sh`; ShellCheck. Plant one red:
    make the IHDR check expect 401 wide once, see FAIL, revert. Checkpoint: the whole gate PASSes; quote its output.
 6. The report.
@@ -350,25 +372,29 @@ make check && make && make test-version   # build/libazhost.dylib, build/azhost,
 build/azhost run <app.3dsx> --sys runs/x/sys --out runs/x/out --frames 600 --shot 300,600
 tests/gate-a.sh build/testapp.3dsx        # step A's gate (after step B; Gen3D's .3dsx before)
 ```
-the `.gitignore` lines for the main loop: `*.plist`, `*.dSYM/`; and last, a block headed `Lessons and notes` for the
-main loop to paste into item laz-120.
+the `.gitignore` lines for the main loop: `*.plist`, `*.dSYM/`; the map lines for the main loop (one each): `host/`,
+the top-level `Makefile` and `tests/` for `docs/map/code.md`, `tests/gate-a.sh` for `docs/map/tools.md`; and last, a
+block headed `Lessons and notes` for the main loop to paste into item laz-120.
 
 ## 9. Hours (agent wall time)
 
 Builder 0.95 h (header, options and version test 0.15, core and env 0.2, Vulkan, frame, crop and PNG 0.35, boot
-failures 0.05, gate and analyzer 0.2), plus its share of the one opus diff review for Phase 1 and the commit (about
-0.2 h, `docs/plans/phase-1.md` section "Hours"): **1.15 h** (PLAN.md: 1.25).
+failures 0.05, gate and analyzer 0.2; review 2's additions are a few lines each, and the gate's symlinks save the
+copy), plus its share of the one as-built review and the commit (about 0.2 h, `docs/plans/phase-1.md` "Hours"):
+**1.15 h** (PLAN.md: 1.25).
 
 ## 10. Review checklist (the opus diff review)
 
 1. API matches section 3 (names, return codes incl. `AZH_E_ORDER` and the reserved -10, struct layouts with fixed
-   arrays, `n` counting records); `azh_abi_layout` reports real `sizeof`/`offsetof` values; later-step functions
-   return their documented codes.
+   arrays, `n` counting records); `azh_abi_layout` reports real `sizeof`/`offsetof` values and, with `azh_error`,
+   works before `azh_open`; `azh_boot` runs no `retro_run`, and the first batch frame makes the NULL-frame check;
+   later-step functions return their documented codes (RAW until C).
 2. Env callback: every id in section 2's table answered as written; SET_VARIABLES strings copied, never kept; the
    callback live before `retro_set_environment`; the microphone refused; nothing GL left; names, not numbers.
 3. Vulkan: proc table loaded once, no `IFN`/`DFN` macros; every `VkResult` and core return checked; readback buffer,
-   pool and command buffer sized from the first frame, reused, freed in close; queue mutex held around the copy;
-   designated initializers with a non-NULL `.handle`; format checked; MoltenVK path from `LAZ_MVK`.
+   pool and command buffer sized from the first frame, reused, freed in close; the readback follows section 2's sync
+   rule (mutex, wait idle, barrier, copy, barrier back, submit, wait); `set_image` keeps no pointer; designated
+   initializers with a non-NULL `.handle`; format checked; MoltenVK path from `LAZ_MVK`.
 4. Boot failure: both planted cases give `AZH_E_BOOT` and `BootError:` with the core's message; the NULL-first-frame
    case is coded.
 5. Options: the profile sets all 32 keys; values validated in `azh_set_option`; the effective set and the core version
@@ -378,6 +404,9 @@ failures 0.05, gate and analyzer 0.2), plus its share of the one opus diff revie
 7. Log callback: thread-safe, level-filtered, no unbounded formatting.
 8. Makefile: `-Wall -Wextra -Werror`, `make check` with the analyzer and `-o /dev/null`, `test-version`, the exports
    list, a `testapp` target that delegates; no `.plist` files left.
-9. Gate script: ShellCheck clean, `mktemp -d` copy with a trap, absolute `$1`, bounded waits, kills only its own pid,
-   the planted red shown; the copy holds tracked plus new non-ignored files only; no Gen3D path in any file.
+9. Gate script: ShellCheck clean, `mktemp -d` copy with a trap, absolute `$1`, `dl/` parts and `vendor/` symlinked,
+   bounded waits (no `timeout`: a background pid and a bounded `kill -0` loop), check 4 on its own 3000-frame run
+   with `kill -0` before and after, kills only its own pid, the planted red shown; the copy holds tracked plus new
+   non-ignored files only; no Gen3D path in any file.
+
 10. No window: no AppKit, `lsappinfo` check passes; nothing written outside `build/`, `runs/` and `$COPY`.
