@@ -9,6 +9,7 @@ the next session needs to act now, and points at the rest. Goals, rules, decisio
 ## Running now
 | What | Where | Agent id | It stops when |
 |---|---|---|---|
+| laz-300: Phase 3 plan (opus): writes `docs/plans/` (phase-3, e, f2, g) only | this repo | aed5ccfac0370b719 | plan written; then review 1 |
 | laz-110: step F1, our core's pin, patches, options profile, build script; configure and planted reds only, no build (sonnet) | ../libazahar-py-f1 (step-f1) | a85f3abcf6d608824 | fixing F1-S1 and nice items from the as-built review (mergeable as is); then the integration run |
 | laz-120: step A, host library and azhost CLI, gate-a (sonnet) | ../libazahar-py-a (step-a) | a4e8c6931d1122bf4 | fixing A-X1, A-X2, A-S1..S5 and nice items; then the integration run |
 | laz-130: step B, test app and checker, gate-b (sonnet) | ../libazahar-py-b (step-b) | ab76e8c1f445db1b3 | fixing B-X1, B-S1..S4 and nice items; then the integration run |
@@ -18,7 +19,7 @@ the next session needs to act now, and points at the rest. Goals, rules, decisio
 2. Phase 1 builders fixing the as-built review's lists (`docs/reviews/phase-1-as-built.md`); a short re-check of the
    fixed items (resume `a9d6a1a04a7ae2c40`), then branch commits, the integration run on `int-1`, the merge to main, then the
    core build in MAIN and its waiter. Every step is in `docs/plans/phase-1.md` "Merge and launch".
-3. Phase 2's steps (C, D) build after Phase 1 merges. Phases 3 and 4: plan with two review loops each, later.
+3. Phase 2's steps (C, D) build after Phase 1 merges. Phase 3's plan is being written (above); then two review loops. Phase 4: plan later.
 
 ## Waiting on Guy (only what blocks a step above)
 - Nothing.
