@@ -16,6 +16,7 @@ publish-ready. What to do this hour: `docs/status/lazpy/1-in-progress/HANDOFF.md
 ## Where each item is
 <!-- generated:begin (python3 -I tools/mkprogress.py; do not edit by hand) -->
 ### libazahar-py (`docs/status/lazpy/`)
+- in-progress: `docs/status/lazpy/1-in-progress/13-plan-check-3.md`
 - files: 1 in `3-waiting-on-guy/`, 0 in `4-not-started/`, 7 in `5-done/`, 0 in `6-parked/`
 <!-- generated:end -->
 
