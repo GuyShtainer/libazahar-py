@@ -20,7 +20,9 @@ plus ctypes) and where Gen3D's adapter ends and this repo begins.
 (so its headings get line numbers in the generated map); then laz-11.
 
 ## Evidence
-none yet
+2026-11-12, opus agent aa56e6986026ffbe0: `docs/PLAN.md` written (290 lines; phases A to I, about 40 to 42 h; speed,
+scaling and memory branches marked "pending spike 2"); added to `ANCHOR_FILES` in `tools/mkmap.py`; mkmap,
+mkprogress, status_check --strict-handoff and map_check pass. Its two questions for Guy are in PLAN.md section 7.
 
 ## Pointers
 - Research: `docs/research/` (spike 1, prior art, Gen3D's needs; spike 2 when it lands)

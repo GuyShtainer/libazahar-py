@@ -31,7 +31,7 @@ SCRIPT_SUFFIXES = (".py", ".sh", ".mk")
 SPLIT_FOLDERS: tuple[str, ...] = ()
 # The big documents whose sections are worth jumping into by line number.
 # Add "docs/PLAN.md" here once the plan exists (item laz-10); a listed file that is missing fails the run.
-ANCHOR_FILES: tuple[str, ...] = ()
+ANCHOR_FILES: tuple[str, ...] = ("docs/PLAN.md",)
 ANCHOR_DEPTH = 3
 PURPOSE_WIDTH = 120
 TARGET_RE = re.compile(r"^([A-Za-z0-9_.%/-]+(?:[ \t]+[A-Za-z0-9_.%/-]+)*)[ \t]*:(?![=:])")
