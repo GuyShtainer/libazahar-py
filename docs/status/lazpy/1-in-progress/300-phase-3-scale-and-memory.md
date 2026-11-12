@@ -41,3 +41,13 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   or a size set at open. Risks in phase-3.md section 8 (ABI 3 refuses ABI-2 state files: Gen3D's states must be
   remade; map grows to 4,890,624 bytes, sparse). The step items point at PLAN.md:289/304/310; the real lines
   are :296 (E), :311 (F2), :317 (G): fix when the items move.
+- Review 1 (ab3db82a4ace714b2, opus, 19:53-20:10; docs/reviews/phase-3-review-1.md): 5 blockers, 9 should fix, 12
+  nice; ready after B1-B5 and S1-S3. Q4: cut F2's stock regression to a smoke run (gate C c and f plus the
+  matching pytest, about 5 min); Q5: keep the fixed 4 MiB area, Python reads its size from the layout row. Phase
+  about 3.1 h after the cuts. D takes B1 (host_paths and LAZ_CORE), B2 (nice at least 10) and S7 (abi range) now.
+- Guy 2026-11-12 20:5x: Q1 "Skip it (Recommended)" (no Gen3D scene; the cap stays provisional on a light scene);
+  Q2 "Approve (Recommended)" (P7: AZH_E_UNMAPPED -11 and GuestMemoryError); Q3 "Allow 4 too": the speed table
+  adds a 4-copy row (about 10 more minutes of machine time) and the cap rule may reach 4.
+- From the Phase 4 plan (item 400's notes): our built core carries Azahar's built-in console key blob
+  (ENABLE_BUILTIN_KEYBLOB ON by default); P9 rebuilds with it off plus -ffile-prefix-map, before F2, so F2 gates
+  the binary that ships.

@@ -62,3 +62,18 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   fail the 10 % gate: the drain is a whole throwaway serialize (about 0.5 s), unserialize drains again inside the
   core, and t_boot is short because the seed's boot_frames=6000 runs fast. Nothing tuned (phase-2.md risk 3): Guy's
   call.
+- D3 finish (ac94c1b1d3eddad30, fresh sonnet, 20:05-20:10), uncommitted on step-d over c1e614e: full suite
+  `67 passed, 1 xfailed in 98.55s`, 0 skipped (the xfail: the wall ratio, split into test_state_boot_wall_ratio);
+  fast 48 passed; test_live_errors 3 passed (SIGSEGV to HostCrashed 0.428 s; SIGSTOP to HostTimeout 3.11 s, no
+  process left; run(200_000) 39.5 s, stopped_by "frames"); planted red fails test_state_boot ("12 lines differ").
+  state-times: t_core_start=0.43 t_boot=5.65 t_state=1.60 ratio=0.282 fixed_ratio=0.223; drain_ms=434.7
+  unserialize_ms=653.0 bytes=266774. test_api.py:49 fix: held input carries across batches, so the second batch
+  now starts by releasing buttons and touch. New docs/USING.md; code.md names python/, pyproject.toml,
+  .pytest_cache/. Lessons: held input persists across batches (reset at frame 1 when comparing batches); xfail
+  marks a whole test, so a single expected-failing check moves into its own test; map_check counts on-disk
+  top-level entries even when git ignores them.
+- Guy 2026-11-12 20:5x, on the 10 % state-boot check: "Absolute bound (Recommended)": the gate is a state boot
+  under 2.5 s on the test app; the ratios stay printed for the record.
+- From Phase 3 review 1 ("What Phase 2 must change"), taken into D before merge: host_paths honours LAZ_CORE
+  through _paths.core_path() and prints core and kind; lazpy_core / stock_core fixtures; the worker's nice is
+  "at least 10" (os.nice adds); state.c:395 accepts 2 <= abi <= AZH_ABI_VERSION; USING.md says wall_ms_mean.
