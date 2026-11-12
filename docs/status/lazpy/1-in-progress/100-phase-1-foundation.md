@@ -44,3 +44,7 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   :238-239 and in phase-1.md's Interfaces for Phase 2 (A18); never-exit-on-START stated as a rule in phase-b section 3
   (B10); `read_png_rgba(path) -> (width, height, rgba_bytes)` in check_testapp.py, RGB expanded to RGBA, CLI behind
   `__main__`, importable under `python3 -I` (B11).
+- Review 2 (`docs/reviews/phase-1-review-2.md`): 2 blockers, 9 should fix, 12 nice; ready to build after revision 2
+  takes X1 (Interfaces for Phase 2 incomplete), X2 (`laz_record` is 40 bytes, not 32), S1 (F1 stops after configure;
+  main loop builds detached in the main checkout), S3/S4 (liveness checks), S5 (wait-idle under the queue mutex) and
+  S7 (cross-step gates on a throwaway merge). No third review loop.

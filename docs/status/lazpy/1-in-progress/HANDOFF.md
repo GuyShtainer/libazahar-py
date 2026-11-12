@@ -11,7 +11,6 @@ the pre-commit hook runs status_check on main (Guy's yes, 2026-11-12). Nothing p
 ## Running now
 | What | Where | Agent id | It stops when |
 |---|---|---|---|
-| laz-100: Phase 1 plan review 2 (opus, fresh; reads review 1 only after its own findings), writes `docs/reviews/` (phase-1-review-2.md) only | this repo | a3e46afeb4c8d10cf | review written, then revision 2 by the plan's author (ad1f072f69021fa61) |
 
 ## Next steps, in order
 1. Phase 1 (laz-100): plan drafted (`docs/plans/phase-1.md` and its three step files, commit dae8f49); review 1
