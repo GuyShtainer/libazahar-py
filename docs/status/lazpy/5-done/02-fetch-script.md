@@ -40,3 +40,5 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   pin is GitHub's generated tag archive; GitHub does not promise generated archives stay byte-identical, so the sha256 could
   one day mismatch with no real change (fix: re-pin). (3) Hashes of the header downloads were computed by me, not from a
   published checksum.
+- 2026-11-12 17:30: first run against the repo's own `dl/` (core moved into `dl/azahar/` first): fetched the headers,
+  verified everything, exit 0.
