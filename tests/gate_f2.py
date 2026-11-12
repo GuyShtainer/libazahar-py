@@ -408,8 +408,8 @@ def tree_files(folder: Path) -> list[str]:
 
 
 def r2_chain(a, c: int) -> dict:
-    import testapp_log as tl
     _use_repo_paths()
+    import testapp_log as tl
     from libazahar import Emulator
     wd = REPO / "runs" / "f2" / f"r2-{c}"
     shutil.rmtree(wd, ignore_errors=True)
@@ -481,8 +481,8 @@ def boot_err(fn) -> str:
 
 
 def scen_cross(a) -> None:
-    import testapp_log as tl
     _use_repo_paths()
+    import testapp_log as tl
     from libazahar import Emulator
     wd = REPO / "runs" / "f2" / "cross"
     shutil.rmtree(wd, ignore_errors=True)
@@ -522,6 +522,7 @@ SCENARIOS = {"keyblob": scen_keyblob, "symbols": scen_symbols, "version": scen_v
 
 
 def main() -> int:
+    _use_repo_paths()
     default_main = Path(os.path.realpath(REPO / "dl" / "azahar-src")).parent.parent       # MAIN, also from a worktree
     top = read_kv(REPO / "core" / "PIN").get("SRC_TOP", "")
     ap = argparse.ArgumentParser(description=__doc__)
