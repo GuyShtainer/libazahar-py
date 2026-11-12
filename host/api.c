@@ -363,41 +363,85 @@ int azh_boot(const char *app, const char *state_or_null)
     azh__state_note_app(app);
     azh_opts_log();
     azh_log(AZH_LOG_INFO, "boot %s with core %s %s", app, azh_g.core_name, azh_g.core_version);
-    rc = (state_or_null != NULL) ? azh__state_boot(app, state_or_null) : boot_game(app);
-    if (rc == AZH_E_UNSUPPORTED && state_or_null != NULL) {
-        return rc;      /* nothing was started: the instance stays open */
-    }
+    rc = boot_game(app);
     if (rc != AZH_OK) {
         azh_g.phase = AZH_PH_DEAD;
         return rc;
     }
     azh_g.t_boot = mono_s();
-    azh_g.phase = AZH_PH_BOOTED;
+    azh_g.phase = AZH_PH_BOOTED;        /* before the state boot: its warm-up frame needs it */
+    if (state_or_null != NULL) {
+        rc = azh__state_boot(app, state_or_null);
+        if (rc != AZH_OK) {
+            azh_g.phase = AZH_PH_DEAD;
+            return rc;
+        }
+    }
     return AZH_OK;
 }
 
-/* batch parameter checks: everything the stop rules of step C would use must still be empty */
-static int check_batch(const azh_batch *b)
+/* 1 when a path has a ".." component (a bare "..", or between slashes, or at either end) */
+static int has_dotdot(const char *path)
 {
-    int32_t i;
+    const char *p = path;
+
+    assert(path != NULL);
+    while (*p != '\0') {
+        size_t n = strcspn(p, "/");
+
+        if (n == 2u && p[0] == '.' && p[1] == '.') {
+            return 1;
+        }
+        p += n;
+        if (*p == '/') {
+            p++;
+        }
+    }
+    return 0;
+}
+
+/* the stop-rule fields: terminated strings, a relative SD path, ranges, the debug-text rules of the two cores */
+static int check_stop_rules(const azh_batch *b)
+{
+    struct retro_variable var;
 
     assert(b != NULL);
-    assert(AZH_MAX_SHOTS > 0);
-    if (b->frames < 1 || b->frames > 100000000) {
-        return azh_fail(AZH_E_ARG, "azh_run: frames must be 1 to 100,000,000");
+    if (memchr(b->sd_file, '\0', sizeof b->sd_file) == NULL || memchr(b->sd_text, '\0', sizeof b->sd_text) == NULL ||
+        memchr(b->debug_text, '\0', sizeof b->debug_text) == NULL) {
+        return azh_fail(AZH_E_ARG, "azh_run: sd_file, sd_text or debug_text is not terminated");
     }
+    if ((b->sd_file[0] != '\0') != (b->sd_text[0] != '\0')) {
+        return azh_fail(AZH_E_ARG, "azh_run: sd_file and sd_text go together");
+    }
+    if (b->sd_file[0] == '/' || has_dotdot(b->sd_file)) {
+        return azh_fail(AZH_E_ARG, "azh_run: sd_file must be relative to the SD folder, without ..");
+    }
+    if (b->sd_every < 0 || b->sd_every > 100000 || b->wall_limit_ms < 0 ||
+        (b->sd_from_end != 0 && b->sd_from_end != 1)) {
+        return azh_fail(AZH_E_ARG, "azh_run: sd_every 0..100000, wall_limit_ms >= 0, sd_from_end 0 or 1");
+    }
+    if (b->debug_text[0] == '\0') {
+        return AZH_OK;
+    }
+    if (azh_g.is_lazpy == 0) {
+        return azh_fail(AZH_E_NEEDS_LAZPY_CORE, "a debug-text stop needs the libazahar core (this core is stock)");
+    }
+    memset(&var, 0, sizeof var);
+    var.key = "citra_instant_debug_log";
+    if (azh_opts_get(&var) == 0 || var.value == NULL || strcmp(var.value, "enabled") != 0) {
+        return azh_fail(AZH_E_ARG, "azh_run: a debug-text stop needs the option citra_instant_debug_log=enabled");
+    }
+    return AZH_OK;
+}
+
+static int check_shots(const azh_batch *b)
+{
+    int32_t i;
+    int png = 0;
+
+    assert(b != NULL);
     if (b->n_shots < 0 || b->n_shots > AZH_MAX_SHOTS) {
         return azh_fail(AZH_E_ARG, "azh_run: n_shots must be 0 to %d", AZH_MAX_SHOTS);
-    }
-    if (b->sd_file[0] != '\0' || b->sd_text[0] != '\0' || b->sd_every != 0 || b->debug_text[0] != '\0' ||
-        b->wall_limit_ms != 0) {
-        return azh_fail(AZH_E_UNSUPPORTED, "stop rules arrive in step C");
-    }
-    if (b->n_shots > 0 && memchr(b->shot_dir, '\0', sizeof b->shot_dir) == NULL) {
-        return azh_fail(AZH_E_ARG, "azh_run: shot_dir is not terminated");
-    }
-    if (b->n_shots > 0 && b->shot_dir[0] == '\0') {
-        return azh_fail(AZH_E_ARG, "azh_run: shots need a shot_dir");
     }
     for (i = 0; i < b->n_shots; i++) {
         if (b->shots[i].frame < 1 || b->shots[i].frame > b->frames) {
@@ -406,34 +450,53 @@ static int check_batch(const azh_batch *b)
         if (b->shots[i].screens < AZH_SCREEN_TOP || b->shots[i].screens > AZH_SCREEN_BOTH) {
             return azh_fail(AZH_E_ARG, "azh_run: shot screens must be 1, 2 or 3");
         }
-        if (b->shots[i].format != AZH_FMT_PNG) {
-            return azh_fail(AZH_E_UNSUPPORTED, "raw shots arrive in step C");
+        if (b->shots[i].format != AZH_FMT_PNG && b->shots[i].format != AZH_FMT_RAW) {
+            return azh_fail(AZH_E_ARG, "azh_run: shot format must be PNG (0) or RAW (1)");
         }
+        png += (b->shots[i].format == AZH_FMT_PNG);
+    }
+    if (png > 0 && memchr(b->shot_dir, '\0', sizeof b->shot_dir) == NULL) {
+        return azh_fail(AZH_E_ARG, "azh_run: shot_dir is not terminated");
+    }
+    if (png > 0 && b->shot_dir[0] == '\0') {
+        return azh_fail(AZH_E_ARG, "azh_run: PNG shots need a shot_dir");
     }
     return AZH_OK;
 }
 
+static int check_batch(const azh_batch *b)
+{
+    assert(b != NULL);
+    if (b->frames < 1 || b->frames > 100000000) {
+        return azh_fail(AZH_E_ARG, "azh_run: frames must be 1 to 100,000,000");
+    }
+    if (check_shots(b) != AZH_OK) {
+        return AZH_E_ARG;
+    }
+    return check_stop_rules(b);
+}
+
 int azh_run(const int32_t *inputs, int32_t n, const azh_batch *b, azh_result *out)
 {
+    char err[200];
     int rc;
 
     assert(azh_g.phase >= AZH_PH_NONE && azh_g.phase <= AZH_PH_DEAD);
-    (void)inputs;     /* only n == 0 is accepted until step C */
     if (azh_g.phase != AZH_PH_BOOTED) {
         return azh_fail(AZH_E_ORDER, "azh_run: needs a successful azh_boot");
     }
     if (b == NULL || out == NULL || n < 0) {
         return azh_fail(AZH_E_ARG, "azh_run: NULL batch or result, or negative n");
     }
-    if (n > 0) {
-        return azh_fail(AZH_E_UNSUPPORTED, "input records arrive in step C");
-    }
     rc = check_batch(b);
     if (rc != AZH_OK) {
         return rc;
     }
+    if (azh__input_validate(inputs, n, b->frames, err, sizeof err) != AZH_OK) {
+        return azh_fail(AZH_E_ARG, "azh_run: %s", err);
+    }
     memset(out, 0, sizeof *out);
-    return azh_run_batch(b, out);
+    return azh_run_batch_inputs(inputs, n, b, out);
 }
 
 int azh_shot(int32_t screens, int32_t format, const char *path_prefix)
@@ -442,11 +505,14 @@ int azh_shot(int32_t screens, int32_t format, const char *path_prefix)
     if (azh_g.phase != AZH_PH_BOOTED) {
         return azh_fail(AZH_E_ORDER, "azh_shot: needs a successful azh_boot");
     }
-    if (screens < AZH_SCREEN_TOP || screens > AZH_SCREEN_BOTH || path_prefix == NULL) {
-        return azh_fail(AZH_E_ARG, "azh_shot: screens must be 1, 2 or 3 and a prefix is required");
+    if (screens < AZH_SCREEN_TOP || screens > AZH_SCREEN_BOTH) {
+        return azh_fail(AZH_E_ARG, "azh_shot: screens must be 1, 2 or 3");
     }
-    if (format != AZH_FMT_PNG) {
-        return azh_fail(AZH_E_UNSUPPORTED, "raw shots arrive in step C");
+    if (format == AZH_FMT_RAW) {
+        return azh_run_raw_shot(screens);        /* the prefix is ignored */
+    }
+    if (format != AZH_FMT_PNG || path_prefix == NULL) {
+        return azh_fail(AZH_E_ARG, "azh_shot: a PNG shot needs a prefix (format 0), or format 1 for raw");
     }
     return azh_frame_write(screens, path_prefix);
 }
@@ -492,8 +558,21 @@ int azh_write(uint32_t addr, uint32_t len, const void *buf)
 
 int azh_set_input(const int32_t rec[AZH_INPUT_INTS])
 {
-    (void)rec;
-    return azh_fail(AZH_E_UNSUPPORTED, "inputs arrive in step C");
+    char err[200];
+    int32_t one[AZH_INPUT_INTS];
+    azh_held h;
+
+    if (rec == NULL) {
+        return azh_fail(AZH_E_ARG, "azh_set_input: NULL record");
+    }
+    memcpy(one, rec, sizeof one);
+    one[AZH_IN_FRAME] = 1;          /* the frame field is ignored */
+    if (azh__input_validate(one, 1, 1, err, sizeof err) != AZH_OK) {
+        return azh_fail(AZH_E_ARG, "azh_set_input: %s", err);
+    }
+    azh__held_from_record(&h, one);
+    azh__input_set(&h);
+    return AZH_OK;
 }
 
 int azh_stats(struct azh_stats *out)

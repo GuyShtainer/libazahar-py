@@ -235,6 +235,9 @@ const struct retro_hw_render_interface_vulkan *azh_vk_iface(void);
 
 /* run.c */
 int azh_run_batch(const azh_batch *b, azh_result *out);
+int azh_run_batch_inputs(const int32_t *inputs, int32_t n, const azh_batch *b, azh_result *out);
+int azh_run_raw_shot(int32_t screens);                  /* a raw shot of the current frame into the map */
+extern azh_msgstate azh_msgs;                           /* env.c's guest-message state, read by run.c */
 /* input glue (run.c): the held state, the two libretro input callbacks, the vblank counter */
 void azh__input_set(const azh_held *h);
 void azh__input_get(azh_held *h);

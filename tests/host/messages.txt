@@ -14,3 +14,6 @@
 -1 ERROR ERROR Fatal Error encountered (): z
 -1 ERROR ERROR Fatal Error encountered (9999): z
 -1 ERROR ERROR some other message
+# real messages from the C gate (stock core, test app): the break (message truncated by the map to 1023 bytes) and the exit
+14 BREAK BREAK Fatal Error encountered (14): Thread: testapp-main (ID: 1)\nProcess: testapp\nException Type: Break\n\nRegisters:\n\n    R0    0x00000001     R1    0x08007EAC     R2    0x00000000     \n    R3    0x000023CE     R4    0x00000078     R5    0x0000007D     \n    R6    0x00000000     R7    0x00122D70     R8    0x05F5E101     \n    R9    0x3008CA00     R10   0x00000000     R11   0x30151800     \n    R12   0x0000012A     \n\n    SP    0x08007EC8     LR    0x001019E8     PC    0x0010E094\n    CPSR  0x00000010     FPEXC 0x00000000     FPSCR 0x03000000\n\n    S0    0x00000000     S1    0x00000000     S2    0x00000000     \n    S3    0x00000000     S4    0x00000000     S5    0x00000000     \n    S6    0x00000000     S7    0x00000000     S8    0x00000000     \n    S9    0x00000000     S10   0x00000000     S11   0x00000000     \n    S12   0x00000000     S13   0x00000000     S14   0xBBFC6CAF     \n    S15   0x00000000     S16   0x00000000     S17   0x00000000     \n    S18   0x00000000     S19   0x00000000     S20   0x00000000     \n    S21   
+16 EXIT_EXITED EXITED Fatal Error encountered (16): 

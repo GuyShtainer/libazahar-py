@@ -16,8 +16,9 @@ build/libazhost.dylib: $(LIB_OBJ) host/libazhost.exports
 	$(CC) -dynamiclib -install_name @rpath/libazhost.dylib -Wl,-exported_symbols_list,host/libazhost.exports \
 	    -o $@ $(LIB_OBJ) -lz -lpthread
 
-build/azhost: build/obj/azhost_main.o build/libazhost.dylib
-	$(CC) -o $@ build/obj/azhost_main.o -Lbuild -lazhost -Wl,-rpath,@loader_path
+# azhost links sdcopy.o directly: azh__copy_tree is internal, not an exported symbol of the library
+build/azhost: build/obj/azhost_main.o build/obj/sdcopy.o build/libazhost.dylib
+	$(CC) -o $@ build/obj/azhost_main.o build/obj/sdcopy.o -Lbuild -lazhost -Wl,-rpath,@loader_path
 
 # static analysis: one pass per host source, no .plist output
 check:
