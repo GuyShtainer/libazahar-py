@@ -285,9 +285,9 @@ on the test app, launched in the background; the full suite once per large batch
 ## 7. Questions for Guy
 
 Answered 2026-11-12:
-- Phase F: yes to a pull request on Azahar's GitHub under Guy's account, and we patch and build the core ourselves so
-  memory reads work (Guy: "cant we update the core ourselves so it does?"). Spike 2 showed the stock core 2126.2
-  exposes no heap or FCRAM. The revision makes our own patched build the main route. Opening the PR still waits for
-  Guy's go when it's ready.
+- Phase F: we patch and build the core ourselves so memory reads work, and publish the patched core publicly "so it
+  works for everyone". No upstream pull request (Guy: "no need to submit a pull request, we edit the core to our
+  needs"; this replaced his earlier yes to one). Spike 2 showed the stock core 2126.2 exposes no heap or FCRAM.
+  Published core binaries ship with their GPLv2+ corresponding source (pinned Azahar commit plus our patch).
 - Phase I: the name `libazahar-py` is approved (Guy: "its informative and excct. so if its clear we use it"), subject
   to the legal agent's check at release.

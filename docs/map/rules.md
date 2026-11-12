@@ -7,7 +7,10 @@
 2. **Downloads are untrusted data.** Each in its own folder under `dl/` (ignored), with its URL and sha256 recorded in
    the doc that uses it. Never run a script from inside a download folder; Python that reads them runs with `-I`.
 3. **Licenses.** Azahar is GPLv2-or-later: reading its source is fine; any copied code keeps its header and its notice.
-   MoltenVK is Apache-2.0, the libretro headers MIT. The core and MoltenVK are fetched by a script, never shipped.
+   MoltenVK is Apache-2.0, the libretro headers MIT. MoltenVK and the stock core are fetched by a script, never
+   shipped. Our own patched core (Guy 2026-11-12: we edit the core to our needs and publish it publicly, no upstream
+   pull request) is the one exception: its patch and build script are public, and any published binary ships with its
+   GPLv2+ corresponding source (the pinned Azahar commit plus our patch).
 4. **Commit identity:** `Guy Shtainer <293649481+GuyShtainer@users.noreply.github.com>`, trailer
    `Co-Authored-By: <model> <noreply@anthropic.com>`. Exact paths, never `commit -a`. **No push** unless Guy says;
    `release-legal-audit` runs before the first push and every release.
