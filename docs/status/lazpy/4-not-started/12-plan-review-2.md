@@ -4,7 +4,7 @@ title: lazpy
 order: 12
 kind: phase
 page: Plan review 2 and its revision
-hours: plan
+hours: plan ~ review 2
 ---
 # Plan review 2 and revision
 

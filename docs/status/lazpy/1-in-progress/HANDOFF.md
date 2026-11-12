@@ -1,30 +1,34 @@
 <!-- handoff: slim v1 | current tasks only | rewritten whole from docs/status/templates/handoff.md | budget 80 lines | never append -->
 # libazahar-py handoff
 
-As of: 2026-11-12 16:02 (the Gen3D session, at setup)
+As of: 2026-11-12 16:10 (this project's own session, which took over from the Gen3D session)
 
-New project, nothing built yet. The repo, status folders, maps and research are in place; the first commit is the
-setup. Nothing pushed. The downloaded core and MoltenVK are already in `dl/` (ignored), the headers in `vendor/`.
+New project, nothing built yet. The repo, status folders, maps and research are in place (setup commit 2288e94);
+the pre-commit hook runs status_check on main (Guy's yes, 2026-11-12). Nothing pushed. The downloaded core and MoltenVK are already in `dl/` (ignored), the headers in `vendor/`.
 
 ## Running now
 | What | Where | Agent id | It stops when |
 |---|---|---|---|
 | laz-05: second test, memory reads and real 3D-scene speed (run by the Gen3D session) | Gen3D session's scratchpad | a8bc5d5c | done or 60 min (about 16:46) |
+| laz-10: the whole-scope plan, opus, writes `docs/` (PLAN.md) only | this repo | aa56e6986026ffbe0 | draft done, then laz-11 |
+| laz-02: the download script `tools/` (fetch.sh) (sonnet), tested on a temp copy only | this repo | a445421c9b1810c3e | script tested, not committed |
+| laz-06: can libretro.py host the core? (sonnet), writes `docs/research/` (libretro-py-probe.md) | this repo + scratch venv | af4e0b90795498306 | verdict or 45 min (about 17:00) |
 
 ## Next steps, in order
-1. Read `docs/research/` (spike 1, prior art, Gen3D's harness needs) and `prototype/README.md`.
-2. When laz-05's result lands in `docs/research/` (spike-2-real-scene.md; the Gen3D session copies it in and moves
-   laz-05), read it. The plan may start before that; leave the speed and memory parts open until it lands.
-3. Plan the whole scope (laz-10, opus): write `docs/` (PLAN.md). Guy's order: whole scope, two review rounds with
-   revisions (laz-11, laz-12), then one item per phase in `docs/status/lazpy/4-not-started/`, then a plan per phase.
-   Each revision runs the hour-saving pass (laz-10's notes).
+1. When the plan agent reports: read `docs/` (PLAN.md), add it to `ANCHOR_FILES` in `tools/mkmap.py`, run the checks,
+   move laz-10 to done, then start review round 1 (laz-11, opus, one at a time).
+2. When laz-05's result lands (`docs/research/` (spike-2-real-scene.md), copied in uncommitted by the Gen3D session,
+   which messages this session): read it, commit it, move laz-05, and fold it into the plan's speed and memory parts.
+3. Review round 2 (laz-12), then one item per phase in `4-not-started/`, then a plan per phase. Each revision runs
+   the hour-saving pass (laz-10's notes).
 4. Book every agent run and main block in `docs/hours.tsv` (phase `plan` for laz-10 to laz-12).
 
 ## Waiting on Guy (only what blocks a step above)
-- Nothing blocks the steps above. The first publish of the progress page waits for his yes:
+- Nothing blocks the steps above. Guy said yes to publishing the progress page (2026-11-12); making a new page
+  needs the Artifact tool, which is off, so it waits for him to allow it for one session:
   `docs/status/lazpy/3-waiting-on-guy/ask-01-progress-page.md`.
 The full list is generated into `docs/status/README.md`.
 
 ## Pointers
-- First plan item: `docs/status/lazpy/2-next/10-plan-whole-scope.md`.
+- First plan item: `docs/status/lazpy/1-in-progress/10-plan-whole-scope.md`.
 - Rules that bite every turn: `docs/map/rules.md`. Commands: `docs/map/runners.md`. Everything else: `docs/map/README.md`.

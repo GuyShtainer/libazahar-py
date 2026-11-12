@@ -16,8 +16,10 @@ publish-ready. What to do this hour: `docs/status/lazpy/1-in-progress/HANDOFF.md
 ## Where each item is
 <!-- generated:begin (python3 -I tools/mkprogress.py; do not edit by hand) -->
 ### libazahar-py (`docs/status/lazpy/`)
+- in-progress: `docs/status/lazpy/1-in-progress/02-fetch-script.md`
 - in-progress: `docs/status/lazpy/1-in-progress/05-spike-2-real-scene.md`
-- next: `docs/status/lazpy/2-next/10-plan-whole-scope.md`
+- in-progress: `docs/status/lazpy/1-in-progress/06-libretro-py-probe.md`
+- in-progress: `docs/status/lazpy/1-in-progress/10-plan-whole-scope.md`
 - files: 1 in `3-waiting-on-guy/`, 2 in `4-not-started/`, 1 in `5-done/`, 0 in `6-parked/`
 <!-- generated:end -->
 
