@@ -1,7 +1,7 @@
 <!-- handoff: slim v1 | current tasks only | rewritten whole from docs/status/templates/handoff.md | budget 80 lines | never append -->
 # libazahar-py handoff
 
-As of: 2026-11-12 19:55 (this project's own session)
+As of: 2026-11-12 19:56 (this project's own session)
 
 This file lives in docs/status/lazpy/1-in-progress/, beside its item files. It holds only what
 the next session needs to act now, and points at the rest. Goals, rules, decisions and history live elsewhere.
@@ -9,7 +9,7 @@ the next session needs to act now, and points at the rest. Goals, rules, decisio
 ## Running now
 | What | Where | Agent id | It stops when |
 |---|---|---|---|
-| laz-210: step C as-built review (opus), writes `docs/reviews/` (phase-2-c-as-built.md) only | MAIN, reads ../libazahar-py-c | a9e8f589eeba79788 | fix list for C's builder (acae9a26ca38daf7c, reported 19:46: gate_c 28/28, uncommitted C2+C3) |
+| laz-210: step C fixes B1, S1-S4 from the as-built review (sonnet), ends with the "C fixes done" report | ../libazahar-py-c | acae9a26ca38daf7c | report; then the main loop commits C2+C3, merges step-c, item 210 to done |
 | laz-220: step D1 + D2 (Python package, worker, errors; state.c, statemeta.c; sonnet), ends with the "D1+D2 done" report | ../libazahar-py-d (step-d from 0651a8d) | a8301022e123dfae3 | D1+D2 committed b24c436; waits for C's api.c fix and C's merge, then main merged into step-d and D resumed for D3 |
 | laz-300: Phase 3 plan review 1 (opus, fresh): writes `docs/reviews/` (phase-3-review-1.md) only | this repo | ab3db82a4ace714b2 | review written; then the author (aed5ccfac0370b719) writes revision 1 |
 

@@ -40,3 +40,12 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   restore are compiled only; D3 runs them. Lessons: -I implies -P (conftest inserts python/ and tests/);
   HostMap.close() swallows BufferError from live numpy views; the wait loop polls the pipe once after the worker
   exits so a last reply is not lost; fakeworker sidecars host.map.died / .stopped give exact delay times.
+- For D3, from C's as-built review: after B1, azh_boot loads the app, sets BOOTED, then calls azh__state_boot
+  (state.c:485-502 needs no edit; any state-boot failure leaves the instance DEAD; azhost --state uses the same
+  path). azh__counters_set now writes the map: D must not call azh_map_set_counters itself. Stock-core guest
+  errors come two ways (one or two error messages in one retro_run: a batch with AZH_STOP_GUEST_ERROR; the third:
+  host exit 11); map both to one rule and write it in USING.md. azh_result.message holds only the stopping kind's
+  message, cut to 255 bytes (the map's 1023-byte message with msg_seq, and host.log, have more). Messages during
+  the drain (retro_serialize_size) set flags the next frame clears, so they are not reported as stops; compare
+  msg_seq before and after to warn. px_frame is -1 during a raw copy. c3 through Python: bound 3.0 + max(1.0,
+  5 * wall_s / frames) from batch 1. N6: D's integration tests exercise --stop-new.

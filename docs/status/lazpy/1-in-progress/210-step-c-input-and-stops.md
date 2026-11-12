@@ -59,3 +59,9 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   later batches, a break continues. Not exercised: our core's debug-text stop and AZH_ACT_EXITED path.
   Lessons: input jitter far below the brief's fear; the 90 % rule is tight for irrst (6 changes); list cross-file
   state (batch inputs, message state) in the frozen prototypes next time; c3 wants a per-frame max wall time.
+- As-built review (a9e8f589eeba79788, opus; docs/reviews/phase-2-c-as-built.md): mergeable after B1 and S1-S4.
+  B1 api.c azh_boot: always boot_game, phase BOOTED, then azh__state_boot (DEAD on failure, no fall back to OPEN).
+  S1 run.c an SD read error ends the batch; S2 azhost load_inputs rejects bad tokens, overflow, an 8th field; S3
+  azh__counters_set writes the map; S4 gate_c kills its child on SIGTERM. All eight builder deviations accepted
+  (deviation 1: the local extern and prototypes move into host/azh_internal.h). N1 (dbg_text race, our core only)
+  goes to F2. Fix list sent to C's builder 19:56 with B1, S1-S4, deviation 1, N2, N3, N5.
