@@ -9,3 +9,5 @@ date	bet	phase	agent_id	model	role	kind	start	end	hours	source
 2026-11-12	review 1 support: spike 2 intake, Guy's answers into plan and rules	plan	main	opus	main	process	16:20	16:26	0.10	session clock
 2026-11-12	plan revision 1 from review 1	plan	aa56e6986026ffbe0	opus	planner	agent	16:27	16:31	0.07	agent duration 238 s
 2026-11-12	review 1 close: Guy's build answers, spirv-tools install, revision check	plan	main	opus	main	process	16:26	16:33	0.12	session clock
+2026-11-12	plan review 2 docs/reviews/plan-review-2.md	plan	ae1d7771a10d61cb5	opus	reviewer	agent	16:32	16:46	0.24	agent duration 868 s
+2026-11-12	review 2 support: Gen3D state-boot need, revision 1 commit	plan	main	opus	main	process	16:33	16:46	0.22	session clock
