@@ -19,8 +19,8 @@ The gate in `docs/PLAN.md` line 310 ("Phase G"), run headless on this Mac with a
 none yet
 
 ## Pointers
-- Plan section: `docs/PLAN.md:310`
-- Phase plan: none yet
+- Plan section: `docs/PLAN.md:317`
+- Phase plan: `docs/plans/phase-g.md` (the builder brief), `docs/plans/phase-3.md`
 - Review: none yet
 
 ## Lessons and notes
