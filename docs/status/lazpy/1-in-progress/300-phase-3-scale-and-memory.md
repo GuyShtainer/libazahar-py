@@ -79,7 +79,7 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   OpenSSL 3 (Homebrew openssl@3 3.6.5, /opt/homebrew/opt/openssl@3/lib/libssl.a, libcrypto.a) through
   USE_SYSTEM_OPENSSL. Main-loop default for Q6: patch 0008 (load no keys) goes in the same rebuild.
 - Revision 2 launched 00:38 (ae13bb77d6994c473, fresh opus).
-- P9b by the main loop (00:45-00:50): patch 0007 (http_c.cpp: no built-in ClCertA; a missing console file is
+- P9b by the main loop (00:45-00:49, commit 5e95423; rebuild launched 00:49, pid 60994): patch 0007 (http_c.cpp: no built-in ClCertA; a missing console file is
   an error and returns), patch 0008 (key.cpp: GetKeysStream() returns an empty stream), core/PIN LAZ_CORE_DROP
   (default_keys.h, ctr-common-1-cert.h, ctr-common-1-key.h, deleted after unpack, before the patches; an entry
   not in the tree fails the build), OPENSSL_VERSION=3.6.5 and OPENSSL_ROOT. tools/build-core.sh: static
