@@ -1,0 +1,35 @@
+# Option profile for the stock Azahar 2126.2 core: every key set explicitly (docs/PLAN.md 2.4).
+# key=value, one per line; later --opt values win. Differences from the core default: graphics_api, input_type,
+# analog_function, enable_motion.
+citra_use_cpu_jit=enabled
+citra_cpu_clock_percentage=100
+citra_is_new_3ds=New 3DS
+citra_region_value=Auto
+citra_language_value=English
+citra_audio_emulation=hle
+citra_input_type=none
+citra_graphics_api=Vulkan
+citra_use_hw_shader=enabled
+citra_use_shader_jit=enabled
+citra_shaders_accurate_mul=enabled
+citra_use_disk_shader_cache=enabled
+citra_resolution_factor=1
+citra_texture_filter=none
+citra_texture_sampling=GameControlled
+citra_custom_textures=disabled
+citra_dump_textures=disabled
+citra_layout_option=default
+citra_swap_screen=Top
+citra_swap_screen_mode=Toggle
+citra_large_screen_proportion=4.00
+citra_render_3d=off
+citra_factor_3d=0
+citra_use_virtual_sd=enabled
+citra_use_libretro_save_path=LibRetro Default
+citra_analog_function=c_stick
+citra_analog_deadzone=15
+citra_enable_mouse_touchscreen=enabled
+citra_enable_touch_touchscreen=enabled
+citra_enable_touch_pointer_timeout=enabled
+citra_enable_motion=disabled
+citra_motion_sensitivity=1.0
