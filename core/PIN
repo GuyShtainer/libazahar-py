@@ -6,3 +6,6 @@ SRC_SIZE=43224348
 SRC_FILE=dl/azahar-src/src.tar.xz
 SRC_TOP=azahar-unified-source-2126.2
 LAZPY_REV=1
+LAZ_CORE_DROP=src/core/hw/default_keys.h src/core/hle/service/http/ctr-common-1-cert.h src/core/hle/service/http/ctr-common-1-key.h
+OPENSSL_VERSION=3.6.5
+OPENSSL_ROOT=/opt/homebrew/opt/openssl@3

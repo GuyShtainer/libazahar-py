@@ -21,13 +21,31 @@ The tarball is verified (size and sha256) before anything is unpacked; a present
 | `0004-lazpy-log-filter.patch` | log level Info, with the emulated program's debug output (`Debug_Emulated`) at Debug |
 | `0005-lazpy-version.patch` | library version string gets the suffix `-lazpy.1` |
 | `0006-lazpy-movie-play.patch` | `lazpy_movie_play(path)` plays a `.ctm` movie from the next boot |
+| `0007-lazpy-no-default-clcert.patch` | the HTTP service no longer falls back to a built-in ClCertA certificate and key; a missing console file is an error |
+| `0008-lazpy-no-key-loading.patch` | `GetKeysStream()` returns an empty stream: no AES keys are ever loaded (no `aes_keys.txt`, no built-in blob) |
+
+## What the core never contains
+
+No console keys and no Nintendo certificate. `tools/build-core.sh` deletes the files on the pin's `LAZ_CORE_DROP`
+list (`default_keys.h`, `ctr-common-1-cert.h`, `ctr-common-1-key.h`) right after the unpack, configures with
+`-DENABLE_BUILTIN_KEYBLOB=OFF`, and after the compile fails if any object still read a dropped file. Build paths are
+stripped with `-ffile-prefix-map`. Homebrew needs none of these.
+
+## OpenSSL
+
+Azahar bundles LibreSSL for its HTTP client. We link a static OpenSSL of the pinned version instead
+(`OPENSSL_VERSION` and `OPENSSL_ROOT` in the pin; Homebrew's `openssl@3` by default, `LAZ_OPENSSL_ROOT` overrides).
+The script refuses another version, checks that configure picked the static `.a` files, and fails if the core links
+an SSL dylib or still carries LibreSSL. `build-core/build.inputs` records the tarball, pin, script, every patch, the
+drop list, the OpenSSL archives (sha256 each), the repo head and whether the tree was clean.
 
 `core/options-lazpy.txt` holds the option lines our core's runs add on top of the default profile.
 
 ## Licenses
 
 Azahar is GPLv2 or later. Every patch hunk is GPLv2 or later, as the file it patches. Any published binary of this
-core ships with the unchanged source tarball plus these patches.
+core ships with the unchanged source tarball plus these patches. OpenSSL 3 is Apache-2.0, which is compatible with GPLv3 but
+not GPLv2, so a published binary of this core is distributed under GPLv3 (Azahar's "or later" allows it).
 
 ## Build
 

@@ -1,0 +1,22 @@
+--- a/src/core/hw/aes/key.cpp
++++ b/src/core/hw/aes/key.cpp
+@@ -1,6 +1,8 @@
+ // Copyright 2017-2026 Citra Emulator Project / Azahar Emulator Project
+ // Licensed under GPLv2 or any later version
+ // Refer to the license.txt file included.
++// Modified by libazahar-py, 2026: GetKeysStream() returns an empty stream, so no AES keys are ever loaded (no
++// aes_keys.txt, no built-in blob). Licensed GPLv2 or later, as this file.
+ 
+ #include <algorithm>
+ #include <optional>
+@@ -290,6 +292,10 @@
+ } // namespace
+ 
+ std::istringstream GetKeysStream() {
++    // libazahar-py: never load AES keys; homebrew needs none.
++    if (true) {
++        return std::istringstream("");
++    }
+     const std::string filepath = FileUtil::GetUserPath(FileUtil::UserPath::SysDataDir) + KEYS_FILE;
+     FileUtil::CreateFullPath(filepath); // Create path if not already created
+ 

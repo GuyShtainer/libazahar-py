@@ -67,3 +67,4 @@ date	bet	phase	agent_id	model	role	kind	start	end	hours	source
 2026-11-13	Review routing, privacy fix, Guy questions, three launches	phase-3	main	opus	main	process	21:15	00:38	0.20	session clock (most of it waiting on Guy)
 2026-11-13	Step D as-built fixes	phase-2	ac94c1b1d3eddad30	sonnet	builder	agent	00:38	00:42	0.06	agent duration 212 s
 2026-11-13	progress page v5, D commit and merge, Phase 2 close	phase-2	main	opus	main	process	00:38	00:45	0.08	session clock
+2026-11-13	P9b: patches 0007/0008, drop list, static OpenSSL 3, build.inputs	phase-3	main	opus	main	build	00:45	00:50	0.08	session clock

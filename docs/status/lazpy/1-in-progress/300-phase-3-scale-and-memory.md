@@ -79,3 +79,12 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   OpenSSL 3 (Homebrew openssl@3 3.6.5, /opt/homebrew/opt/openssl@3/lib/libssl.a, libcrypto.a) through
   USE_SYSTEM_OPENSSL. Main-loop default for Q6: patch 0008 (load no keys) goes in the same rebuild.
 - Revision 2 launched 00:38 (ae13bb77d6994c473, fresh opus).
+- P9b by the main loop (00:45-00:50): patch 0007 (http_c.cpp: no built-in ClCertA; a missing console file is
+  an error and returns), patch 0008 (key.cpp: GetKeysStream() returns an empty stream), core/PIN LAZ_CORE_DROP
+  (default_keys.h, ctr-common-1-cert.h, ctr-common-1-key.h, deleted after unpack, before the patches; an entry
+  not in the tree fails the build), OPENSSL_VERSION=3.6.5 and OPENSSL_ROOT. tools/build-core.sh: static
+  OpenSSL via USE_SYSTEM_OPENSSL (CMakeCache must name the .a files; otool must show no SSL dylib; no LibreSSL
+  string), build-core/build.inputs (sha256 of tarball, pin, script, each patch, both .a files; drop list; head;
+  clean), the .o.d guard over every drop entry, an atomic install through $DYLIB.tmp. 0007 and 0008 apply with
+  --fuzz 0 on a fresh 2126.2 tree after 0000-0006 with the drop files gone; the remaining references are
+  under #ifdef ENABLE_BUILTIN_KEYBLOB (OFF) or file-name strings. The rebuild runs next in MAIN, detached.
