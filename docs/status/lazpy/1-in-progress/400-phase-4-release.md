@@ -20,7 +20,7 @@ none yet
 
 ## Pointers
 - Plan section: `docs/PLAN.md` section 3
-- Phase plan: none yet
+- Phase plan: being written (`docs/plans/` phase-4, h, i)
 - Review: none yet
 
 ## Lessons and notes

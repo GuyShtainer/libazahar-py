@@ -1,7 +1,7 @@
 <!-- handoff: slim v1 | current tasks only | rewritten whole from docs/status/templates/handoff.md | budget 80 lines | never append -->
 # libazahar-py handoff
 
-As of: 2026-11-12 18:49 (this project's own session)
+As of: 2026-11-12 20:00 (this project's own session)
 
 This file lives in docs/status/lazpy/1-in-progress/, beside its item files. It holds only what
 the next session needs to act now, and points at the rest. Goals, rules, decisions and history live elsewhere.
@@ -9,22 +9,23 @@ the next session needs to act now, and points at the rest. Goals, rules, decisio
 ## Running now
 | What | Where | Agent id | It stops when |
 |---|---|---|---|
-| laz-100: our core's first build, detached and nice'd in MAIN (`tools/build-core.sh --detach`) | MAIN build-core/ | main | `build-core/build.exit` written (or the pid dies); waiter reports |
-| laz-300: Phase 3 plan (opus): writes `docs/plans/` (phase-3, e, f2, g) only | this repo | aed5ccfac0370b719 | plan written; then review 1 |
+| laz-220: step D3 (state boots, SD snapshot, integration tests; sonnet), ends with the "D done" report | ../libazahar-py-d (step-d, main merged) | a8301022e123dfae3 | report; then the opus as-built review of D |
+| laz-300: Phase 3 plan review 1 (opus, fresh): writes `docs/reviews/` (phase-3-review-1.md) only | this repo | ab3db82a4ace714b2 | review written; then the author (aed5ccfac0370b719) writes revision 1 |
+| laz-400: Phase 4 plan (opus): writes `docs/plans/` (phase-4, h, i) only | this repo | a867570428c4f7738 | plan written; then review 1 |
 
 ## Next steps, in order
 1. Phase 2's plan is final (5f77e28; fix check all DONE, item 200's notes). C and D build after Phase 1 merges.
-2. Phase 1 merged to main (A, B, F1 done). When the core build exits: record it in item 100, close Phase 1, remove the
-   four worktrees (`git status --porcelain` empty first) and branch int-1. Then Phase 2's builders (C, D) per
-   `docs/plans/phase-2.md`; their timed gates wait for `build-core/build.exit`.
-3. Phase 2's steps (C, D) build after Phase 1 merges. Phase 3's plan is being written (above); then two review loops. Phase 4: plan later.
+2. Phase 1 is done (item 100 in `5-done/`); our core is built (`build-core/azahar_lazpy_libretro.dylib`, 14 min),
+   so Phase 2's timed gates may run (one at a time).
+3. Phase 2's steps (C, D) build after Phase 1 merges. Phase 3's plan revision 0 is committed (item 300's notes); review 1 runs (above), then revision 1, review 2, revision 2. Phase 4's plan is being written (above).
 
 ## Waiting on Guy (only what blocks a step above)
-- Nothing.
+- Phase 3 questions Q1-Q3 (real-scene speed row, the new GuestMemoryError class, the cap rule): item 300's notes.
+  They block Phase 3's build, not its reviews; the plan's defaults hold until Guy answers.
 The full list is generated into `docs/status/README.md`.
 
 ## Pointers
-- Phase 1: `docs/status/lazpy/1-in-progress/100-phase-1-foundation.md` (its notes hold Phase 2's asks and review 2's
+- Phase 1: `docs/status/lazpy/5-done/100-phase-1-foundation.md` (its notes hold Phase 2's asks and review 2's
   verdict); review `docs/reviews/phase-1-review-2.md`.
 - Phase 2: `docs/status/lazpy/1-in-progress/200-phase-2-control.md`; plans `docs/plans/phase-2.md`, `phase-c.md`,
   `phase-d.md`.
