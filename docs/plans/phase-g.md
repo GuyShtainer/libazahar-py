@@ -1,20 +1,20 @@
 # Step G: reading and writing the game's memory, and the watch list (item laz-330)
 
-Brief for one sonnet builder, revision 1 (2026-11-12, after review 1). Phase index: `docs/plans/phase-3.md` (order,
-ownership, merges, departures, interfaces, Phase 2's holds H1-H7). Contract: `docs/PLAN.md:317` ("Phase G"),
+Brief for one sonnet builder, revision 2 (2026-11-13, after review 2; final). Phase index: `docs/plans/phase-3.md`
+(order, ownership, merges, departures, interfaces, Phase 2's holds H1-H7). Contract: `docs/PLAN.md:317` ("Phase G"),
 sections 2.2 (`azh_read`/`azh_write`, the watch list) and 2.5 (`emu.memory`, libmgba-py's names). Where this brief
-disagrees with PLAN.md on a goal, PLAN.md wins: stop and report (except the approved departures P1-P8 and
-refinements R1-R3 of phase-3.md section 5 and phase-2.md section 5, which you follow; P7, approved by Guy, and R1
-are this step's).
+disagrees with PLAN.md on a goal, PLAN.md wins: stop and report (except the approved departures P1-P8 and refinements
+R1-R4 of phase-3.md section 5 and phase-2.md section 5, which you follow; P7, approved by Guy, and R1 are this step's).
 
-You work in `../libazahar-py-g` (branch `step-g`, made at main **after step F2 merged**, with step E's E1 commit
-merged in; phase-3.md section 2). "MAIN" is `/Users/guyshtainer/VSCodeProjects/3ds-toolkit/projects/libazahar-py`.
-"OURS" is `MAIN/build-core/azahar_lazpy_libretro.dylib` (absolute; read only; the keys-off build F2 gated);
-"STOCK" is `dl/azahar/azahar_libretro.dylib`. **Never commit, never edit item files, never write in MAIN.** Read
-first: the repo's `CLAUDE.md`, `docs/map/rules.md`, phase-3.md sections 2, 3, 5, 6, phase-c.md section 3 (the
-frozen ABI 2 you extend), phase-d.md section 4, `core/patches/0001-lazpy-memory-exports.patch`,
-`testapp/source/main.c`, `record.h`, `control.h`, `tests/python/conftest.py`, `~/.claude/c-golden-rules.md` and
-`~/.claude/python-golden-rules.md`.
+You work in `../libazahar-py-g` (branch `step-g`, made at main **after step F2 merged**, with step E's E1 commit merged
+in; phase-3.md section 2). "MAIN" is `/Users/guyshtainer/VSCodeProjects/3ds-toolkit/projects/libazahar-py`. "OURS" is
+`MAIN/build-core/azahar_lazpy_libretro.dylib` (absolute; read only; step 0's build, which F2 gated); "STOCK" is
+`dl/azahar/azahar_libretro.dylib`. **Never commit, never edit item files, never write in MAIN, never run
+`tools/build-core.sh`** (in a worktree its build tree is the linked `dl/azahar-src/build-src`, MAIN's: a run would
+delete it and start a full build). Read first: the repo's `CLAUDE.md`, `docs/map/rules.md`, phase-3.md sections 2, 3, 5,
+6, phase-c.md section 3 (the frozen ABI 2 you extend), phase-d.md section 4,
+`core/patches/0001-lazpy-memory-exports.patch`, `testapp/source/main.c`, `record.h`, `control.h`,
+`tests/python/conftest.py`, `~/.claude/c-golden-rules.md` and `~/.claude/python-golden-rules.md`.
 
 ## 1. Goal and gate
 
@@ -87,8 +87,10 @@ Torn reads: a record whose fields do not all match line `frame` but each match l
 - D's `from_code` maps `AZH_E_ARG` to `ValueError` carrying the host's text (`errors.py:96-97`), so the host's watch
   plan message (with the largest-frames hint) already reaches the caller; Python does not repeat the plan.
 - States: `host/state.c` accepts `2 <= meta.abi <= AZH_ABI_VERSION` (hold H3), so ABI-2 states load after this step.
-  D's `test_newer_abi_refused` (`tests/python/test_state.py:116-124`) asserts `"abi=2\n"` in a fresh meta: under ABI 3
-  that literal must become the current version (section 5).
+  D's as-built fix S3 builds `test_newer_abi_refused` (`tests/python/test_state.py:116-124`) from
+  `_abi.AZH_ABI_VERSION` (plus an abi-1 case), so it follows ABI 3 with no edit; if the merged test still has the
+  literal `"abi=2\n"`, report it (do not edit `test_state.py`). The meta parse is strict on keys
+  (`statemeta.c:154`): add no meta key.
 - libmgba-py's memory names, which Gen3D's code already uses: `core.memory.u32.raw_read(addr)`,
   `core.memory.u8.raw_read(addr)` (gba-toolkit-share `tools/vsd_run.py`); PLAN 2.5 writes `emu.memory.u32(addr)`
   and `emu.memory.read(addr, 64)`.
@@ -160,15 +162,18 @@ else `AZH_E_ARG` whose text names the largest `frames` that fits at this `every`
 - `azh_run` with `n_watch > 0`: on the stock core `AZH_E_NEEDS_LAZPY_CORE` before any frame (beside C's debug-text
   check); `azh__watch_plan` failing: `AZH_E_ARG` before any frame. At the batch start (only when `n_watch > 0`):
   `watch_rows = 0`, the row size, the words, `watch_first`, `watch_seq + 1`.
-- After each `retro_run`, between `azh__run_one_frame` and `take_shots` (`host/run.c` `run_frames`; C's order, and
-  after E1's timing code): when batch frame `i % every == 0`, write one row: the absolute frame, then for each entry
-  `lazpy_read_memory(addr, row_ptr, 4 x words)`; a non-zero code zeroes that entry's words, sets the row status to
-  the first mapped code and counts the entry as failed. Then the release store of `watch_rows`. At every batch exit
-  that returns 0, if the last frame run has no row yet, write it. `result.watch_rows` and `watch_status` filled.
-  An unmapped watch never stops the batch (a game may unmap and remap).
+- After each `retro_run`, between `azh__run_one_frame` and `take_shots` (`host/run.c` `run_frames`; C's order, and after
+  E1's timing code): when batch frame `i % every == 0`, write one row: the absolute frame, then for each entry
+  `lazpy_read_memory(addr, row_ptr, 4 x words)`; a non-zero code zeroes that entry's words, sets the row status to the
+  first mapped code and counts the entry as failed. Then the release store of `watch_rows`. At every batch exit that
+  returns 0, if the last frame run has no row yet, write it. (`i` is `run_frames`'s 1-based batch frame, `for (i = 1; i
+  <= b->frames; ...)`, so 600 frames at `every` 10 give exactly 60 rows; review 2 N2.) `result.watch_rows` and
+  `watch_status` filled. An unmapped watch never stops the batch (a game may unmap and remap).
 - `host/mem.c` (not pure) holds the two bound function pointers (file statics; `azh__mem_bind(void *core_handle)`
-  called beside A's `is_lazpy_core` detection in `core.c`; both must be found, else our core is treated as stock and
-  one host.log line says why), `azh_read`/`azh_write`'s bodies (called from `api.c`), and the row writer
+  called beside A's `is_lazpy_core` detection in `core.c`; A detects our core by `lazpy_read_memory` alone
+  (`host/core.c:100`): a core that exports `lazpy_read_memory` but not `lazpy_write_memory` is a hard `AZH_E_CORE`
+  at `azh_open` with the text "our core lacks lazpy_write_memory" and one host.log line, so `is_lazpy_core` never
+  names a half-exported core; review 2 N6), `azh_read`/`azh_write`'s bodies (called from `api.c`), and the row writer
   (`azh__watch_begin`, `azh__watch_row`, `azh__watch_finish`, called from `run.c`). C rules: functions under about
   60 lines, about 2 asserts each, checked returns, bounded loops (entries <= 32, rows <= rows_max).
 
@@ -225,7 +230,6 @@ else `AZH_E_ARG` whose text names the largest `frames` that fits at this `every`
 | `python/libazahar/_abi.py`, `_map.py`, `results.py`, `errors.py`, `_worker.py`, `emulator.py`, `memory.py` (new), `__init__.py` | section 4 |
 | `tests/python/fakeworker.py`, `tests/python/test_abi.py`, `tests/python/test_map.py` | ABI 3 updates only |
 | `tests/python/test_memory.py` (new), `tests/python/test_memory_live.py` (new) | section 6 |
-| `tests/python/test_state.py` | only `test_newer_abi_refused`'s `abi=2` literal, made `f"abi={AZH_ABI_VERSION}\n"`, if Phase 2 left it literal |
 | `docs/USING.md` | section 4's memory section only |
 
 No core patch, no rebuild. Everything else is outside your files: in particular `host/state.c` (H3 is Phase 2's),
@@ -279,8 +283,11 @@ core=...)`):
 
 0. **Seed the worktree**: `mkdir -p dl && for d in azahar moltenvk libretro-headers vulkan-headers azahar-src; do [ -e
    MAIN/dl/$d ] && ln -s MAIN/dl/$d dl/$d; done`, `cp -R MAIN/vendor .`, `make`, `PATH=/opt/devkitpro/devkitARM/bin:
-   /opt/devkitpro/tools/bin:$PATH make testapp` (or copy `MAIN/build/testapp.3dsx`). Checkpoint: `git log --oneline
-   -3` shows F2's merge and E1's commit; `make test-host` and the non-slow pytest pass (baseline counts).
+   /opt/devkitpro/tools/bin:$PATH make testapp` (or copy `MAIN/build/testapp.3dsx`), and `mkdir -p build-core && ln
+   -sf MAIN/build-core/azahar_lazpy_libretro.dylib build-core/azahar_lazpy_libretro.dylib` (D's `lazpy_core` falls
+   back to the checkout's `build-core/`; without the link gate 2's our-core tests fail; the link is your
+   worktree's, ignored; MAIN's `build-core/` stays read-only; review 2 B2). Checkpoint: `git log --oneline -3` shows
+   F2's merge and E1's commit; `make test-host` and the non-slow pytest pass (baseline counts).
 1. **G1 (about 0.4 h; no emulator).** Sections 3, 4, the pure tests of 6; write `test_memory_live.py` without
    running it. Checkpoint: gate 1; `azhost layout` output saved to `runs/g/layout.txt` with the four sizes (3612, 312,
    240, 6452) and the row count.
@@ -311,11 +318,11 @@ core=...)`):
 
 ## 9. The builder's report
 
-Gates 1-3 as printed; the four struct sizes and the `fields[]` row count; the torn-read counts per address for m1
-and m2, which fields were torn, and m1's lag; m3's hit address X, its offset from `addr_global`, and the frame
-written; m4's P and its offset from `addr_global`; m6's numbers; m7's result; the wait for E's table; whether
-`test_state.py`'s literal needed the edit; line counts per new or edited file and the longest function; anything the
-core did that section 2 did not predict; the runners block for `docs/map/runners.md`:
+Gates 1-3 as printed; the four struct sizes and the `fields[]` row count; the torn-read counts per address for m1 and
+m2, which fields were torn, and m1's lag; m3's hit address X, its offset from `addr_global`, and the frame written; m4's
+P and its offset from `addr_global`; m6's numbers; m7's result; the wait for E's table; whether the merged
+`test_newer_abi_refused` passed under ABI 3 with no edit; line counts per new or edited file and the longest function;
+anything the core did that section 2 did not predict; the runners block for `docs/map/runners.md`:
 ```
 LAZ_REQUIRE_EMULATOR=1 nice -n 10 python3 -m pytest -q -rs tests/python/test_memory_live.py   # step G's gate (both cores)
 ```
@@ -355,4 +362,5 @@ fixtures' names), follow the code and report the difference.
    or f - 1", counted and bounded at 1 %; m3 finds exactly one hit; m4's P comes from a bounded probe; every live
    test names its core; m7 loads an ABI-2 state.
 9. G2 waited for E's speed table if it was running (or ended its run on the timeout); every run went through the slot
-   cap; nothing written in MAIN; no item file touched; nothing committed; no core patch; `host/state.c` untouched.
+   cap; nothing written in MAIN; no item file touched; nothing committed; no core patch; `host/state.c` and
+   `tests/python/test_state.py` untouched; `tools/build-core.sh` never run; a half-exported core fails at open.

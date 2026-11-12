@@ -1,15 +1,21 @@
-# Step F2: gate our patched core, as rebuilt with the key blob off, with the full test batch (item laz-320)
+# Step F2: gate our patched core, as rebuilt by step 0 ("P9b"), with the full test batch (item laz-320)
 
-Brief for one sonnet builder, revision 1 (2026-11-12, after review 1). Phase index: `docs/plans/phase-3.md` (order,
-ownership, merges, departures, interfaces, Phase 2's holds H1-H7). Contract: `docs/PLAN.md:311` ("Phase F2"),
+Brief for one sonnet builder, revision 2 (2026-11-13, after review 2; final). Phase index: `docs/plans/phase-3.md`
+(order, ownership, merges, departures, interfaces, Phase 2's holds H1-H7). Contract: `docs/PLAN.md:311` ("Phase F2"),
 sections 2.4 and 2.7. Where this brief disagrees with PLAN.md on a goal, PLAN.md wins: stop and report (except the
-approved departures P1-P8 and refinements R1-R3 of phase-3.md section 5 and phase-2.md section 5, which you follow).
+approved departures P1-P8 and refinements R1-R4 of phase-3.md section 5 and phase-2.md section 5, which you follow; R4,
+what "exact" means for the debug-text stop, is this step's).
 
 You work in `../libazahar-py-f2` (branch `step-f2`, made at main after Phase 2 merged). "MAIN" is
 `/Users/guyshtainer/VSCodeProjects/3ds-toolkit/projects/libazahar-py`. "OURS" is
-`MAIN/build-core/azahar_lazpy_libretro.dylib` (absolute path; **read only**), the core the main loop has just
-rebuilt with Azahar's built-in console key blob off (Phase 4's P9). "STOCK" is `dl/azahar/azahar_libretro.dylib` in
-your worktree (a link to MAIN's). **Never commit, never edit item files, never write in MAIN.** Read first: the
+`MAIN/build-core/azahar_lazpy_libretro.dylib` (absolute path; **read only**), the core the main loop is rebuilding
+in step 0 (phase-3.md section 4 step 0: key blob off, patch 0007 no default ClCertA, patch 0008 no key loading, the
+three Nintendo headers and `externals/libressl` dropped from the build tree, static OpenSSL 3.6.5 from Homebrew in
+place of LibreSSL). You are launched while that build runs; you run **no emulator** until it has ended with 0 and
+its `build.inputs` matches your tree (section 7). "STOCK" is `dl/azahar/azahar_libretro.dylib` in your worktree (a
+link to MAIN's). **Never commit, never edit item files, never write in MAIN, never run `tools/build-core.sh`** (in a
+worktree its build tree is the linked `dl/azahar-src/build-src`, MAIN's: a run would delete it and start a full
+build; the build is the main loop's). Read first: the
 repo's `CLAUDE.md`, `docs/map/rules.md`, phase-3.md sections 2, 3, 5 and 6, phase-c.md sections 3.4, 3.5, 6, 8,
 phase-d.md sections 3, 4 and 8, `core/README.md`, `core/options-lazpy.txt`, `tests/gate_c.py`,
 `tests/python/conftest.py`, `~/.claude/python-golden-rules.md` and `~/.claude/c-golden-rules.md`.
@@ -19,13 +25,36 @@ phase-d.md sections 3, 4 and 8, `core/README.md`, `core/options-lazpy.txt`, `tes
 Prove that the core we will ship (keys off) works with everything Phases 1 and 2 built, applied with its own option
 profile, and that it gives the exact repeats the stock core cannot. The gate (headless, this Mac):
 
-1. **f1 the rebuilt core** (`gate_f2.py` id `keyblob`, the first check): `MAIN/build-core/build.exit` holds `0`;
-   OURS exists and its mtime is later than `MAIN/build-core/build/CMakeCache.txt`'s (so it came from this build);
-   the cache has the line `ENABLE_BUILTIN_KEYBLOB:BOOL=OFF`; a walk of `MAIN/build-core/build/` finds at least 1,000
-   `*.o.d` files and **none** names `default_keys.h`; OURS does not contain the 16 bytes `[removed]
-   [removed]` (the blob's start, at offset 13,960,800 of the keys-on build); `strings -a OURS` has a line
-   `-lazpy.1`. RECORD: OURS's size and the number of `strings -a` lines holding `/Users/` (the prefix map's effect;
-   Phase 4 gates it to 0).
+1. **f1 the rebuilt core's supply chain** (`gate_f2.py` id `keyblob`, the first check; all of it in
+   `keyblob_findings`, section 6, so Phase 4's `release_check` imports one implementation):
+   - `MAIN/build-core/build.exit` holds `0`; OURS's mtime is later than `MAIN/build-core/build/CMakeCache.txt`'s;
+   - `MAIN/build-core/build.inputs` exists (the 21:09 build has none, which is what tells the new build from the old
+     one); its `tarball=` equals `core/PIN`'s `SRC_SHA256`; its `pin=`, `script=` and every `patch <name>=` equal the
+     sha256 of your tree's `core/PIN`, `tools/build-core.sh` and `core/patches/*.patch` (the same names, no more, no
+     fewer; 0007 and 0008 among them); `drop=` equals `core/PIN`'s `LAZ_CORE_DROP`; `clean=yes`;
+     `openssl_version=` equals `core/PIN`'s `OPENSSL_VERSION`; both `openssl_*_sha256=` lines present. RECORD `head=`,
+     `openssl_prefix=`, and whether the two `.a` files at that prefix still have the recorded sha256;
+   - the cache has the exact lines `ENABLE_BUILTIN_KEYBLOB:BOOL=OFF`, `USE_SYSTEM_OPENSSL:BOOL=ON`,
+     `OPENSSL_SSL_LIBRARY:FILEPATH=<openssl_prefix>/lib/libssl.a`, `OPENSSL_CRYPTO_LIBRARY:FILEPATH=<openssl_prefix>/
+     lib/libcrypto.a` (match the type field as `:[A-Z]*=`, since a `-D` without a type may stay `UNINITIALIZED`);
+   - every `LAZ_CORE_DROP` entry (read from `core/PIN`, never typed) is absent from the **build tree**
+     `MAIN/dl/azahar-src/build-src/<SRC_TOP>/` (not `unpacked/`, the reading copy, which keeps them);
+   - a walk of `MAIN/build-core/build/` finds at least 1,000 `*.o.d` files and **none** names the basename of any drop
+     entry (`default_keys.h`, `ctr-common-1-cert.h`, `ctr-common-1-key.h`, `libressl`);
+   - OURS holds none of 8 evenly spaced 16-byte windows of each of `default_keys_enc` (`src/core/hw/default_keys.h`),
+     `ctr_common_1_cert_bin` and `ctr_common_1_key_bin` (`src/core/hle/service/http/ctr-common-1-*.h`), the `0x..`
+     tokens parsed from the **reading copy's** headers (FAIL if a header is missing there or parses to under 128
+     bytes: then nothing was checked);
+   - `strings -a OURS`: a line equal to `-lazpy.1`; **no** line holding `/Users/` (review 2 N4); no line holding
+     `ClCertA file missing, using default` (N5, the text 0007 removes); no line holding `libressl`, any case (the
+     21:09 build has `externals/libressl/...` paths); at least one line equal to the pinned version (`3.6.5`) or
+     holding `OpenSSL 3.6.5` (the providers' version string; the 21:09 build has none);
+   - `/usr/bin/otool -L OURS` names no `libssl` or `libcrypto`;
+   - `MAIN/build-core/build/src/citra_libretro/CMakeFiles/citra_libretro.dir/link.txt` names
+     `<openssl_prefix>/lib/libssl.a` and `<openssl_prefix>/lib/libcrypto.a` and holds no `libressl`, any case.
+   RECORD: OURS's size; every `strings` line holding `OpenSSL` or `openssl@3` (count and the first 5); the link
+   line's `-framework` and `-l` items and `otool -L`'s list (so a library the static OpenSSL needed shows); the count
+   of `built for newer macOS` lines in `MAIN/build-core/build.log`.
 2. **f2** `/usr/bin/nm -gU OURS` lists exactly the 25 `_retro_*` names of SRC `citra_libretro/libretro.osx.def` plus
    `_lazpy_read_memory`, `_lazpy_write_memory`, `_lazpy_movie_play` (28, nothing else); STOCK lists exactly the 25.
 3. **f3** a run on OURS writes `2126.2-lazpy.1` as the core version in host.log (`core <name> version <v>`), and the
@@ -39,9 +68,9 @@ profile, and that it gives the exact repeats the stock core cannot. The gate (he
    `wall_ms_mean=` fields removed.
 6. **f6** D's state boot repeat (section 6, r2): two full chains on OURS give identical shot sha256s and log lines
    after the state for the two restored instances; each chain's `t_state` is under 2.5 s (Guy's bound, hold H5).
-7. **f7** the debug-text stop (section 6, dbg): `stop=debug_text`; the batch's last frame is within {0, 1} of the
-   `ready` line's host frame and **equal across two runs**; the SD log at the stop ends at the `ready f=200` line or
-   the one per-frame line after it.
+7. **f7** the debug-text stop (section 6, dbg; refinement R4): `stop=debug_text`; the batch's last frame is within {0,
+   1} of the `ready` line's host frame and **equal across two runs**; the SD log at the stop ends at the `ready f=200`
+   line or the one per-frame line after it.
 8. **f8** recorded, not gated: a stock-made state loaded into OURS and an OURS state loaded into STOCK (ok, or the
    error class and text); r1 on STOCK twice (which fields differ); the state bytes of the two r2 chains after the
    256-byte header; `drain_ms` and `t_state` of each r2 chain.
@@ -53,10 +82,26 @@ profile, and that it gives the exact repeats the stock core cannot. The gate (he
 ## 2. Facts (checked; SRC = `MAIN/dl/azahar-src/unpacked/azahar-unified-source-2126.2/src/`, PATCHES = `core/patches/`)
 
 - The key blob: `option(ENABLE_BUILTIN_KEYBLOB ... ON)` (SRC `CMakeLists.txt:154`) adds `src/core/hw/default_keys.h`
-  to `citra_core` when on; the keys-on build's `CMakeCache.txt:728` said ON and only
-  `citra_core.dir/hw/aes/key.cpp.o.d` (of 1,659 `.o.d` files) named the header. `tools/build-core.sh` now passes
-  `-DENABLE_BUILTIN_KEYBLOB=OFF` and `-ffile-prefix-map=$PWD/=` and dies when either guard fails, so a 0 in
-  `build.exit` already implies f1's two file checks; `gate_f2.py` checks them again from the files, independently.
+  to `citra_core` when on (`src/core/CMakeLists.txt:501-503`; `key.cpp:21-23` includes it only under the option).
+  The P9 build (21:09, e40e59c) is OFF with no `.o.d` naming the header, but it still holds Nintendo's ClCertA and
+  links LibreSSL; step 0's build replaces it.
+- Step 0 (phase-3.md section 4 step 0, the main loop's): patch 0007 removes `http_c.cpp:37-38`'s two includes of
+  `ctr-common-1-cert.h`/`-key.h` and the fallback copy at `:2281-2289` (now `LOG_ERROR(..., "ClCertA file missing");
+  return;`); patch 0008 makes `GetKeysStream()` (`key.cpp:292-314`, the one key source of AES, RSA `rsa.cpp:101` and
+  ECC `ecc.cpp:65`) return an empty stream; `core/PIN`'s `LAZ_CORE_DROP` lists the three headers and
+  `externals/libressl`, deleted after unpack and before the patches; the configure has `USE_SYSTEM_OPENSSL=ON` with
+  the explicit static `libssl.a`/`libcrypto.a` of the pinned keg; `--build` writes `build-core/build.inputs` (one
+  `key=value` per line: `tarball`, `pin`, `script`, `patch <name>` per patch, `drop`, `openssl_version`,
+  `openssl_prefix`, `openssl_libssl_sha256`, `openssl_libcrypto_sha256`, `head`, `clean`, `cmake`) before compiling.
+  The script dies on each of its own guards, so a 0 in `build.exit` already implies most of f1; `gate_f2.py` checks
+  them again from the files, independently.
+- With no keys, `DecryptClCertA()` (run from the HTTP service's constructor, `http_c.cpp:2507`) returns at the
+  missing key slot 0x0D (`:2262-2266`) before the removed branch, so neither 0007 nor 0008 changes anything the
+  test app can see: your whole batch on OURS is the "homebrew needs no keys and no ClCertA" proof.
+- OpenSSL here: `/opt/homebrew/opt/openssl@3` -> `Cellar/openssl@3/3.6.5`; its objects say `minos 15.0` (our target
+  is 11.0, so `ld` may warn: record, do not fix); the full text `OpenSSL 3.6.5 29 Sep 2026` lives only in
+  `cversion.o`, which the link pulls only if something calls `OpenSSL_version`, while the bare `3.6.5` sits in the
+  providers the core does use (hence f1's either-or).
 - macOS exports only what `libretro.osx.def` lists (SRC citra_libretro/CMakeLists.txt:96); the file has 25 symbols
   after two comment lines. Patch 0001 appends `_lazpy_read_memory`, `_lazpy_write_memory`; 0006 `_lazpy_movie_play`.
 - Patch 0005 makes the version `g_build_fullname + "-lazpy.1"` at run time, so the dylib holds `-lazpy.1` as its own
@@ -155,7 +200,7 @@ loop names the file in a message.
 | C(f) exit | f1 exit 10; f2 map stop code 4, `exit_code` 10, message `(16)`; f3; f4 | f1 exit 10 **after** a summary line with `stop=guest_exited` and `msg` holding `(16)`; f2 no exit-path line in host.log, and the map's stop code and `exit_code` as the code writes them on this path (read `azhost_main.c`; report the values); f3 with the summary's `last` in place of the map's `frame_total` if the map does not carry it; f4 the same |
 | D's debug-text test | `test_c4_debug_text_needs_our_core` (stock, explicit): `NeedsLazpyCore` | your twin `test_c4_debug_text_on_our_core` (explicit `lazpy_core`): `stopped_by == "debug_text"` |
 | D's guest-exit test (`test_f_guest_exit`) | `RunResult(stopped_by="guest_exited")` from the death mapping, Emulator closed | the same `RunResult` from the reply, Emulator closed (H7) |
-| D's state boot (`test_state_boot`, `test_state_boot_wall_ratio`) | `t_state < 2.5 s` (H5) | the same bound |
+| D's state boot (`test_state_boot`; D's as-built S2 put the bound inside it) | `t_state < 2.5 s` (H5) | the same bound |
 | Everything else | as written | identical expectations |
 
 ## 6. `tests/gate_f2.py` (new; stdlib plus `tests/` modules)
@@ -165,13 +210,20 @@ It inserts the absolute `tests/` and `python/` paths into `sys.path` first (phas
 a fresh `runs/f2/<id>/`: import `gate_c`, set `gate_c.RUNS = <repo>/runs/f2` and reuse `gate_c.run_azhost` (pass
 `--core <core>` in its flags) and `checks_c.parse_summary` rather than a second runner (review 1 N12). Lines printed:
 `PASS <id> ...`, `FAIL <id> ...`, `RECORD <id> ...`; the summary goes to `runs/f2/summary.txt`; exit 0 only if no
-FAIL. `keyblob` and `symbols` run no emulator.
+FAIL **and `gate_c.failed` is 0** (`gate_c.run_azhost` reports a timeout through `gate_c.report`, which bumps
+`gate_c.failed`, not your counter; review 2 N3). `keyblob` and `symbols` run no emulator.
 
-- **keyblob** (f1): file reads only: `build.exit`, the two mtimes, the cache line (exact match), an `os.walk` of
-  `MAIN/build-core/build` counting `*.o.d` files and listing any that contain `default_keys.h`, a byte search of OURS
-  for the 16 bytes, `strings -a OURS` for a line equal to `-lazpy.1`. Print each finding; RECORD the size and the
-  `/Users/` line count. Write the check as one function `keyblob_findings(build_dir, core) -> list[str]` (empty
-  means pass) so Phase 4's `release_check.py` can import it.
+- **keyblob** (f1): file reads plus one `strings -a`, one `otool -L` and `shasum`-equivalent `hashlib` reads, as
+  section 1 f1 lists them. Write it as one function
+  `keyblob_findings(build_dir: Path, core: Path, src_root: Path, tree: Path, repo: Path) -> list[str]` (empty means
+  pass; each string one finding naming the check) plus a small `keyblob_records(...) -> list[str]` for the RECORD
+  lines, both importable without side effects (Phase 4's `release_check.py` imports them): `build_dir` =
+  `MAIN/build-core`, `core` = OURS, `src_root` = the reading copy `MAIN/dl/azahar-src/unpacked/<SRC_TOP>`, `tree` =
+  the build tree `MAIN/dl/azahar-src/build-src/<SRC_TOP>`, `repo` = the checkout whose `core/PIN`, `core/patches/`
+  and `tools/build-core.sh` are hashed (your worktree; `LAZ_CORE_DROP`, `OPENSSL_VERSION` and `SRC_SHA256` come from
+  its `core/PIN`, read like the script: `KEY=value` lines, never executed). `--build-dir`, `--src-root`, `--tree`
+  default to those MAIN paths. The windows: parse every `0x..` token of the array's initializer, take 8 windows of
+  16 bytes at offsets `k * (n - 16) // 7`, k = 0..7, and search OURS's bytes for each.
 - **symbols**: f2. The 25 names are read from SRC's `libretro.osx.def` (lines starting with `_`), not typed in. Print
   any extra or missing name.
 - **version**: a 30-frame run on OURS; f3, the six key=value pairs found among the `option ` lines.
@@ -188,10 +240,15 @@ FAIL. `keyblob` and `symbols` run no emulator.
 - **stock_r1** (f8): r1 twice on STOCK; RECORD which fields differ (expected: `s=` and `t=`) and whether the shots
   match.
 - **r2** (f6), two chains on OURS, in Python through `libazahar` (core passed as `core=OURS`):
-  1. `a = Emulator(app, runs/f2/r2-<c>/a, sd_seed=seed(boot_frames=1200))`; `a.run(1300)`; the log has the
-     `booted` line; `S = a.save_state(runs/f2/r2-<c>/s.state)`; note the SD `log.txt` length at the save;
-     `a.run(300, shots=[100, 300])`; keep a's log lines after the noted length and its shot sha256s; `a.close()`.
-  2. `t0 = time.monotonic(); b = Emulator(app, runs/f2/r2-<c>/b, state=s.state); t_state = time.monotonic() - t0`
+  1. `a = Emulator(app, runs/f2/r2-<c>/a, sd_seed=seed(boot_frames=1200))` (in a script, `seed(**keys)` is
+     `testapp_log.write_control(folder, **keys)` on a fresh folder, `tests/testapp_log.py:11`, as D's fixture does);
+     `a.run(1300)`; the log has the `booted` line; `S = a.save_state(runs/f2/r2-<c>/s.state)`; note the SD `log.txt`
+     length at the save; `a.run(300, shots=[100, 300])`; keep a's log lines after the noted length and its shot sha256s;
+     `a.close()`.
+  2. First copy a's `sys/` minus the SD card into b, as D's `test_state_boot` does (`tests/python/test_state.py:48-51`;
+     the shader cache and NAND come along, hold H5): `shutil.copytree(a_dir / "sys", b_dir / "sys",
+     ignore=shutil.ignore_patterns("sdmc"))`; RECORD the copied top folders under `sys/Azahar/`. Then `t0 =
+     time.monotonic(); b = Emulator(app, runs/f2/r2-<c>/b, state=s.state); t_state = time.monotonic() - t0`
      (D's definition, hold H5); `b.run(300, shots=[100, 300])`; b's log lines after the snapshot's length and its
      shot sha256s; the `state load ...` line from b's host.log (it holds `drain_ms`); `b.close()`.
   Gate: b of chain 1 equals b of chain 2 (lines and shot hashes); `t_state < 2.5` per chain. RECORD: a1 == a2; a_c ==
@@ -203,20 +260,26 @@ FAIL. `keyblob` and `symbols` run no emulator.
 
 ## 7. Steps, with a checkpoint after each (save files as you go; never commit)
 
-0. **F2-0 (about 0.05 h): the rebuilt core.** You are launched after `MAIN/build-core/build.exit` holds 0. If it does
-   not (or is missing), stop and report the tail of `build.log`; the build is the main loop's. Seed the worktree:
-   `mkdir -p dl && for d in azahar moltenvk libretro-headers vulkan-headers azahar-src; do [ -e MAIN/dl/$d ] && ln
-   -s MAIN/dl/$d dl/$d; done` (link the children, never `dl/` itself), `cp -R MAIN/vendor .`, `make`,
+0. **F2-0 (about 0.05 h; no emulator).** You are launched together with step E, right after the main loop started
+   step 0's build (`MAIN/build-core/build.exit` is absent while it runs). Seed the worktree: `mkdir -p dl && for d
+   in azahar moltenvk libretro-headers vulkan-headers azahar-src; do [ -e MAIN/dl/$d ] && ln -s MAIN/dl/$d dl/$d;
+   done` (link the children, never `dl/` itself), `cp -R MAIN/vendor .`, **`mkdir -p build-core && ln -sf
+   MAIN/build-core/azahar_lazpy_libretro.dylib build-core/azahar_lazpy_libretro.dylib`** (D's `lazpy_core` falls back
+   to the checkout's `build-core/`; the link is your worktree's, ignored, and resolves to the new dylib once the
+   build installs it; MAIN's `build-core/` stays read-only; review 2 B2), `make`,
    `PATH=/opt/devkitpro/devkitARM/bin:/opt/devkitpro/tools/bin:$PATH make testapp` (or copy
-   `MAIN/build/testapp.3dsx`). Write `gate_f2.py`'s `keyblob` and `symbols` parts first and run them (`--only
-   keyblob,symbols`; no emulator). Checkpoint: f1, f2; `make test-host` and the non-slow pytest pass (baseline
-   counts printed). **If f1 fails, stop and report "the key blob is still in the build"**: nothing else in this step
-   is valid on that binary.
-1. **F2-1 (about 0.2 h; no emulator except one by-hand check).** Sections 3 and the rest of 6 (write the emulator
-   parts of `gate_f2.py`, do not run them). Checkpoint: `make check && make && make test-host` clean; `python3 -m
-   pytest -q tests/python -m "not slow"` passes with `test_lazpy_profile.py`; one by-hand `build/azhost run
-   build/testapp.3dsx ... --core OURS --frames 30` through the slot helper shows f3's version and the six keys in
-   host.log.
+   `MAIN/build/testapp.3dsx`). Checkpoint: `make test-host` and `python3 -m pytest -q tests/python -m "not slow"`
+   pass (baseline counts printed; after D's fixes about 49 passed).
+1. **F2-1 (about 0.23 h; no emulator).** Sections 3 and 6, all of `gate_f2.py` written (keyblob and symbols first),
+   none of it run on OURS yet. Checkpoint: `make check && make && make test-host` clean; `python3 -m pytest -q
+   tests/python -m "not slow"` passes with `test_lazpy_profile.py`; `python3 -I tests/gate_f2.py --help` works.
+   **Then wait for the build** (rule T): Monitor until `MAIN/build-core/build.exit` exists (an until-loop, bounded
+   **150 min**). On a timeout, stop the waiter and end your run with a "waiting for the build" report (F2-0 and F2-1
+   results in it); the main loop resumes you. If `build.exit` is not `0`, stop and report the last 30 lines of
+   `MAIN/build-core/build.log`; the build is the main loop's. On `0`: run `python3 -I tests/gate_f2.py --only
+   keyblob,symbols,version` (one 30-frame emulator run, through the slot helper; it replaces revision 1's by-hand
+   check). Checkpoint: f1, f2, f3. **If f1 fails, stop and report "the gated build is not the build that may ship"
+   with every finding**: nothing else in this step is valid on that binary.
 2. **F2-2 (about 0.2 h of agent time; about 45-65 min of machine time).** One background batch, every emulator
    command through the slot helper, one instance at a time, as `runs/f2/batch.sh` with one rc file per part
    (`runs/f2/<part>.rc`), in this order:
@@ -248,7 +311,7 @@ and the key blob stays off.
 
 - One emulator instance at a time, always nice'd, folders under `runs/f2*`, `runs/c-gate/`, `runs/d-pytest/`
   (ignored). Step E's builder runs no emulator while your batch runs (the main loop holds it at its E1 checkpoint);
-  your batch never runs beside the core build.
+  no emulator of yours runs beside the core build (section 7 step 1's wait). Never run `tools/build-core.sh`.
 - **The slot cap** (phase-3.md section 2): step E's `_slots.py` is not in your tree, so every emulator command runs
   under `runs/f2/hold_slot.py` (about 20 lines, ignored, not committed): it opens `LAZ_SLOT_DIR` or
   `~/Library/Caches/libazahar-py/slots/` (mkdir 0700), tries `slot-0.lock` .. `slot-<LAZ_MAX_INSTANCES or 3,
@@ -261,7 +324,9 @@ and the key blob stays off.
 
 ## 10. The builder's report
 
-F2-0's result; f1-f9 as printed (with f1's RECORD lines: size, `/Users/` count); every changed assertion in C's and
+F2-0's result; the build wait (start, end, `build.exit`); f1-f9 as printed (with f1's RECORD lines: size, `head=`,
+the OpenSSL prefix and whether its `.a` files still match, the `OpenSSL` strings, the link line's `-framework`/`-l`
+items, `otool -L`, the `built for newer macOS` count); every changed assertion in C's and
 D's tests (old and new, with the reason); the `option_plan` and the azhost order as built; the r1 and r2
 comparisons and every RECORD line (stock's differing fields, the state bytes after byte 256, `drain_ms` and
 `t_state`, cross-core results); the dbg frames of both runs; the slot waits; C(f)'s map values on our core; line
@@ -278,14 +343,21 @@ a drain-only export is worth a Phase 4 item, which it is only if `drain_ms` is o
 
 ## 11. Hours (agent wall time)
 
-Builder 0.45 h (F2-0 0.05, F2-1 0.2, F2-2 0.2), the opus as-built review 0.2 h, the commit 0.1 h: **0.75 h**, equal
-to PLAN.md's 0.75 (P8's profile application and the key-blob check, offset by Phase 2's holds, the reused runner and
-the stock smoke). The batch is machine time; the rebuild is the main loop's.
+Builder 0.48 h (F2-0 0.05, F2-1 0.23, F2-2 0.2), the opus as-built review 0.2 h, the commit 0.1 h: **0.78 h**,
+against PLAN.md's 0.75 (P8's profile application and f1's supply-chain checks, offset by Phase 2's holds, the reused
+runner, the stock smoke and the by-hand check folded into `--only keyblob,symbols,version`). The build wait and the
+batch are machine time; the rebuild is the main loop's.
 
 ## 12. Review checklist (the opus as-built review)
 
-1. `keyblob` reads the cache, the `.o.d` files (at least 1,000 found), OURS's bytes and strings, and the mtimes;
-   it ran first and passed; it is importable as `keyblob_findings`.
+0. Step 0's diff on main (the main loop's commit): patches 0007 and 0008 (each with its notice line; 0007 removes
+   both includes and the whole fallback copy, the `else` branch intact; 0008 returns an empty stream), the
+   `core/PIN` lines, `tools/build-core.sh` (the OpenSSL pin check before any unpack, the STAMP over patches and drop
+   list, the drop's refusals, the configure flags and guards, `build.inputs` before compiling, the `.o.d`, link-line
+   and `otool` guards, the atomic install), `core/README.md`'s rows and licence lines; and `build.inputs` itself.
+1. `keyblob_findings(build_dir, core, src_root, tree, repo)` checks everything section 1 f1 lists, reads the drop
+   list and the pins from `repo/core/PIN` (none typed), parses the windows from the reading copy and fails when a
+   header is missing; it ran first and passed; it and `keyblob_records` import without side effects.
 2. f2 compares against the `.def` file read from the source, not a typed list; it fails on any extra export.
 3. The lazpy profile is applied only when `is_lazpy_core`, first, before the profile and the caller's options, in
    azhost and in the worker alike; `none` and a missing default behave as 3.1 and 3.2 say; the no-shared-key test
@@ -298,8 +370,10 @@ the stock smoke). The batch is machine time; the rebuild is the main loop's.
 7. dbg's d3 and d4 are computed from the printed `last` values; the SD-stop comparison is a RECORD only.
 8. The exit-path grep uses the exact text from `env.c` and ran right after each our-core part, before the stock
    smoke; `runs/f2/exitpath-ours.txt` is empty.
-9. `gate_f2.py` reuses `gate_c.run_azhost`; every emulator command ran under the slot helper, one at a time, nice'd;
-   nothing written in MAIN; no item file touched; nothing committed; no file under `core/` changed.
+9. `gate_f2.py` reuses `gate_c.run_azhost` and exits non-zero when `gate_c.failed` is; every emulator command ran
+   under the slot helper, one at a time, nice'd, none before `build.exit` held 0; r2 copied a's `sys/` minus `sdmc`
+   into b; nothing written in MAIN; `tools/build-core.sh` never run; no item file touched; nothing committed; no
+   file under `core/` changed.
 
 ## 13. Interfaces assumed
 

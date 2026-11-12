@@ -1,14 +1,16 @@
 # Step E: many copies at once, the machine-wide cap, and the speed table (item laz-310)
 
-Brief for one sonnet builder, revision 1 (2026-11-12, after review 1). Phase index: `docs/plans/phase-3.md` (order,
-ownership, merges, departures, interfaces, Phase 2's holds H1-H7). Contract: `docs/PLAN.md:296` ("Phase E") and
+Brief for one sonnet builder, revision 2 (2026-11-13, after review 2; final). Phase index: `docs/plans/phase-3.md`
+(order, ownership, merges, departures, interfaces, Phase 2's holds H1-H7). Contract: `docs/PLAN.md:296` ("Phase E") and
 section 2.8. Where this brief disagrees with PLAN.md on a goal, PLAN.md wins: stop and report (except the approved
-departures P1-P8 and refinements R1-R3 of phase-3.md section 5 and phase-2.md section 5, which you follow; R2, the
+departures P1-P8 and refinements R1-R4 of phase-3.md section 5 and phase-2.md section 5, which you follow; R2, the
 4-instance row, and R3, no Gen3D row, are this step's).
 
 You work in `../libazahar-py-e` (branch `step-e`, made at main after Phase 2 merged; before E2 the main loop merges
 main, with step F2, into it). "MAIN" is `/Users/guyshtainer/VSCodeProjects/3ds-toolkit/projects/libazahar-py`.
-**Never commit, never edit item files, never write in MAIN.** Read first: the repo's `CLAUDE.md`,
+**Never commit, never edit item files, never write in MAIN, never run `tools/build-core.sh`** (in a worktree its
+build tree is the linked `dl/azahar-src/build-src`, MAIN's: a run would delete it and start a full build; the core
+build is the main loop's, and step 0's rebuild runs while you do E1). Read first: the repo's `CLAUDE.md`,
 `docs/map/rules.md`, `docs/map/README.md`, phase-3.md sections 2, 3 and 6, phase-d.md sections 4 and 8 (the Python
 package you extend), `~/.claude/python-golden-rules.md`, and for the two C edits `~/.claude/c-golden-rules.md`.
 
@@ -41,7 +43,8 @@ one-slot command runner, two cheap host wins, and the speed table. The gate (all
 
 - One frame is 4,481,136 guest ticks; the clock is 268,111,856 Hz (SRC core/core_timing.h:37, 40-42). One
   `retro_run` is one VBlank (the VBlank callback presents, the present ends the loop: gpu.cpp:488-498,
-  libretro_window.cpp:68-71), so x real time = host fps / 59.831.
+  citra_libretro/emu_window/libretro_window.cpp:68-71 and :327-331, the loop citra_libretro.cpp:282-306), so x real
+  time = host fps / 59.831.
 - The log's `s=` is `svcGetSystemTick` (testapp/source/main.c:149; record.c:58-61). Its start is random on the
   stock core and fixed on ours, but its **deltas** are guest time on both, so `Δs / 268,111,856` is guest seconds.
 - In 3D mode the app's `v` is `C3D_FrameCounter(0)` (testapp/source/scene3d.c:82-85), so `v == f`: the app's own
@@ -56,8 +59,9 @@ one-slot command runner, two cheap host wins, and the speed table. The gate (all
   fork+exec, so a sibling thread's child never keeps a slot fd past `exec`.
 - D's worker nice is at least 10 (hold H2) and A's readback runs only on asked frames (phase-3.md A9); C gives raw
   frames (`screens()`): three of PLAN's items are already true and are only checked here.
-- `host/png.c` is a **pure** module (stdlib and zlib only) built into `build/test-host` (`Makefile:41` `TEST_SRC`),
-  so it must not call `azh_log`; its level is `#define PNG_LEVEL 6` (`png.c:11`), used by `compress2` (`:136`).
+- `host/png.c` is a **pure** module (stdlib and zlib only) built into `build/test-host` (`Makefile:42` `TEST_SRC` after
+  D's merge), so it must not call `azh_log`; its level is `#define PNG_LEVEL 6` (`png.c:11`), used by `compress2`
+  (`:136`).
 - D's `HostTimeout(op, seconds, message)` prints its third argument as "(last guest message: ...)"
   (`errors.py:32-36`); a slot timeout needs its own text (3.1).
 - host.log has one `option <key>=<value>` line per registered key at boot (`host/options.c:164`): the effective
@@ -99,12 +103,19 @@ class LoadWarning(UserWarning)
 
 ### 3.2 The worker holds its slot (`python/libazahar/_client.py`, D's spawn)
 
-In D's spawn, before `Popen`: `slot = _slots.acquire()`. Then `pass_fds=(child.fileno(), slot.fd)` and append
-`str(slot.fd)` to the argv as `argv[3]` (D's `-c` text reads only `argv[1]` and `argv[2]`, so the worker needs no
-change; the number shows in `ps` for whoever debugs a held slot). Right after `Popen` returns, `slot.release()` in
-the parent (the child keeps the lock). If `Popen` raises, release and re-raise. Write `<workdir>/slot.txt`
-**after** `Popen`: `slot=<k> pid=<worker pid> acquired=<time.time() at the lock, 6 decimals> waited_s=<x>`. Change
-nothing else in `_client.py`. The spawn knows the workdir (D's cwd, `self.workdir`); the fake worker's argv is a
+`WorkerClient.__init__` gains one keyword, `slot: bool | None = None` (review 2 B3): `None` means "take a slot only
+for the real worker" (D's `argv` callable is `None`); `True` takes one for a fake worker too; `False` never takes
+one. D's fake-worker tests (`test_client.py`) pass no keyword, so they never touch the real slot folder or the cap,
+and the non-slow suite never waits behind a running pool. The docstring says so.
+
+When a slot is taken, in D's spawn, before `Popen`: `slot = _slots.acquire()`. Then `pass_fds=(child.fileno(), slot.fd)`
+and append `str(slot.fd)` to the argv as `argv[3]` (D's `-c` text reads only `argv[1]` and `argv[2]`, so the worker
+needs no change; the number shows in `ps` for whoever debugs a held slot). Right after `Popen` returns, `slot.release()`
+in the parent (the child keeps the lock). If `Popen` raises, release and re-raise. Write `<workdir>/slot.txt`
+**after** `Popen`: `slot=<k> pid=<worker pid> acquired=<time.time() at the lock, 6 decimals> waited_s=<x>`. D's
+spawn already closes both pipe ends when `Popen` raises (`except BaseException`); put the slot's release in that
+same `except`. With no slot taken, the argv, `pass_fds` and `slot.txt` stay as D's. Change nothing else in
+`_client.py`. The spawn knows the workdir (D's cwd, `self.workdir`); the fake worker's argv is a
 callable, so appending the slot fd works for both.
 
 Consequences you document in the docstring: the slot is free the moment the worker dies, however it dies; the
@@ -188,8 +199,10 @@ real folder):
   `_slots.DEFAULT_CAP`; a value set **after** the module was imported is seen by the next `cap()` call (S5).
 - s4: the slot folder is created mode 0700, lock files 0600.
 - s5: `LoadWarning` is warned when `os.getloadavg` is patched to return `(1000, 0, 0)`, and not at `(0, 0, 0)`.
-- s6: D's fake worker (mode `ok`) spawned through `_client` under cap 1 holds the slot (a second
-  `acquire(timeout=0.3)` raises) and frees it when the fake exits; `slot.txt` has the four keys.
+- s6: D's fake worker (mode `ok`) spawned through `_client` with **`slot=True`** under cap 1 and a private
+  `LAZ_SLOT_DIR` (monkeypatch) holds the slot (a second `acquire(timeout=0.3)` raises) and frees it when the fake
+  exits; `slot.txt` has the four keys. The same fake with no keyword writes no `slot.txt` and leaves the folder's
+  lock files free.
 - s7: `tools/hold_slot.py` under cap 1 runs `python3 -I -c "import time; time.sleep(60)"`; meanwhile
   `acquire(timeout=0.3)` raises; after SIGKILL of that child, `acquire(timeout=2)` succeeds; with nothing after `--`
   it exits 2.
@@ -295,11 +308,13 @@ spike-2-real-scene.md." No speed claim beyond the table.
 
 ## 8. Steps, with a checkpoint after each (save files as you go; never commit)
 
-0. **Seed the worktree**: `mkdir -p dl && for d in azahar moltenvk libretro-headers vulkan-headers azahar-src; do
-   [ -e MAIN/dl/$d ] && ln -s MAIN/dl/$d dl/$d; done` (link the children, never `dl/` itself), `cp -R MAIN/vendor .`;
-   `make`; `PATH=/opt/devkitpro/devkitARM/bin:/opt/devkitpro/tools/bin:$PATH make testapp` (or copy
-   `MAIN/build/testapp.3dsx`). Checkpoint: `make test-host` and `python3 -m pytest -q tests/python -m "not slow"`
-   pass before your edits (D's baseline; print the counts).
+0. **Seed the worktree**: `mkdir -p dl && for d in azahar moltenvk libretro-headers vulkan-headers azahar-src; do [ -e
+   MAIN/dl/$d ] && ln -s MAIN/dl/$d dl/$d; done` (link the children, never `dl/` itself), `cp -R MAIN/vendor .`; `mkdir
+   -p build-core && ln -sf MAIN/build-core/azahar_lazpy_libretro.dylib build-core/azahar_lazpy_libretro.dylib` (D's
+   `lazpy_core` falls back to the checkout's `build-core/`; the link is your worktree's, ignored; MAIN's `build-core/`
+   stays read-only; review 2 B2); `make`; `PATH=/opt/devkitpro/devkitARM/bin:/opt/devkitpro/tools/bin:$PATH make
+   testapp` (or copy `MAIN/build/testapp.3dsx`). Checkpoint: `make test-host` and `python3 -m pytest -q tests/python -m
+   "not slow"` pass before your edits (D's baseline, about 49 passed after D's fixes; print the counts).
 1. **E1 (about 0.4 h; no emulator).** Sections 3, 4 (E1 rows), 5; write `test_pool_live.py` and
    `tools/speed_table.py` but do not run them. Checkpoint: gate 1 passes; `python3 -I tools/speed_table.py --help`
    and `python3 -I tools/hold_slot.py` (exit 2) work. **Then end your run**: your final report is the "E1 done"
@@ -314,14 +329,17 @@ spike-2-real-scene.md." No speed claim beyond the table.
      tests/python/test_pool_live.py > runs/e-pytest.log 2>&1'` with `run_in_background`; wait with Monitor until
      `runs/e-pytest.rc` exists (bounded 45 min).
    - The table as section 7 says, with both cores if `MAIN/build-core/azahar_lazpy_libretro.dylib` exists (pass its
-     absolute path; read only; it is the keys-off build F2 gated) and the stock core `dl/azahar/azahar_libretro.dylib`,
+     absolute path; read only; it is step 0's build F2 gated) and the stock core `dl/azahar/azahar_libretro.dylib`,
      with `--extra-rows`; wait with Monitor on `runs/e-speed.rc` (bounded 75 min). Expected machine time: 7 rows
      (stock 1-3, ours 1-4) x (60 s + boot and warm-up) plus the extra rows, about 20-25 min.
    - Set `DEFAULT_CAP`; write `docs/research/speed-table-e.md`. Checkpoint: gate 2 and 3 pass; quote them.
    Without Monitor: run the live tests one test per foreground call and the table one `--instances` value per call
    (`--instances 1`, `2`, `3`, `4`, then `--only-extra`), each under the 10-minute limit; say so. Still write
    `runs/e-speed.rc` at the end (step G waits on it).
-3. The report (section 10) ends the run. Stop every waiter and background task you started (TaskStop) first.
+3. The report (section 10) ends the run. Stop every waiter and background task you started (TaskStop) first. If the
+   opus review asks for fixes, the main loop resumes you; any emulator rerun is a timed part (phase-3.md rule T):
+   the resume message says when the machine is free (wait on `../libazahar-py-g/runs/g-batch.rc` with Monitor if it
+   says G2 is running).
 
 ## 9. Machine-sharing rules
 
@@ -354,9 +372,9 @@ check and the cap rule; `tools/hold_slot.py`: hold one slot of the machine-wide 
 
 ## 11. Hours (agent wall time)
 
-Builder 0.8 h (E1 0.4, E2 0.4), the opus as-built review 0.2 h, the commit 0.1 h: **1.1 h**, against PLAN.md's 1.0
-(the live slot gate's real-plus-private slots, the 4-instance row and its rule; less the cut state row and the cut
-`_slots` timing print). The slot waits, the live tests and the table runs are machine time.
+Builder 0.81 h (E1 0.41, E2 0.4), the opus as-built review 0.2 h, the commit 0.1 h: **1.11 h**, against PLAN.md's
+1.0 (the live slot gate's real-plus-private slots, the 4-instance row and its rule, the `slot=` keyword; less the
+cut state row and the cut `_slots` timing print). The slot waits, the live tests and the table runs are machine time.
 
 ## 12. Review checklist (the opus as-built review)
 
@@ -364,7 +382,8 @@ Builder 0.8 h (E1 0.4, E2 0.4), the opus as-built review 0.2 h, the commit 0.1 h
    file, and raises `SlotTimeout` (a `HostTimeout`) whose text names the folder and the cap; `slot_dir()`, `cap()`
    and the timeout read the environment on every call.
 2. The parent closes its slot fd right after `Popen` (and on a `Popen` failure); `slot.txt` is written after
-   `Popen`; `pass_fds` holds exactly the pipe fd and the slot fd.
+   `Popen`; `pass_fds` holds exactly the pipe fd and the slot fd; **a fake-worker spawn takes no slot unless asked**
+   (`slot=None` default, `slot=True` in s6 only).
 3. No lock is held in the parent process for a live worker (check with `lsof -p <parent pid>` in the report, or by
    reading the code path); `tools/hold_slot.py` makes only the slot fd inheritable before `execvp`.
 4. `Pool` closes every Emulator on every path; results come back in item order; overrides win over kwargs.
@@ -379,7 +398,7 @@ Builder 0.8 h (E1 0.4, E2 0.4), the opus as-built review 0.2 h, the commit 0.1 h
    `DEFAULT_CAP`.
 9. Python rules: type hints and docstrings on public names, bounded loops, no bare `except`, every opened fd closed
    on every path; C rules for the two edits (checked returns, no new globals beyond file statics).
-10. Nothing committed by the builder; no item file touched; nothing written in MAIN.
+10. Nothing committed by the builder; no item file touched; nothing written in MAIN; `tools/build-core.sh` never run.
 
 ## 13. Interfaces assumed
 

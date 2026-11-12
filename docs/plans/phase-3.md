@@ -1,25 +1,30 @@
 # Phase 3, scale and memory: the phase plan (item laz-300)
 
-Opus phase plan, 2026-11-12, **revision 1** (after review 1, `docs/reviews/phase-3-review-1.md`; written by a fresh
-author from revision 0, commit cb3406c). Steps: E (laz-310, `docs/plans/phase-e.md`), F2 (laz-320,
-`docs/plans/phase-f2.md`) and G (laz-330, `docs/plans/phase-g.md`). Each brief is complete on its own for one
-sonnet builder in its own worktree. This file is the index: order, checkpoints, file ownership, merge plan, hours,
-the departures from PLAN.md, the interfaces taken from Phases 1 and 2 (with Phase 2's holds), the interfaces left
-for Phase 4, the checked facts, the risks, the hour-saving pass and the changes from review 1 (section 13).
+Opus phase plan, 2026-11-13, **revision 2, the final one** (after review 2, `docs/reviews/phase-3-review-2.md`, which
+took revision 1 at 8a16f9e; revision 1 answered review 1, revision 0 is cb3406c). Steps: E (laz-310,
+`docs/plans/phase-e.md`), F2 (laz-320, `docs/plans/phase-f2.md`) and G (laz-330, `docs/plans/phase-g.md`). Each brief is
+complete on its own for one sonnet builder in its own worktree. This file is the index: order, checkpoints, file
+ownership, merge plan, hours, the departures from PLAN.md, the interfaces taken from Phases 1 and 2 (with Phase 2's
+holds), the interfaces left for Phase 4, the checked facts, the risks, the hour-saving pass, the changes from review 1
+(section 13) and from review 2 (section 14). Review 2 said no third review loop is needed if its fix list is taken as
+written; section 14 names the few departures.
 
 Contract: `docs/PLAN.md` (final) sections 2.2, 2.4, 2.5, 2.7, 2.8, 2.9, the grouping paragraph of section 3 and its
 **Phase E (PLAN.md:296), Phase F2 (PLAN.md:311) and Phase G (PLAN.md:317)** paragraphs. The step item files 310,
 320 and 330 still name PLAN.md lines 289, 304 and 310 (in "The gate" and "Plan section"); the main loop rewrites
 them to **:296, :311 and :317** in the commit that moves each item to `1-in-progress/` (section 4 step 1). This plan
 refines PLAN.md. Where a brief disagrees with PLAN.md on a goal, PLAN.md wins and the builder stops and reports,
-**except for the approved departures** (Phase 2's P1-P6, this plan's P7-P8 and the refinements R1-R3 of section 5),
+**except for the approved departures** (Phase 2's P1-P6, this plan's P7-P8 and the refinements R1-R4 of section 5),
 which the builders follow without stopping.
 
-Inputs. Phase 1: merged at 570eebf (A, B, F1). Phase 2: step C merged on main at 7584a8d (its as-built fixes in;
-step C's own branch at ba21233, C1 at 0651a8d); step D on `step-d` (c1e614e) with its fixes being made now, merged
-before Phase 3 launches. **Phase 2 delivers the holds H1-H7 of section 6 before its merge**; the briefs treat them
-as facts. Every interface this plan takes is a row of section 6. **If the merged code differs from a row, the
-builder follows the code and reports the row.**
+Inputs. Phase 1: merged at 570eebf (A, B, F1). Phase 2: step C merged on main at 7584a8d (its as-built fixes in; step
+C's own branch at ba21233, C1 at 0651a8d); step D on `step-d` at 88cdbe6 (D3 done, 69 passed), its as-built review done
+(`docs/reviews/phase-2-d-as-built.md`, S1-S6), its fixes being made now; **D merges on main before step 0 and before any
+Phase 3 build**. The P9 rebuild is done (e40e59c; `build-core/` dylib 21:09, 19,145,936 bytes,
+`ENABLE_BUILTIN_KEYBLOB:BOOL=OFF`, no `.o.d` naming `default_keys.h`, 0 `/Users/` strings); it is replaced by step 0's
+build ("P9b", section 4), which is the binary Phase 3 gates. **Phase 2 delivers the holds H1-H7 of section 6 before its
+merge**; the briefs treat them as facts. Every interface this plan takes is a row of section 6. **If the merged code
+differs from a row, the builder follows the code and reports the row.**
 
 Hours are agent wall time (PLAN.md's unit). Machine time (emulator batches, the core rebuild, a wait for a slot or
 for another step's timed run) is not counted.
@@ -28,27 +33,32 @@ for another step's timed run) is not counted.
 
 | Step | Delivers | Gate (headless, this Mac) | Hours |
 |---|---|---|---|
-| E, laz-310 | `python/libazahar/_slots.py` (the machine-wide `flock` slot cap, `SlotTimeout`, `LoadWarning`) and `pool.py` (`Pool`); `tools/hold_slot.py` (hold one slot, exec a command); the worker spawned holding its slot; zlib level 1 (`LAZ_PNG_LEVEL`); one timing line per batch in host.log; `tools/speed_table.py`; unit and live tests; `docs/research/speed-table-e.md` with the default cap | `python3 -m pytest -q tests/python -m "not slow"` passes; `LAZ_REQUIRE_EMULATOR=1 python3 -m pytest -q -rs tests/python/test_pool_live.py` passes 0 skipped: 3 instances give correct, separate logs and shots; a 4th waits under cap 3; a SIGKILL frees the slot within 1 s; every worker at nice >= 10; the speed table for 1, 2, 3 and 4 instances of the test app's 3D scene, 60 s each, with the guest-time check, written, and the default cap (1-4) set by the rule fixed in phase-e.md section 7 | 1.1 |
-| F2, laz-320 | the gate of **our core as rebuilt with the key blob off (P9)**; our core applied with its own profile (`core/options-lazpy.txt`) by `azhost` and by the worker; core-kind switches in C's gate and an our-core twin of D's debug-text test; `tests/gate_f2.py` (key blob, symbols, version, exact repeats, the exact debug-text stop, cross-core states) | **f1, first:** the rebuilt core: `build.exit` 0, `CMakeCache.txt` has `ENABLE_BUILTIN_KEYBLOB:BOOL=OFF`, no `.o.d` file names `default_keys.h`, the blob's first 16 bytes absent, the dylib newer than the cache, `strings` holds `-lazpy.1`; `nm -gU` shows exactly the 25 `_retro_*` plus `_lazpy_read_memory`, `_lazpy_write_memory`, `_lazpy_movie_play`; host.log shows `2126.2-lazpy.1` and the six lazpy options; on our core gate C passes and `LAZ_REQUIRE_EMULATOR=1` pytest passes 0 skipped, stop reasons returned (no exit-path line in any our-core host.log); C(e)'s repeat and D's state boot give identical shot hashes and log lines across two runs; the debug-text stop's frame is exact and equal across runs; stock states into ours (and back) recorded; a stock smoke run still passes | 0.75 |
+| E, laz-310 | `python/libazahar/_slots.py` (the machine-wide `flock` slot cap, `SlotTimeout`, `LoadWarning`) and `pool.py` (`Pool`); `tools/hold_slot.py` (hold one slot, exec a command); the worker spawned holding its slot; zlib level 1 (`LAZ_PNG_LEVEL`); one timing line per batch in host.log; `tools/speed_table.py`; unit and live tests; `docs/research/speed-table-e.md` with the default cap | `python3 -m pytest -q tests/python -m "not slow"` passes; `LAZ_REQUIRE_EMULATOR=1 python3 -m pytest -q -rs tests/python/test_pool_live.py` passes 0 skipped: 3 instances give correct, separate logs and shots; a 4th waits under cap 3; a SIGKILL frees the slot within 1 s; every worker at nice >= 10; the speed table for 1, 2, 3 and 4 instances of the test app's 3D scene, 60 s each, with the guest-time check, written, and the default cap (1-4) set by the rule fixed in phase-e.md section 7 | 1.11 |
+| F2, laz-320 | the gate of **our core as rebuilt by step 0 ("P9b": key blob off, no ClCertA, no key loading, static OpenSSL 3 instead of LibreSSL)**; our core applied with its own profile (`core/options-lazpy.txt`) by `azhost` and by the worker; core-kind switches in C's gate and an our-core twin of D's debug-text test; `tests/gate_f2.py` (the core's supply chain, symbols, version, exact repeats, the exact debug-text stop, cross-core states) | **f1, first** (`keyblob_findings`, phase-f2.md section 6): `build.exit` 0 and `build.inputs` matching the worktree's patches, PIN and script, listing 0007 and 0008, `clean=yes`, OpenSSL as pinned; every `LAZ_CORE_DROP` entry absent from the build tree; no `.o.d` names a dropped file; none of 8 windows of each of the key blob, Nintendo's ClCertA cert and key in the dylib; no `/Users/`, no "ClCertA file missing, using default", no `libressl` string; the pinned OpenSSL version string present; `otool -L` without libssl/libcrypto; the link line names the pinned static libs; `strings` holds `-lazpy.1`; `nm -gU` shows exactly the 25 `_retro_*` plus `_lazpy_read_memory`, `_lazpy_write_memory`, `_lazpy_movie_play`; host.log shows `2126.2-lazpy.1` and the six lazpy options; on our core gate C passes and `LAZ_REQUIRE_EMULATOR=1` pytest passes 0 skipped, stop reasons returned (no exit-path line in any our-core host.log); C(e)'s repeat and D's state boot give identical shot hashes and log lines across two runs; the debug-text stop's frame is exact and equal across runs; stock states into ours (and back) recorded; a stock smoke run still passes | 0.78 |
 | G, laz-330 | ABI 3: `azh_read`/`azh_write` through the exports (`host/mem.c`), the per-frame watch list into a watch area of the map (pure planning in `host/watch.c`), `AZH_E_UNMAPPED`; Python `emu.memory` (`read`, `write`, `u8`..`u64`, signed, `write_*`, libmgba-py's `.raw_read`), `run(..., watch=)`, `RunResult.watch`, `GuestMemoryError`; unit and live tests | on our core: both records (global and heap) read back the logged values frame by frame for 600 frames, by `read` calls and by the watch list; a write changes the next logged event line (R1); a straddling read and a fully unmapped read both raise `GuestMemoryError`; on the stock core every memory call and any watch raises `NeedsLazpyCore`; an ABI-2 state loads under ABI 3; `make test-host`, gate C and D's pytest still pass | 0.85 |
 
-Phase total: **2.7 h** of step work plus about 0.5 h for the two review loops = **about 3.2 h**, against PLAN.md's
-1.0 + 0.75 + 0.5 + 0.5 = **2.75 h**. The 0.45 h over is named per step in section 7. The checkpoint choreography
-(commits on branches, two worktree merges, two resumes) and the P9 rebuild's launch are main-loop time, about
-0.2 h, booked to the main loop.
+Phase total: **2.74 h** of step work plus 0.5 h for the two review loops (both done) = **about 3.25 h**, against
+PLAN.md's 1.0 + 0.75 + 0.5 + 0.5 = **2.75 h**. The 0.5 h over is named per step in section 7. Step 0 (P9b: the two
+patches, the drop list, the OpenSSL switch, the script edits, the configure check, the commit and the launch,
+about 0.2 h) and the checkpoint choreography (commits on branches, two worktree merges, two resumes, about 0.2 h)
+are main-loop time, **about 0.4 h**, booked to the main loop.
 
 ## 2. Order, checkpoints and the parallel split
 
 ```
-Main loop, once Phase 2's last emulator run has ended: commit tools/build-core.sh (P9) on main; in MAIN start
-  tools/build-core.sh --detach (it nices itself; about 15 min quiet, 40-90 min loaded); NO timed run meanwhile
-Before launch: Phase 2 merged on main (the holds H1-H7 of section 6 are in its code)
-  |
+Phase 2 merged on main (D's fixes in; the holds H1-H7 of section 6 are in its code), its last emulator run ended
+Main loop, step 0 "P9b" (section 4): patches 0007 + 0008, LAZ_CORE_DROP + OpenSSL pins in core/PIN, the
+  build-core.sh edits, core/README.md; --configure-only check in MAIN; commit on main; tools/build-core.sh
+  --detach in MAIN (nice'd; a re-unpack and a citra_core recompile: about 20-40 min quiet, 60-120 loaded);
+  NO emulator run meanwhile (rule T)
+  |  worktrees made from main after step 0's commit; E and F2 launched together
   E builder (sonnet, ../libazahar-py-e, step-e)       F2 builder (sonnet, ../libazahar-py-f2, step-f2)
-  |  (may launch while the rebuild runs)              |  (launched when MAIN/build-core/build.exit holds 0)
-  |  E1: _slots, pool, hold_slot, client spawn,       |  F2-0: the rebuilt core: key blob absent, symbols, version
-  |      png level, run.c timing line, speed_table,   |  F2-1: profile application, test switches, gate_f2.py
-  |      unit tests; NO emulator                      |  F2-2: the batch on our core, the stock smoke
+  |                                                   |  F2-0: seed, baseline (no emulator)
+  |  E1: _slots, pool, hold_slot, client spawn,       |  F2-1: profile application, test switches, gate_f2.py
+  |      png level, run.c timing line, speed_table,   |        (all of it written; no emulator)
+  |      unit tests; NO emulator                      |  waits (Monitor, 150 min) on MAIN build.exit; then f1
+  |                                                   |        first (keyblob, symbols, version)
+  |                                                   |  F2-2: the batch on our core, the stock smoke
   |  ENDS ITS RUN: "E1 done"                          |        (timed, one instance)
   |  main loop commits E1 on step-e (sha noted)       |  ENDS ITS RUN: "F2 done"
   |                                                   opus as-built review of F2; fixes (reruns: rule T); commit;
@@ -76,14 +86,15 @@ Before launch: Phase 2 merged on main (the holds H1-H7 of section 6 are in its c
   write an rc file from a `trap ... EXIT`; the builder starts them with `run_in_background` and waits with the
   Monitor tool on "the rc file exists" (an until-loop, bounded); it stops every waiter it started (TaskStop) before
   it hands back. Without Monitor, it runs the work in foreground parts under the 10-minute Bash limit and says so.
-- **Rule T: timed parts never overlap** (rules.md 5 and 7; PLAN 2.8). A timed part is anything that runs an
-  emulator or the core build: the P9 rebuild, F2-2, E2, G2, **every emulator rerun after an as-built review**, and
-  the phase-end suite. Exactly one runs at a time, in the order they become ready. A part that becomes ready while
-  another runs waits on that part's rc file (a builder with Monitor; the main loop with a background waiter) before
-  it starts. E1, F2-1 and G1 run no emulator and may overlap anything (F2-1's one by-hand 30-frame check is the
-  only exception, and F2 launches after the rebuild). F2-2 runs one emulator at a time; E2 up to 4 (the 4-instance
-  row); G2 one at a time. Since E2 starts only after step-f2 merged (S2), F2's review reruns always come before E2;
-  E's review reruns queue behind G2 if G2 is running.
+- **Rule T: timed parts never overlap** (rules.md 5 and 7; PLAN 2.8). A timed part is anything that runs an emulator or
+  the core build: step 0's rebuild, F2's first emulator check and F2-2, E2, G2, **every emulator rerun after an as-built
+  review**, and the phase-end suite. Exactly one runs at a time, in the order they become ready. A part that becomes
+  ready while another runs waits on that part's rc file (a builder with Monitor; the main loop with a background waiter)
+  before it starts; step 0's rc file is `MAIN/build-core/build.exit`. E1, F2-0, F2-1 and G1 run no emulator and may
+  overlap anything, the rebuild included. F2 runs its first emulator check (`gate_f2.py --only keyblob,symbols,version`)
+  only after `build.exit` holds 0 and `build.inputs` matches its tree. F2-2 runs one emulator at a time; E2 up to 4 (the
+  4-instance row); G2 one at a time. Since E2 starts only after step-f2 merged (S2), F2's review reruns always come
+  before E2; E's review reruns queue behind G2 if G2 is running.
 - **G's wait for E2.** G2 starts only when `../libazahar-py-e/runs/e-speed.rc` exists. G waits with Monitor
   (bounded **150 min**: E2's own bounds are 45 min for the live tests plus 75 min for the table, plus margin). On a
   timeout G **ends its run** with a "waiting for E2" report (G1's results in it) and never starts G2 on its own;
@@ -100,13 +111,20 @@ Before launch: Phase 2 merged on main (the holds H1-H7 of section 6 are in its c
 - **Why F2 goes first on the machine:** it is on the critical path to G (G needs F2's profile application, and its
   gate needs our core applied right), and E2's our-core rows must run our core as users will (with P8 applied, S2),
   so E2 runs after step-f2 merged and its worktree merged main.
-- **The P9 rebuild** (Phase 4's departure P9, Guy's G1 default; item 400's notes): Azahar's built-in console key
-  blob must not ship, so our core is rebuilt with `-DENABLE_BUILTIN_KEYBLOB=OFF` and `-ffile-prefix-map` before F2,
-  and F2 gates that binary. `tools/build-core.sh` already carries both flags plus two guards (the cache must say
-  OFF; no `.o.d` file may name `default_keys.h`) as an uncommitted edit in MAIN. The patches do not change, so the
-  STAMP holds and the tree is not re-unpacked; the flag change recompiles every object. If `build.exit` is not 0,
-  the main loop reads `build.log`, fixes and reruns (with `LAZ_CORE_LTO=OFF` if the linker died); F2 is launched
-  only on a 0. E1 goes on meanwhile; E2 then waits for F2-2 as usual.
+- **Step 0, "P9b", the core that may ship** (section 4 step 0 is the recipe). P9 (key blob off, prefix map) is done
+  (e40e59c, the 21:09 build). Three more things must not be in the binary we gate: Nintendo's ClCertA certificate and
+  key (`http_c.cpp:37-38`, copied in the fallback at `:2281-2289`; Phase 4 review 1 B1), any key loading at all (Q6,
+  main-loop default yes: patch 0008), and LibreSSL, whose OpenSSL/SSLeay licence reads as GPLv3-incompatible (Phase 4
+  review 1; Guy, 2026-11-13: "Switch to OpenSSL 3"). Step 0 adds patches 0007 and 0008, deletes the three Nintendo
+  headers and `externals/libressl` from the build tree after unpacking (`LAZ_CORE_DROP` in `core/PIN`), configures
+  with `USE_SYSTEM_OPENSSL=ON` against the **static** `libssl.a`/`libcrypto.a` of Homebrew's `openssl@3` keg, pinned
+  to 3.6.5 in `core/PIN` (the script refuses another version, so a brew upgrade cannot silently change the next
+  build), and writes `build-core/build.inputs` (what went in). The STAMP hashes the patches and the drop list, so the
+  tree is re-unpacked; the OpenSSL include path changes `citra_core`'s and `network`'s flags, so those recompile
+  (machine time; F2 writes its code meanwhile). If `build.exit` is not 0, the main loop reads `build.log`, fixes and
+  reruns (`LAZ_CORE_LTO=OFF` if the linker died). A missing system library at the static link (a framework, zlib)
+  may be added and is recorded; **if static OpenSSL cannot be linked, the main loop stops and reports to Guy: never
+  the OpenSSL dylib, never back to LibreSSL**. E1 goes on meanwhile; E2 then waits for F2-2 as usual.
 - **Why G's worktree carries E1:** G edits `python/libazahar/__init__.py`, `host/run.c` and `host/azh_pure.h` after
   E1 has edited them (E1's exports, its timing line, its `azh_png_level` prototype). Merging E1's commit into G's
   worktree at launch (Phase 2's D-at-C1 pattern) means G's edits sit on top of E1's and the final merges are
@@ -118,9 +136,9 @@ Before launch: Phase 2 merged on main (the holds H1-H7 of section 6 are in its c
 
 | File | Owner in Phase 3 | What changes |
 |---|---|---|
-| `tools/build-core.sh` | the main loop (P9), before F2 | `-DENABLE_BUILTIN_KEYBLOB=OFF`, the prefix map, the two guards (already edited in MAIN; the main loop commits it) |
+| `core/patches/0007-lazpy-no-default-clcert.patch`, `core/patches/0008-lazpy-no-key-loading.patch` (new), `core/PIN`, `core/README.md`, `tools/build-core.sh` | **the main loop, step 0** (on main, before F2's first emulator check) | section 4 step 0 (the P9 flags and guards are already committed at e40e59c) |
 | `python/libazahar/_slots.py`, `pool.py`, `tools/hold_slot.py` | E (new) | phase-e.md section 3; E2 may change only the value of `DEFAULT_CAP` |
-| `python/libazahar/_client.py` | E | the spawn acquires a slot, passes its fd in `pass_fds` and as `argv[3]`, closes the parent's copy, writes `<workdir>/slot.txt` |
+| `python/libazahar/_client.py` | E | `WorkerClient(..., slot=None)`: the spawn of the real worker acquires a slot (a fake worker only with `slot=True`), passes its fd in `pass_fds` and as `argv[3]`, closes the parent's copy, writes `<workdir>/slot.txt` |
 | `python/libazahar/__init__.py` | E (E1), then G | E1 exports `Pool`, `LoadWarning`, `SlotTimeout`; G exports `Memory`, `WatchRow`, `GuestMemoryError` |
 | `host/png.c` | E | `int azh_png_level(void)` from `LAZ_PNG_LEVEL` (0-9, default 1), used by `compress2`; stays pure |
 | `host/azh_pure.h` | E (E1: one prototype), then G | E1: `azh_png_level`; G: the watch and memory pure functions |
@@ -136,7 +154,7 @@ Before launch: Phase 2 merged on main (the holds H1-H7 of section 6 are in its c
 | `tests/host/test_main.c`, `tests/host/test_main.h` | G | one line each: register `test_watch()` |
 | `Makefile` | G | `TEST_SRC` gains `host/watch.c` (the `tests/host/*.c` wildcard already takes `test_watch.c`) |
 | `python/libazahar/_abi.py`, `_map.py`, `results.py`, `errors.py`, `tests/python/fakeworker.py`, `tests/python/test_abi.py`, `test_map.py`, `docs/USING.md` (a memory section) | G | ABI 3 mirrors, the watch area (its size read from the layout), `GuestMemoryError` |
-| `tests/python/test_state.py` | G, one line | `test_newer_abi_refused`'s `"abi=2\n"` literal becomes `f"abi={AZH_ABI_VERSION}\n"`, only if Phase 2 left it literal |
+| `tests/python/test_state.py` | nobody | D's as-built S3 builds `test_newer_abi_refused` from `_abi.AZH_ABI_VERSION`; G only reports if the merged test still has the literal |
 
 A file listed for two steps is edited by the second only after the first's commit is in its worktree (section 2).
 **No builder edits a file outside its rows.** F2 may edit another Phase 2 file only when a check fails because of it
@@ -145,23 +163,126 @@ and the main loop names the file in a message. Nobody touches: `testapp/`, `test
 `tests/python/conftest.py` (D's fixtures are the holds H1; a missing fixture is reported, not added), `host/state.c`,
 `host/statemeta.c`, `host/crop.c`, `host/frame.c`, `core/`, `.gitignore`, `docs/map/*`, `docs/PLAN.md`,
 `docs/plans/*`, `docs/hours.tsv`, the handoff, **every item file**, `prototype/`, `README.md`, and MAIN (read and
-copy only; MAIN's `build-core/` is read only for builders). Lines the main loop must add (`.gitignore`,
+copy only; MAIN's `build-core/` is read only for builders). **No builder ever runs `tools/build-core.sh`**: in a
+worktree its build tree is `dl/azahar-src/build-src`, which the seeding links to MAIN's, so a run would delete
+MAIN's build tree and start a full build (review 2 N10). Lines the main loop must add (`.gitignore`,
 `docs/map/runners.md`, `docs/map/tools.md`) and the "Lessons and notes" block for the item go in each builder's
 report.
 
 ## 4. Merge plan (the main loop does every commit; agents never commit)
 
-0. **P9 rebuild** (main loop, rule T): once Phase 2's last emulator run has ended (step D's live tests, any D
-   review rerun), commit `tools/build-core.sh` on main with exact paths; in MAIN run `tools/build-core.sh --detach`
-   (it nices itself and detaches; about 15 min quiet, 40-90 min loaded), and wait with a background waiter on
-   `build-core/build.exit` (`run_in_background`, bounded 120 min). Nothing timed runs meanwhile; nothing reads OURS
-   until `build.exit` holds 0 (the dylib is replaced at the end of the build). E1 may run.
+0. **Step 0, "P9b"** (main loop, on main in MAIN; a timed part under rule T). **When:** D merged on main and Phase
+   2's last emulator run ended (D's fix reruns); nothing else timed running. **Files** (the main loop writes them; no
+   builder, review 2 section 4):
+   - `core/patches/0007-lazpy-no-default-clcert.patch` on `src/core/hle/service/http/http_c.cpp`: one notice line
+     after line 3, `// Modified by libazahar-py, 2026: removes the built-in default ClCertA (the ctr-common-1
+     certificate and key); without the console's own ClCertA file the HTTP service has no client certificate.
+     Licensed GPLv2 or later, as this file.` (0000's pattern, GPLv2 2(a)); delete lines 37-38 (the two `#include
+     "ctr-common-1-*.h"`); in `DecryptClCertA` replace the fallback body (`:2282-2288`, from `LOG_ERROR(...
+     "ClCertA file missing, using default");` through the second `memcpy`) with `LOG_ERROR(Service_HTTP, "ClCertA
+     file missing");` and `return;`; the `else` branch stays.
+   - `core/patches/0008-lazpy-no-key-loading.patch` on `src/core/hw/aes/key.cpp` (Q6, default yes): one notice line
+     after line 3, `// Modified by libazahar-py, 2026: GetKeysStream returns an empty stream, so no AES, RSA or ECC
+     key is ever loaded (aes_keys.txt is not read). Licensed GPLv2 or later, as this file.`; in `GetKeysStream()`
+     (`:292-314`) keep the `filepath` and `CreateFullPath` lines and replace the rest of the body with `return
+     std::istringstream("");` (RSA `rsa.cpp:101` and ECC `ecc.cpp:65` read the same stream).
+     Make both with `diff -u` from copies of the reading tree's two files (`unpacked/`; no patch 0000-0006 touches
+     either file, checked 2026-11-13), labels `a/src/...` and `b/src/...`, so they apply after 0006 with `--fuzz 0`.
+   - `core/PIN` gains three lines (`LAZPY_REV=1` and the `-lazpy.1` suffix stay: nothing is released, `build.inputs`
+     tells builds apart, N7):
+     ```
+     LAZ_CORE_DROP=src/core/hw/default_keys.h src/core/hle/service/http/ctr-common-1-cert.h src/core/hle/service/http/ctr-common-1-key.h externals/libressl
+     OPENSSL_VERSION=3.6.5
+     OPENSSL_PREFIX=/opt/homebrew/opt/openssl@3
+     ```
+   - `tools/build-core.sh` (POSIX sh, `set -eu` kept):
+     (a) **OpenSSL pin**, before the tarball step: `OSSL_VER=$(pin OPENSSL_VERSION)`; `OSSL=$(cd -P
+     "${LAZ_OPENSSL_PREFIX:-$(pin OPENSSL_PREFIX)}" && pwd) || die ...` (the keg's real path,
+     `/opt/homebrew/Cellar/openssl@3/3.6.5`; never `/opt/homebrew` itself, whose `include/` holds every brew
+     header); die unless `$OSSL/lib/libssl.a`, `$OSSL/lib/libcrypto.a`, `$OSSL/include/openssl/opensslv.h` exist;
+     die "OpenSSL at $OSSL is <x>, core/PIN pins $OSSL_VER (re-pin core/PIN on purpose)" unless `sed -n 's/^#
+     *define OPENSSL_VERSION_STR "\(.*\)"$/\1/p'` of `opensslv.h` equals `$OSSL_VER`, and unless `strings -a
+     $OSSL/lib/libcrypto.a` has a line holding `OpenSSL $OSSL_VER ` (header and library agree; do not trust `brew
+     info`, whose JSON here says 3.6.1/3.5.9 while the keg is 3.6.5).
+     (b) **STAMP** hashes the patches and the drop list: `$({ cat "$PATCHES"/*.patch; pin LAZ_CORE_DROP; } | shasum
+     -a 256 | cut -d' ' -f1)`.
+     (c) **drop**, after the unpack and before the patches, under `set -f`: an empty list dies; each entry that
+     starts with `/`, holds `..`, or is not in the fresh tree (`[ -e "$TREE/$E" ]`) removes `$BUILD_SRC` and dies;
+     else `rm -rf -- "$TREE/$E"` and `say "dropped $E"`.
+     (d) before configure, `rm -rf build-core/build/externals/libressl` (the bundled LibreSSL's stale objects and
+     `.o.d` files from earlier builds).
+     (e) **configure** gains `-DUSE_SYSTEM_OPENSSL=ON -DOPENSSL_USE_STATIC_LIBS=TRUE -DOPENSSL_ROOT_DIR="$OSSL"
+     -DOPENSSL_INCLUDE_DIR="$OSSL/include" -DOPENSSL_SSL_LIBRARY="$OSSL/lib/libssl.a"
+     -DOPENSSL_CRYPTO_LIBRARY="$OSSL/lib/libcrypto.a"` (explicit paths: `find_package(OpenSSL 1.1)` at
+     `externals/CMakeLists.txt:320-322` then takes them as found; its `OpenSSL::SSL`/`OpenSSL::Crypto` reach
+     `httplib` (`:362`), which `citra_core` links (`src/core/CMakeLists.txt:508`), so the static libs land on
+     `citra_libretro`'s link line). Build the command once as `set -- cmake ...` and run `"$@"`, so step (g) can
+     write the same words.
+     (f) **after configure**, die unless the cache has the exact lines `USE_SYSTEM_OPENSSL:BOOL=ON`,
+     `OPENSSL_SSL_LIBRARY:FILEPATH=$OSSL/lib/libssl.a`, `OPENSSL_CRYPTO_LIBRARY:FILEPATH=$OSSL/lib/libcrypto.a`
+     (the type field may read `FILEPATH` or `UNINITIALIZED` for a `-D` without a type: match `:[A-Z]*=`; beside the
+     existing `ENABLE_BUILTIN_KEYBLOB:BOOL=OFF` guard) and the cache's
+     `FIND_PACKAGE_MESSAGE_DETAILS_OpenSSL:INTERNAL=` line holds `v$OSSL_VER` (not `configure.log`'s "Found
+     OpenSSL" line: CMake prints it only when the details change, so the second configure, `--build` after
+     `--configure-only`, would not have it).
+     (g) **`--build` writes `build-core/build.inputs`** after the configure guards and before compiling (to `.tmp`,
+     then `mv`); `--detach` deletes the old one beside `build.exit` (`:25`). One `key=value` per line:
+     ```
+     tarball=<sha256 of the tarball>
+     pin=<sha256 of core/PIN>
+     script=<sha256 of tools/build-core.sh>
+     patch <file name>=<sha256>          (one line per applied patch, in name order)
+     drop=<LAZ_CORE_DROP>
+     openssl_version=<OSSL_VER>
+     openssl_prefix=<OSSL>
+     openssl_libssl_sha256=<sha256 of $OSSL/lib/libssl.a>
+     openssl_libcrypto_sha256=<sha256 of $OSSL/lib/libcrypto.a>
+     head=<git -C "$ROOT" rev-parse HEAD, or none>
+     clean=<yes when git -C "$ROOT" status --porcelain -- core tools/build-core.sh prints nothing, else no>
+     cmake=<the configure command's words, with $ROOT written as <repo> (no user name in a file Phase 4 quotes)>
+     ```
+     (h) **after the compile**: the `.o.d` guard (`:110-112`) loops over every drop entry's basename (`grep -lF`;
+     die "an object still reads <entry>, which is dropped"); `L=build-core/build/src/citra_libretro/CMakeFiles/
+     citra_libretro.dir/link.txt` must name `$OSSL/lib/libssl.a` and `$OSSL/lib/libcrypto.a` and must not hold
+     `libressl` (case-insensitive).
+     (i) **atomic install** (N8): `cp` to `$DYLIB.tmp`, `strip -x`, `codesign --force -s -`, `codesign -v`, die if
+     `otool -L "$DYLIB.tmp"` names `libssl` or `libcrypto` ("static OpenSSL only; stop and report"), then `mv -f
+     "$DYLIB.tmp" "$DYLIB"`.
+     Header comment: `LAZ_OPENSSL_PREFIX` (default the PIN's `OPENSSL_PREFIX`).
+   - `core/README.md`: rows for 0007 and 0008; a "Dropped from the tree" paragraph (the list, deleted after unpack
+     and before the patches, in the STAMP; turning `ENABLE_BUILTIN_KEYBLOB` or the bundled LibreSSL back on now
+     fails at configure); an "OpenSSL" paragraph (static OpenSSL 3.6.5 from Homebrew's `openssl@3` keg, pinned in
+     PIN, another version refused, `brew install openssl@3` a build prerequisite); Licenses: OpenSSL 3 is
+     Apache-2.0, so the combined binary is distributed under GPLv3 (Azahar's "or later"); the source of a published
+     binary is the tarball minus the drop list, plus the patches, plus OpenSSL 3.6.5's source (Phase 4 writes the
+     offer).
+   **Checks before the commit** (in MAIN; `T=dl/azahar-src/build-src/azahar-unified-source-2126.2`):
+   `sh -n tools/build-core.sh`; `nice -n 10 tools/build-core.sh --configure-only` (it re-unpacks because the STAMP
+   changed, drops, patches 0000-0008 with `--fuzz 0`, configures with the OpenSSL guards; a few minutes, no
+   compile; this replaces review 2's scratch unpack and also tests the script and the static-OpenSSL configure):
+   four `dropped` lines, `patch 0007-lazpy-no-default-clcert.patch ok`, `patch 0008-lazpy-no-key-loading.patch
+   ok`, `applied 9 patches, 0 rejects`, `configure done`; `grep -c ctr_common_1
+   $T/src/core/hle/service/http/http_c.cpp` = 0; `grep -c default_keys_enc $T/src/core/hw/aes/key.cpp` = 0; none of
+   the four drop entries exists under `$T`; `grep -c 'Modified by libazahar-py' $T/src/core/hle/service/http/http_c.cpp
+   $T/src/core/hw/aes/key.cpp` = 1 each; `grep -E '^(USE_SYSTEM_OPENSSL|OPENSSL_SSL_LIBRARY|OPENSSL_CRYPTO_LIBRARY|
+   ENABLE_BUILTIN_KEYBLOB):' build-core/build/CMakeCache.txt` shows ON, the two keg `.a` paths, OFF; `grep 'Found
+   OpenSSL' build-core/configure.log` says `found suitable version "3.6.5"` and the cache's
+   `FIND_PACKAGE_MESSAGE_DETAILS_OpenSSL` line holds `v3.6.5`.
+   **Commit** on main with exact paths (`git add core/patches/0007-lazpy-no-default-clcert.patch
+   core/patches/0008-lazpy-no-key-loading.patch core/PIN core/README.md tools/build-core.sh` plus the item and
+   handoff files the project rules ask; `git diff --cached --stat`; `status_check.py --strict-handoff`).
+   **Launch**: `tools/build-core.sh --detach` in MAIN; a background waiter (`run_in_background`) until
+   `build-core/build.exit` exists, bounded 150 min. On 0: `cat build-core/build.inputs` (`clean=yes`, `head=` the
+   commit), `otool -L build-core/azahar_lazpy_libretro.dylib`, and `grep -c 'built for newer macOS'
+   build-core/build.log` into the handoff (Homebrew's objects say `minos 15.0`, our target is 11.0: risk 11). On
+   non-0: section 2's failure rule. E1 and F2-0/F2-1 run meanwhile; no emulator runs until `build.exit` is 0.
 1. Before launch: Phase 2 merged; the holds H1-H7 checked in main's code (section 6 names the lines). Move items
    310 and 320 to `1-in-progress/` (and 330 at G's launch), each with its PLAN.md pointer corrected (310 :296, 320
-   :311, 330 :317). `git worktree list` and a case-insensitive name check (`ls .. | grep -i libazahar-py-`), then
-   `git worktree add -b step-e ../libazahar-py-e main` and `git worktree add -b step-f2 ../libazahar-py-f2 main`.
-   Dispatch both sonnets without isolation, cwd in the worktree; they seed `dl/` and `vendor/` themselves (each
-   brief's step 0). Agent ids into the handoff. Launch E at once; launch F2 when `build.exit` holds 0.
+   :311, 330 :317). **After step 0's commit** (so F2's tree hashes to what `build.inputs` records): `git worktree
+   list` and a case-insensitive name check (`ls .. | grep -i libazahar-py-`), then `git worktree add -b step-e
+   ../libazahar-py-e main` and `git worktree add -b step-f2 ../libazahar-py-f2 main`. Dispatch both sonnets
+   without isolation, cwd in the worktree, **together, right after `--detach` started**; they seed `dl/`,
+   `vendor/` and the `build-core/` link themselves (each brief's step 0). Agent ids into the handoff.
 2. At "E1 done": commit exactly E1's paths on `step-e` (`git add <paths>`, `git diff --cached --stat`); note the sha
    for step 4. Do not resume E yet.
 3. At "F2 done": opus as-built review of the step-f2 diff (phase-f2.md section 12); fixes by the resumed F2
@@ -175,16 +296,18 @@ report.
 5. At "E done": opus as-built review of the step-e diff (phase-e.md section 12). Fixes to files G does not edit go
    on `step-e` (reruns under rule T, queued behind G2 if it runs). **Fixes to `__init__.py`, `host/run.c` or
    `host/azh_pure.h` (files G edits on top of E1) are held** and made on main by the main loop right after step-g
-   merges (step 6), never on step-e after G launched. Commit; merge `step-e` into main (clean: G is not merged);
-   item 310 as in 3. Leave G's worktree alone now.
+   merges (step 6), never on step-e after G launched. Commit; merge `step-e` into main (clean whether or not step-g
+   merged first, step 6); item 310 as in 3. Leave G's worktree alone now.
 6. At "G done" (or a resumed G's end): in `../libazahar-py-g` `git merge --no-edit main` (brings E2's files, none
    of which G edits); opus as-built review (phase-g.md section 12); fixes; commit; merge `step-g`; item 330. Then
    any held E fix on main, with its rerun under rule T; then the phase item 300. Remove each worktree only after
-   `git status --porcelain` is empty in it.
+   `git status --porcelain` is empty in it. **If G is done first**, merge step-g first (its tree holds E1's
+   commit, the same sha as step-e's); step-e's later merge is still clean because E's fixes to G's shared files are
+   held (step 5) and E2 edits only `DEFAULT_CAP` and E's own files (review 2 S7).
 7. After the phase merges, the full suite runs once as one background batch (the main loop is woken on exit),
    every azhost command under `tools/hold_slot.py`: gates A and B; `gate_c.py` on both cores; `gate_f2.py`; the
-   full pytest with `LAZ_CORE` set to each core in turn (the explicit-core tests run both ways regardless); E's live
-   pool test once.
+   full pytest with `LAZ_CORE` set to each core in turn, each with `--ignore=tests/python/test_pool_live.py` (the
+   explicit-core tests run both ways regardless); E's live pool test once (review 2 N9).
 
 ## 5. Departures from PLAN.md and refinements
 
@@ -197,11 +320,12 @@ Phase 2's P1-P6 stay approved and in force. This phase's:
 | R1 | PLAN Phase G: "a write changes the next logged line" | m3 checks the next **event** line (`ready f=<written>`) after a write of the control struct's `ready_at` | the record behind the per-frame line is rewritten from scratch every frame (B6), so a write into it can never reach a log line; the control struct is read every frame | refinement (review 1 N10) |
 | R2 | PLAN Phase E: "running 1, 2 and 3 instances"; "sets the default cap" | the table adds a 4-instance row on the cap's core, and the cap rule may reach 4 | Guy, Q3 ("Allow 4 too"); the rule is fixed in phase-e.md section 7 before any run | **approved** (Guy) |
 | R3 | PLAN Phase E: "an optional local row on a Gen3D 3D scene that agents may skip" | skipped; the cap stays marked provisional (light scene); `speed_table.py` has no state-row option | Guy, Q1 ("Skip it") | **approved** (Guy) |
+| R4 | PLAN.md:314: "the debug-text stop fires on the exact frame" | "exact" = the same host frame on every run (F2's d4) and within one frame of the ready line's host frame (d3: `last - (ready.v + c_min)` is 0 or 1) | the host frame a guest line lands in depends on where the slice ends (`citra_libretro.cpp:286-306`); exactness is carried by d4 | refinement (review 2 S3) |
 
 Not departures, listed so the reviews see them: ABI 3 appends fields to `azh_batch` and `azh_result` and grows the
 map (G); states made under ABI 2 still load under ABI 3 (H3); `azh_stats` is already valid after open (H6), so F2
-changes nothing there; P9 (key blob off) is Phase 4's departure, applied before F2 so F2 gates the binary that
-ships.
+changes nothing there; P9 (key blob off) is Phase 4's departure, and step 0 ("P9b": no ClCertA, no key loading,
+static OpenSSL 3, Guy's ruling) applies it with Phase 4 review 1's asks before F2, so F2 gates the binary that ships.
 
 ## 6. Interfaces taken from Phases 1 and 2
 
@@ -209,12 +333,16 @@ ships.
 2 delivers it before its merge; checked in `../libazahar-py-d`'s working tree while D's fixer runs), **planned**
 (not yet in any code). The builder checks every row against the merged code and reports a difference.
 
-**Phase 2's holds** (the briefs rely on them; the main loop checks each in main before launch):
-- **H1** `tests/python/conftest.py`: `host_paths` resolves the core with `_paths.core_path()` (honours `LAZ_CORE`)
-  and checks that file; session fixtures `stock_core` (`<repo>/dl/azahar/azahar_libretro.dylib`) and `lazpy_core`
-  (`LAZ_CORE` when it names our core, else `<repo>/build-core/azahar_lazpy_libretro.dylib`), each skipping, or
-  failing under `LAZ_REQUIRE_EMULATOR=1`, when missing; the session header prints `core=<path> kind=<kind>` (kind
-  `lazpy` when the file name holds "lazpy", else `stock`). D's c4 test already passes `core=stock_core`.
+**Phase 2's holds** (the briefs rely on them; the main loop checks each in main before launch). D's as-built fixes
+(S1 `held_after` in `emulator.py` `run`, S3 the abi test, optional N1/N5) move some of D's line numbers below; the
+builders follow the merged code. Expected baselines after D's fixes: non-slow pytest "49 passed", full "69 passed".
+- **H1** `tests/python/conftest.py`: `host_paths` resolves the core with `_paths.core_path()` (honours `LAZ_CORE`) and
+  checks that file; session fixtures `stock_core` (`<repo>/dl/azahar/azahar_libretro.dylib`) and `lazpy_core`
+  (`LAZ_CORE` when it names our core, else `<repo>/build-core/azahar_lazpy_libretro.dylib`, where `<repo>` is **the
+  checkout the tests run in**, so every worktree links `build-core/azahar_lazpy_libretro.dylib` to MAIN's in its step 0,
+  review 2 B2), each skipping, or failing under `LAZ_REQUIRE_EMULATOR=1`, when missing; the session header prints
+  `core=<path> kind=<kind>` (kind `lazpy` when the file name holds "lazpy", else `stock`). D's c4 test already passes
+  `core=stock_core`.
 - **H2** the worker's nice is **at least 10**: it raises its niceness to 10 only when the parent is nicer
   (`_worker.py`), so under `nice -n 10` the workers sit at exactly 10.
 - **H3** `host/state.c` accepts `2 <= meta.abi <= AZH_ABI_VERSION` (an ABI-2 state loads under ABI 3).
@@ -222,7 +350,9 @@ ships.
   (`host/azhost_main.c:565`); there is no `wall_ms_max`.
 - **H5** D3's state boot is gated by an absolute bound: `t_state` (the wall of the restoring `Emulator(...)`) under
   **2.5 s** on the test app (Guy's ruling); `test_state_boot` records `t_state`, the ratio and the load line in
-  `runs/d-pytest/state-times.txt`; the 10 % ratio is recorded only.
+  `runs/d-pytest/state-times.txt`, then asserts the bound itself (D's as-built S2 removes
+  `test_state_boot_wall_ratio`); the 10 % ratio is recorded only. Its recipe copies a's `sys/` minus `Azahar/sdmc`
+  into b before b boots (`test_state.py:48-51`), so the shader cache and NAND come along.
 - **H6** `azh_stats` is valid any time after `azh_open` (`host/api.c` `azh_stats`: refuses only `AZH_PH_NONE`).
 - **H7** the Emulator closes itself after a returned `guest_exited` on both cores (`emulator.py` `run`), with
   `close(self.timeout)`.
@@ -236,7 +366,7 @@ ships.
 | A5 | `azh_set_option` checks at once that the key was registered by the core and the value is listed, else `AZH_E_ARG` naming the key; our core registers its six extra keys; at boot host.log has one `option <key>=<value>` line per key (`host/options.c:164`) | phase-a; `host/options.c` | holds | F2, E (the option set per table row) |
 | A6 | `azhost run` defaults are relative to the current directory; `--profile host/options-default.txt`; profile then `--opt`, later wins | `host/azhost_main.c:155, 496-499` | holds | F2 |
 | A7 | `azh_version_ok` accepts `2126.2` and `2126.2-lazpy.1` (`host/pins.h`); host.log logs `core <name> version <v>` at open (`host/core.c:72`) | as built | holds | F2 |
-| A8 | `host/png.c` is **pure** (stdlib and zlib only) and in `TEST_SRC` (`Makefile:41`); `#define PNG_LEVEL 6` at `png.c:11`, used by `compress2` at `:136` | as built | holds | E |
+| A8 | `host/png.c` is **pure** (stdlib and zlib only) and in `TEST_SRC` (`Makefile:42` in D's tree, which merges first; 41 on main today); `#define PNG_LEVEL 6` at `png.c:11`, used by `compress2` at `:136` | as built | holds | E |
 | A9 | The readback runs only on asked shot frames (`run.c` `run_frames` takes shots only for asked frames) | `host/run.c:310-330` | holds | E |
 | A10 | `azh_stats_t` fields: frames, wall_s, user_s, sys_s, peak_rss, core_name, core_version, is_lazpy_core; size 240 | `host/azhost.h` | holds | E, F2 |
 | A11 | One `azh_open` per process (`api.c` `opened_once`) | as built | holds | E |
@@ -246,7 +376,7 @@ ships.
 | F2a | `lazpy_movie_play(const char *path)` | patch 0006 | holds | not used |
 | F3 | The six options in `core/options-lazpy.txt`; patch 0002 registers them **with stock defaults** | `core/options-lazpy.txt`; patch 0002 | holds | F2, E |
 | F4 | Patch 0003 (our `retro_run` returns after `DisplayMessage`), 0004 (log filter), 0005 (the version is `g_build_fullname + "-lazpy.1"`, assembled at run time; the dylib's strings hold `-lazpy.1`) | patches 0003-0005 | holds | F2 |
-| F5 | `tools/build-core.sh --detach` in MAIN: `build-core/build.pid`, `build.exit`, `build.log`; output `build-core/azahar_lazpy_libretro.dylib`; the first build (keys ON) ended 19:40 with 0 (19,195,472 bytes, 28 exports, key blob in it); the P9 rebuild replaces it | `tools/build-core.sh:95-117` (P9 edit in MAIN) | planned (the P9 rebuild) | F2 |
+| F5 | `tools/build-core.sh --detach` in MAIN: `build-core/build.pid`, `build.exit`, `build.log`; output `build-core/azahar_lazpy_libretro.dylib`; the first build (keys ON) ended 19:40 (19,195,472 bytes, key blob in it); the P9 build (e40e59c) ended 21:09 with 0 (19,145,936 bytes, keys OFF, 0 `/Users/`, but ClCertA in and LibreSSL linked); **step 0's build replaces it** and adds `build-core/build.inputs` | `tools/build-core.sh:95-117` (committed at e40e59c); section 4 step 0 | holds (21:09); planned (step 0) | F2 |
 | C1 | ABI 2: `azh_batch` 3348, `azh_result` 304, `azh_stats` 240, `azh_layout` 6452 (`n_fields`, `fields[160]` of 40 bytes); **114** `field_rows`; `_Static_assert` rows <= `AZH_MAX_FIELDS` (160) | `host/api.c:49-166`, `host/azhost.h:38, 66` | holds | G |
 | C2 | Map version 2; offsets 16 heartbeat .. 1104 exit_code, 4096 pixels; size 695,296; bytes 1108-4095 free | `host/hostmap.c`; `python/libazahar/_map.py` | holds | G |
 | C3 | After each `retro_run` (`azh__run_one_frame`): totals, then `take_shots`, then the stops; every stop returns 0 | `host/run.c:102, 173, 310-330` | holds | E (timing line), G (watch rows between `azh__run_one_frame` and `take_shots`) |
@@ -262,7 +392,7 @@ ships.
 | D6 | `Emulator(app, workdir, *, sd_seed, state, core, options, timeout=30.0, boot_timeout=300.0)`; `run(frames, inputs, shots, *, stop_file, stop_text, stop_every, stop_new, debug_text, wall_limit, timeout)`; `run_until` delegates to `run`; `set_input`, `run_frame`, `set_keys`, `screens`, `shot`, `save_state`, `load_state`, `stats`, `sd`, `frame_total`, `pid`, `closed`, `close` | `emulator.py:62-64, 133-175, 226-232, 306-311` | hold | E, F2, G |
 | D7 | `RunResult(frames, stopped_by, first_frame, last_frame, frame_total, vblanks, wall_s, message, shots)` (frozen; `shots` has a default); `Stats` mirrors `azh_stats` | `results.py:19-32` | hold | E, G |
 | D8 | `_paths`: `repo_root`, `host_path`, `core_path` (`LAZ_CORE`, else `<root>/dl/azahar/azahar_libretro.dylib`), `mvk_path`, `profile_path` (`LAZ_PROFILE`); `emulator.py` `_read_profile(path)` reads `key=value` lines | `_paths.py`, `emulator.py:25-48` | hold | F2 |
-| D9 | States: `<path>`, `<path>.sd/`, `<path>.meta` (`abi=`, `k=`, `frame_total=`, ...); a different `core_version` only warns; abi range as H3; `test_newer_abi_refused` | `host/state.c:395`; `tests/python/test_state.py:116-124` | hold | F2, G |
+| D9 | States: `<path>`, `<path>.sd/`, `<path>.meta` (`abi=`, `k=`, `frame_total=`, ...); a different `core_version` only warns; abi range as H3; `test_newer_abi_refused` built from `_abi.AZH_ABI_VERSION` with an abi-1 case (D's as-built S3); the meta parse is strict on keys, so a new meta key would have to be optional for ABI-2 metas (G adds none) | `host/state.c:395-398`; `tests/python/test_state.py:116-124`; `statemeta.c:154` | hold | F2, G |
 | D10 | Fixtures as H1, `workdir` (`runs/d-pytest/<test>/`, deleted and remade), `seed(**control_keys)`, `repo_root`; `d_helpers.boot(paths, workdir, seed_dir, **kwargs)`; marker `slow` (`pyproject.toml:22`); `fakeworker.py` modes | `tests/python/conftest.py`, `d_helpers.py` | hold | E, F2, G |
 | SD | SD file writes are synchronous on the emulator thread; OpenFile, SetSize, Close are async on the stock core | phase-2.md SD | holds | F2 |
 
@@ -270,21 +400,23 @@ ships.
 
 | Step | Builder | Review | Commit | Total | PLAN.md | Why the difference |
 |---|---|---|---|---|---|---|
-| E | 0.8 (E1 0.4, E2 0.4) | 0.2 | 0.1 | **1.1** | 1.0 | the live slot gate holds real slots while it tests a private cap; the 4-instance row and its rule (R2, +0.03 h) less the cut state row (R3) and the cut `_slots` timing print |
-| F2 | 0.45 (F2-0 0.05, F2-1 0.2, F2-2 0.2) | 0.2 | 0.1 | **0.75** | 0.75 | P8's profile application, offset by the cuts: no `azh_stats` change (H6), no conftest work and no guest-exit close code beyond a 5 s wait (H1, H7), `gate_c`'s runner reused (N12), the stock smoke (Q4) |
+| E | 0.81 (E1 0.41, E2 0.4) | 0.2 | 0.1 | **1.11** | 1.0 | the live slot gate holds real slots while it tests a private cap; the 4-instance row and its rule (R2, +0.03 h); the `slot=` keyword (review 2 B3, +0.01 h); less the cut state row (R3) and the cut `_slots` timing print |
+| F2 | 0.48 (F2-0 0.05, F2-1 0.23, F2-2 0.2) | 0.2 | 0.1 | **0.78** | 0.75 | P8's profile application and f1's supply-chain checks (review 2 B1, N3-N5, the OpenSSL checks: +0.05 h), offset by the cuts: no `azh_stats` change (H6), no conftest work and no guest-exit close code beyond a 5 s wait (H1, H7), `gate_c`'s runner reused (N12), the stock smoke (Q4), the by-hand 30-frame check folded into `--only keyblob,symbols,version` (-0.02 h) |
 | G | 0.55 (G1 0.4, G2 0.15) | 0.2 | 0.1 | **0.85** | 0.5 | PLAN's 0.5 h did not count the ABI 3 bump the watch list needs (header, `fields[]`, `_abi.py`, the map area); less the cut Python mirror of the watch plan (N4) and the halved G2 batch (B4) |
 | Review loops | | | | 0.5 | 0.5 | |
-| **Phase** | | | | **3.2** | **2.75** | |
+| **Phase** | | | | **3.24** | **2.75** | |
 
-Main loop (not in the table): the P9 commit and launch, the checkpoint choreography and the item moves, about
-0.2 h.
+Main loop (not in the table): step 0 (the two patches, PIN, the script edits, README, the configure check, the
+commit and the launch, about 0.2 h) and the checkpoint choreography and the item moves (about 0.2 h): **about 0.4 h**.
 
 ## 8. Risks for this phase
 
-1. **The P9 rebuild fails or changes behaviour.** A failure is the main loop's (section 2); F2 launches only on a 0.
-   With the key blob off, the core has no built-in keys; the test app is an unencrypted `.3dsx` and needs none. If
-   F2's batch shows a difference from Phase 2's stock results that traces to keys, F2 reports it and the main loop
-   takes it to Guy (Phase 4's G1); F2 never turns the blob back on.
+1. **Step 0's rebuild fails or changes behaviour.** A failure is the main loop's (section 2); F2 runs no emulator
+   until `build.exit` is 0 and `build.inputs` matches. With the key blob off, 0008 and 0007, the core loads no keys
+   and has no ClCertA; the test app is an unencrypted `.3dsx` and needs neither (`DecryptClCertA` returns at the
+   missing key slot 0x0D, `http_c.cpp:2262-2266`, before the removed branch). If F2's batch shows a difference from
+   Phase 2's results that traces to keys, F2 reports it and the main loop takes it to Guy (Phase 4's G1); nobody
+   turns the blob, the keys or the ClCertA back on.
 2. **Repeats are not identical on our core** (a host thread still leaks into guest time: the Vulkan presentation
    thread, shader compiles, an async path the option does not cover). F2 records the first differing log line and
    shot, does not tune, and reports; a new patch is a Phase 3 change of scope.
@@ -306,6 +438,15 @@ Main loop (not in the table): the P9 commit and launch, the checkpoint choreogra
    by the thread that runs batches.
 10. **The default cap rests on a light scene** (Guy, Q1: no real-scene row). The table labels it "light" (rules.md
     7) and the cap stays marked provisional; spike 2's real-scene numbers are quoted beside it.
+11. **Static OpenSSL from Homebrew.** (a) The static link may need a system library the dylib did not (Homebrew's
+    `libcrypto.3.dylib` links only `libSystem`, so probably none): the main loop may add a system framework or zlib
+    and records it; F2 RECORDs the link line's `-framework`/`-l` items. If static linking is impossible, stop and
+    report to Guy; never the dylib, never LibreSSL. (b) Homebrew's objects are built for macOS 15.0 (`minos 15.0` in
+    `libcrypto.a`, checked 2026-11-13) while our `MACOSX_DEPLOYMENT_TARGET` is 11.0: `ld` warns, and the core's real
+    minimum becomes 15.0; F2 records the warning count, Phase 4 states the minimum (section 12). (c) The rebuild
+    recompiles `citra_core` and `network` (their OpenSSL include path changes): 60-120 min on a loaded Mac, on the
+    critical path F2 -> E2 -> G2; F2-0 and F2-1 run meanwhile. (d) A `brew upgrade` changes the keg: the script
+    refuses another version, so a later build stops until `core/PIN` is re-pinned on purpose.
 
 ## 9. Hour-saving pass (revision 1)
 
@@ -338,6 +479,25 @@ Revision 1, each item checked against the code or the review:
 | Reading `g_ctl`'s address from `testapp.elf` with devkitARM `nm` | exact, but a devkitARM dependency in a pytest; the scan costs nothing | declined |
 | Drop the phase-end suite (G2 already ran gate C and pytest on ours) | about 45 min machine at the very end, off the critical path | declined: it is the only run of the merged tree (E2's files, held fixes) on both cores |
 
+Revision 2 (review 2 section 6's rows taken, plus this revision's own):
+
+| Cut, existing thing or cheaper test | Saves | Verdict |
+|---|---|---|
+| 0007, 0008, the drop list, `build.inputs` **and the OpenSSL switch** in one rebuild (step 0) | Phase 4's second rebuild and a gate_f2 rerun (about 0.1 h agent, 20-40 min machine); a third rebuild for OpenSSL | taken (Q6 default yes; Guy's OpenSSL ruling) |
+| F2 launched with E right after `--detach`; it seeds, writes F2-1's code and `gate_f2.py`, then waits (Monitor, 150 min) on `build.exit` 0 and a matching `build.inputs` | the rebuild's 20-120 min off the critical path F2 -> E2 -> G2 as far as F2's own agent time reaches | taken |
+| The main loop writes the patches and the script change (no brief, worktree or checkpoint for about 60 lines) | about 0.1 h against a sonnet step | taken |
+| `--configure-only` in MAIN as step 0's pre-commit check, instead of review 2's scratch unpack outside `dl/` | about 0.02 h main loop, and it also tests the script edits and the static-OpenSSL configure before the commit and before a long build | taken (departure, section 14) |
+| F2-1's by-hand 30-frame check replaced by `gate_f2.py --only keyblob,symbols,version` right after the build | about 0.02 h F2 and one emulator start | taken |
+| The OpenSSL and LibreSSL checks inside `keyblob_findings` (the same `strings -a` pass, the same build tree) | a second checker in F2 and in Phase 4's `release_check` | taken |
+| `externals/libressl` in the drop list: the bundled LibreSSL cannot be configured by mistake (configure fails) | a separate "LibreSSL not configured" guard | taken |
+| One `keyblob_findings` imported by Phase 4's `release_check` | a second implementation in Phase 4 | taken |
+| `--ignore=tests/python/test_pool_live.py` in the phase-end per-core pytests (N9) | about 6 min machine | taken |
+| D's as-built S3 fixes the abi literal | G's one-line `test_state.py` row | taken (row dropped) |
+| Build OpenSSL 3.6.5 from source for macOS 11.0 instead of Homebrew's static libs | nothing now (about 0.2 h plus a pinned download); it only matters for the release's minimum macOS | declined: Guy's ruling names Homebrew's libs; Phase 4 decides (section 12) |
+| Raise `LAZ_CORE_JOBS` above 4 for this rebuild | 10-30 min machine on the critical path | declined: a shared Mac (rules.md 5) |
+| Cut G2's gate C part | about 10 min machine | declined (review 2: G changes the host library azhost links) |
+| Cut F2's `stock_r1` record | about 4 min machine | declined (review 2: Phase 4's USING fix needs it) |
+
 ## 10. Facts checked for this plan (reviewers: verify these)
 
 "SRC" = `dl/azahar-src/unpacked/azahar-unified-source-2126.2/src/` (GIT-COMMIT 219d743a1e698101fe1ab8bef43e6563126c3c27,
@@ -351,7 +511,7 @@ GIT-TAG 2126.2), read 2026-11-12. "PATCHES" = `core/patches/`. Review 1 verified
 | `init_clock` SystemTime (plus DST hour) / FixedTime (`init_time` default 946681277) | SRC core/hle/kernel/shared_page.cpp:34-63; settings.h:503-505 |
 | `deterministic_async_operations` gates `std::async` in HLE requests | SRC settings.h:490-491; hle_ipc.h:306, 348 |
 | `instant_debug_log` writes inline **and flushes every backend per entry** (a speed cost on a chatty app) | SRC settings.h:659; common/logging/backend.cpp:353-357 |
-| One `retro_run` = one VBlank: `GPU::VBlankCallback` presents every VBlank, the present calls `SwapBuffers`, which sets `submittedFrame` and ends the loop | SRC video_core/gpu.cpp:488-498; libretro_vk.cpp:710-711; libretro_window.cpp:68-71; citra_libretro.cpp:282-331 |
+| One `retro_run` = one VBlank: `GPU::VBlankCallback` presents every VBlank, the present calls `SwapBuffers`, which sets `submittedFrame` and ends the loop | SRC video_core/gpu.cpp:488-498; libretro_vk.cpp:710-711; citra_libretro/emu_window/libretro_window.cpp:68-71; the loop citra_libretro.cpp:282-306, its end condition emu_window/libretro_window.cpp:327-331 |
 | `ReadBlock` zero-fills unmapped pages, flushes cached pages; `WriteBlock` skips unmapped | SRC core/memory.cpp:173-229, 247-253 |
 | `IsValidVirtualAddress`; `CITRA_PAGE_SIZE` 0x1000; `Kernel::GetCurrentProcess()` | SRC memory.cpp:824-837; memory.h:34; kernel.h:319 |
 | Exports from `libretro.osx.def` via `-exported_symbols_list` | SRC citra_libretro/CMakeLists.txt:32, 96 |
@@ -359,13 +519,18 @@ GIT-TAG 2126.2), read 2026-11-12. "PATCHES" = `core/patches/`. Review 1 verified
 | `GIT_REV` from `GIT-COMMIT`, `BUILD_FULLNAME` from `GIT-TAG` (so the version is `2126.2-lazpy.1`) | CMakeModules/GenerateBuildInfo.cmake:13-16, 40-55 |
 | `async_shader_compilation` defaults to false; `frame_limit` forced to 0 by the libretro core | SRC settings.h:537; core_settings.cpp:1133 |
 | macOS `flock(2)`: locks belong to the open file description; an inherited fd keeps the lock after the parent closes; Python `subprocess` uses fork+exec with `pass_fds`, so a sibling thread's child never keeps a slot fd past `exec` | `man 2 flock`; Python docs; review 1 |
-| new: `option(ENABLE_BUILTIN_KEYBLOB ... ON)`; today's build has `ENABLE_BUILTIN_KEYBLOB:BOOL=ON` (CMakeCache.txt:728); of 1,659 `.o.d` files only `citra_core.dir/hw/aes/key.cpp.o.d` names `default_keys.h`; the blob's first 16 bytes `[removed]` sit at offset 13,960,800 of today's dylib | SRC CMakeLists.txt:154; `build-core/build/`; phase-4.md section 0 |
-| new: `tools/build-core.sh` in MAIN (uncommitted) passes `-DENABLE_BUILTIN_KEYBLOB=OFF` and `-ffile-prefix-map=$PWD/=` for C and C++, dies if the cache does not say OFF, and dies if any `.o.d` names `default_keys.h` | `tools/build-core.sh:95-112` |
-| new: `strings -a` of today's dylib holds `-lazpy.1` as its own string (patch 0005 joins it to `g_build_fullname` at run time) | `strings -a build-core/azahar_lazpy_libretro.dylib`; patch 0005 line 9 |
+| `option(ENABLE_BUILTIN_KEYBLOB ... ON)`; the P9 build (21:09) has `ENABLE_BUILTIN_KEYBLOB:BOOL=OFF` (CMakeCache.txt:728), 1,659 `.o.d` files, none naming `default_keys.h`, one (`http_c.cpp.o.d`) naming `ctr-common-1-*`; the keys-on build's blob [removed] | SRC CMakeLists.txt:154; `build-core/build/`; phase-4.md section 0 |
+| `tools/build-core.sh` (committed at e40e59c) passes `-DENABLE_BUILTIN_KEYBLOB=OFF` and `-ffile-prefix-map=$PWD/=` for C and C++ (configure `:95-103`), dies if the cache does not say OFF (`:104-105`), and dies if any `.o.d` names `default_keys.h` (`:110-112`); it installs the dylib in place (`:113-117`); the STAMP hashes the patches (`:68`) | `tools/build-core.sh` |
+| `strings -a` of the 21:09 dylib holds `-lazpy.1` as its own string (patch 0005) and 0 lines holding `/Users/` | `strings -a build-core/azahar_lazpy_libretro.dylib`; patch 0005 line 9 |
+| new (rev 2): `http_c.cpp:37-38` include `ctr-common-1-cert.h` (`ctr_common_1_cert_bin[1264]`) and `ctr-common-1-key.h` (`[1232]`) with no `#ifdef`; `DecryptClCertA()` (`:2262`) returns at the missing key slot 0x0D (`:2263-2266`), else copies the defaults when the NAND file is missing (`:2281-2289`); it runs from the HTTP service's constructor (`:2507`); no other file names them; `default_keys.h` is included only under `#ifdef ENABLE_BUILTIN_KEYBLOB` (`key.cpp:21-23`) and named in CMake only under the option (`src/core/CMakeLists.txt:501-503`) | SRC core/hle/service/http/http_c.cpp; core/hw/aes/key.cpp |
+| new (rev 2): `GetKeysStream()` (`key.cpp:292-314`) is the one key source of AES (`key.cpp:152`), RSA (`rsa.cpp:101`) and ECC (`ecc.cpp:65`) | SRC core/hw |
+| new (rev 2): OpenSSL: `USE_SYSTEM_OPENSSL` (default OFF, `externals/cmake-modules/CitraHandleSystemLibs.cmake:9`) makes `externals/CMakeLists.txt:320-322` call `find_package(OpenSSL 1.1)` (not REQUIRED; a miss leaves `OpenSSL::SSL` undefined, so generation fails) and skip `add_subdirectory(libressl)` (`:323-333`); `httplib` links `${OPENSSL_LIBRARIES}` (`:361-362`); `citra_core` (`src/core/CMakeLists.txt:508`) and `network` link `httplib`; `web_service` is off in our build (`ENABLE_WEB_SERVICE:BOOL=OFF`); `<openssl/rand.h>` is included only by `ssl_c.cpp` and `am.cpp` | SRC; `build-core/build/CMakeCache.txt` |
+| new (rev 2): the 21:09 dylib links LibreSSL (`link.txt`: `../../externals/libressl/ssl/libssl.a`, `.../crypto/libcrypto.a`), holds `externals/libressl/...` source-path strings but no "LibreSSL" string, and no line equal to `3.6.5`; so f1's `libressl` and version checks both fail on it | `strings -a`, `link.txt`, 2026-11-13 |
+| new (rev 2): Homebrew `openssl@3` here: `/opt/homebrew/opt/openssl@3` -> `../Cellar/openssl@3/3.6.5`; `opensslv.h` `OPENSSL_VERSION_STR "3.6.5"`, text `OpenSSL 3.6.5 29 Sep 2026`; `libssl.a` 1,475,544 bytes sha256 `23c6a50d6e01660db8ad58ed2f71305bf634970f044be2289b18d55ebc0370d9`, `libcrypto.a` 8,593,624 bytes sha256 `88981a4c6ce3c36127d12f6e7053b926d8a70ec1dbd0fa259113e6c8514a0583`; its objects say `minos 15.0`; `libcrypto.3.dylib` links only `libSystem`; the version text lives only in `cversion.o` (pulled only if something calls `OpenSSL_version`), the bare `3.6.5` also in the providers (`defltprov.o`, `baseprov.o`, `provider_core.o`); `brew info --json` disagrees (3.6.1 installed, 3.5.9 stable), so the header is the source of truth; cmake 4.3.4 | `ls`, `otool`, `strings`, `shasum`, 2026-11-13 |
 | new: host.log has one `option <key>=<value>` line per registered key at boot (`(core default)` when unset) | `host/options.c:164` |
 | This Mac: 12 cores (6 performance), 18 GB RAM, load 17-24 at planning time; PLAN's load warning is above 2 x cpu_count = 24 | `sysctl`, `uptime`, 2026-11-12 |
 
-## 11. Questions (all answered for revision 1)
+## 11. Questions (all answered)
 
 - **Q1 (Guy, 2026-11-12): the real-scene row.** "Skip it": no Gen3D row; the cap stays provisional on a light
   scene (R3).
@@ -376,7 +541,15 @@ GIT-TAG 2126.2), read 2026-11-12. "PATCHES" = `core/patches/`. Review 1 verified
 - **Q4 (review 1): F2's stock regression.** Cut to the stock smoke (phase-f2.md f9).
 - **Q5 (review 1): the watch area.** Fixed 4 MiB; Python reads the area's size from the layout's `map.watch_data`
   and `map.__size__` rows, so a later resize is host-only with no ABI bump (phase-g.md section 4).
-- New for review 2: none.
+- **Q6 (review 2 S4): patch 0008 (load no keys at all) in the same rebuild?** Main-loop default **yes** (2026-11-13;
+  the conservative side, reversible by dropping the patch); it is in step 0. If Guy later says no, Phase 4 drops
+  0008 and owns that rebuild plus `gate_f2.py --only keyblob,symbols,version` and a short our-core smoke.
+- **Guy, 2026-11-13, LibreSSL** (its OpenSSL/SSLeay licence reads as GPLv3-incompatible, Phase 4 review 1): "Switch
+  to OpenSSL 3". In step 0: `USE_SYSTEM_OPENSSL=ON` against Homebrew's static OpenSSL 3.6.5, pinned in `core/PIN`;
+  F2's f1 checks it; static or nothing (risk 11).
+- **Main-loop rulings, 2026-11-12/13:** the main loop writes the patches and the script change itself and runs the
+  rebuild (review 2's choice); F2 launches with E and waits on `build.exit` plus a matching `build.inputs`; D's
+  as-built review is done and D merges before Phase 3 builds, its abi literal fixed in D.
 
 ## 12. Interfaces for Phase 4 (H: docs, I: release)
 
@@ -388,12 +561,40 @@ GIT-TAG 2126.2), read 2026-11-12. "PATCHES" = `core/patches/`. Review 1 verified
   light; the default cap and its rule; the effective option set per core.
 - `core/options-lazpy.txt` applied automatically on our core (P8); `azhost --lazpy-profile`; `LAZ_LAZPY_PROFILE`;
   USING.md: `instant_debug_log` flushes the log per guest line (a speed cost on chatty apps).
-- `tests/gate_f2.py`'s results: the key blob absent from the gated build, repeat exactness, the debug-stop frame,
-  cross-core state loading (for STATUS.md); its key-blob check can be imported by `release_check.py`.
+- `tests/gate_f2.py`'s results: the supply chain of the gated build (no key blob, no ClCertA, no key loading, no
+  LibreSSL, OpenSSL as pinned), repeat exactness, the debug-stop frame, cross-core state loading (for STATUS.md).
 - ABI 3: `azh_read`, `azh_write`, the `azh_watch` entry type, the watch area (its size from the layout),
-  `AZH_E_UNMAPPED`; `emu.memory` with libmgba-py's names; `run(watch=)`, `RunResult.watch`; `GuestMemoryError`;
-  ABI-2 states load under ABI 3 (for `docs/HOST-API.md` and USING.md).
-- The release (I) ships `azahar_lazpy_libretro.dylib` from the P9 rebuild that F2 gated (Phase 4's R1 then holds).
+  `AZH_E_UNMAPPED`; `emu.memory` with libmgba-py's names; `run(watch=)`, `RunResult.watch`; `GuestMemoryError`
+  (for `docs/HOST-API.md` and USING.md).
+- **Core supply chain** (review 2 S5): patches 0000-0008 (0007 no default ClCertA, 0008 no key loading, Q6);
+  `LAZ_CORE_DROP` in `core/PIN` (the three Nintendo headers and `externals/libressl`, deleted after unpack and
+  before the patches); `OPENSSL_VERSION=3.6.5` and `OPENSSL_PREFIX` in `core/PIN` (`LAZ_OPENSSL_PREFIX` overrides
+  the prefix; the script refuses another version); `build-core/build.inputs` (format in section 4 step 0 (g));
+  `gate_f2.keyblob_findings(build_dir, core, src_root, tree, repo) -> list[str]` (phase-f2.md section 6; the drop
+  list and the OpenSSL pins come from `repo/core/PIN`) for `release_check`, which imports it instead of
+  re-implementing the windows.
+- **Environment** Phase 3 adds: `LAZ_MAX_INSTANCES`, `LAZ_SLOT_DIR`, `LAZ_SLOT_TIMEOUT` (default 3600),
+  `LAZ_PNG_LEVEL` (0-9, default 1), `LAZ_LAZPY_PROFILE`, and the build-only `LAZ_OPENSSL_PREFIX`; there is **no**
+  `LAZ_LAZPY_CORE` (D took `LAZ_CORE`; Phase 4's R12 drops it).
+- **`SlotTimeout`** subclasses `HostTimeout` (so `except HostTimeout` catches it), `.op == "slot"`, `.seconds`, text
+  "no libazahar slot free after <s> s: all <cap> are held; see <dir>". Fake workers never take a slot unless asked
+  (`WorkerClient(..., slot=True)`).
+- **States both ways:** an ABI-3 host loads metas with `abi` 2..3; an ABI-2 host refuses an ABI-3 state
+  (`host/state.c:395-396`, `meta.abi > AZH_ABI_VERSION`).
+- **What Phase 4 must change because of step 0:** (a) the Corresponding Source of a published core is the tarball
+  minus `LAZ_CORE_DROP` plus patches 0000-0008 plus `tools/build-core.sh`, **plus OpenSSL 3.6.5's source** (Apache-2.0;
+  Phase 4 pins its tarball URL and sha256 in `core/PIN`, and checks whether Homebrew's formula patches it, in which
+  case those patches go with it); P10 option (a)'s re-pack drops the whole list, not only `default_keys.h`. (b)
+  NOTICES: OpenSSL's Apache-2.0 licence (and its NOTICE, if any) replaces LibreSSL's entry; R4's link line changes
+  (two absolute keg paths instead of `externals/libressl/...`); G3 (LibreSSL) is closed by Guy's ruling. (c) The
+  binary is distributed under GPLv3 (Apache-2.0 is GPLv3-compatible, not GPLv2-compatible; Azahar's "or later"
+  allows it): README, `core/README.md`, the release notes. (d) The minimum macOS: Homebrew's objects say 15.0
+  while we build for 11.0; state 15.0 as the core's minimum, or build OpenSSL from source for 11.0 (risk 11). (e)
+  `release_check` reads `build.inputs` and `LAZ_CORE_DROP` as defined here, imports `keyblob_findings`, and drops
+  its configure-only check 10 (the binary is built from the stripped tree). (f) If Q6 is reversed, Phase 4 owns
+  that rebuild and F2's partial rerun. (g) STATUS/USING: ABI-2 states load under ABI 3, an ABI-2 host refuses
+  ABI-3 states, `SlotTimeout` is a `HostTimeout`, our core loads no keys (encrypted titles cannot run on it).
+- The release (I) ships `azahar_lazpy_libretro.dylib` from step 0's build that F2 gated (Phase 4's R1 then holds).
 
 ## 13. Changes from review 1
 
@@ -449,4 +650,54 @@ One line per finding (`docs/reviews/phase-3-review-1.md`), then Guy's answers an
 
 ## 14. Changes from review 2
 
-None yet.
+One line per finding of `docs/reviews/phase-3-review-2.md` (all taken as written unless a line says "departure"),
+then the rulings.
+
+- B1 (F2 gates a binary with ClCertA; step 0 stale): step 0 "P9b" in section 4 (patch 0007, 0008, `LAZ_CORE_DROP`,
+  the script's drop/STAMP/guard/`build.inputs`/atomic install, `core/README.md`; main loop; commit; `--detach`;
+  waiter); f1 is `keyblob_findings` with every review-2 check (phase-f2.md 1, 6); section 3's step-0 row; F2's
+  review checklist item 0. **Departure (small):** the signature is `keyblob_findings(build_dir, core, src_root, tree,
+  repo)`, the drop list read from `repo/core/PIN` rather than passed (review 2 asked for "read from core/PIN, not
+  typed"; one argument also gives the inputs to hash).
+- B2 (`lazpy_core` falls back to the checkout's `build-core/`): every brief's step 0 links
+  `build-core/azahar_lazpy_libretro.dylib` to MAIN's; H1 says the fallback is the checkout's.
+- B3 (fake-worker spawns take real slots): `WorkerClient(..., slot=None)`, a slot only for the real worker unless
+  `slot=True`; s6 passes `slot=True` with a private `LAZ_SLOT_DIR`; E's checklist item 2.
+- S1 (stale facts): header, sections 2, 3, 4 step 0, 6 (F5), 10 rewritten to the state after P9 (e40e59c, 21:09,
+  19,145,936 bytes, OFF, 0 `/Users/`) and D at 88cdbe6; "the STAMP holds" removed.
+- S2 (r2 without D's `sys/` copy): phase-f2.md r2 step 2 copies a's `sys/` minus `sdmc` and RECORDs the folders;
+  `seed()` = `testapp_log.write_control`.
+- S3 (the {0, 1} tolerance): R4 in section 5.
+- S4 (0008 needs a decision): Q6 in section 11, main-loop default yes, 0008 in step 0; section 12 (f) for a later no.
+- S5 (section 12 incomplete): section 12's supply-chain, environment, `SlotTimeout` and states lines.
+- S6 (E's rerun line): phase-e.md step 3.
+- S7 (G may finish first): section 4 step 6.
+- N1 citations: fixed in section 10 and phase-e.md section 2 (`emu_window/libretro_window.cpp:68-71`, the loop
+  `citra_libretro.cpp:282-306` ending at `emu_window/libretro_window.cpp:327-331`, `Makefile:42` (D's tree; 41 on main
+  today), ClCertA `http_c.cpp:2281-2289`).
+- N2: phase-g.md 3.3 says `i` is `run_frames`'s 1-based batch frame.
+- N3: `gate_f2.py` exits non-zero when `gate_c.failed` is non-zero too (phase-f2.md 6).
+- N4: f1 FAILs on any `/Users/` line.
+- N5: f1 FAILs on "ClCertA file missing, using default".
+- N6: a core exporting only one of the two memory exports is a hard `AZH_E_CORE` at open (phase-g.md 3.3).
+- N7: 0007's and 0008's notice lines; `core/README.md` rows; no version bump (`-lazpy.1`, `LAZPY_REV=1`).
+- N8: atomic install in step 0 (i).
+- N9: `--ignore=tests/python/test_pool_live.py` in the phase-end per-core pytests (section 4 step 7).
+- N10: "never run `tools/build-core.sh`" in section 3 and in the three briefs.
+- Hours: E 1.11, F2 0.78, G 0.85, loops 0.5 = 3.24 h; main loop 0.4 h (review 2 said 0.35; +0.05 for the OpenSSL
+  switch). Section 9 takes review 2's rows and adds this revision's.
+- **Departure (small, hour-saving):** step 0's pre-commit check is `tools/build-core.sh --configure-only` in MAIN
+  instead of a scratch unpack outside `dl/`: it runs the real edited script (OpenSSL pin, drop, patches with `--fuzz
+  0`, the configure guards) on the tree the build will use; the checks review 2 listed (0 rejects, `ctr_common_1`
+  count 0) are run on that tree.
+- **Addition:** `externals/libressl` joins the drop list, so the bundled LibreSSL cannot be configured by mistake;
+  the `.o.d` guard covers it, and step 0 (d) removes the old LibreSSL objects from the build folder first.
+- **Additions (small):** the OpenSSL version guard reads the cache's `FIND_PACKAGE_MESSAGE_DETAILS_OpenSSL` line, not
+  `configure.log` (CMake prints "Found OpenSSL" only once); `build.inputs`'s `cmake=` line writes `$ROOT` as
+  `<repo>` (no user name); `keyblob_records` beside `keyblob_findings` for the RECORD lines.
+- Guy's OpenSSL ruling: section 2 (step 0 paragraph), section 4 step 0 (a), (e)-(i), `core/PIN`'s pins, f1's
+  OpenSSL checks (phase-f2.md 1, 6), risk 11, facts, section 12 (a)-(d).
+- Q6 default yes: 0008 in step 0. The main loop writes and runs step 0; F2 launches with E and waits on
+  `build.exit` plus a matching `build.inputs` (section 2, phase-f2.md section 7).
+- D's as-built review (S1-S6): H5 (the bound inline in `test_state_boot`), D9 (abi test built from the constant; G's
+  `test_state.py` row dropped), the expected baselines (49 / 69), and the moved line numbers noted in section 6.

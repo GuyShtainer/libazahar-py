@@ -100,3 +100,11 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   For Phase 4: Homebrew's libcrypto.a objects are built for macOS 15.0 while the core says minos 11.0 (ld warns
   per object); OpenSSL's OPENSSLDIR/ENGINESDIR/MODULESDIR /opt/homebrew strings are in the core (not private).
   Both sent to Phase 4 revision 1 (a739c8de18f2e6992). Scratch tree deleted.
+- Revision 2 (ae13bb77d6994c473, opus, 00:38-00:57; phase-3.md section 14 "Changes from review 2"): final, all
+  of review 2 taken with 8 departures listed there. Hours E 1.11, F2 0.78, G 0.85, loops 0.5: 3.24 h, plus about
+  0.4 main loop. Its step 0 (section 4 item 0) differs from the P9b build of 5e95423 in: externals/libressl on the
+  drop list, OPENSSL_PREFIX (keg real path via cd -P) for OPENSSL_ROOT, the version read from opensslv.h and
+  libcrypto.a strings, explicit OPENSSL_* cache paths, the FIND_PACKAGE_MESSAGE_DETAILS_OpenSSL guard, split
+  build.inputs keys (openssl_version, openssl_prefix, openssl_*_sha256), cmake= with <repo>, the link.txt check,
+  otool on the .tmp before install. The main loop aligns the script to it and rebuilds, so F2's f1 gates the
+  plan's format.
