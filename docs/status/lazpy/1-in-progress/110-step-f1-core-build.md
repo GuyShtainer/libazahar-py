@@ -54,3 +54,12 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   citra_setting(BaseKeys::...), all six exist in settings.h; init_time's stoull is in try/catch. BSD patch quotes file
   names in its output: check with `diff -r`, not a pipeline's exit code (a first `rc=0` was tr's). `--detach` checked
   by reading and `sh -n` only. Builder scratch: session scratchpad f1-notes.md, e0.py-e6.py, mkpatch.sh.
+- Fix round (19:22): F1-S1, N1, N2, N3 done. Changed: tools/ (build-core.sh, now 110 lines, shellcheck clean),
+  core/patches/0002 (158 lines) and 0006 (89); the stack was rebuilt from pristine source (0000, 0001, 0003-0005
+  same content). Clean --configure-only: 7 patches, 0 rejects, configure done, exit 0. Reds 1-3 as before, exit 1;
+  new red 4 (an evil tarball through the full script with a matching scratch PIN): "REFUSED" then "unpack REFUSED or
+  failed (tree removed)", exit 1, no misleading patch REJECTED; new red 5 (empty SRC_TOP): "pin <file> is missing a
+  value", exit 1. lazpy_movie_play codes: -2 missing file, -3 null path (empty path clears, returns 0), -4 not a movie,
+  -5 already booted. init_time needs a leading digit (else the 946681277 fallback). Lessons: never pipe
+  untar_checked.py (sed hides its exit and REFUSED line); read $? from a separate rerun, not a pipe (no PIPESTATUS
+  in sh); to change a patch mid-stack, rebuild the stack from pristine source, never hand-edit hunks.
