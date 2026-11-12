@@ -5,7 +5,9 @@
    `seeddb.bin`, screenshots of commercial games, Guy's real email, console IP/MAC/SSID. Check `git ls-files` before
    the first push. A tiny homebrew test app built here from source is fine.
 2. **Downloads are untrusted data.** Each in its own folder under `dl/` (ignored), with its URL and sha256 recorded in
-   the doc that uses it. Never run a script from inside a download folder; Python that reads them runs with `-I`.
+   the doc that uses it. Never run a script from inside a download folder; Python that reads them runs with `-I`. One exception (Guy
+   2026-11-12): our core build script may run Azahar's own CMake build on the exact pinned Azahar commit, nice'd in
+   the background; nothing else in a download is run.
 3. **Licenses.** Azahar is GPLv2-or-later: reading its source is fine; any copied code keeps its header and its notice.
    MoltenVK is Apache-2.0, the libretro headers MIT. MoltenVK and the stock core are fetched by a script, never
    shipped. Our own patched core (Guy 2026-11-12: we edit the core to our needs and publish it publicly, no upstream
