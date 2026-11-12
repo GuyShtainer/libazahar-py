@@ -9,15 +9,14 @@ the next session needs to act now, and points at the rest. Goals, rules, decisio
 ## Running now
 | What | Where | Agent id | It stops when |
 |---|---|---|---|
-| laz-100: Phase 1 as-built review (opus), A and B now, F1 when its report is sent; writes `docs/reviews/` (phase-1-as-built.md) only | MAIN, reads the three worktrees | a9d6a1a04a7ae2c40 | ends with fix lists per step; resumed for F1 and re-checks |
-| laz-110: step F1, our core's pin, patches, options profile, build script; configure and planted reds only, no build (sonnet) | ../libazahar-py-f1 (step-f1) | a85f3abcf6d608824 | reported 19:03, configure + 3 reds ok, uncommitted; in the as-built review |
-| laz-120: step A, host library and azhost CLI, gate-a (sonnet) | ../libazahar-py-a (step-a) | a4e8c6931d1122bf4 | reported 18:59, gate-a 8/8 PASS, uncommitted; in the as-built review |
-| laz-130: step B, test app and checker, gate-b (sonnet) | ../libazahar-py-b (step-b) | ab76e8c1f445db1b3 | reported 18:57, gate-b 14/14 PASS (fe2), uncommitted; in the as-built review |
+| laz-110: step F1, our core's pin, patches, options profile, build script; configure and planted reds only, no build (sonnet) | ../libazahar-py-f1 (step-f1) | a85f3abcf6d608824 | fixing F1-S1 and nice items from the as-built review (mergeable as is); then the integration run |
+| laz-120: step A, host library and azhost CLI, gate-a (sonnet) | ../libazahar-py-a (step-a) | a4e8c6931d1122bf4 | fixing A-X1, A-X2, A-S1..S5 and nice items; then the integration run |
+| laz-130: step B, test app and checker, gate-b (sonnet) | ../libazahar-py-b (step-b) | ab76e8c1f445db1b3 | fixing B-X1, B-S1..S4 and nice items; then the integration run |
 
 ## Next steps, in order
 1. Phase 2 revision 2 running (above): commit it, check each review-2 fix is in the text (no third loop).
-2. Phase 1 builders running (above). When A and B have reported (F1 reports first and waits): one opus as-built
-   review over all three worktrees, then branch commits, the integration run on `int-1`, the merge to main, then the
+2. Phase 1 builders fixing the as-built review's lists (`docs/reviews/phase-1-as-built.md`); a short re-check of the
+   fixed items (resume `a9d6a1a04a7ae2c40`), then branch commits, the integration run on `int-1`, the merge to main, then the
    core build in MAIN and its waiter. Every step is in `docs/plans/phase-1.md` "Merge and launch".
 3. Phase 2's steps (C, D) build after Phase 1 merges. Phases 3 and 4: plan with two review loops each, later.
 

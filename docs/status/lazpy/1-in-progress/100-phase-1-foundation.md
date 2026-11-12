@@ -50,3 +50,10 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   S7 (cross-step gates on a throwaway merge). No third review loop.
 - Revision 2: every review-2 finding and Phase 2's five asks taken, none declined. F1 0.75 h, A 1.15 h, B 0.9 h,
   phase 2.8 h; main-loop integration about 0.2 h. Launch and merge order: `docs/plans/phase-1.md` "Merge and launch".
+- As-built review (`docs/reviews/phase-1-as-built.md`, a9d6a1a04a7ae2c40): A mergeable after A-X1 (log.c formats the
+  guest line) and A-X2 (gate-a breaks when vendor is a symlink); B after B-X1 (gate-b writes into runs/ before it
+  exists); F1 mergeable as is (F1-S1 unpack failure not caught, unreachable under the sha pin). Its scratch
+  integration (main + A + B): make and make testapp exit 0, gate-a 8/8 on testapp.3dsx, RUNNER=azhost gate-b 13/14
+  (the fail is B-X1), so A and B fit. F1's patches checked by hand against 2126.2 signatures; no C++ compiled yet.
+  At merge: add host/azh_pure.h to code.md; note lazpy_movie_play's -5 in phase-c; until A-X2 lands, copy vendor in
+  the integration clone. untar_checked.py needs Python 3.12+ (filter=).
