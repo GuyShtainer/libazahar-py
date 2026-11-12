@@ -1,0 +1,34 @@
+# Downloads and third-party binaries (fetched by script, never committed)
+dl/
+cores/
+vendor/
+*.dylib
+*.zip
+*.tar
+# Game and system data: never committed
+roms/
+sdmc/
+nand/
+sysdata/
+*.3ds
+*.cci
+*.cxi
+*.cia
+*.3dsx
+*.gba
+*.nds
+*.sav
+aes_keys.txt
+seeddb.bin
+# Runs, builds, caches
+runs/
+build/
+build-*/
+tmp/
+temp/
+.venv/
+__pycache__/
+.pytest_cache/
+*.o
+build/
+.DS_Store
