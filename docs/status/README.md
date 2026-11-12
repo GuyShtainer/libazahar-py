@@ -24,7 +24,8 @@ publish-ready. What to do this hour: `docs/status/lazpy/1-in-progress/HANDOFF.md
 - in-progress: `docs/status/lazpy/1-in-progress/210-step-c-input-and-stops.md`
 - in-progress: `docs/status/lazpy/1-in-progress/220-step-d-python-and-states.md`
 - in-progress: `docs/status/lazpy/1-in-progress/300-phase-3-scale-and-memory.md`
-- files: 0 in `3-waiting-on-guy/`, 6 in `4-not-started/`, 13 in `5-done/`, 0 in `6-parked/`
+- in-progress: `docs/status/lazpy/1-in-progress/400-phase-4-release.md`
+- files: 0 in `3-waiting-on-guy/`, 5 in `4-not-started/`, 13 in `5-done/`, 0 in `6-parked/`
 <!-- generated:end -->
 
 ## How to change a status (one step)
