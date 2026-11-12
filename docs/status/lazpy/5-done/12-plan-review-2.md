@@ -15,11 +15,14 @@ An adversarial opus review of the plan (review 2 of 2), then the plan's revision
 The review file and the revised plan committed.
 
 ## Evidence
-none yet
+2026-11-12: review `docs/reviews/plan-review-2.md` (opus ae1d7771a10d61cb5; 3 blockers, 12 should fix, 12 nice), commit
+79bafff. Revision 2 by the plan's author (aa56e6986026ffbe0), who re-checked review 2's source claims at tag 2126.2
+(commit 219d743a) and corrected its own svcBreak line: PLAN.md 425 lines, one line per finding in section 9;
+phases F1, A, B, C, D, E, F2, G, H, I about 10.9 h agent wall time plus 1-2 h machine; state boot is Phase D's gate.
 
 ## Pointers
 - Plan: `docs/PLAN.md`
-- Review: `docs/reviews/` (plan-review-2.md, being written; a fresh reviewer, reads review 1 only after its own findings)
+- Review: `docs/reviews/plan-review-2.md`
 
 ## Lessons and notes
 Read this part only when you work on this item. Blockers, numbers and Guy's words go here verbatim.
