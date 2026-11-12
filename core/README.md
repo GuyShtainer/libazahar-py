@@ -22,7 +22,7 @@ The tarball is verified (size and sha256) before anything is unpacked; a present
 | `0005-lazpy-version.patch` | library version string gets the suffix `-lazpy.1` |
 | `0006-lazpy-movie-play.patch` | `lazpy_movie_play(path)` plays a `.ctm` movie from the next boot |
 | `0007-lazpy-no-default-clcert.patch` | the HTTP service no longer falls back to a built-in ClCertA certificate and key; a missing console file is an error |
-| `0008-lazpy-no-key-loading.patch` | `GetKeysStream()` returns an empty stream: no AES keys are ever loaded (no `aes_keys.txt`, no built-in blob) |
+| `0008-lazpy-no-key-loading.patch` | `GetKeysStream()` returns an empty stream: no AES, RSA or ECC keys are ever loaded (Azahar's `sysdata/keys.txt` is never read, and there is no built-in blob). The patch's own comment says `aes_keys.txt`, the older Citra name; it is corrected at the next core revision |
 
 ## Dropped from the tree
 

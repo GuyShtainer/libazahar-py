@@ -46,3 +46,17 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   kills every Emulator. Second builder a83e1355c6bcddc1f (sonnet, fresh; the first ran out of context) fixes it
   with getpriority/setpriority plus a unit test, fixes the batch's nesting and the 'macOS' quote in the count,
   and reruns the batch.
+- Second run (a83e1355c6bcddc1f): _worker.raise_nice_floor(floor=10) with getpriority/setpriority, no os.nice
+  left; test_worker_nice_step_survives_nice_20 (not slow; 56 passed); batch.sh has one nice layer and logs its
+  nice; gate_f2.py counts built for newer 'macOS' version. make check rc 0, test-host 307743/0. Batch rerun
+  started 01:17:47 at nice 15 (session at nice 5 plus nice -n 10), load 15-32; a restart to nice 10 was denied,
+  so the nice-15 batch stands. The main loop waits on runs/f2-batch.rc and collects f4-f9 itself.
+- Batch rerun ended 01:21:11 (runs/f2/*.rc in the F2 worktree): gate_c 0, pytest 0, smoke gate_c 0, smoke pytest 0,
+  gate_f2 1; 0 lines in exitpath-ours.txt. gate_f2: every f-check PASS (keyblob, symbols ours/stock, version
+  2126.2-lazpy.1, options, dbg d1-d4, r1 identical, r2 boot and restored equal, cross both ways ok) except
+  r2.1.t_state 2.80 s (bound 2.5) at load 28; r2.2 1.91 s. RECORD: 944 built-for-newer-macOS lines; the libssl.a
+  and libcrypto.a sha256 still match; stock_r1 differs only in log fields s and t (shots match).
+- 01:24 rerun of r2 alone plus test_state_boot (Gen3D held; load rose to 46 from other sessions' builds): r2.1 2.60 s,
+  r2.2 4.88 s, state_boot failed; correctness parts passed. drain_ms and unserialize_ms carry the time (about
+  0.5-1.4 s each), so the bound is a load floor. runs/f2/quiet-rerun.sh waits until the 1-min load is under 10
+  and the 5-min under 14, then reruns both once (waiter bi08wz1d9, 4 h at most). The bound stays as planned.

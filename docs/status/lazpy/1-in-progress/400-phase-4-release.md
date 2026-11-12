@@ -31,7 +31,7 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   0.8, main loop and the two legal agents 0.3, review loops 0.4. Urgent: our built core contains Azahar's
   built-in 3DS console AES key blob: ENABLE_BUILTIN_KEYBLOB is ON by default (CMakeLists.txt:154),
   src/core/hw/default_keys.h is read by key.cpp:302-312; ON in
-  build-core/build/CMakeCache.txt; the [removed] 13,960,800 of the dylib; Azahar's unchanged
+  build-core/build/CMakeCache.txt; the blob is in the dylib; Azahar's unchanged
   tarball holds the same header. Breaks the policy's no-key-handling rule. P9: -DENABLE_BUILTIN_KEYBLOB=OFF and
   -ffile-prefix-map (removes 461 home-path strings) in one rebuild before F2. P10: the source asset is Azahar's
   tarball minus default_keys.h, re-packed deterministically, with SOURCE.md proving from the build's .o.d files
@@ -103,3 +103,19 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   Gen3D friction: USING lines in H now; ArgumentError(LibAzaharError, ValueError) and a fresh_sd option after
   v0.1.0 (0.1 h each). Hours about 2.15. For Guy later: may rules.md 2's exception cover building OpenSSL from
   its pinned tarball (with risk 9's macOS 11 build)? Revision 2 waits for the ip-legal consult, then takes both.
+- ip-legal consult (aee2a9ba07ce653cf, 01:05-01:21): docs/reviews/release-ip-legal.md. 1 the patched core is GREEN
+  under rule 7 with five conditions (no key input path ever, no commercial-title docs, no ClCertA/NAND/online, no
+  commerce, no extraction hints). 2 source asset (a), the tarball minus the drop list; (c) the unchanged tarball is
+  RED. 3 OpenSSL: compatible, the Apache-2.0 text must ship inside the binary's zip. 4 faad2: the Nero line verbatim.
+  5 system archives: five checks before shipping, OFL and Unifont notices. 6 keep the name; the README's first
+  paragraph says unofficial, not affiliated with or endorsed by Azahar. 7 the scripted stock-core fetch is YELLOW:
+  remove the pinned URL and sha256 from fetch.sh and the default tests, LAZ_STOCK_CORE opt-in (or Guy accepts the
+  YELLOW). 8 reword spike-2's game title, product code and file location. Also: Azahar reads sysdata/keys.txt, not
+  aes_keys.txt (core/README now; the 0008 comment at the next LAZPY_REV); a .gitignore line for keys.txt.
+- New push blocker (consult section 9): byte values, offsets and a decode note about the key blob and ClCertA in
+  tracked docs (22 of 100 commits). Reworded at HEAD 01:25 in phase-3.md, phase-4.md, both reviews and this item
+  (sources stay, values go). Still due before the push: G8b, a second filter-repo pass with a replace file kept
+  outside the repo, after Phase 3's worktrees are merged and removed, then the commit map updated. Never commit the
+  byte windows keyblob_findings() reads from the local source.
+- For Guy: Q7 (remove the stock-core fetch, recommended, or accept the YELLOW); a courtesy note to Azahar's
+  maintainers is his call (section 6).
