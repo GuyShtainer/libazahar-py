@@ -1,88 +1,97 @@
-# Step F2: gate our patched core with the full test batch (item laz-320)
+# Step F2: gate our patched core, as rebuilt with the key blob off, with the full test batch (item laz-320)
 
-Brief for one sonnet builder, revision 0 (2026-11-12). Phase index: `docs/plans/phase-3.md` (order, ownership,
-merges, departures, interfaces). Contract: `docs/PLAN.md:311` ("Phase F2"), sections 2.4 and 2.7. Where this brief
-disagrees with PLAN.md on a goal, PLAN.md wins: stop and report (except the approved departures P1-P8 of
-phase-3.md section 5 and phase-2.md section 5, which you follow).
+Brief for one sonnet builder, revision 1 (2026-11-12, after review 1). Phase index: `docs/plans/phase-3.md` (order,
+ownership, merges, departures, interfaces, Phase 2's holds H1-H7). Contract: `docs/PLAN.md:311` ("Phase F2"),
+sections 2.4 and 2.7. Where this brief disagrees with PLAN.md on a goal, PLAN.md wins: stop and report (except the
+approved departures P1-P8 and refinements R1-R3 of phase-3.md section 5 and phase-2.md section 5, which you follow).
 
 You work in `../libazahar-py-f2` (branch `step-f2`, made at main after Phase 2 merged). "MAIN" is
 `/Users/guyshtainer/VSCodeProjects/3ds-toolkit/projects/libazahar-py`. "OURS" is
-`MAIN/build-core/azahar_lazpy_libretro.dylib` (absolute path; **read only**); "STOCK" is
-`dl/azahar/azahar_libretro.dylib` in your worktree (a link to MAIN's). **Never commit, never edit item files, never
-write in MAIN.** Read first: the repo's `CLAUDE.md`, `docs/map/rules.md`, phase-3.md sections 2, 3, 5 and 6,
-phase-c.md sections 3.4, 3.5, 6, 8, phase-d.md sections 3, 4 and 8, `core/README.md`, `core/options-lazpy.txt`,
-`~/.claude/python-golden-rules.md` and `~/.claude/c-golden-rules.md`.
+`MAIN/build-core/azahar_lazpy_libretro.dylib` (absolute path; **read only**), the core the main loop has just
+rebuilt with Azahar's built-in console key blob off (Phase 4's P9). "STOCK" is `dl/azahar/azahar_libretro.dylib` in
+your worktree (a link to MAIN's). **Never commit, never edit item files, never write in MAIN.** Read first: the
+repo's `CLAUDE.md`, `docs/map/rules.md`, phase-3.md sections 2, 3, 5 and 6, phase-c.md sections 3.4, 3.5, 6, 8,
+phase-d.md sections 3, 4 and 8, `core/README.md`, `core/options-lazpy.txt`, `tests/gate_c.py`,
+`tests/python/conftest.py`, `~/.claude/python-golden-rules.md` and `~/.claude/c-golden-rules.md`.
 
 ## 1. Goal and gate
 
-Prove our core works with everything Phases 1 and 2 built, applied with its own option profile, and that it gives
-the exact repeats the stock core cannot. The gate (headless, this Mac):
+Prove that the core we will ship (keys off) works with everything Phases 1 and 2 built, applied with its own option
+profile, and that it gives the exact repeats the stock core cannot. The gate (headless, this Mac):
 
-1. **f1** `MAIN/build-core/build.exit` holds `0` and OURS exists.
-2. **f2** `/usr/bin/nm -gU OURS` lists exactly the 25 `_retro_*` names of SRC
-   `citra_libretro/libretro.osx.def` plus `_lazpy_read_memory`, `_lazpy_write_memory`, `_lazpy_movie_play` (28,
-   nothing else); STOCK lists exactly the 25.
-3. **f3** a run on OURS writes `2126.2-lazpy.1` as the core version in host.log, and the effective option set logged
-   at boot holds the six keys of `core/options-lazpy.txt` with its values (P8 works).
-4. **f4** on OURS: `make test-host` passes; `python3 -I tests/gate_c.py --core OURS` prints PASS for C(a)-(f) and the
-   raw-shot check with the our-core expectations of section 5; `LAZ_CORE=OURS LAZ_REQUIRE_EMULATOR=1 python3 -m
-   pytest -q -rs tests/python` passes with 0 skipped; **no host.log** under `runs/c-gate/` or `runs/d-pytest/` from
-   these runs holds C's exit-path line (stop reasons returned, no `_exit`).
+1. **f1 the rebuilt core** (`gate_f2.py` id `keyblob`, the first check): `MAIN/build-core/build.exit` holds `0`;
+   OURS exists and its mtime is later than `MAIN/build-core/build/CMakeCache.txt`'s (so it came from this build);
+   the cache has the line `ENABLE_BUILTIN_KEYBLOB:BOOL=OFF`; a walk of `MAIN/build-core/build/` finds at least 1,000
+   `*.o.d` files and **none** names `default_keys.h`; OURS does not contain the 16 bytes `[removed]
+   [removed]` (the blob's start, at offset 13,960,800 of the keys-on build); `strings -a OURS` has a line
+   `-lazpy.1`. RECORD: OURS's size and the number of `strings -a` lines holding `/Users/` (the prefix map's effect;
+   Phase 4 gates it to 0).
+2. **f2** `/usr/bin/nm -gU OURS` lists exactly the 25 `_retro_*` names of SRC `citra_libretro/libretro.osx.def` plus
+   `_lazpy_read_memory`, `_lazpy_write_memory`, `_lazpy_movie_play` (28, nothing else); STOCK lists exactly the 25.
+3. **f3** a run on OURS writes `2126.2-lazpy.1` as the core version in host.log (`core <name> version <v>`), and the
+   `option <key>=<value>` lines logged at boot hold the six keys of `core/options-lazpy.txt` with its values (P8).
+4. **f4** on OURS: `make test-host` passes; `python3 -I tests/gate_c.py --core OURS` prints PASS for C(a)-(f) with
+   the our-core expectations of section 5; `LAZ_CORE=OURS LAZ_REQUIRE_EMULATOR=1 python3 -m pytest -q -rs
+   tests/python` passes with 0 skipped (its header line says `kind=lazpy`); **no host.log** written by these two
+   parts holds C's exit-path line, grepped right after each part (section 7 step 2).
 5. **f5** C(e)'s repeat (section 6, r1): two runs on OURS in fresh folders give identical shot sha256s, a
-   byte-identical SD `log.txt` (`s=` and `t=` included) and identical summary lines (wall fields removed).
+   byte-identical SD `log.txt` (`s=` and `t=` included) and identical summary lines with the `wall=`, `fps=` and
+   `wall_ms_mean=` fields removed.
 6. **f6** D's state boot repeat (section 6, r2): two full chains on OURS give identical shot sha256s and log lines
-   after the state for the two restored instances.
+   after the state for the two restored instances; each chain's `t_state` is under 2.5 s (Guy's bound, hold H5).
 7. **f7** the debug-text stop (section 6, dbg): `stop=debug_text`; the batch's last frame is within {0, 1} of the
    `ready` line's host frame and **equal across two runs**; the SD log at the stop ends at the `ready f=200` line or
    the one per-frame line after it.
 8. **f8** recorded, not gated: a stock-made state loaded into OURS and an OURS state loaded into STOCK (ok, or the
    error class and text); r1 on STOCK twice (which fields differ); the state bytes of the two r2 chains after the
-   256-byte header; `drain_ms` and `t_state` from the r2 host.logs.
-9. **f9** the stock core still passes after your edits: `python3 -I tests/gate_c.py --core STOCK` and `LAZ_CORE=STOCK
-   LAZ_REQUIRE_EMULATOR=1 python3 -m pytest -q -rs tests/python`.
+   256-byte header; `drain_ms` and `t_state` of each r2 chain.
+9. **f9** the stock smoke (review 1, Q4) after your edits: `python3 -I tests/gate_c.py --core STOCK --only c,f`
+   passes, and `LAZ_CORE=STOCK LAZ_REQUIRE_EMULATOR=1 python3 -m pytest -q -rs tests/python -k "c4 or guest_exit or
+   lazpy"` passes with 0 skipped (the stock c4 test, D's guest-exit test, your profile tests and your our-core c4
+   twin, which takes `lazpy_core` whatever `LAZ_CORE` says). The phase-end suite runs everything on stock later.
 
 ## 2. Facts (checked; SRC = `MAIN/dl/azahar-src/unpacked/azahar-unified-source-2126.2/src/`, PATCHES = `core/patches/`)
 
-- macOS exports only what `libretro.osx.def` lists (SRC citra_libretro/CMakeLists.txt:96, `-exported_symbols_list`);
-  the file has 25 symbols after two comment lines (27 lines). Patch 0001 appends `_lazpy_read_memory` and
-  `_lazpy_write_memory`; 0006 appends `_lazpy_movie_play`.
-- Patch 0005 sets the version suffix `-lazpy.1`; A's `azh_version_ok` accepts `2126.2` and `2126.2-lazpy.1`
-  (`host/pins.h`).
-- Our core's six options exist only when it registers them (patch 0002); A's `azh_set_option` refuses an
-  unregistered key with `AZH_E_ARG` (phase-a "2. Facts"), so **the lazpy lines must not be sent to the stock core**.
-  No Phase 1 or 2 code applies `core/options-lazpy.txt` (phase-3.md P8): you add that.
-- What makes repeats exact on our core, and what breaks them on stock:
-  - async HLE work runs on `std::async` unless `deterministic_async_operations` (SRC common/settings.h:490-491;
-    core/hle/kernel/hle_ipc.h:306, 348);
-  - the guest's tick base is random unless `init_ticks_type=Fixed` (SRC core/core_timing.cpp:37-44), so `s=`
-    differs run to run on stock;
-  - the guest clock starts from the host clock unless `init_clock=FixedTime` (SRC core/hle/kernel/shared_page.cpp:
-    34-63), so `t=` differs on stock;
-  - the log runs on its own thread unless `instant_debug_log` (SRC common/logging/backend.cpp:353), which is why a
-    debug-text stop is refused on stock (P5) and must be exact on ours.
-- On our core status 16 does not `_exit`: patch 0003 makes `retro_run` return after `DisplayMessage`, C's detector
-  flags `AZH_ACT_EXITED` and the batch returns `stop=guest_exited` (phase-c 3.5); azhost exits 10 after printing the
-  summary (phase-c 6). A crash is `guest_error` with no 3-in-one-run count; the Emulator stays open after a
-  `GuestError` on our core (phase-d 4.5).
-- A state's 256-byte `CSTHeader` holds the program id, the revision, **the wall-clock time of the save** and the
-  build name (SRC core/savestate.cpp:24-36, 262), so two states of one guest moment differ in their first 256 bytes.
-  A state is refused when its revision is not `g_scm_rev` (savestate.cpp:296-303). A build from the unified tarball
-  takes `GIT_REV` from its `GIT-COMMIT` file (`dl/azahar-src/unpacked/.../CMakeModules/GenerateBuildInfo.cmake:13-16`),
-  the same commit the stock release was built from, so the two cores may accept each other's states; D's meta only
-  warns on a different `core_version` (phase-d 3.3). f8 records what happens.
-- C's exit-path line: find its exact fixed text in `host/env.c` (phase-c 3.5: one `write(2)` of a fixed line to the
-  log fd) and grep for that text.
+- The key blob: `option(ENABLE_BUILTIN_KEYBLOB ... ON)` (SRC `CMakeLists.txt:154`) adds `src/core/hw/default_keys.h`
+  to `citra_core` when on; the keys-on build's `CMakeCache.txt:728` said ON and only
+  `citra_core.dir/hw/aes/key.cpp.o.d` (of 1,659 `.o.d` files) named the header. `tools/build-core.sh` now passes
+  `-DENABLE_BUILTIN_KEYBLOB=OFF` and `-ffile-prefix-map=$PWD/=` and dies when either guard fails, so a 0 in
+  `build.exit` already implies f1's two file checks; `gate_f2.py` checks them again from the files, independently.
+- macOS exports only what `libretro.osx.def` lists (SRC citra_libretro/CMakeLists.txt:96); the file has 25 symbols
+  after two comment lines. Patch 0001 appends `_lazpy_read_memory`, `_lazpy_write_memory`; 0006 `_lazpy_movie_play`.
+- Patch 0005 makes the version `g_build_fullname + "-lazpy.1"` at run time, so the dylib holds `-lazpy.1` as its own
+  string and the logged version is `2126.2-lazpy.1`; A's `azh_version_ok` accepts it (`host/pins.h`).
+- Our core's six options exist only when it registers them (patch 0002, **with stock defaults**); A's
+  `azh_set_option` refuses an unregistered key with `AZH_E_ARG`, so **the lazpy lines must not be sent to the stock
+  core**. No Phase 1 or 2 code applies `core/options-lazpy.txt` (P8): you add that. host.log logs one `option
+  <key>=<value>` line per registered key at boot (`host/options.c:164`).
+- `azh_stats` is already valid after `azh_open` (hold H6), so azhost and the worker can learn `is_lazpy_core`
+  before they set options. Change nothing in `host/api.c`.
+- D's Emulator already closes itself after a returned `guest_exited` (hold H7, `emulator.py` `run`).
+- What makes repeats exact on our core, and what breaks them on stock: async HLE work on `std::async` unless
+  `deterministic_async_operations` (SRC settings.h:490-491; hle_ipc.h:306, 348); a random tick base unless
+  `init_ticks_type=Fixed` (core_timing.cpp:37-44), so `s=` differs on stock; the host clock unless
+  `init_clock=FixedTime` (shared_page.cpp:34-63), so `t=` differs on stock; the log on its own thread unless
+  `instant_debug_log` (backend.cpp:353-357, which also flushes per entry), why a debug-text stop is refused on stock.
+- On our core status 16 does not `_exit`: patch 0003 makes `retro_run` return after `DisplayMessage`, C flags
+  `AZH_ACT_EXITED` and the batch returns `stop=guest_exited`; azhost exits 10 after printing the summary. A crash is
+  `guest_error` with no count; the Emulator stays open after a `GuestError` on our core.
+- A state's 256-byte `CSTHeader` holds the program id, the revision, the wall-clock time of the save and the build
+  name (SRC core/savestate.cpp:24-36, 262); the body after it is zstd (`:303-304`). A state is refused when its
+  revision is not `g_scm_rev` (`:291-301`); both cores take `GIT_REV` from the same `GIT-COMMIT`, so they may accept
+  each other's states; D's meta only warns on a different `core_version`. f8 records what happens.
+- C's exit-path line is one fixed `write(2)` in `host/env.c:40-56`; take its exact text from there.
+- The summary line is `frames= wall= fps= shots= stop= first= last= vblanks= wall_ms_mean= batch= msg=` (hold H4).
+- `tests/gate_c.py` has `run_azhost(ident, flags, control, timeout)` writing under the module global `RUNS`
+  (`runs/c-gate/<ident>/`), killing its own child on a timeout or any `BaseException`, returning rc, parsed
+  summaries (`checks_c.parse_summary`) and `last` lines; reuse it (section 6).
+- D's fixtures (hold H1): `host_paths` follows `LAZ_CORE`; `lazpy_core` and `stock_core` name a core whatever
+  `LAZ_CORE` says; the session header prints `core=<path> kind=<kind>`. D's `test_c4_debug_text_needs_our_core`
+  passes `core=stock_core`.
 
 ## 3. The code changes (F2-1)
 
-### 3.1 `azh_stats` after open (`host/api.c`)
-
-Allow `azh_stats` in every state after `azh_open` succeeded (before boot it reports frames 0, the rusage so far, the
-core's name and version and `is_lazpy_core`). Change only the call-order check for this one function; the header
-comment in `azhost.h` is not edited (frozen); the change goes in your report for USING.md and HOST-API.md (Phase 4).
-If the merged code already allows it, change nothing.
-
-### 3.2 `azhost` applies our core's profile (`host/azhost_main.c`)
+### 3.1 `azhost` applies our core's profile (`host/azhost_main.c`)
 
 New flag `--lazpy-profile FILE|none`, default `core/options-lazpy.txt` (relative to the current directory, like A's
 `--profile` default). After `azh_open`: `azh_stats`; if `is_lazpy_core`, apply the file's lines with A's profile
@@ -90,7 +99,7 @@ reader and `azh_set_option` **first**, then A's `--profile` lines, then each `--
 skips it. On the stock core the lazpy file is not read. A missing or bad lazpy file on our core is handled exactly
 as A handles a missing or bad `--profile` (same message shape, same exit code). Add the flag to `--help`.
 
-### 3.3 The Python side
+### 3.2 The Python side
 
 - `_paths.py`: `lazpy_profile() -> Path | None`: `LAZ_LAZPY_PROFILE` (the text `none` gives None), else
   `<root>/core/options-lazpy.txt`, resolved; a missing default file gives None with no error (a pip user without the
@@ -98,20 +107,24 @@ as A handles a missing or bad `--profile` (same message shape, same exit code). 
 - `_worker.py`: the `start` request gains `lazpy_options` (an ordered list of pairs, maybe empty). After `azh_open`:
   `azh_stats`; then apply `option_plan(is_lazpy, lazpy_options, options)` in order, then `azh_boot`. `option_plan`
   is a small pure function (lazpy pairs first only when `is_lazpy`, then the others) so it is unit-tested.
-- `emulator.py`: read the lazpy file with the same reader the profile uses and send its pairs; after a `run` reply
-  whose `stopped_by` is `guest_exited` (the our-core path: the worker is alive), close the Emulator (D's graceful
-  close, then reap) before returning the `RunResult`, so both cores leave the user in the same state (closed).
-  Nothing else in the Emulator changes.
+- `emulator.py`: read the lazpy file with D's `_read_profile` and send its pairs. In `run`, the close after a
+  returned `guest_exited` (H7's line) waits at most 5 s for the graceful close (`self._client.close(min(self.timeout,
+  5.0))`), then D's SIGKILL of its own worker, so a stalled `retro_unload_game` does not cost 30 s. Nothing else in
+  the Emulator changes.
 
-### 3.4 Core-kind switches in the tests (no expectation loosened)
+### 3.3 Core-kind switches in the tests (no expectation loosened)
 
-- `tests/gate_c.py`: `--core PATH` (passed to `azhost --core`; default as before) and `--core-kind auto|stock|lazpy`
-  (auto: `/usr/bin/nm -gU <core>` lists `_lazpy_read_memory`). The kind is printed first. Our-core expectations in
-  section 5; the stock expectations are unchanged.
-- `tests/python/conftest.py`: a session fixture `core_kind` ("stock" or "lazpy", by the same `nm` test on the core
-  `host_paths` resolves). D's slow tests whose outcome depends on the core branch on it; each branch asserts as
-  strictly as the stock one (section 5). Edit only the tests that need it (`test_c_checks.py`, `test_live_errors.py`,
-  `test_state.py`, `test_api.py`) and list every changed assertion in the report.
+- `tests/gate_c.py`: `--core PATH` (passed to `azhost --core` through a module-level flag list that `run_azhost`
+  appends; default as before) and `--core-kind auto|stock|lazpy` (auto: `/usr/bin/nm -gU <core>` lists
+  `_lazpy_read_memory`). The first printed line is `core=<path> kind=<kind>` (D's header shape). Our-core
+  expectations in section 5; the stock expectations are unchanged.
+- `tests/python/test_c_checks.py`: add `test_c4_debug_text_on_our_core(host_paths, lazpy_core, workdir, seed)`: on
+  `core=lazpy_core`, `run(600, debug_text="ready f=")` with `ready_at=200` gives `stopped_by == "debug_text"` and
+  `last_frame < 600`. Do not touch the stock c4 test.
+- D's other live tests run on whichever core `LAZ_CORE` names. Run them on OURS first; edit
+  `test_live_errors.py`, `test_state.py` or `test_api.py` **only** where a check fails for a core reason (an
+  expectation that differs by design, section 5), branching on `"lazpy" in host_paths.core.name` with an our-core
+  assertion at least as strict as the stock one. Do not edit `conftest.py` (D's; a missing fixture is reported).
 - New `tests/python/test_lazpy_profile.py` (no emulator): `option_plan` order and the stock skip; `lazpy_profile()`
   with the variable set, `none`, unset with and without the file; **no key of `core/options-lazpy.txt` appears in
   `host/options-default.txt`** (so the order between the two files can never matter).
@@ -120,18 +133,18 @@ as A handles a missing or bad `--profile` (same message shape, same exit code). 
 
 | Path | Role |
 |---|---|
-| `host/api.c` | 3.1 only |
-| `host/azhost_main.c` | 3.2 only |
-| `python/libazahar/_paths.py`, `_worker.py`, `emulator.py` | 3.3 only |
-| `tests/gate_c.py`, `tests/python/conftest.py`, `test_c_checks.py`, `test_live_errors.py`, `test_state.py`, `test_api.py` | 3.4 only |
+| `host/azhost_main.c` | 3.1 only |
+| `python/libazahar/_paths.py`, `_worker.py`, `emulator.py` | 3.2 only |
+| `tests/gate_c.py`, `tests/python/test_c_checks.py` | 3.3 only |
+| `tests/python/test_live_errors.py`, `test_state.py`, `test_api.py` | 3.3, only where a run proves an our-core branch is needed |
 | `tests/python/test_lazpy_profile.py`, `tests/gate_f2.py` | new |
-| `core/patches/*` | only in the build-failed path (section 7 step 0) |
 
 Run artefacts go under `runs/f2/` (ignored), including the slot helper of section 9. Everything else is outside your
-files (phase-3.md section 3): in particular `host/run.c`, `host/png.c`, `python/libazahar/_client.py` and
-`__init__.py` (step E edits them in parallel), every header, `testapp/`, `tests/testapp_log.py`, `tests/checks_c.py`
-(import only). If a check fails because of another Phase 2 file, stop and report with the failing output; edit it
-only if the main loop names the file in a message.
+files (phase-3.md section 3): in particular `host/api.c`, `host/run.c`, `host/png.c`, `core/` (no patch changes in
+this step), `tools/build-core.sh`, `python/libazahar/_client.py` and `__init__.py` (step E edits them in parallel),
+`tests/python/conftest.py`, every header, `testapp/`, `tests/testapp_log.py`, `tests/checks_c.py` (import only). If
+a check fails because of another Phase 2 file, stop and report with the failing output; edit it only if the main
+loop names the file in a message.
 
 ## 5. Our-core expectations in C's and D's tests
 
@@ -139,23 +152,29 @@ only if the main loop names the file in a message.
 |---|---|---|
 | C(c) c4 `--debug-stop "ready f="` | exit 7, stderr `NeedsLazpyCore:` | exit 0, `stop=debug_text`, batch 1's `last` below 600 |
 | C(e) break | `stop=guest_break`, runs on | the same |
-| C(f) exit | f1 exit 10; f2 map stop code 4, `exit_code` 10, message `(16)`; f3; f4 | f1 exit 10 **after** a summary line with `stop=guest_exited` and `msg` holding `(16)`; f2 map `exit_code` 0 and no exit-path line in host.log; f3 with the summary's `last` in place of the map's `frame_total`; f4 the same |
-| C(g)-style error count (D's live tests) | 3 errors in one `retro_run`: exit 11, `GuestError`, Emulator closed | `GuestError` with `.result` (`stopped_by == "guest_error"`), Emulator open, one more `run(1)` works |
-| D's debug-text test (if any) | `NeedsLazpyCore` | `stopped_by == "debug_text"` |
-| D's exit test | `RunResult(stopped_by="guest_exited")` from the death mapping, Emulator closed | the same `RunResult` from the reply, Emulator closed (3.3) |
+| C(f) exit | f1 exit 10; f2 map stop code 4, `exit_code` 10, message `(16)`; f3; f4 | f1 exit 10 **after** a summary line with `stop=guest_exited` and `msg` holding `(16)`; f2 no exit-path line in host.log, and the map's stop code and `exit_code` as the code writes them on this path (read `azhost_main.c`; report the values); f3 with the summary's `last` in place of the map's `frame_total` if the map does not carry it; f4 the same |
+| D's debug-text test | `test_c4_debug_text_needs_our_core` (stock, explicit): `NeedsLazpyCore` | your twin `test_c4_debug_text_on_our_core` (explicit `lazpy_core`): `stopped_by == "debug_text"` |
+| D's guest-exit test (`test_f_guest_exit`) | `RunResult(stopped_by="guest_exited")` from the death mapping, Emulator closed | the same `RunResult` from the reply, Emulator closed (H7) |
+| D's state boot (`test_state_boot`, `test_state_boot_wall_ratio`) | `t_state < 2.5 s` (H5) | the same bound |
 | Everything else | as written | identical expectations |
 
 ## 6. `tests/gate_f2.py` (new; stdlib plus `tests/` modules)
 
-`python3 -I tests/gate_f2.py --ours OURS --stock STOCK [--only symbols,version,dbg,r1,r2,cross,stock_r1]`. It
-inserts the absolute `tests/` and `python/` paths into `sys.path` first (phase-2.md B12). Every scenario runs in a
-fresh `runs/f2/<id>/`; azhost runs are `nice -n 10 build/azhost run build/testapp.3dsx --sys ... --out ...
---sd-seed ... --core <core>` with a 600 s timeout that kills only its own child. Lines printed: `PASS <id> ...`,
-`FAIL <id> ...`, `RECORD <id> ...`; the summary goes to `runs/f2/summary.txt`; exit 0 only if no FAIL.
+`python3 -I tests/gate_f2.py --ours OURS --stock STOCK [--only keyblob,symbols,version,dbg,r1,r2,cross,stock_r1]`.
+It inserts the absolute `tests/` and `python/` paths into `sys.path` first (phase-2.md B12). Every scenario runs in
+a fresh `runs/f2/<id>/`: import `gate_c`, set `gate_c.RUNS = <repo>/runs/f2` and reuse `gate_c.run_azhost` (pass
+`--core <core>` in its flags) and `checks_c.parse_summary` rather than a second runner (review 1 N12). Lines printed:
+`PASS <id> ...`, `FAIL <id> ...`, `RECORD <id> ...`; the summary goes to `runs/f2/summary.txt`; exit 0 only if no
+FAIL. `keyblob` and `symbols` run no emulator.
 
-- **symbols**: f2 (section 1). The 25 names are read from SRC's `libretro.osx.def` (lines starting with `_`), not
-  typed in. Print any extra or missing name.
-- **version**: a 30-frame run on OURS; f3 (section 1), the six key=value pairs found in the logged option set.
+- **keyblob** (f1): file reads only: `build.exit`, the two mtimes, the cache line (exact match), an `os.walk` of
+  `MAIN/build-core/build` counting `*.o.d` files and listing any that contain `default_keys.h`, a byte search of OURS
+  for the 16 bytes, `strings -a OURS` for a line equal to `-lazpy.1`. Print each finding; RECORD the size and the
+  `/Users/` line count. Write the check as one function `keyblob_findings(build_dir, core) -> list[str]` (empty
+  means pass) so Phase 4's `release_check.py` can import it.
+- **symbols**: f2. The 25 names are read from SRC's `libretro.osx.def` (lines starting with `_`), not typed in. Print
+  any extra or missing name.
+- **version**: a 30-frame run on OURS; f3, the six key=value pairs found among the `option ` lines.
 - **dbg** (f7), twice (`.1`, `.2`): seed `ready_at=200`; `--frames 600,1,1,1,1,1,1,1,1 --debug-stop "ready f="
   --print-last-line testapp/log.txt`. d1 batch 1 `stop=debug_text`; c_min from batches 2-9 with
   `checks_c.boot_offsets`; d2 batch 1's `last 1:` line is `ready f=200 ...` or the per-frame line `f=201 ...`; d3
@@ -164,63 +183,66 @@ fresh `runs/f2/<id>/`; azhost runs are `nice -n 10 build/azhost run build/testap
 - **r1** (f5), twice on OURS: seed `break_at=300`; an inputs file written by the gate (A held frames 120-129, B
   140-149, touch (160, 120) down 150-159, circle (32767, 0) 170-179, all before the break); `--frames 600,120
   --inputs r1.txt --shot 100,250 --print-last-line testapp/log.txt`. Batch 1 must stop `guest_break` (as C(e)).
-  Compare the two runs: the four PNGs' sha256, `log.txt` bytes, the summary lines with `wall=`, `fps=`,
-  `wall_ms_max=` fields removed. Any difference is a FAIL naming the first differing line and field.
-- **stock_r1** (f8): r1 twice on STOCK; RECORD which fields differ (expected: `s=` and `t=`, section 2) and whether
-  the shots match.
+  Compare the two runs: the four PNGs' sha256, `log.txt` bytes, the summary lines with the `wall=`, `fps=` and
+  `wall_ms_mean=` fields removed. Any difference is a FAIL naming the first differing line and field.
+- **stock_r1** (f8): r1 twice on STOCK; RECORD which fields differ (expected: `s=` and `t=`) and whether the shots
+  match.
 - **r2** (f6), two chains on OURS, in Python through `libazahar` (core passed as `core=OURS`):
   1. `a = Emulator(app, runs/f2/r2-<c>/a, sd_seed=seed(boot_frames=1200))`; `a.run(1300)`; the log has the
      `booted` line; `S = a.save_state(runs/f2/r2-<c>/s.state)`; note the SD `log.txt` length at the save;
      `a.run(300, shots=[100, 300])`; keep a's log lines after the noted length and its shot sha256s; `a.close()`.
-  2. `b = Emulator(app, runs/f2/r2-<c>/b, state=s.state)`; `b.run(300, shots=[100, 300])`; b's log lines after the
-     snapshot's length (the snapshot's `log.txt` is a's at the save) and its shot sha256s; the `state load ...
-     drain_ms=` line from b's host.log; `b.close()`.
-  Gate: b of chain 1 equals b of chain 2 (lines and shot hashes). RECORD: a1 == a2; a_c == b_c within a chain (a
-  saved instance and its restore continue alike); the two `s.state` files equal after byte 256 (and their first
-  256 bytes, expected to differ only in the time field); `drain_ms`, `t_state`.
+  2. `t0 = time.monotonic(); b = Emulator(app, runs/f2/r2-<c>/b, state=s.state); t_state = time.monotonic() - t0`
+     (D's definition, hold H5); `b.run(300, shots=[100, 300])`; b's log lines after the snapshot's length and its
+     shot sha256s; the `state load ...` line from b's host.log (it holds `drain_ms`); `b.close()`.
+  Gate: b of chain 1 equals b of chain 2 (lines and shot hashes); `t_state < 2.5` per chain. RECORD: a1 == a2; a_c ==
+  b_c within a chain; the two `s.state` files equal after byte 256 (and their first 256 bytes, expected to differ
+  only in the time field); `drain_ms`, `t_state`.
 - **cross** (f8): `x = Emulator(app, ..., core=STOCK)`, `run(300)`, `save_state(stock.state)`, close; then
   `Emulator(app, ..., core=OURS, state=stock.state)` and `run(60)`: RECORD ok (and whether the log's `f` continues
   from the save) or the error class and text. The reverse with r2's chain-1 `s.state` into STOCK.
 
 ## 7. Steps, with a checkpoint after each (save files as you go; never commit)
 
-0. **F2-0 (about 0.05 h): the build.** Read `MAIN/build-core/build.exit`, `ls -l OURS`, the tail of
-   `MAIN/build-core/build.log`.
-   - `build.exit` is `0` and OURS exists: go on.
-   - The build failed (non-zero): find the first error in `build.log`. If it is in a patched file, fix the patch in
-     your worktree's `core/patches/` with the smallest change (keep the hunk's notice; re-check it applies with `patch
-     -p1 --dry-run` on a scratch copy of the pristine unpacked tree under `runs/f2/`, never in MAIN). **Then end your
-     run** with a "build failed" report: the error, the patch diff, and the restart command for the main loop
-     (`cd MAIN && nice -n 10 tools/build-core.sh --detach`, with `LAZ_CORE_LTO=OFF` if the log shows the linker was
-     killed or ran out of memory). If the error is not in our patches (CMake, a submodule), report it with the log
-     lines and stop. The main loop resumes you when `build.exit` is 0.
-   - No `build.exit` and a live `build.pid`: the build is still running; wait with Monitor (bounded 120 min) and
-     report the wait.
-   Then f2 with `nm`. Seed the worktree: `mkdir -p dl && for d in azahar moltenvk libretro-headers vulkan-headers
-   azahar-src; do [ -e MAIN/dl/$d ] && ln -s MAIN/dl/$d dl/$d; done`, `cp -R MAIN/vendor .`, `make`,
+0. **F2-0 (about 0.05 h): the rebuilt core.** You are launched after `MAIN/build-core/build.exit` holds 0. If it does
+   not (or is missing), stop and report the tail of `build.log`; the build is the main loop's. Seed the worktree:
+   `mkdir -p dl && for d in azahar moltenvk libretro-headers vulkan-headers azahar-src; do [ -e MAIN/dl/$d ] && ln
+   -s MAIN/dl/$d dl/$d; done` (link the children, never `dl/` itself), `cp -R MAIN/vendor .`, `make`,
    `PATH=/opt/devkitpro/devkitARM/bin:/opt/devkitpro/tools/bin:$PATH make testapp` (or copy
-   `MAIN/build/testapp.3dsx`). Checkpoint: f1, f2; `make test-host` and the non-slow pytest pass (baseline counts
-   printed).
-1. **F2-1 (about 0.25 h; no emulator except one by-hand check).** Sections 3 and 6 (write `gate_f2.py`, do not run
-   it). Checkpoint: `make check && make && make test-host` clean; `python3 -m pytest -q tests/python -m "not slow"`
-   passes with `test_lazpy_profile.py`; one by-hand `azhost run build/testapp.3dsx ... --core OURS --frames 30`
-   through the slot helper shows f3's version and the six keys in host.log.
-2. **F2-2 (about 0.25 h of agent time; about 60-90 min of machine time).** One background batch, every emulator
-   command through the slot helper, one instance at a time, in this order: gate C on OURS; pytest on OURS;
-   `gate_f2.py` (all ids); gate C on STOCK; pytest on STOCK. Write it as `runs/f2/batch.sh` with one rc file per part
-   (`runs/f2/<part>.rc`) and the whole batch's from a trap: `sh -c 'trap "echo \$? > runs/f2-batch.rc" EXIT; nice -n
-   10 sh runs/f2/batch.sh > runs/f2-batch.log 2>&1'` with `run_in_background`; wait with Monitor until
-   `runs/f2-batch.rc` exists (bounded 150 min). Then grep the host.logs for the exit-path line (f4). Without
-   Monitor: run each part as its own foreground call, each split under the 10-minute limit (`gate_c.py --only`,
-   pytest per file, `gate_f2.py --only`), and say so. Checkpoint: gate f1-f9; quote every PASS/FAIL/RECORD line.
+   `MAIN/build/testapp.3dsx`). Write `gate_f2.py`'s `keyblob` and `symbols` parts first and run them (`--only
+   keyblob,symbols`; no emulator). Checkpoint: f1, f2; `make test-host` and the non-slow pytest pass (baseline
+   counts printed). **If f1 fails, stop and report "the key blob is still in the build"**: nothing else in this step
+   is valid on that binary.
+1. **F2-1 (about 0.2 h; no emulator except one by-hand check).** Sections 3 and the rest of 6 (write the emulator
+   parts of `gate_f2.py`, do not run them). Checkpoint: `make check && make && make test-host` clean; `python3 -m
+   pytest -q tests/python -m "not slow"` passes with `test_lazpy_profile.py`; one by-hand `build/azhost run
+   build/testapp.3dsx ... --core OURS --frames 30` through the slot helper shows f3's version and the six keys in
+   host.log.
+2. **F2-2 (about 0.2 h of agent time; about 45-65 min of machine time).** One background batch, every emulator
+   command through the slot helper, one instance at a time, as `runs/f2/batch.sh` with one rc file per part
+   (`runs/f2/<part>.rc`), in this order:
+   1. `gate_c.py --core OURS`; then at once `grep -rlF "<the env.c line>" runs/c-gate --include host.log >
+      runs/f2/exitpath-ours.txt` (B3: before any stock part can write there);
+   2. `LAZ_CORE=OURS LAZ_REQUIRE_EMULATOR=1 python3 -m pytest -q -rs tests/python`; then at once the same grep over
+      `runs/d-pytest`, appended to `runs/f2/exitpath-ours.txt` (the stock c4 test there is refused before any
+      frame, so it cannot write the line either);
+   3. `gate_f2.py` (all ids; its our-core host.logs are grepped by the gate itself into the same file);
+   4. the stock smoke (f9).
+   Start it as `sh -c 'trap "echo \$? > runs/f2-batch.rc" EXIT; nice -n 10 sh runs/f2/batch.sh > runs/f2-batch.log
+   2>&1'` with `run_in_background`; wait with Monitor until `runs/f2-batch.rc` exists (bounded 120 min). f4's grep
+   passes when `runs/f2/exitpath-ours.txt` is empty. Without Monitor: run each part as its own foreground call,
+   each split under the 10-minute limit (`gate_c.py --only`, pytest per file, `gate_f2.py --only`), grep after each
+   our-core part, and say so. Checkpoint: f1-f9; quote every PASS/FAIL/RECORD line.
 3. The report (section 10) ends the run. Stop every waiter and background task you started (TaskStop) first. If the
-   opus review asks for fixes, the main loop resumes you.
+   opus review asks for fixes, the main loop resumes you; any emulator rerun then is a timed part (phase-3.md rule
+   T): the resume message says when the machine is free.
 
 ## 8. When a repeat is not identical
 
 Do not tune and do not add options. Record the first differing log line (both versions), which fields differ, the
 first differing shot frame, and whether the a1 == a2 RECORD differs at the same place. Then report; the main loop
-takes it to review (a new core patch is a change of scope for Phase 3). The rest of the batch still runs.
+takes it to review (a new core patch is a change of scope for Phase 3). The rest of the batch still runs. If a
+difference looks key-related (a file or service that needs console keys), say so: the main loop takes it to Guy,
+and the key blob stays off.
 
 ## 9. Machine-sharing rules
 
@@ -239,45 +261,48 @@ takes it to review (a new core patch is a change of scope for Phase 3). The rest
 
 ## 10. The builder's report
 
-F2-0's result (and any wait or build failure); f1-f9 as printed; every changed assertion in C's and D's tests (old
-and new, with the reason); the `option_plan` and the azhost order as built; the r1 and r2 comparisons and every
-RECORD line (stock's differing fields, the state bytes after byte 256, `drain_ms` and `t_state`, cross-core
-results); the dbg frames of both runs; the slot waits; whether `azh_stats` needed the order change; line counts per
-edited file and the longest function; the runners block for `docs/map/runners.md`:
+F2-0's result; f1-f9 as printed (with f1's RECORD lines: size, `/Users/` count); every changed assertion in C's and
+D's tests (old and new, with the reason); the `option_plan` and the azhost order as built; the r1 and r2
+comparisons and every RECORD line (stock's differing fields, the state bytes after byte 256, `drain_ms` and
+`t_state`, cross-core results); the dbg frames of both runs; the slot waits; C(f)'s map values on our core; line
+counts per edited file and the longest function; the runners block for `docs/map/runners.md`:
 ```
 build/azhost run <app> ... --core build-core/azahar_lazpy_libretro.dylib [--lazpy-profile core/options-lazpy.txt|none]
 python3 -I tests/gate_c.py --core <core> [--core-kind auto|stock|lazpy]
-python3 -I tests/gate_f2.py --ours <our core> --stock <stock core> [--only ...]   # step F2's gate
+python3 -I tests/gate_f2.py --ours <our core> --stock <stock core> [--only ...]   # step F2's gate (keyblob first)
 ```
 lines for `.gitignore` (none expected); one line for USING.md (Phase 4): "on our core `core/options-lazpy.txt` is
-applied first; `LAZ_LAZPY_PROFILE=none` turns it off"; and a final **"Lessons and notes"** block, ready to paste into
-item 320 (with the drain numbers for D 3.3's note: whether a drain-only export is worth a Phase 4 item).
+applied first; `LAZ_LAZPY_PROFILE=none` turns it off; `instant_debug_log` flushes the log per guest line"; and a
+final **"Lessons and notes"** block, ready to paste into item 320 (with the drain numbers for D 3.3's note: whether
+a drain-only export is worth a Phase 4 item, which it is only if `drain_ms` is over half of `t_state`).
 
 ## 11. Hours (agent wall time)
 
-Builder 0.55 h (F2-0 0.05, F2-1 0.25, F2-2 0.25), the opus as-built review 0.2 h, the commit 0.1 h: **0.85 h**,
-against PLAN.md's 0.75 (P8's profile application and the core-kind switches were not in PLAN's F2). The batch, a
-build wait and a rebuild are machine time.
+Builder 0.45 h (F2-0 0.05, F2-1 0.2, F2-2 0.2), the opus as-built review 0.2 h, the commit 0.1 h: **0.75 h**, equal
+to PLAN.md's 0.75 (P8's profile application and the key-blob check, offset by Phase 2's holds, the reused runner and
+the stock smoke). The batch is machine time; the rebuild is the main loop's.
 
 ## 12. Review checklist (the opus as-built review)
 
-1. f2 compares against the `.def` file read from the source, not a typed list; it fails on any extra export.
-2. The lazpy profile is applied only when `is_lazpy_core`, first, before the profile and the caller's options, in
-   azhost and in the worker alike; `none` and a missing default behave as 3.2 and 3.3 say; the no-shared-key test
+1. `keyblob` reads the cache, the `.o.d` files (at least 1,000 found), OURS's bytes and strings, and the mtimes;
+   it ran first and passed; it is importable as `keyblob_findings`.
+2. f2 compares against the `.def` file read from the source, not a typed list; it fails on any extra export.
+3. The lazpy profile is applied only when `is_lazpy_core`, first, before the profile and the caller's options, in
+   azhost and in the worker alike; `none` and a missing default behave as 3.1 and 3.2 say; the no-shared-key test
    exists.
-3. `azh_stats` after open changes nothing else in the call-order rules.
-4. The Emulator closes after a returned `guest_exited` and only then; `GuestError` on our core leaves it open.
+4. `host/api.c` and `conftest.py` are untouched; the close after a returned `guest_exited` waits at most 5 s.
 5. Every changed test assertion is at least as strict on our core as the stock one; no stock expectation changed.
-6. r1 compares bytes and hashes (no fuzzy match); r2's gate compares the two restored instances across chains; the
-   state comparison skips exactly the 256-byte header.
+6. r1 compares bytes and hashes (no fuzzy match) with exactly `wall=`, `fps=`, `wall_ms_mean=` removed; r2's gate
+   compares the two restored instances across chains and bounds `t_state`; the state comparison skips exactly the
+   256-byte header.
 7. dbg's d3 and d4 are computed from the printed `last` values; the SD-stop comparison is a RECORD only.
-8. The exit-path grep uses the exact text from `env.c` and covers every our-core host.log of the batch.
-9. Every emulator command ran under the slot helper, one at a time, nice'd; nothing written in MAIN; no item file
-   touched; nothing committed.
-10. Any patch change (build-failed path) is the smallest fix and keeps its notice.
+8. The exit-path grep uses the exact text from `env.c` and ran right after each our-core part, before the stock
+   smoke; `runs/f2/exitpath-ours.txt` is empty.
+9. `gate_f2.py` reuses `gate_c.run_azhost`; every emulator command ran under the slot helper, one at a time, nice'd;
+   nothing written in MAIN; no item file touched; nothing committed; no file under `core/` changed.
 
 ## 13. Interfaces assumed
 
-From phase-3.md section 6: A3-A7, A12, B1-B3, B9, F1-F5, C4-C7, D1-D10, SD. If a merged name, flag or line differs
-from those rows (the exit-path text, `--print-last-line`'s format, D's fixtures or the `start` arguments), follow
-the code and report the difference.
+From phase-3.md section 6: H1, H4-H7, A3-A7, A12, B1-B3, B9, F1-F5, C4-C7, D1-D10, SD. If a merged name, flag or line
+differs from those rows (the exit-path text, `--print-last-line`'s format, D's fixtures or the `start` arguments),
+follow the code and report the difference.

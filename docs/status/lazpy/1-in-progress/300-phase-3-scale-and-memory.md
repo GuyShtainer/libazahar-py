@@ -57,3 +57,14 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   rebuild took 5 min (exit 0). Checks: CMakeCache ENABLE_BUILTIN_KEYBLOB:BOOL=OFF; 0 .o.d files name
   default_keys.h (key.cpp.o.d did before); the first 32 blob bytes of default_keys.h are not in the dylib;
   0 strings contain /Users/ (461 before); version string still -lazpy.1; 3 lazpy_ exports. F2 gates this binary.
+- Revision 1 (a848bdbe41c898002, opus, 20:59-21:15; phase-3.md section 13 "Changes from review 1"): all of B1-B5,
+  S1-S9, N1-N12 taken (N7 as a committed tools/hold_slot.py; S1's G wait bounded at 150 min). Hours E 1.1, F2
+  0.75, G 0.85, loops 0.5: about 3.2 h, plus 0.2 main loop. Phase 2 holds H1-H7 (phase-3.md section 6). Rule T:
+  every timed part, reruns included, runs alone; E2 after step-f2 merges, with main merged into E first. Q3 cap
+  rule (phase-e.md section 7): start at 1; for n = 2, 3, 4 step up only if T(n) >= 1.25 x T(n-1) and end load
+  < 2 x cores; a failed check on our core's rows keeps 3. F2's first check f1 "keyblob". The plan's step 0 (the
+  P9 rebuild) is already done (e40e59c). For Phase 2 (should): test_state.py::test_newer_abi_refused uses the
+  literal "abi=2\n"; use _abi.AZH_ABI_VERSION. For Phase 4: phase-h.md:138 (ABI-2 states still load), drop
+  phase-4.md's P9 contingency (lines 138, 293), R1 holds after F2, re-read R2's size and R4's link line on the
+  new build; docs items listed in the report (cap 1-4 provisional, SlotTimeout, tools/hold_slot.py, profile
+  applied first, watch size from the layout).

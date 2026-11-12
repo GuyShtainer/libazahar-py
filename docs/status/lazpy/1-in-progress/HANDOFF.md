@@ -1,7 +1,7 @@
 <!-- handoff: slim v1 | current tasks only | rewritten whole from docs/status/templates/handoff.md | budget 80 lines | never append -->
 # libazahar-py handoff
 
-As of: 2026-11-12 21:10 (this project's own session)
+As of: 2026-11-12 21:16 (this project's own session)
 
 This file lives in docs/status/lazpy/1-in-progress/, beside its item files. It holds only what
 the next session needs to act now, and points at the rest. Goals, rules, decisions and history live elsewhere.
@@ -9,15 +9,15 @@ the next session needs to act now, and points at the rest. Goals, rules, decisio
 ## Running now
 | What | Where | Agent id | It stops when |
 |---|---|---|---|
-| laz-220: step D complete on step-d 88cdbe6 (69 passed); waits for an opus slot for its as-built review | ../libazahar-py-d | main | review, fixes, merge |
-| laz-300: Phase 3 plan revision 1 (opus, fresh author): edits `docs/plans/` (phase-3, e, f2, g) only | this repo | a848bdbe41c898002 | revision written; then review 2 |
+| laz-220: step D as-built review (opus), writes `docs/reviews/` (phase-2-d-as-built.md) only | MAIN, reads ../libazahar-py-d (88cdbe6) | a1685c2425484d723 | fix list for D's builder (ac94c1b1d3eddad30); then merge step-d |
+| laz-300: Phase 3 plan revision 1 written (committed); review 2 waits for an opus slot | this repo | main | review 2 (fresh opus), then revision 2 |
 | laz-400: Phase 4 plan review 1 (opus): writes `docs/reviews/` (phase-4-review-1.md) only | this repo | ab421b8f1945fcdfa | review written; then revision 1 |
 
 ## Next steps, in order
 1. D fixes done: commit on step-d, then a fresh opus as-built review of D (writes docs/reviews/phase-2-d-as-built.md),
    fixes, merge step-d (runners.md and tools.md lines in the D reports, item 220's notes), items 220 and 200 to done.
 2. Our core is rebuilt with the key blob off (P9 done, item 300's notes); F2 gates that binary.
-3. Phase 3: revision 1 (above), then opus review 2 and revision 2; build after Phase 2 merges and the rebuild.
+3. Phase 3: opus review 2 of revision 1 (fresh reviewer; brief like review 1's, plus "check each review-1 fix"), then revision 2; build after Phase 2 merges and the rebuild.
 4. Phase 4: review 1 (above), then revision 1, review 2, revision 2; the ip-legal consult (phase-i.md 9.1)
    when an opus slot is free. At most 2 opus at once.
 

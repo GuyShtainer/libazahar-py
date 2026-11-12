@@ -1,335 +1,451 @@
 # Phase 3, scale and memory: the phase plan (item laz-300)
 
-Opus phase plan, 2026-11-12, **revision 0** (before review 1). Steps: E (laz-310, `docs/plans/phase-e.md`), F2
-(laz-320, `docs/plans/phase-f2.md`) and G (laz-330, `docs/plans/phase-g.md`). Each brief is complete on its own for
-one sonnet builder in its own worktree. This file is the index: order, checkpoints, file ownership, merge plan,
-hours, the proposed departures from PLAN.md, the interfaces taken from Phases 1 and 2, the interfaces left for
-Phase 4, the checked facts, the risks and the hour-saving pass.
+Opus phase plan, 2026-11-12, **revision 1** (after review 1, `docs/reviews/phase-3-review-1.md`; written by a fresh
+author from revision 0, commit cb3406c). Steps: E (laz-310, `docs/plans/phase-e.md`), F2 (laz-320,
+`docs/plans/phase-f2.md`) and G (laz-330, `docs/plans/phase-g.md`). Each brief is complete on its own for one
+sonnet builder in its own worktree. This file is the index: order, checkpoints, file ownership, merge plan, hours,
+the departures from PLAN.md, the interfaces taken from Phases 1 and 2 (with Phase 2's holds), the interfaces left
+for Phase 4, the checked facts, the risks, the hour-saving pass and the changes from review 1 (section 13).
 
 Contract: `docs/PLAN.md` (final) sections 2.2, 2.4, 2.5, 2.7, 2.8, 2.9, the grouping paragraph of section 3 and its
-Phase E (PLAN.md:296), F2 (:311) and G (:317) paragraphs. (The step item files still point at :289, :304 and :310;
-the main loop fixes those pointers when it moves the items.) This plan refines PLAN.md. Where a brief disagrees with
-PLAN.md on a goal, PLAN.md wins and the builder stops and reports, **except for the approved departures** (Phase 2's
-P1-P6 and, once the reviews approve them, this plan's P7-P8 in section 5), which the builders follow without stopping.
+**Phase E (PLAN.md:296), Phase F2 (PLAN.md:311) and Phase G (PLAN.md:317)** paragraphs. The step item files 310,
+320 and 330 still name PLAN.md lines 289, 304 and 310 (in "The gate" and "Plan section"); the main loop rewrites
+them to **:296, :311 and :317** in the commit that moves each item to `1-in-progress/` (section 4 step 1). This plan
+refines PLAN.md. Where a brief disagrees with PLAN.md on a goal, PLAN.md wins and the builder stops and reports,
+**except for the approved departures** (Phase 2's P1-P6, this plan's P7-P8 and the refinements R1-R3 of section 5),
+which the builders follow without stopping.
 
-Phase 2's inputs: `docs/plans/phase-2.md` revision 2 with `phase-c.md` and `phase-d.md` (final, not yet built when
-this plan was written: step C was at C1, commit cd2aadd). Phase 1's: merged at 570eebf (A, B, F1). Every interface
-this plan takes from them is listed in section 6, so review can reconcile it with the code as built. **If the merged
-code differs from a row of section 6, the builder follows the code and reports the row.**
+Inputs. Phase 1: merged at 570eebf (A, B, F1). Phase 2: step C merged on main at 7584a8d (its as-built fixes in;
+step C's own branch at ba21233, C1 at 0651a8d); step D on `step-d` (c1e614e) with its fixes being made now, merged
+before Phase 3 launches. **Phase 2 delivers the holds H1-H7 of section 6 before its merge**; the briefs treat them
+as facts. Every interface this plan takes is a row of section 6. **If the merged code differs from a row, the
+builder follows the code and reports the row.**
 
-Hours are agent wall time (PLAN.md's unit). Machine time (emulator batches, the core build, a wait for a slot or for
-another step's timed run) is not counted.
+Hours are agent wall time (PLAN.md's unit). Machine time (emulator batches, the core rebuild, a wait for a slot or
+for another step's timed run) is not counted.
 
 ## 1. The three steps
 
 | Step | Delivers | Gate (headless, this Mac) | Hours |
 |---|---|---|---|
-| E, laz-310 | `python/libazahar/_slots.py` (the machine-wide `flock` slot cap) and `pool.py` (`Pool`, `LoadWarning`); the worker spawned holding its slot; zlib level 1 (`LAZ_PNG_LEVEL`); one timing line per batch in host.log; `tools/speed_table.py`; unit and live tests; `docs/research/speed-table-e.md` with the default cap | `python3 -m pytest -q tests/python -m "not slow"` passes; `LAZ_REQUIRE_EMULATOR=1 python3 -m pytest -q -rs tests/python/test_pool_live.py` passes 0 skipped: 3 instances give correct, separate logs and shots; a 4th waits under cap 3; a SIGKILL frees the slot within 1 s; every worker at nice 10; the speed table for 1, 2, 3 instances of the test app's 3D scene, 60 s each, with the guest-time check, written and the default cap set by section 2's fixed rule | 1.1 |
-| F2, laz-320 | our core applied with its own profile (`core/options-lazpy.txt`) by `azhost` and by the worker; `azh_stats` after open; the Emulator closes after a returned guest exit; core-kind switches in C's and D's tests; `tests/gate_f2.py` (symbols, version, exact repeats, the exact debug-text stop, cross-core states) | `nm -gU` shows exactly the 25 `_retro_*` plus `_lazpy_read_memory`, `_lazpy_write_memory`, `_lazpy_movie_play`; host.log shows `2126.2-lazpy.1`; on our core gate C passes and `LAZ_REQUIRE_EMULATOR=1` pytest passes 0 skipped, stop reasons returned (no exit-path line in any host.log); C(e)'s repeat and D's state boot give identical shot hashes and log lines across two runs; the debug-text stop's frame is exact and equal across runs; stock states into ours (and back) recorded; the stock core still passes gate C and pytest | 0.85 |
-| G, laz-330 | ABI 3: `azh_read`/`azh_write` through the exports (`host/mem.c`), the per-frame watch list into a watch area of the map, `AZH_E_UNMAPPED`; Python `emu.memory` (`read`, `write`, `u8`..`u64`, signed, `write_*`, libmgba-py's `.raw_read`), `run(..., watch=)`, `RunResult.watch`, `GuestMemoryError`; unit and live tests | on our core: both records (global and heap) read back the logged values frame by frame for 600 frames, by `read` calls and by the watch list; a write changes the next logged event; a straddling read and a fully unmapped read both raise `GuestMemoryError`; on the stock core every memory call and any watch raises `NeedsLazpyCore`; `make test-host`, gate C and D's pytest still pass | 0.9 |
+| E, laz-310 | `python/libazahar/_slots.py` (the machine-wide `flock` slot cap, `SlotTimeout`, `LoadWarning`) and `pool.py` (`Pool`); `tools/hold_slot.py` (hold one slot, exec a command); the worker spawned holding its slot; zlib level 1 (`LAZ_PNG_LEVEL`); one timing line per batch in host.log; `tools/speed_table.py`; unit and live tests; `docs/research/speed-table-e.md` with the default cap | `python3 -m pytest -q tests/python -m "not slow"` passes; `LAZ_REQUIRE_EMULATOR=1 python3 -m pytest -q -rs tests/python/test_pool_live.py` passes 0 skipped: 3 instances give correct, separate logs and shots; a 4th waits under cap 3; a SIGKILL frees the slot within 1 s; every worker at nice >= 10; the speed table for 1, 2, 3 and 4 instances of the test app's 3D scene, 60 s each, with the guest-time check, written, and the default cap (1-4) set by the rule fixed in phase-e.md section 7 | 1.1 |
+| F2, laz-320 | the gate of **our core as rebuilt with the key blob off (P9)**; our core applied with its own profile (`core/options-lazpy.txt`) by `azhost` and by the worker; core-kind switches in C's gate and an our-core twin of D's debug-text test; `tests/gate_f2.py` (key blob, symbols, version, exact repeats, the exact debug-text stop, cross-core states) | **f1, first:** the rebuilt core: `build.exit` 0, `CMakeCache.txt` has `ENABLE_BUILTIN_KEYBLOB:BOOL=OFF`, no `.o.d` file names `default_keys.h`, the blob's first 16 bytes absent, the dylib newer than the cache, `strings` holds `-lazpy.1`; `nm -gU` shows exactly the 25 `_retro_*` plus `_lazpy_read_memory`, `_lazpy_write_memory`, `_lazpy_movie_play`; host.log shows `2126.2-lazpy.1` and the six lazpy options; on our core gate C passes and `LAZ_REQUIRE_EMULATOR=1` pytest passes 0 skipped, stop reasons returned (no exit-path line in any our-core host.log); C(e)'s repeat and D's state boot give identical shot hashes and log lines across two runs; the debug-text stop's frame is exact and equal across runs; stock states into ours (and back) recorded; a stock smoke run still passes | 0.75 |
+| G, laz-330 | ABI 3: `azh_read`/`azh_write` through the exports (`host/mem.c`), the per-frame watch list into a watch area of the map (pure planning in `host/watch.c`), `AZH_E_UNMAPPED`; Python `emu.memory` (`read`, `write`, `u8`..`u64`, signed, `write_*`, libmgba-py's `.raw_read`), `run(..., watch=)`, `RunResult.watch`, `GuestMemoryError`; unit and live tests | on our core: both records (global and heap) read back the logged values frame by frame for 600 frames, by `read` calls and by the watch list; a write changes the next logged event line (R1); a straddling read and a fully unmapped read both raise `GuestMemoryError`; on the stock core every memory call and any watch raises `NeedsLazpyCore`; an ABI-2 state loads under ABI 3; `make test-host`, gate C and D's pytest still pass | 0.85 |
 
-Phase total: **2.85 h** of step work plus about 0.5 h for the two review loops (PLAN.md section 3's grouping
-paragraph) = **about 3.35 h**, against PLAN.md's 1.0 + 0.75 + 0.5 + 0.5 = **2.75 h**. The 0.6 h over is named per
-step in section 7. The checkpoint choreography (two commits on branches, one merge into G's worktree, two resumes) is
-main-loop time, about 0.15 h, booked to the main loop.
+Phase total: **2.7 h** of step work plus about 0.5 h for the two review loops = **about 3.2 h**, against PLAN.md's
+1.0 + 0.75 + 0.5 + 0.5 = **2.75 h**. The 0.45 h over is named per step in section 7. The checkpoint choreography
+(commits on branches, two worktree merges, two resumes) and the P9 rebuild's launch are main-loop time, about
+0.2 h, booked to the main loop.
 
 ## 2. Order, checkpoints and the parallel split
 
 ```
-Before launch: Phase 2 merged on main (step-c and step-d); MAIN/build-core/build.exit exists (the core build ended)
+Main loop, once Phase 2's last emulator run has ended: commit tools/build-core.sh (P9) on main; in MAIN start
+  tools/build-core.sh --detach (it nices itself; about 15 min quiet, 40-90 min loaded); NO timed run meanwhile
+Before launch: Phase 2 merged on main (the holds H1-H7 of section 6 are in its code)
   |
   E builder (sonnet, ../libazahar-py-e, step-e)       F2 builder (sonnet, ../libazahar-py-f2, step-f2)
-  |  E1: _slots, pool, client spawn, png level,       |  F2-0: the build's result, symbols, version
-  |      run.c timing line, speed_table.py,           |  F2-1: profile application, stats after open,
-  |      unit tests; NO emulator                      |        guest-exit close, test switches, gate_f2.py
-  |  ENDS ITS RUN: "E1 done"                          |  F2-2: the batch on our core, the stock regression,
-  |  main loop commits E1 on step-e                   |        the repeats, cross-core   (timed, one instance)
-  |                                                   |  ENDS ITS RUN: "F2 done"
-  |  (waits for "F2 done": the timed runs never overlap)
-  |  main loop resumes E: "E1 committed at <sha>; F2's batch is over; go on with E2"
-  |  E2: live pool gate, the speed table              opus as-built review of F2; fixes; commit; merge step-f2
-  |      (writes runs/e-speed.rc from a trap)         main loop: git worktree add -b step-g ../libazahar-py-g main;
-  |                                                   in it: git merge <E1 sha> (E1's commit on step-e)
-  |  ENDS ITS RUN: "E done"                           launch G (message names ../libazahar-py-e/runs/e-speed.rc)
-  v                                                   G1: ABI 3, mem.c, watch area, Python memory; no emulator
-  opus as-built review of E; fixes; commit;           G2: waits on e-speed.rc if E2 is still timing (Monitor),
-  merge step-e into main                                  then the live gate on both cores
-                                                      ENDS ITS RUN: "G done"
-                                                      main loop: git merge main in ../libazahar-py-g (E2's files)
+  |  (may launch while the rebuild runs)              |  (launched when MAIN/build-core/build.exit holds 0)
+  |  E1: _slots, pool, hold_slot, client spawn,       |  F2-0: the rebuilt core: key blob absent, symbols, version
+  |      png level, run.c timing line, speed_table,   |  F2-1: profile application, test switches, gate_f2.py
+  |      unit tests; NO emulator                      |  F2-2: the batch on our core, the stock smoke
+  |  ENDS ITS RUN: "E1 done"                          |        (timed, one instance)
+  |  main loop commits E1 on step-e (sha noted)       |  ENDS ITS RUN: "F2 done"
+  |                                                   opus as-built review of F2; fixes (reruns: rule T); commit;
+  |                                                   merge step-f2 into main
+  |  main loop: git -C ../libazahar-py-e merge --no-edit main; resume E: "E1 committed at <sha>; main (with F2)
+  |  merged into your tree at <sha>; go on with E2"
+  |  E2: live pool gate, the speed table 1-4          main loop: git worktree add -b step-g ../libazahar-py-g main;
+  |      (writes runs/e-speed.rc from a trap)         in it: git merge --no-edit <E1 sha>; launch G (message names
+  |  ENDS ITS RUN: "E done"                           ../libazahar-py-e/runs/e-speed.rc and that E2 is running)
+  v                                                   G1: ABI 3, mem.c, watch.c, watch area, Python memory; no emulator
+  opus as-built review of E; fixes (rule T, and      G2: waits on e-speed.rc (Monitor, bounded 150 min), then
+  the held-fix rule of section 4 step 5); commit;         one batch: gate C on OURS, one pytest covering both cores
+  merge step-e into main                              ENDS ITS RUN: "G done"
+                                                      main loop: git merge --no-edit main in ../libazahar-py-g;
                                                       opus as-built review of G; fixes; commit; merge step-g
+  phase-end suite (section 4 step 7)
 ```
 
 - **A builder never waits for the main loop.** A sub-agent reports only by ending its run, so each checkpoint is the
-  end of a run: E after E1 and after E2, F2 at its end, G at its end. The main loop commits, then resumes the same
-  agent with SendMessage (its context kept). The main loop writes each builder's agent id into the handoff at launch.
-  If a resume fails, the fallback is a fresh sonnet given the brief, the earlier report and `git log step-<x>`; the
-  reports list exact paths and measured values to make that possible.
+  end of a run: E after E1 and after E2, F2 at its end, G at its end (or at a "waiting for E2" timeout). The main
+  loop commits, then resumes the same agent with SendMessage (its context kept). The main loop writes each
+  builder's agent id into the handoff at launch. If a resume fails, the fallback is a fresh sonnet given the brief,
+  the earlier report and `git log step-<x>`; the reports list exact paths and measured values to make that possible.
 - **How a builder waits on its own long command** (Phase 2 S9): never `sleep`-poll, never "be woken". Long runs
   write an rc file from a `trap ... EXIT`; the builder starts them with `run_in_background` and waits with the
   Monitor tool on "the rc file exists" (an until-loop, bounded); it stops every waiter it started (TaskStop) before
   it hands back. Without Monitor, it runs the work in foreground parts under the 10-minute Bash limit and says so.
-- **Timed runs never overlap** (rules.md 7; PLAN 2.8): the core build, F2-2, E2 and G2 are each timed or loaded,
-  and they run one after another in that order. E1, F2-1 and G1 run no emulator and may overlap anything. G2 starts
-  only when `../libazahar-py-e/runs/e-speed.rc` exists (or E's report says E2 is over); it waits with Monitor
-  (bounded 90 min). F2-2 runs one emulator at a time; E2 runs up to 3; G2 one at a time.
+- **Rule T: timed parts never overlap** (rules.md 5 and 7; PLAN 2.8). A timed part is anything that runs an
+  emulator or the core build: the P9 rebuild, F2-2, E2, G2, **every emulator rerun after an as-built review**, and
+  the phase-end suite. Exactly one runs at a time, in the order they become ready. A part that becomes ready while
+  another runs waits on that part's rc file (a builder with Monitor; the main loop with a background waiter) before
+  it starts. E1, F2-1 and G1 run no emulator and may overlap anything (F2-1's one by-hand 30-frame check is the
+  only exception, and F2 launches after the rebuild). F2-2 runs one emulator at a time; E2 up to 4 (the 4-instance
+  row); G2 one at a time. Since E2 starts only after step-f2 merged (S2), F2's review reruns always come before E2;
+  E's review reruns queue behind G2 if G2 is running.
+- **G's wait for E2.** G2 starts only when `../libazahar-py-e/runs/e-speed.rc` exists. G waits with Monitor
+  (bounded **150 min**: E2's own bounds are 45 min for the live tests plus 75 min for the table, plus margin). On a
+  timeout G **ends its run** with a "waiting for E2" report (G1's results in it) and never starts G2 on its own;
+  the main loop resumes it when E2 is over.
 - **One slot convention, fixed here** because E builds it while F2 already needs it: the folder is `LAZ_SLOT_DIR`,
   else `~/Library/Caches/libazahar-py/slots/` (mode 0700); the files are `slot-0.lock` .. `slot-<cap-1>.lock` (mode
   0600); a slot is held by `flock(LOCK_EX|LOCK_NB)` on its own open file description; the cap is
-  `LAZ_MAX_INSTANCES`, default 3. F2 has no `_slots.py` yet, so it holds one slot around each emulator command with
-  a 20-line helper in its ignored `runs/f2/` (phase-f2.md section 9); G and later use E's `_slots.py` through the
-  Emulator.
+  `LAZ_MAX_INSTANCES`, default `_slots.DEFAULT_CAP` (3 until E2's rule sets it, 1-4). Both variables are read on
+  every call, never cached at import. The cap is machine-wide only if every user reads the same
+  `LAZ_MAX_INSTANCES` (a process with cap 5 takes slots 3 and 4 beside three cap-3 users); `_slots`'s docstring says
+  so (N8). F2 has no `_slots.py` in its tree, so it holds one slot around each emulator command with a 20-line
+  helper in its ignored `runs/f2/` (phase-f2.md section 9). G and the phase-end suite use E1's committed
+  `tools/hold_slot.py` for azhost commands and the Emulator's own slot for Python tests.
 - **Why F2 goes first on the machine:** it is on the critical path to G (G needs F2's profile application, and its
-  gate needs our core applied right), and E2's numbers are better taken after F2 has shown our core works, so the
-  table can carry a row for each core (section 7's hour-saving pass: one table run, both cores).
-- **If the core build failed** (F2-0 finds `build.exit` non-zero or no dylib): F2 reads `build.log`, fixes the patch
-  in its own worktree's `core/patches/` (the only case where F2 edits `core/`), and ends its run with a "build
-  failed" report holding the fix. The main loop copies the fixed patch into MAIN's ignored build tree (never
-  committing in MAIN) and restarts `nice -n 10 tools/build-core.sh --detach` there (the STAMP changes, so the tree is
-  re-unpacked with the archive's mtimes and the rebuild is incremental). A build that died rather than failed is
-  rerun with `LAZ_CORE_LTO=OFF`. F2 is resumed when `build.exit` is 0. E1 goes on meanwhile; E2 then waits for F2-2.
-- **Why G's worktree carries E1:** G edits `python/libazahar/__init__.py`, `host/run.c` and the map after E1 has
-  edited them (E1's exports, its timing line). Merging E1's commit into G's worktree at launch (Phase 2's
-  D-at-C1 pattern) means G's edits sit on top of E1's and the final merges are conflict-free. **E2 edits none of
-  E1's shared files** (`__init__.py`, `_client.py`, `host/run.c`, `host/png.c`); a fix there found in E2 is reported
-  to the main loop, which sequences it.
+  gate needs our core applied right), and E2's our-core rows must run our core as users will (with P8 applied, S2),
+  so E2 runs after step-f2 merged and its worktree merged main.
+- **The P9 rebuild** (Phase 4's departure P9, Guy's G1 default; item 400's notes): Azahar's built-in console key
+  blob must not ship, so our core is rebuilt with `-DENABLE_BUILTIN_KEYBLOB=OFF` and `-ffile-prefix-map` before F2,
+  and F2 gates that binary. `tools/build-core.sh` already carries both flags plus two guards (the cache must say
+  OFF; no `.o.d` file may name `default_keys.h`) as an uncommitted edit in MAIN. The patches do not change, so the
+  STAMP holds and the tree is not re-unpacked; the flag change recompiles every object. If `build.exit` is not 0,
+  the main loop reads `build.log`, fixes and reruns (with `LAZ_CORE_LTO=OFF` if the linker died); F2 is launched
+  only on a 0. E1 goes on meanwhile; E2 then waits for F2-2 as usual.
+- **Why G's worktree carries E1:** G edits `python/libazahar/__init__.py`, `host/run.c` and `host/azh_pure.h` after
+  E1 has edited them (E1's exports, its timing line, its `azh_png_level` prototype). Merging E1's commit into G's
+  worktree at launch (Phase 2's D-at-C1 pattern) means G's edits sit on top of E1's and the final merges are
+  conflict-free. **E2 edits none of E1's shared files** (`__init__.py`, `_client.py`, `host/run.c`, `host/png.c`,
+  `host/azh_pure.h`); E2's only E1-file edit is the value of `DEFAULT_CAP` in `_slots.py`, which G does not touch.
+  A fix found in E2 to a shared file is reported to the main loop, which sequences it (section 4 step 5).
 
 ## 3. File ownership (who creates or edits what)
 
 | File | Owner in Phase 3 | What changes |
 |---|---|---|
-| `python/libazahar/_slots.py`, `pool.py` | E (new) | phase-e.md section 3 |
+| `tools/build-core.sh` | the main loop (P9), before F2 | `-DENABLE_BUILTIN_KEYBLOB=OFF`, the prefix map, the two guards (already edited in MAIN; the main loop commits it) |
+| `python/libazahar/_slots.py`, `pool.py`, `tools/hold_slot.py` | E (new) | phase-e.md section 3; E2 may change only the value of `DEFAULT_CAP` |
 | `python/libazahar/_client.py` | E | the spawn acquires a slot, passes its fd in `pass_fds` and as `argv[3]`, closes the parent's copy, writes `<workdir>/slot.txt` |
-| `python/libazahar/__init__.py` | E (E1), then G | E1 exports `Pool`, `LoadWarning`; G exports `Memory`, `WatchRow`, `GuestMemoryError` |
-| `host/png.c` | E | zlib level from `LAZ_PNG_LEVEL` (0-9, default 1) |
-| `host/run.c` | E (E1: the timing line), then G | G adds the watch rows after each `retro_run` |
+| `python/libazahar/__init__.py` | E (E1), then G | E1 exports `Pool`, `LoadWarning`, `SlotTimeout`; G exports `Memory`, `WatchRow`, `GuestMemoryError` |
+| `host/png.c` | E | `int azh_png_level(void)` from `LAZ_PNG_LEVEL` (0-9, default 1), used by `compress2`; stays pure |
+| `host/azh_pure.h` | E (E1: one prototype), then G | E1: `azh_png_level`; G: the watch and memory pure functions |
+| `host/run.c` | E (E1: the timing line and the one `png level=` line), then G | G adds the watch rows after each `retro_run` |
 | `tools/speed_table.py`, `tests/python/test_slots.py`, `test_pool.py`, `test_pool_live.py`, `docs/research/speed-table-e.md` | E (new) | phase-e.md |
-| `host/azhost_main.c` | F2, then G | F2: `--lazpy-profile`; G: only if `azhost layout` needs a change (it should not: it prints `fields[]`) |
-| `host/api.c` | F2, then G | F2: `azh_stats` allowed after open; G: `azh_read`, `azh_write`, the watch checks in `azh_run`, the new `fields[]` rows |
-| `python/libazahar/_paths.py`, `_worker.py`, `emulator.py` | F2, then G | F2: `lazpy_profile()`, the option plan, the close after a returned guest exit; G: the `read`/`write` ops, `emu.memory`, `run(watch=)` |
-| `tests/gate_c.py`, `tests/python/test_c_checks.py`, `test_live_errors.py`, `test_state.py`, `test_api.py`, `tests/python/conftest.py` | F2 | core-kind switches only (`--core`, `--core-kind`, a `core_kind` fixture) |
+| `host/azhost_main.c` | F2 | `--lazpy-profile` |
+| `python/libazahar/_paths.py`, `_worker.py`, `emulator.py` | F2, then G | F2: `lazpy_profile()`, the option plan, a 5 s close wait after a returned guest exit; G: the `read`/`write` ops, `emu.memory`, `run(watch=)` |
+| `tests/gate_c.py`, `tests/python/test_c_checks.py` | F2 | `--core`, `--core-kind` and the our-core expectations; an our-core twin of c4 with `lazpy_core` |
+| `tests/python/test_live_errors.py`, `test_state.py`, `test_api.py` | F2, only for an our-core branch a run proves needed | each changed assertion listed in the report |
 | `tests/gate_f2.py`, `tests/python/test_lazpy_profile.py` | F2 (new) | phase-f2.md |
-| `core/patches/*` | F2, only if the build failed | the smallest fix to the failing hunk |
-| `host/azhost.h`, `host/azh_internal.h`, `host/azh_pure.h`, `host/hostmap.c`, `host/core.c` (the `dlsym` of the two exports beside A's detection, wherever the code does it) | G | ABI 3 (phase-g.md section 3) |
-| `host/mem.c`, `tests/host/test_mem.c`, `python/libazahar/memory.py`, `tests/python/test_memory.py`, `test_memory_live.py` | G (new) | phase-g.md |
-| `python/libazahar/_abi.py`, `_map.py`, `results.py`, `errors.py`, `tests/python/fakeworker.py`, `tests/python/test_abi.py`, `test_map.py`, `Makefile` (`test-host` gets `test_mem`), `docs/USING.md` (a memory section) | G | ABI 3 mirrors, the watch area, `GuestMemoryError` |
+| `host/azhost.h`, `host/azh_internal.h`, `host/hostmap.c`, `host/core.c` (only the bind call beside A's detection), `host/api.c` | G | ABI 3 (phase-g.md section 3) |
+| `host/mem.c`, `host/watch.c` (pure, in `TEST_SRC`), `tests/host/test_watch.c`, `python/libazahar/memory.py`, `tests/python/test_memory.py`, `test_memory_live.py` | G (new) | phase-g.md |
+| `tests/host/test_main.c`, `tests/host/test_main.h` | G | one line each: register `test_watch()` |
+| `Makefile` | G | `TEST_SRC` gains `host/watch.c` (the `tests/host/*.c` wildcard already takes `test_watch.c`) |
+| `python/libazahar/_abi.py`, `_map.py`, `results.py`, `errors.py`, `tests/python/fakeworker.py`, `tests/python/test_abi.py`, `test_map.py`, `docs/USING.md` (a memory section) | G | ABI 3 mirrors, the watch area (its size read from the layout), `GuestMemoryError` |
+| `tests/python/test_state.py` | G, one line | `test_newer_abi_refused`'s `"abi=2\n"` literal becomes `f"abi={AZH_ABI_VERSION}\n"`, only if Phase 2 left it literal |
 
 A file listed for two steps is edited by the second only after the first's commit is in its worktree (section 2).
 **No builder edits a file outside its rows.** F2 may edit another Phase 2 file only when a check fails because of it
 and the main loop names the file in a message. Nobody touches: `testapp/`, `tests/check_testapp.py`,
-`tests/gate-a.sh`, `tests/gate-b.sh`, `tests/testapp_log.py`, `tests/checks_c.py` (import only), `host/state.c`,
-`host/statemeta.c`, `host/crop.c`, `host/frame.c`, `.gitignore`, `docs/map/*`, `docs/PLAN.md`, `docs/plans/*`,
-`docs/hours.tsv`, the handoff, **every item file**, `prototype/`, `README.md`, and MAIN (read and copy only; MAIN's
-`build-core/` is read only). Lines the main loop must add (`.gitignore`, `docs/map/runners.md`, `docs/map/tools.md`)
-and the "Lessons and notes" block for the item go in each builder's report.
+`tests/gate-a.sh`, `tests/gate-b.sh`, `tests/testapp_log.py`, `tests/checks_c.py` (import only),
+`tests/python/conftest.py` (D's fixtures are the holds H1; a missing fixture is reported, not added), `host/state.c`,
+`host/statemeta.c`, `host/crop.c`, `host/frame.c`, `core/`, `.gitignore`, `docs/map/*`, `docs/PLAN.md`,
+`docs/plans/*`, `docs/hours.tsv`, the handoff, **every item file**, `prototype/`, `README.md`, and MAIN (read and
+copy only; MAIN's `build-core/` is read only for builders). Lines the main loop must add (`.gitignore`,
+`docs/map/runners.md`, `docs/map/tools.md`) and the "Lessons and notes" block for the item go in each builder's
+report.
 
 ## 4. Merge plan (the main loop does every commit; agents never commit)
 
-1. Before launch: Phase 2 merged; `MAIN/build-core/build.exit` exists. `git worktree list` and a case-insensitive
-   name check (`ls .. | grep -i libazahar-py-`), then `git worktree add -b step-e ../libazahar-py-e main` and
-   `git worktree add -b step-f2 ../libazahar-py-f2 main`. Dispatch both sonnets without isolation, cwd in the
-   worktree; they seed `dl/` and `vendor/` themselves (each brief's step 0). Agent ids into the handoff. If the build
-   has not exited, launch E alone and F2 when `build.exit` appears.
+0. **P9 rebuild** (main loop, rule T): once Phase 2's last emulator run has ended (step D's live tests, any D
+   review rerun), commit `tools/build-core.sh` on main with exact paths; in MAIN run `tools/build-core.sh --detach`
+   (it nices itself and detaches; about 15 min quiet, 40-90 min loaded), and wait with a background waiter on
+   `build-core/build.exit` (`run_in_background`, bounded 120 min). Nothing timed runs meanwhile; nothing reads OURS
+   until `build.exit` holds 0 (the dylib is replaced at the end of the build). E1 may run.
+1. Before launch: Phase 2 merged; the holds H1-H7 checked in main's code (section 6 names the lines). Move items
+   310 and 320 to `1-in-progress/` (and 330 at G's launch), each with its PLAN.md pointer corrected (310 :296, 320
+   :311, 330 :317). `git worktree list` and a case-insensitive name check (`ls .. | grep -i libazahar-py-`), then
+   `git worktree add -b step-e ../libazahar-py-e main` and `git worktree add -b step-f2 ../libazahar-py-f2 main`.
+   Dispatch both sonnets without isolation, cwd in the worktree; they seed `dl/` and `vendor/` themselves (each
+   brief's step 0). Agent ids into the handoff. Launch E at once; launch F2 when `build.exit` holds 0.
 2. At "E1 done": commit exactly E1's paths on `step-e` (`git add <paths>`, `git diff --cached --stat`); note the sha
-   for step 5. Do not resume E yet.
-3. At "F2 done": resume E with "E1 committed at <sha>; F2's batch is over; go on with E2". Opus as-built review of
-   the step-f2 diff (phase-f2.md section 12); fixes by the resumed F2 builder if any; commit; merge `step-f2` into
-   main; paste the report's "Lessons and notes" into item 320 and move it with its Evidence line (one commit with
-   the moved item, per the project's CLAUDE.md).
-4. Then: `git worktree add -b step-g ../libazahar-py-g main`; in it `git merge --no-edit <E1 sha>` (E1 touches no
-   F2 file, so no conflict is expected; a conflict stops the launch and goes to the main loop); launch G with
-   phase-g.md and a message naming `../libazahar-py-e/runs/e-speed.rc` and whether E2 is still running.
-5. At "E done": opus as-built review of the step-e diff (phase-e.md section 12), fixes, commit, merge `step-e` into
-   main (it merges cleanly: G is not merged yet); item 310 as in 3. In `../libazahar-py-g`: `git merge main` (brings
-   E2's files, none of which G edits).
-6. At "G done": opus as-built review (phase-g.md section 12), fixes, commit, merge `step-g`; item 330; then the phase
-   item 300. Remove each worktree only after `git status --porcelain` is empty in it.
-7. After the phase merges, the full suite (gates A, B, C on both cores, F2, D's and E's and G's pytest) runs once as
-   one background batch (the main loop is woken on exit), through the slot cap.
+   for step 4. Do not resume E yet.
+3. At "F2 done": opus as-built review of the step-f2 diff (phase-f2.md section 12); fixes by the resumed F2
+   builder if any (reruns under rule T); commit; merge `step-f2` into main; paste the report's "Lessons and notes"
+   into item 320 and move it with its Evidence line (one commit with the moved item, per the project's CLAUDE.md).
+4. Then, in this order: `git -C ../libazahar-py-e merge --no-edit main` (E1 touches no F2 file, so it is clean; a
+   conflict stops and goes to the main loop); resume E with "E1 committed at <sha>; main (with F2) merged into your
+   tree at <sha>; go on with E2". `git worktree add -b step-g ../libazahar-py-g main`; in it `git merge --no-edit
+   <E1 sha>` (clean for the same reason); launch G with phase-g.md and a message naming
+   `../libazahar-py-e/runs/e-speed.rc` and that E2 is running.
+5. At "E done": opus as-built review of the step-e diff (phase-e.md section 12). Fixes to files G does not edit go
+   on `step-e` (reruns under rule T, queued behind G2 if it runs). **Fixes to `__init__.py`, `host/run.c` or
+   `host/azh_pure.h` (files G edits on top of E1) are held** and made on main by the main loop right after step-g
+   merges (step 6), never on step-e after G launched. Commit; merge `step-e` into main (clean: G is not merged);
+   item 310 as in 3. Leave G's worktree alone now.
+6. At "G done" (or a resumed G's end): in `../libazahar-py-g` `git merge --no-edit main` (brings E2's files, none
+   of which G edits); opus as-built review (phase-g.md section 12); fixes; commit; merge `step-g`; item 330. Then
+   any held E fix on main, with its rerun under rule T; then the phase item 300. Remove each worktree only after
+   `git status --porcelain` is empty in it.
+7. After the phase merges, the full suite runs once as one background batch (the main loop is woken on exit),
+   every azhost command under `tools/hold_slot.py`: gates A and B; `gate_c.py` on both cores; `gate_f2.py`; the
+   full pytest with `LAZ_CORE` set to each core in turn (the explicit-core tests run both ways regardless); E's live
+   pool test once.
 
-## 5. Departures from PLAN.md
+## 5. Departures from PLAN.md and refinements
 
-Phase 2's P1-P6 stay approved and in force. Proposed here, for the reviews to approve or reject:
+Phase 2's P1-P6 stay approved and in force. This phase's:
 
-| # | PLAN.md says | Phase 3 does | Why |
-|---|---|---|---|
-| P7 | PLAN 2.5's error classes (plus P6's `HostError`) | adds `AZH_E_UNMAPPED` (-11) and `GuestMemoryError` (a `LibAzaharError`, with `.addr` and `.length`) for a read or write that touches an unmapped guest page; the core's -1 maps to `AZH_E_ORDER` (`HostError`), -3 to `AZH_E_ARG` (`ValueError`) | PLAN's gate asks for "a clean error" on unmapped reads; a caller probing memory (Gen3D's harness, G's own straddle test) must tell "that page is not mapped" from a host bug without parsing text |
-| P8 | PLAN 2.4: "a committed option profile ... Users override per key" (one profile) | on our core, the lines of `core/options-lazpy.txt` are applied first, then the profile, then the caller's options (later wins); azhost `--lazpy-profile FILE\|none`, Python `LAZ_LAZPY_PROFILE` | PLAN 2.4 says our core's options are "all pinned on in our core's profile", but no Phase 1 or 2 code applies that file: without it the debug-text stop is `AZH_E_ARG` on our core (phase-c 3.4) and repeats are not exact. The two files share no key (checked by a test), so the order is only for the caller's overrides |
+| # | PLAN.md says | Phase 3 does | Why | Status |
+|---|---|---|---|---|
+| P7 | PLAN 2.5's error classes (plus P6's `HostError`) | adds `AZH_E_UNMAPPED` (-11) and `GuestMemoryError` (a direct `LibAzaharError`, not a `ValueError`, with `.addr` and `.length`) for a read or write that touches an unmapped guest page; the core's -1 maps to `AZH_E_ORDER` (`HostError`, its text says "no current process"), -3 to `AZH_E_ARG` (`ValueError`) | PLAN's gate asks for "a clean error" on unmapped reads; a caller probing memory (Gen3D's harness, G's own straddle test) must tell "that page is not mapped" from a host bug without parsing text | **approved** (Guy, Q2, 2026-11-12) |
+| P8 | PLAN 2.4: "a committed option profile ... Users override per key" (one profile) | on our core, the lines of `core/options-lazpy.txt` are applied first, then the profile, then the caller's options (later wins); azhost `--lazpy-profile FILE\|none`, Python `LAZ_LAZPY_PROFILE` | PLAN 2.4 says our core's options are "all pinned on in our core's profile", but no Phase 1 or 2 code applies that file: patch 0002 registers the six keys with stock defaults, so without it the debug-text stop is `AZH_E_ARG` on our core and repeats are not exact. The two files share no key (checked by a test) | **approved** (review 1: "sound and necessary") |
+| R1 | PLAN Phase G: "a write changes the next logged line" | m3 checks the next **event** line (`ready f=<written>`) after a write of the control struct's `ready_at` | the record behind the per-frame line is rewritten from scratch every frame (B6), so a write into it can never reach a log line; the control struct is read every frame | refinement (review 1 N10) |
+| R2 | PLAN Phase E: "running 1, 2 and 3 instances"; "sets the default cap" | the table adds a 4-instance row on the cap's core, and the cap rule may reach 4 | Guy, Q3 ("Allow 4 too"); the rule is fixed in phase-e.md section 7 before any run | **approved** (Guy) |
+| R3 | PLAN Phase E: "an optional local row on a Gen3D 3D scene that agents may skip" | skipped; the cap stays marked provisional (light scene); `speed_table.py` has no state-row option | Guy, Q1 ("Skip it") | **approved** (Guy) |
 
-Interface changes inside the project (not PLAN departures; listed so the review sees them): `azh_stats` becomes
-valid any time after `azh_open` (Phase A allowed it only after boot), so `azhost` and the worker can learn the core
-kind before setting options (F2); ABI 3 appends fields to `azh_batch` and `azh_result` and grows the map (G).
+Not departures, listed so the reviews see them: ABI 3 appends fields to `azh_batch` and `azh_result` and grows the
+map (G); states made under ABI 2 still load under ABI 3 (H3); `azh_stats` is already valid after open (H6), so F2
+changes nothing there; P9 (key blob off) is Phase 4's departure, applied before F2 so F2 gates the binary that
+ships.
 
 ## 6. Interfaces taken from Phases 1 and 2
 
-"State" says how sure the row is: **holds** (checked in code merged on main), **planned** (from a final plan, not yet
-built when this was written; the builder checks it against the code and reports a difference).
+"State": **holds** (checked in code on main, 2026-11-12, main at 0928a6f with C merged at 7584a8d), **hold** (Phase
+2 delivers it before its merge; checked in `../libazahar-py-d`'s working tree while D's fixer runs), **planned**
+(not yet in any code). The builder checks every row against the merged code and reports a difference.
+
+**Phase 2's holds** (the briefs rely on them; the main loop checks each in main before launch):
+- **H1** `tests/python/conftest.py`: `host_paths` resolves the core with `_paths.core_path()` (honours `LAZ_CORE`)
+  and checks that file; session fixtures `stock_core` (`<repo>/dl/azahar/azahar_libretro.dylib`) and `lazpy_core`
+  (`LAZ_CORE` when it names our core, else `<repo>/build-core/azahar_lazpy_libretro.dylib`), each skipping, or
+  failing under `LAZ_REQUIRE_EMULATOR=1`, when missing; the session header prints `core=<path> kind=<kind>` (kind
+  `lazpy` when the file name holds "lazpy", else `stock`). D's c4 test already passes `core=stock_core`.
+- **H2** the worker's nice is **at least 10**: it raises its niceness to 10 only when the parent is nicer
+  (`_worker.py`), so under `nice -n 10` the workers sit at exactly 10.
+- **H3** `host/state.c` accepts `2 <= meta.abi <= AZH_ABI_VERSION` (an ABI-2 state loads under ABI 3).
+- **H4** the azhost summary is `frames= wall= fps= shots= stop= first= last= vblanks= wall_ms_mean= batch= msg=`
+  (`host/azhost_main.c:565`); there is no `wall_ms_max`.
+- **H5** D3's state boot is gated by an absolute bound: `t_state` (the wall of the restoring `Emulator(...)`) under
+  **2.5 s** on the test app (Guy's ruling); `test_state_boot` records `t_state`, the ratio and the load line in
+  `runs/d-pytest/state-times.txt`; the 10 % ratio is recorded only.
+- **H6** `azh_stats` is valid any time after `azh_open` (`host/api.c` `azh_stats`: refuses only `AZH_PH_NONE`).
+- **H7** the Emulator closes itself after a returned `guest_exited` on both cores (`emulator.py` `run`), with
+  `close(self.timeout)`.
 
 | # | What Phase 3 relies on | Source | State | Used by |
 |---|---|---|---|---|
-| A1 | `AZH_E_*` -1 ARG, -2 ORDER, -3 CORE, -4 BOOT, -5 VULKAN, -6 IO, -7 NOMEM, -8 UNSUPPORTED, -9 NEEDS_LAZPY_CORE, -10 SAVESTATE; G adds -11 | phase-a "3. The API"; phase-2.md A1 | holds | G |
-| A2 | `int azh_read(uint32_t addr, uint32_t len, void *buf)` and `int azh_write(uint32_t addr, uint32_t len, const void *buf)` exist and return `AZH_E_NEEDS_LAZPY_CORE` on the stock core until G | phase-a "3. The API" | holds | G |
-| A3 | Our core is detected at `azh_open` by `dlsym(core, "lazpy_read_memory")`; the result is `azh_stats.is_lazpy_core` and a flag in the state struct | phase-a "3. The API" | holds | F2, G |
-| A4 | Call order: open, then options, then boot, then run/shot/stats; `azh_abi_layout`, `azh_error` in any state | phase-a "3. The API" | holds; F2 relaxes `azh_stats` to "after open" | F2 |
-| A5 | `azh_set_option` checks at once that the key was registered by the core (SET_VARIABLES in `azh_open`) and the value is listed (`citra_init_time` any decimal), else `AZH_E_ARG` naming the key; our core registers its six extra keys | phase-a "2. Facts" | holds | F2 |
-| A6 | `azhost run` defaults are relative to the current directory; `--profile host/options-default.txt`; the library applies no profile; profile then `--opt`, later wins | phase-a "3. The API" | holds | F2 |
-| A7 | `azh_version_ok` accepts `AZH_STOCK_VERSION "2126.2"` and that plus `AZH_LAZPY_SUFFIX "-lazpy.1"` (`host/pins.h`); host.log logs the core version at boot | phase-a; step A as built | holds | F2 |
-| A8 | `png.c` writes PNGs with `compress2` at level 6, with a row stride ("step E tunes") | phase-a "4. Files"; as built | holds | E |
-| A9 | The readback runs only on asked shot frames (run.c after `retro_run`, and `azh_shot`) | phase-2.md A19 | holds | E (the "readback only on asked frames" win is already true) |
-| A10 | `azh_stats_t` fields: frames, wall_s, user_s, sys_s (rusage), peak_rss, core_name, core_version, is_lazpy_core; size 240 | phase-2.md A2, A17 | holds | E (CPU ms per frame), F2 |
-| A11 | One `azh_open` per process (step A's as-built note A-N1) | `docs/reviews/phase-1-as-built.md` | holds | E (one worker per instance) |
-| A12 | `log.c` writes the core's line literally (Phase 1 as-built fix A-X1) | phase-1-as-built review | planned (fix list) | F2 (the debug stop matches the literal line) |
-| B1 | `build/testapp.3dsx`, built with devkitARM first in PATH | phase-b; item 130 | holds | all |
-| B2 | `<sys>/Azahar/sdmc/testapp/control.txt` keys `draw=2d\|3d`, `break_at`, `exit_at`, `ready_at` (1-1,000,000), `boot_frames` (1-10,000) | phase-b "3. The app" | holds | all |
-| B3 | Log lines: `start addr_global=0x%08lx addr_heap=0x%08lx size=%u mode=%s break_at= exit_at= ready_at= boot_frames=`; per frame `f= v= s= t= k= tx= ty= td= cx= cy=`; events `ready f= v=`, `booted`, `break`, `exit`; every line also to `svcOutputDebugString`, before the SD write | testapp/source/record.c:44-46, 58-61; sdlog.c (B as built) | holds | all |
-| B4 | In 3D `v` is `C3D_FrameCounter(0)`, so `v == f`; the 3D loop draws with `C3D_FRAME_SYNCDRAW` | testapp/source/scene3d.c:77, 82-85; item 130 | holds | E |
-| B5 | The record `laz_record` (32 bytes: magic 0x4C415A52 at 0, frame 4, vblank 8, keys 12, tx 16, ty 18, cx 20, cy 22, tick 24 = `svcGetSystemTick`, logged as `s=`); a global `g_record` and a heap copy | testapp/source/record.h:14-21; main.c:24-25 | holds | G |
-| B6 | Per frame: `hidScanInput`, `record_fill(&g_record)`, `memcpy` to the heap copy, then the log line from `g_record`; so a host write into the record is overwritten next frame and cannot change a log line | testapp/source/main.c:137-156 | holds | G (the write test targets the control struct instead) |
-| B7 | `static laz_control g_ctl`: `int mode3d` 0, u32 `break_at` 4, `exit_at` 8, `ready_at` 12, `boot_frames` 16, `error_count` 20, `error_line[17]` 24 (u32); `run_events` reads `g_ctl.ready_at == f` every frame | testapp/source/control.h:11-19; main.c:23, 159-170 | holds | G |
-| B8 | `LAZ_FRAME_CAP` 100,000,000; the app never exits on a button | testapp/source/main.c:16 | holds | E (60 s runs) |
-| B9 | `tests/check_testapp.py`: `read_png_rgba`, `markers --top --bottom --mode 2d\|3d` | phase-b "4. Files" | holds | E, F2 |
-| F1 | `core/patches/0000`-`0006` (identical in MAIN and `../libazahar-py-f1`, `diff -r` 2026-11-12): `lazpy_read_memory(uint32_t vaddr, void *buf, uint32_t len)` and `lazpy_write_memory(uint32_t vaddr, const void *buf, uint32_t len)`: 0 ok, -1 not running or no process (or an exception), -2 a page unmapped, -3 bad args (NULL, len 0, len > 0x4000000, `vaddr + len > 2^32`); every page checked with `IsValidVirtualAddress` before any byte moves; "call only between frames" | core/patches/0001-lazpy-memory-exports.patch | holds | G |
-| F2a | `lazpy_movie_play(const char *path)`: 0 ok, -2 missing, -3 null, -4 invalid, -5 already booted, `""` clears | core/patches/0006 | holds | not used in Phase 3 |
-| F3 | The six options in `core/options-lazpy.txt`: `citra_deterministic_async_operations=enabled`, `citra_async_fs_operations=disabled`, `citra_instant_debug_log=enabled`, `citra_init_clock=FixedTime`, `citra_init_time=946681277`, `citra_init_ticks_type=Fixed` | core/options-lazpy.txt; patch 0002 | holds | F2 |
-| F4 | Patch 0003: our `retro_run` breaks out after `DisplayMessage` on a non-Success status; patch 0004: log filter Info plus `Debug_Emulated` at Debug; patch 0005: version `2126.2-lazpy.1` | core/patches/0003-0005 | holds | F2 |
-| F5 | `nice -n 10 tools/build-core.sh --detach` in MAIN writes `build-core/build.pid`, `build.exit`, `build.log`; output `build-core/azahar_lazpy_libretro.dylib`; STAMP = hash of the patches; `LAZ_CORE_LTO=OFF` fallback | phase-f1; tools/build-core.sh | holds (the first build was running at cd2aadd) | F2 |
-| C1 | ABI 2 frozen at C1: `azh_batch` 3348, `azh_result` 304 (`vblanks`, `message[256]` appended), `azh_stats` 240, `azh_layout` 6452 (`n_fields`, `fields[160]` of `{char name[32]; int32 offset, size}`), `const.*` rows for every enum and limit, `map.*` rows | phase-c 3.1-3.2 | planned | G (appends) |
-| C2 | Map version 2; offsets 16 heartbeat, 24 stop code, 28 msg len, 32 msg[1024], 1056 dims, 1072 px_frame, 1080 frame_total, 1088 vblanks_total, 1096 msg_seq, 1100 pid, 1104 exit_code, 4096 pixels; size 695,296; bytes 1108-4095 free | phase-c 3.3 | planned | G |
-| C3 | After each `retro_run`: first-frame check, heartbeat, frame and vblank totals, the shot, then the stops in priority order; every stop returns 0 | phase-c 3.4 | planned | E (timing line), G (watch rows go after the totals, before the shot) |
-| C4 | On our core status 16 is `AZH_ACT_EXITED` (a flag; the batch stops when `retro_run` returns, `stop=guest_exited`); a crash is `AZH_ACT_ERROR` with no count; the exit path (`_exit`) runs only on the stock core and writes one fixed line to the log | phase-c 3.5 | planned | F2 |
-| C5 | On our core a debug-text stop needs `citra_instant_debug_log=enabled` in the option store, else `AZH_E_ARG` naming the key; on stock `AZH_E_NEEDS_LAZPY_CORE` (P5) | phase-c 3.4 | planned | F2 |
-| C6 | `azhost run` flags `--inputs`, `--sd-seed`, `--stop-file/--stop-text/--stop-every/--stop-new`, `--debug-stop`, `--wall-limit-ms`, `--frames N[,N2]`, `--raw-shot`, `--print-last-line`, `--save`; per-batch summary `... stop= first= last= vblanks= wall_ms_max= batch= msg=`; exit 10/11 when a batch stopped that way on our core; exit 7 for a debug stop on stock; `azhost layout` prints `abi=<n>` and every `fields[]` row | phase-c 6 | planned | F2, G |
-| C7 | `tests/gate_c.py` scenarios a-f under `runs/c-gate/<id>/`, `--only`, PASS/FAIL lines, `runs/c-gate.rc`; c4 expects exit 7 on stock; f expects exit 10, map stop code 4 and `exit_code` 10; `tests/testapp_log.py` (`write_control`, `parse_log`), `tests/checks_c.py` (`boot_offsets`, `offsets_ok`, `touch_expected`) | phase-c 8 | planned | F2 (switches), G (regression) |
-| D1 | Modules `__init__`, `_abi`, `_host`, `_worker`, `_map`, `_client`, `_paths`, `inputs`, `results`, `errors`, `emulator`; stdlib only, numpy optional | phase-d 4.1 | planned | E, F2, G |
-| D2 | Worker spawn: `python -I -c "<...> main(int(sys.argv[1]))" <child fd> <pkg_parent>` with `pass_fds=(child_fd,)`, cwd the workdir, stderr to `worker.err` (P3); `subprocess` default `close_fds=True` | phase-d 4.2 | planned | E (adds the slot fd as `argv[3]` and to `pass_fds`) |
-| D3 | Worker ops `start` (core, sysdir, log, map, options list (profile lines then caller's), app, state), `run`, `set_input`, `shot`, `save_state`, `load_state`, `stats`, `close`; replies `("ok", x)` / `("err", code, text)`; `os.nice(10)` in the worker | phase-d 4.1, 4.3 | planned | E (nice check), F2 (`start` gains `lazpy_options`), G (`read`, `write`) |
-| D4 | Wait loop and death mapping: exit 10 during `run` gives a `RunResult(stopped_by="guest_exited")` and closes the Emulator; 11 `GuestError`; else `HostCrashed`; heartbeat timeout `HostTimeout` and SIGKILL of its own worker | phase-d 4.4 | planned | E (kill test), F2 |
-| D5 | Errors: `LibAzaharError` base; `BootError`, `GuestError` (`.result`), `HostTimeout`, `HostCrashed`, `StateError`, `NeedsLazpyCore`, `HostError`; AZH_E_ARG becomes `ValueError`; `errors.from_code(code, text)` | phase-d 4.5 | planned | G (adds `GuestMemoryError`) |
-| D6 | `Emulator(app, workdir, *, sd_seed=None, state=None, core=None, options=None, timeout=30.0, boot_timeout=300.0)`; workdir holds `sys/` (SD at `sys/Azahar/sdmc/`), `shots/`, `host.log`, `host.map`, `worker.err`; `run(frames, inputs=(), shots=(), *, stop_file, stop_text, stop_every, stop_new, debug_text, wall_limit, timeout) -> RunResult`; `run_frame()`, `set_keys(raw=)`, `screens()`, `shot()`, `save_state()`, `load_state()`, `stats()`, `sd`, `frame_total`, `pid`, `closed`, `close()`; "`emu.memory` is Phase G's" | phase-d 4.6 | planned | E, F2, G |
-| D7 | `RunResult(frames, stopped_by, first_frame, last_frame, frame_total, vblanks, wall_s, message, shots)`, frozen dataclasses; `Stats(...)` mirrors `azh_stats` | phase-d 4.1 | planned | E, G (appends `watch`) |
-| D8 | `_paths`: `LAZ_ROOT`, `LAZ_HOST`, `LAZ_CORE` (else `<root>/dl/azahar/azahar_libretro.dylib`), `LAZ_MVK`, `LAZ_PROFILE` (else `<root>/host/options-default.txt`), all resolved absolute | phase-d 4.1 | planned | F2 (adds `LAZ_LAZPY_PROFILE`) |
-| D9 | States: `<path>`, `<path>.sd/`, `<path>.meta` (`abi=`, `k=`, `frame_total=`, `vblanks_total=`, `created=`, `core_version=`, `app=`, `app_sha256=`); a different `core_version` only warns, the core decides; `abi` must equal `AZH_ABI_VERSION` | phase-d 3.1, 3.3 | planned | F2 (cross-core), G (ABI 3 makes ABI-2 states refused: section 8 risk 7) |
-| D10 | Tests: `tests/python/conftest.py` fixtures `host_paths` (skip, or fail under `LAZ_REQUIRE_EMULATOR=1`, P2), `workdir` (`runs/d-pytest/<test>/`), `seed(**control_keys)`; marker `slow`; `fakeworker.py` modes | phase-d 5 | planned | E, F2, G |
-| SD | SD file writes are synchronous on the emulator thread (file.cpp:200-217); OpenFile, SetSize, Close are async on the stock core | phase-2.md SD | holds | F2 |
+| A1 | `AZH_E_*` -1 ARG, -2 ORDER, -3 CORE, -4 BOOT, -5 VULKAN, -6 IO, -7 NOMEM, -8 UNSUPPORTED, -9 NEEDS_LAZPY_CORE, -10 SAVESTATE; G adds -11 | `host/azhost.h:11-13` | holds | G |
+| A2 | `int azh_read(uint32_t addr, uint32_t len, void *buf)`, `int azh_write(uint32_t addr, uint32_t len, const void *buf)` exist; after open on our core they return `AZH_E_UNSUPPORTED` ("arrives in step G"), on stock `AZH_E_NEEDS_LAZPY_CORE`; G tightens the order to "after boot" | `host/api.c` `memory_gate` | holds | G |
+| A3 | Our core is detected at `azh_open` by `dlsym(core, "lazpy_read_memory")` in `azh_core_open`; the result is `azh_stats.is_lazpy_core` | `host/core.c:100` | holds | F2, G |
+| A4 | Call order: open, options, boot, then run/shot; `azh_stats` after open (H6); `azh_abi_layout`, `azh_error` in any state | `host/api.c` | holds | F2 |
+| A5 | `azh_set_option` checks at once that the key was registered by the core and the value is listed, else `AZH_E_ARG` naming the key; our core registers its six extra keys; at boot host.log has one `option <key>=<value>` line per key (`host/options.c:164`) | phase-a; `host/options.c` | holds | F2, E (the option set per table row) |
+| A6 | `azhost run` defaults are relative to the current directory; `--profile host/options-default.txt`; profile then `--opt`, later wins | `host/azhost_main.c:155, 496-499` | holds | F2 |
+| A7 | `azh_version_ok` accepts `2126.2` and `2126.2-lazpy.1` (`host/pins.h`); host.log logs `core <name> version <v>` at open (`host/core.c:72`) | as built | holds | F2 |
+| A8 | `host/png.c` is **pure** (stdlib and zlib only) and in `TEST_SRC` (`Makefile:41`); `#define PNG_LEVEL 6` at `png.c:11`, used by `compress2` at `:136` | as built | holds | E |
+| A9 | The readback runs only on asked shot frames (`run.c` `run_frames` takes shots only for asked frames) | `host/run.c:310-330` | holds | E |
+| A10 | `azh_stats_t` fields: frames, wall_s, user_s, sys_s, peak_rss, core_name, core_version, is_lazpy_core; size 240 | `host/azhost.h` | holds | E, F2 |
+| A11 | One `azh_open` per process (`api.c` `opened_once`) | as built | holds | E |
+| A12 | `log.c` writes the core's line literally | `host/log.c` | holds (C merged; the builder checks) | F2 |
+| B1-B9 | The test app: `build/testapp.3dsx` (devkitARM first in PATH); control keys `draw`, `break_at`, `exit_at`, `ready_at` (1-1,000,000), `boot_frames` (1-10,000); `start addr_global= addr_heap= ...` line, per-frame `f= v= s= t= k= tx= ty= td= cx= cy=`, events `ready`, `booted`, `break`, `exit`; in 3D `v == f`; `laz_record` 32 bytes (magic 0, frame 4, vblank 8, keys 12, tx 16, ty 18, cx 20, cy 22, tick 24); per frame `hidScanInput`, `record_fill(&g_record)`, heap `memcpy`, log; `static laz_control g_ctl` (`mode3d` 0, `break_at` 4, `exit_at` 8, `ready_at` 12, `boot_frames` 16, `error_count` 20, `error_line` 24); `LAZ_FRAME_CAP` 100,000,000; `check_testapp.py markers` | `testapp/source/record.c:43-48, 58-61`, `record.h:13-21`, `control.h:11-19`, `main.c:16, 23-25, 137-174`, `scene3d.c:77-85` | holds (review 1 found `g_ctl` 100 bytes from `g_record` in C's `testapp.elf`) | all |
+| F1 | Patch 0001: `lazpy_read_memory(uint32_t vaddr, void *buf, uint32_t len)` and `lazpy_write_memory(uint32_t vaddr, const void *buf, uint32_t len)`: 0 ok, -1 not running / no process / exception, -2 a page unmapped, -3 bad args (NULL, len 0, len > 0x4000000, `vaddr + len > 2^32`); every page checked before any byte moves | `core/patches/0001-lazpy-memory-exports.patch` | holds | G |
+| F2a | `lazpy_movie_play(const char *path)` | patch 0006 | holds | not used |
+| F3 | The six options in `core/options-lazpy.txt`; patch 0002 registers them **with stock defaults** | `core/options-lazpy.txt`; patch 0002 | holds | F2, E |
+| F4 | Patch 0003 (our `retro_run` returns after `DisplayMessage`), 0004 (log filter), 0005 (the version is `g_build_fullname + "-lazpy.1"`, assembled at run time; the dylib's strings hold `-lazpy.1`) | patches 0003-0005 | holds | F2 |
+| F5 | `tools/build-core.sh --detach` in MAIN: `build-core/build.pid`, `build.exit`, `build.log`; output `build-core/azahar_lazpy_libretro.dylib`; the first build (keys ON) ended 19:40 with 0 (19,195,472 bytes, 28 exports, key blob in it); the P9 rebuild replaces it | `tools/build-core.sh:95-117` (P9 edit in MAIN) | planned (the P9 rebuild) | F2 |
+| C1 | ABI 2: `azh_batch` 3348, `azh_result` 304, `azh_stats` 240, `azh_layout` 6452 (`n_fields`, `fields[160]` of 40 bytes); **114** `field_rows`; `_Static_assert` rows <= `AZH_MAX_FIELDS` (160) | `host/api.c:49-166`, `host/azhost.h:38, 66` | holds | G |
+| C2 | Map version 2; offsets 16 heartbeat .. 1104 exit_code, 4096 pixels; size 695,296; bytes 1108-4095 free | `host/hostmap.c`; `python/libazahar/_map.py` | holds | G |
+| C3 | After each `retro_run` (`azh__run_one_frame`): totals, then `take_shots`, then the stops; every stop returns 0 | `host/run.c:102, 173, 310-330` | holds | E (timing line), G (watch rows between `azh__run_one_frame` and `take_shots`) |
+| C4 | On our core status 16 is `AZH_ACT_EXITED` (`stop=guest_exited`); a crash is `AZH_ACT_ERROR` with no count; the exit path (`_exit`) runs only on stock and writes one fixed line (`host/env.c:40-56`) | `host/msg.c:75`, `host/env.c` | holds | F2 |
+| C5 | On our core a debug-text stop needs `citra_instant_debug_log=enabled` in the option store, else `AZH_E_ARG`; on stock `AZH_E_NEEDS_LAZPY_CORE` | `host/api.c` `check_stop_rules` | holds | F2 |
+| C6 | `azhost run` flags `--inputs`, `--sd-seed`, `--stop-*`, `--debug-stop`, `--wall-limit-ms`, `--frames N[,N2]`, `--raw-shot`, `--print-last-line`, `--save`; summary as H4; exit 10/11 on our core; exit 7 for a debug stop on stock; `azhost layout` prints `abi=<n>` and every row | `host/azhost_main.c` | holds | F2, G |
+| C7 | `tests/gate_c.py` scenarios a-f, `--only`, `run_azhost(ident, flags, control, timeout)` (kills its child on any `BaseException`), PASS/FAIL lines, `runs/c-gate.rc`; no `--core` yet; no `abi=` literal | `tests/gate_c.py:26-60, 245` | holds | F2 (switches, reuse), G |
+| D1 | Modules `__init__`, `_abi`, `_host`, `_worker`, `_map`, `_client`, `_paths`, `inputs`, `results`, `errors`, `emulator`; stdlib only, numpy optional | phase-d 4.1 | hold | E, F2, G |
+| D2 | Worker spawn: `python -I -c "<...> main(int(sys.argv[1]))" <child fd> <pkg_parent>`, `pass_fds=(child_fd,)`, cwd the workdir, stderr to `worker.err`; the fake worker's argv is a callable | `_client.py:28-29, 42-44, 108-126` (D tree) | hold | E |
+| D3 | Worker ops `start` (core, sysdir, log, map, options, app, state; `azh_stats` after boot), `run`, `set_input`, `shot`, `save_state`, `load_state`, `stats`, `close`; replies `("ok", x)` / `("err", code, text)`; nice as H2 | `_worker.py:27-41, 110-112` | hold | E, F2, G |
+| D4 | Wait loop and death mapping: exit 10 during `run` gives `("exited", info)` and `RunResult(stopped_by="guest_exited")`; H7; 11 `GuestError`; else `HostCrashed`; heartbeat timeout `HostTimeout` and SIGKILL of its own worker | `_client.py:212-249`, `emulator.py` | hold | E, F2 |
+| D5 | Errors: `LibAzaharError`; `BootError`, `GuestError` (`.result`), `HostTimeout(op, seconds, message)` (the third argument prints as "(last guest message: ...)"), `HostCrashed`, `StateError`, `NeedsLazpyCore`, `HostError`, internal `HostCallError`; `AZH_E_ARG` becomes `ValueError` with the host's text; `errors.from_code(code, text)` | `errors.py:32-36, 96-97` | hold | E (`SlotTimeout`), G |
+| D6 | `Emulator(app, workdir, *, sd_seed, state, core, options, timeout=30.0, boot_timeout=300.0)`; `run(frames, inputs, shots, *, stop_file, stop_text, stop_every, stop_new, debug_text, wall_limit, timeout)`; `run_until` delegates to `run`; `set_input`, `run_frame`, `set_keys`, `screens`, `shot`, `save_state`, `load_state`, `stats`, `sd`, `frame_total`, `pid`, `closed`, `close` | `emulator.py:62-64, 133-175, 226-232, 306-311` | hold | E, F2, G |
+| D7 | `RunResult(frames, stopped_by, first_frame, last_frame, frame_total, vblanks, wall_s, message, shots)` (frozen; `shots` has a default); `Stats` mirrors `azh_stats` | `results.py:19-32` | hold | E, G |
+| D8 | `_paths`: `repo_root`, `host_path`, `core_path` (`LAZ_CORE`, else `<root>/dl/azahar/azahar_libretro.dylib`), `mvk_path`, `profile_path` (`LAZ_PROFILE`); `emulator.py` `_read_profile(path)` reads `key=value` lines | `_paths.py`, `emulator.py:25-48` | hold | F2 |
+| D9 | States: `<path>`, `<path>.sd/`, `<path>.meta` (`abi=`, `k=`, `frame_total=`, ...); a different `core_version` only warns; abi range as H3; `test_newer_abi_refused` | `host/state.c:395`; `tests/python/test_state.py:116-124` | hold | F2, G |
+| D10 | Fixtures as H1, `workdir` (`runs/d-pytest/<test>/`, deleted and remade), `seed(**control_keys)`, `repo_root`; `d_helpers.boot(paths, workdir, seed_dir, **kwargs)`; marker `slow` (`pyproject.toml:22`); `fakeworker.py` modes | `tests/python/conftest.py`, `d_helpers.py` | hold | E, F2, G |
+| SD | SD file writes are synchronous on the emulator thread; OpenFile, SetSize, Close are async on the stock core | phase-2.md SD | holds | F2 |
 
 ## 7. Hours, against PLAN.md (agent wall time)
 
 | Step | Builder | Review | Commit | Total | PLAN.md | Why the difference |
 |---|---|---|---|---|---|---|
-| E | 0.8 (E1 0.4, E2 0.4) | 0.2 | 0.1 | **1.1** | 1.0 | the live slot gate holds real slots while it tests a private cap (phase-e 6), a little more test code |
-| F2 | 0.55 (F2-0 0.05, F2-1 0.25, F2-2 0.25) | 0.2 | 0.1 | **0.85** | 0.75 | the profile gap (P8) and the core-kind switches were not in PLAN's F2 |
-| G | 0.6 (G1 0.4, G2 0.2) | 0.2 | 0.1 | **0.9** | 0.5 | PLAN's 0.5 h did not count the ABI 3 bump the watch list needs (header, `fields[]`, `_abi.py`, the map area) |
+| E | 0.8 (E1 0.4, E2 0.4) | 0.2 | 0.1 | **1.1** | 1.0 | the live slot gate holds real slots while it tests a private cap; the 4-instance row and its rule (R2, +0.03 h) less the cut state row (R3) and the cut `_slots` timing print |
+| F2 | 0.45 (F2-0 0.05, F2-1 0.2, F2-2 0.2) | 0.2 | 0.1 | **0.75** | 0.75 | P8's profile application, offset by the cuts: no `azh_stats` change (H6), no conftest work and no guest-exit close code beyond a 5 s wait (H1, H7), `gate_c`'s runner reused (N12), the stock smoke (Q4) |
+| G | 0.55 (G1 0.4, G2 0.15) | 0.2 | 0.1 | **0.85** | 0.5 | PLAN's 0.5 h did not count the ABI 3 bump the watch list needs (header, `fields[]`, `_abi.py`, the map area); less the cut Python mirror of the watch plan (N4) and the halved G2 batch (B4) |
 | Review loops | | | | 0.5 | 0.5 | |
-| **Phase** | | | | **3.35** | **2.75** | |
+| **Phase** | | | | **3.2** | **2.75** | |
+
+Main loop (not in the table): the P9 commit and launch, the checkpoint choreography and the item moves, about
+0.2 h.
 
 ## 8. Risks for this phase
 
-1. **Our core's first build fails** or dies. F2-0 finds it; the patch fix and the incremental rebuild of section 2;
-   E1 and the main loop's other work go on; E2 and G slip by the rebuild's machine time.
+1. **The P9 rebuild fails or changes behaviour.** A failure is the main loop's (section 2); F2 launches only on a 0.
+   With the key blob off, the core has no built-in keys; the test app is an unencrypted `.3dsx` and needs none. If
+   F2's batch shows a difference from Phase 2's stock results that traces to keys, F2 reports it and the main loop
+   takes it to Guy (Phase 4's G1); F2 never turns the blob back on.
 2. **Repeats are not identical on our core** (a host thread still leaks into guest time: the Vulkan presentation
    thread, shader compiles, an async path the option does not cover). F2 records the first differing log line and
-   shot, does not tune, and reports; the main loop takes it to a review (a new patch is a Phase 3 change of scope).
+   shot, does not tune, and reports; a new patch is a Phase 3 change of scope.
 3. **Torn reads in G**: `retro_run` returns after the slice in which the VBlank fired, so the guest may be part-way
    through `record_fill` for the next frame. G's checks allow a record whose fields all come from line f or f-1 and
    fail above 1 % of reads; the watch rows share the risk.
-4. **F2's fixes touch Phase 2 files** that the as-built reviews of C and D may still be changing. F2 launches only
-   after Phase 2 merges; its edits are narrow and listed (section 3).
+4. **Phase 2's holds are not all in the merged code.** The main loop checks H1-H7 before launch; a missing hold is
+   either added to Phase 2 before its merge or named to the builder whose brief relies on it.
 5. **The control-struct write test depends on B's layout** (B7) and on the u32 pair (999001, 999002) appearing once
    near `addr_global`. G scans a bounded window and fails with the hit count if it is not exactly one.
 6. **Timed runs overlap** another session's emulators. Each table row records the load at its start and end; the
-   slot cap counts only libazahar's workers; rules.md 5. The cap rule (phase-e 7) is fixed in advance so a noisy
-   number cannot be argued into a cap.
-7. **ABI 3 makes Phase 2's ABI-2 state files refused** (D's meta check). The state files are run artefacts, not
-   committed; G's report says so and USING.md gets one line. Gen3D's states made before G must be remade.
+   slot cap counts only libazahar's workers; rules.md 5. The cap rule (phase-e.md section 7) is fixed in advance.
+7. **The 4-instance row loads a shared Mac.** It runs 4 instances for 60 s on one core only, through the real slot
+   folder (all 4 slots held, so cap-3 users wait); the rule refuses 4 unless the end load is below 2 x cores.
 8. **The map grows to 4,890,624 bytes per instance** (the 4 MiB watch area). The file is `ftruncate`d, so unwritten
-   pages cost no disk on APFS and no memory until touched. G measures `du -k host.map` and RSS in its report.
+   pages cost no disk on APFS and no memory until touched. G measures `du -k host.map` and RSS.
 9. **A between-frames read touches GPU-cached pages** (VRAM, linear heap): `ReadBlock` flushes the rasterizer cache
-   for them (memory.cpp:213-). It runs on the worker's one thread, the same thread as `retro_run` (the libretro
-   thread, citra_libretro.cpp:284), so it is safe; G's brief says reads are only made by the thread that runs
-   batches.
-10. **The default cap rests on a light scene.** The test app's 3D scene is lighter than a game; the table labels it
-    "light" (rules.md 7) and the cap stays marked provisional until a real-scene row exists (Q1 for Guy).
+   for them. It runs on the worker's one thread, the same thread as `retro_run`, so it is safe; reads are only made
+   by the thread that runs batches.
+10. **The default cap rests on a light scene** (Guy, Q1: no real-scene row). The table labels it "light" (rules.md
+    7) and the cap stays marked provisional; spike 2's real-scene numbers are quoted beside it.
 
-## 9. Hour-saving pass (revision 0)
+## 9. Hour-saving pass (revision 1)
 
-| Existing thing or cut | What it saves | Verdict |
+Kept from revision 0 (each still the cheapest path): the slot fd passed to the worker with `pass_fds` (no worker
+slot code); `ThreadPoolExecutor` for `Pool`; the kill-frees-slot check with a plain `sleep` child plus one
+Emulator-level kill; one batch per instance per row; the per-batch timing line instead of a profiler; D's nice and
+A's readback-on-asked-frames only checked; one table run for both cores; `--lazpy-profile` defaulting on; the
+repeats reusing gate C's and D's shapes; no core patch in G; the write test through a scanned control struct; no
+azhost memory flags; copied watch rows; no ring buffer; libmgba-py's `raw_read` names.
+
+Revision 1, each item checked against the code or the review:
+
+| Cut, existing thing or cheaper test | Saves | Verdict |
 |---|---|---|
-| The slot fd passed to the worker with `pass_fds` (and closed in the parent); no worker-side slot code, no protocol change | a worker op and a second owner of the lock | taken (E) |
-| `concurrent.futures.ThreadPoolExecutor` for `Pool`; each job's Emulator in its own thread (the work is in the worker processes) | a scheduler | taken (E) |
-| The kill-frees-slot check at the `_slots` level with a plain `python3 -I -c "sleep"` child, plus one Emulator-level kill | most of the slot gate's machine time | taken (E) |
-| One batch per instance per row (`run(10_000_000, wall_limit=60)`) instead of timed loops of small runs | Python overhead in the numbers and code | taken (E) |
-| A per-batch host.log timing line (Σ `retro_run` wall vs batch wall) instead of a profiler run | the host-share measurement; `/usr/bin/sample` on one worker for 10 s is an optional cross-check | taken (E) |
-| D's `os.nice(10)` in the worker and A's readback-on-asked-frames (A9), C's raw frames | three of PLAN's E items need no code | taken (E: checked only) |
-| One speed-table run giving both cores' rows (stock and ours) instead of two scripts | a second run later | taken (E) |
-| A real Gen3D row by default | the optional row's set-up time | declined: optional, local-only, needs Guy (Q1) |
-| `azhost --lazpy-profile` defaulting to `core/options-lazpy.txt` when our core is detected | every gate and user remembering a flag | taken (F2) |
-| Two repeat checks reusing gate_c's input file and D's state-boot test shape | new scenario code | taken (F2) |
-| A drain-only core export for D's restore (D 3.3's note) | `drain_ms` | declined unless F2's measured `drain_ms` is over half of `t_state` (then a Phase 4 item, not G: it needs a rebuild) |
-| No core patch in G (the exports exist; no rebuild) | a 15-90 min machine rebuild and a re-gate | taken (G) |
-| The write test through the control struct found by scanning for a seeded u32 pair, instead of a test-app change | a testapp edit, a rebuild of the `.3dsx`, B's gate rerun | taken (G) |
-| `azhost` memory flags (`--read`, `--watch`) | 0.1 h | cut: Python is the memory interface; `azhost` keeps `layout` |
-| Watch rows copied into `RunResult.watch` (immutable bytes) instead of zero-copy views into the map | the view-lifetime rules `screens()` needs | taken (G) |
-| A ring buffer for unbounded watched batches | nothing needed now | declined: a batch that does not fit is `ValueError` naming the largest frame count; the caller splits |
-| libmgba-py's `memory.u32.raw_read(addr)` as an alias on the same objects (gba-toolkit-share `tools/vsd_run.py`) | Gen3D porting cost | taken (G, three lines per width) |
+| Phase 2's holds H1, H6, H7: D's `host_paths`/`lazpy_core`/`stock_core`, `azh_stats` after open, D's close after a returned exit already exist | F2's conftest edits, its `api.c` change and its close-after-exit code (about 0.08 h) | taken (F2) |
+| `gate_c.run_azhost` and its summary parsing imported by `gate_f2.py` (N12) | a second azhost runner (about 0.03 h) | taken (F2) |
+| The stock smoke (Q4): `gate_c.py --core STOCK --only c,f` plus `pytest -k "c4 or guest_exit or lazpy"` on STOCK | about 25 min of machine time on the critical path, 0.03 h | taken (F2) |
+| The key-blob check as plain file reads in `gate_f2.py` (the cache line, a walk of `.o.d` files, a byte search) instead of a new tool; Phase 4's `release_check.py` may import it | a second checker | taken (F2) |
+| No Python mirror of `azh__watch_plan` (N4): C's `AZH_E_ARG` text with the largest-frames hint already reaches the caller as `ValueError` | about 0.05 h | taken (G) |
+| Explicit `core=lazpy_core` / `core=stock_core` in G's live tests (B4): one pytest run covers both cores, so G2 is two parts (gate C, one pytest) instead of four | about 0.05 h, about 15 min machine | taken (G) |
+| No `AZH_MAX_FIELDS` branch (N3): 114 + 23 = 137 <= 160 | a branch and a size | taken (G) |
+| `tools/hold_slot.py` committed by E1 (N7), used by G2 and the phase-end suite | two throw-away helpers | taken (E; F2 keeps its temporary one: E1 is not in its tree) |
+| No state-row option in `speed_table.py` (Guy, Q1) | about 0.02 h | taken (E) |
+| The 4-instance row on the cap's core only (ours), not on both cores | about 2 min machine | taken (E) |
+| The `_slots` 1,000-pair timing print | 0.01 h | cut (E) |
+| G stops at "waiting for E2" instead of a longer wait | an unbounded Monitor wait | taken (G) |
+| A ready-made lock library (`filelock`, `fasteners`) or POSIX named semaphores for the cap | nothing: not stdlib, and a named semaphore is not released when its holder dies on macOS | declined (review 1 checked) |
+| The stock core's `SET_MEMORY_MAPS` instead of the lazpy exports | nothing: it covers only heap and VRAM VMAs present at load, never the app image | declined (review 1 section 5) |
+| A sticky `azh_set_watch()` call instead of appending to `azh_batch` | nothing: the ABI still moves for the map rows | declined |
+| Reading `g_ctl`'s address from `testapp.elf` with devkitARM `nm` | exact, but a devkitARM dependency in a pytest; the scan costs nothing | declined |
+| Drop the phase-end suite (G2 already ran gate C and pytest on ours) | about 45 min machine at the very end, off the critical path | declined: it is the only run of the merged tree (E2's files, held fixes) on both cores |
 
 ## 10. Facts checked for this plan (reviewers: verify these)
 
 "SRC" = `dl/azahar-src/unpacked/azahar-unified-source-2126.2/src/` (GIT-COMMIT 219d743a1e698101fe1ab8bef43e6563126c3c27,
-GIT-TAG 2126.2), read 2026-11-12. "PATCHES" = `core/patches/` (MAIN, identical to `../libazahar-py-f1/core/patches/`).
+GIT-TAG 2126.2), read 2026-11-12. "PATCHES" = `core/patches/`. Review 1 verified every row of revision 0's list
+(its section 5); the rows below are the ones the briefs use, plus revision 1's new ones (marked new).
 
 | Fact | Where |
 |---|---|
 | `BASE_CLOCK_RATE_ARM11 = 268111856`; one frame is 4,481,136 ticks (59.831 Hz); `MAX_SLICE_LENGTH` = clock / 234 | SRC core/core_timing.h:37, 40-42, 184 |
-| `init_ticks_type` Random seeds the base ticks from `std::random_device`, so `s` starts at a random value on the stock core; Fixed uses `init_ticks_override` | SRC core/core_timing.cpp:37-44; common/settings.h:506-507 |
-| `init_clock` SystemTime takes the host clock (plus DST hour); FixedTime takes `init_time` (default 946681277) | SRC core/hle/kernel/shared_page.cpp:34-63; common/settings.h:503-505 |
-| `deterministic_async_operations` (default false) gates `std::async` in HLE requests | SRC common/settings.h:490-491; core/hle/kernel/hle_ipc.h:306, 348 |
-| `instant_debug_log` (default false) makes the log backend write inline | SRC common/settings.h:659; common/logging/backend.cpp:353 |
-| `retro_run` registers the core-loop thread, loops `RunLoop` until a frame is submitted, `DisplayMessage` on non-Success | SRC citra_libretro/citra_libretro.cpp:284-306 |
-| `ReadBlock` zero-fills unmapped pages with a log line; copies `Memory` pages; flushes the rasterizer for cached pages | SRC core/memory.cpp:176-215 |
-| `IsValidVirtualAddress`: a page pointer or a non-Unmapped attribute | SRC core/memory.cpp:824-837 |
-| `CITRA_PAGE_SIZE` 0x1000 | SRC core/memory.h:34 |
-| `Kernel::GetCurrentProcess()` | SRC core/hle/kernel/kernel.h:319 |
-| The core's exported symbols come from `libretro.osx.def` via `-exported_symbols_list`; output name `azahar_libretro` | SRC citra_libretro/CMakeLists.txt:32, 96 |
-| A savestate is refused if its program id differs or its revision is not `g_scm_rev` ("created from a different revision") | SRC core/savestate.cpp:292-306 |
-| A build from the unified tarball takes `GIT_REV` from its `GIT-COMMIT` file, so our core's `g_scm_rev` is 219d743a...; the stock release was built from the same commit, so a stock state may load into ours (F2 records it) | dl/.../CMakeModules/GenerateBuildInfo.cmake:13-16; GIT-COMMIT |
-| `retro_serialize_size`, `retro_serialize`, `retro_unserialize` | SRC citra_libretro.cpp:692, 712, 722 |
-| `PollInput` runs from the window's VBlank path, once per VBlank | SRC citra_libretro/emu_window/libretro_window.cpp:198-206 |
-| The memory exports check every page before `ReadBlock`/`WriteBlock`; codes -1/-2/-3; len cap 0x4000000; no 4 GiB wrap; try/catch to -1 | PATCHES 0001 (citra_libretro.cpp hunk at :746) |
-| The `.def` gains `_lazpy_read_memory`, `_lazpy_write_memory` (0001) and `_lazpy_movie_play` (0006) | PATCHES 0001, 0006 |
+| Random base ticks from `std::random_device`; Fixed uses the override | SRC core/core_timing.cpp:37-44; common/settings.h:506-507 |
+| `init_clock` SystemTime (plus DST hour) / FixedTime (`init_time` default 946681277) | SRC core/hle/kernel/shared_page.cpp:34-63; settings.h:503-505 |
+| `deterministic_async_operations` gates `std::async` in HLE requests | SRC settings.h:490-491; hle_ipc.h:306, 348 |
+| `instant_debug_log` writes inline **and flushes every backend per entry** (a speed cost on a chatty app) | SRC settings.h:659; common/logging/backend.cpp:353-357 |
+| One `retro_run` = one VBlank: `GPU::VBlankCallback` presents every VBlank, the present calls `SwapBuffers`, which sets `submittedFrame` and ends the loop | SRC video_core/gpu.cpp:488-498; libretro_vk.cpp:710-711; libretro_window.cpp:68-71; citra_libretro.cpp:282-331 |
+| `ReadBlock` zero-fills unmapped pages, flushes cached pages; `WriteBlock` skips unmapped | SRC core/memory.cpp:173-229, 247-253 |
+| `IsValidVirtualAddress`; `CITRA_PAGE_SIZE` 0x1000; `Kernel::GetCurrentProcess()` | SRC memory.cpp:824-837; memory.h:34; kernel.h:319 |
+| Exports from `libretro.osx.def` via `-exported_symbols_list` | SRC citra_libretro/CMakeLists.txt:32, 96 |
+| A state is refused on program id or revision; the body after the 256-byte `CSTHeader` is zstd | SRC core/savestate.cpp:291-304 |
+| `GIT_REV` from `GIT-COMMIT`, `BUILD_FULLNAME` from `GIT-TAG` (so the version is `2126.2-lazpy.1`) | CMakeModules/GenerateBuildInfo.cmake:13-16, 40-55 |
+| `async_shader_compilation` defaults to false; `frame_limit` forced to 0 by the libretro core | SRC settings.h:537; core_settings.cpp:1133 |
+| macOS `flock(2)`: locks belong to the open file description; an inherited fd keeps the lock after the parent closes; Python `subprocess` uses fork+exec with `pass_fds`, so a sibling thread's child never keeps a slot fd past `exec` | `man 2 flock`; Python docs; review 1 |
+| new: `option(ENABLE_BUILTIN_KEYBLOB ... ON)`; today's build has `ENABLE_BUILTIN_KEYBLOB:BOOL=ON` (CMakeCache.txt:728); of 1,659 `.o.d` files only `citra_core.dir/hw/aes/key.cpp.o.d` names `default_keys.h`; the blob's first 16 bytes `[removed]` sit at offset 13,960,800 of today's dylib | SRC CMakeLists.txt:154; `build-core/build/`; phase-4.md section 0 |
+| new: `tools/build-core.sh` in MAIN (uncommitted) passes `-DENABLE_BUILTIN_KEYBLOB=OFF` and `-ffile-prefix-map=$PWD/=` for C and C++, dies if the cache does not say OFF, and dies if any `.o.d` names `default_keys.h` | `tools/build-core.sh:95-112` |
+| new: `strings -a` of today's dylib holds `-lazpy.1` as its own string (patch 0005 joins it to `g_build_fullname` at run time) | `strings -a build-core/azahar_lazpy_libretro.dylib`; patch 0005 line 9 |
+| new: host.log has one `option <key>=<value>` line per registered key at boot (`(core default)` when unset) | `host/options.c:164` |
 | This Mac: 12 cores (6 performance), 18 GB RAM, load 17-24 at planning time; PLAN's load warning is above 2 x cpu_count = 24 | `sysctl`, `uptime`, 2026-11-12 |
-| macOS `flock(2)`: locks belong to the open file description; two `open`s of one file in one process conflict; a lock held through an fd inherited by a child survives the parent's `close` and is dropped when the last fd to that description closes (the child's death) | `man 2 flock` (macOS); Python `subprocess` `pass_fds` docs |
 
-## 11. Open questions
+## 11. Questions (all answered for revision 1)
 
-- **Q1 (for Guy): the real-scene row.** PLAN wants an optional Gen3D 3D-scene row, local only. It needs a game and a
-  state from Gen3D (a field scene). Options: (a) Gen3D hands over a field-scene state file and its `.3dsx` path for
-  one local run, never committed; (b) skip it and keep the default cap provisional, quoting spike 2's real-scene
-  numbers (rules.md 5) beside the light table. The plan does (b) unless Guy says (a).
-- **Q2 (for Guy): P7.** A new error class `GuestMemoryError` for unmapped guest memory, rather than reusing
-  `ValueError` or `HostError`. Small, but it is public API.
-- **Q3 (for Guy): the cap rule.** Phase E keeps cap 3 unless 3 instances give less than 1.25x the total throughput
-  of 2 (then cap 2); it never raises the cap above 3 without a 4-instance row. Fixed before the run.
-- Q4 (for review): should F2's stock regression (gate C and pytest on the stock core after F2's edits) be the
-  phase-end full suite only, to save about 30 min of machine time? The plan keeps it in F2 because F2 edits the
-  worker and the Emulator.
-- Q5 (for review): the watch area size (4 MiB, about 52,000 rows of two 32-byte records). Enough for Gen3D's
-  per-frame party/position watch over a long batch; the review may prefer a size field set at `azh_open`.
+- **Q1 (Guy, 2026-11-12): the real-scene row.** "Skip it": no Gen3D row; the cap stays provisional on a light
+  scene (R3).
+- **Q2 (Guy): P7.** "Approve": `AZH_E_UNMAPPED` -11, `GuestMemoryError` with `.addr`, `.length`.
+- **Q3 (Guy): the cap rule.** "Allow 4 too": a 4-instance row, and the rule may reach 4, in the same shape: step up
+  from n-1 to n only if T(n) >= 1.25 x T(n-1) and the end load of the n row is below 2 x cores (phase-e.md section
+  7, written before any run).
+- **Q4 (review 1): F2's stock regression.** Cut to the stock smoke (phase-f2.md f9).
+- **Q5 (review 1): the watch area.** Fixed 4 MiB; Python reads the area's size from the layout's `map.watch_data`
+  and `map.__size__` rows, so a later resize is host-only with no ABI bump (phase-g.md section 4).
+- New for review 2: none.
 
 ## 12. Interfaces for Phase 4 (H: docs, I: release)
 
-- `Pool(n, app, root, **emulator_kwargs)` with `submit`, `map`, `close`; `LoadWarning`; `LAZ_MAX_INSTANCES`,
-  `LAZ_SLOT_DIR`, `LAZ_SLOT_TIMEOUT`; `<workdir>/slot.txt`.
+- `Pool(n, app, root, **emulator_kwargs)` with `submit`, `map`, `close`; `LoadWarning`; `SlotTimeout`;
+  `LAZ_MAX_INSTANCES`, `LAZ_SLOT_DIR`, `LAZ_SLOT_TIMEOUT`; `<workdir>/slot.txt`; `tools/hold_slot.py`; the default
+  cap set by E2's rule (1-4, marked provisional); USING.md: the cap is machine-wide only if every user reads the
+  same `LAZ_MAX_INSTANCES` (N8).
 - `docs/research/speed-table-e.md`: the numbers the README quotes, each with load and date, test-app rows labelled
-  light; the default cap and its rule.
-- `core/options-lazpy.txt` applied automatically on our core (P8); `azhost --lazpy-profile`; `LAZ_LAZPY_PROFILE`.
-- `tests/gate_f2.py`'s results: repeat exactness, the debug-stop frame, cross-core state loading (for STATUS.md).
-- ABI 3: `azh_read`, `azh_write`, `azh_watch`, the watch area, `AZH_E_UNMAPPED`; `emu.memory` with libmgba-py names;
-  `run(watch=)`, `RunResult.watch`; `GuestMemoryError` (for `docs/HOST-API.md` and USING.md).
-- The release (I) ships `azahar_lazpy_libretro.dylib` built from the patches as F2 gated them; any patch fixed in F2
-  (risk 1) is the one released.
+  light; the default cap and its rule; the effective option set per core.
+- `core/options-lazpy.txt` applied automatically on our core (P8); `azhost --lazpy-profile`; `LAZ_LAZPY_PROFILE`;
+  USING.md: `instant_debug_log` flushes the log per guest line (a speed cost on chatty apps).
+- `tests/gate_f2.py`'s results: the key blob absent from the gated build, repeat exactness, the debug-stop frame,
+  cross-core state loading (for STATUS.md); its key-blob check can be imported by `release_check.py`.
+- ABI 3: `azh_read`, `azh_write`, the `azh_watch` entry type, the watch area (its size from the layout),
+  `AZH_E_UNMAPPED`; `emu.memory` with libmgba-py's names; `run(watch=)`, `RunResult.watch`; `GuestMemoryError`;
+  ABI-2 states load under ABI 3 (for `docs/HOST-API.md` and USING.md).
+- The release (I) ships `azahar_lazpy_libretro.dylib` from the P9 rebuild that F2 gated (Phase 4's R1 then holds).
 
 ## 13. Changes from review 1
 
-None yet (revision 0).
+One line per finding (`docs/reviews/phase-3-review-1.md`), then Guy's answers and the other inputs.
+
+- B1 (host_paths ignores `LAZ_CORE`): taken by Phase 2 as hold H1; F2 edits no conftest; the session header line
+  prints the core and its kind.
+- B2 (nice 10 is an increment): Phase 2's worker is "at least 10" (H2); g4 asserts `nice >= 10`; every table row
+  records the workers' nice.
+- B3 (exit-path grep sees stock artefacts): F2's `batch.sh` greps right after each our-core part into
+  `runs/f2/exitpath-ours.txt`, before any stock part runs.
+- B4 (gate 4's stock test): G's live tests take `lazpy_core` / `stock_core` explicitly; one pytest run covers m1-m7
+  on both cores with 0 skipped; G2 is two parts.
+- B5 (`test_mem.c` cannot link): the pure functions live in a new pure `host/watch.c` in `TEST_SRC`, tested by
+  `tests/host/test_watch.c`; `test_main.c`/`.h` (one line each) and the `Makefile` are in G's rows.
+- S1 (three overlap seams): rule T in section 2 (every rerun after a review is a timed part and queues); G's wait
+  bound is 150 min (E2's bounds grew with the 4-instance row) and a timeout ends G's run with a report.
+- S2 (E2's our-core rows without P8): E is resumed only after step-f2 merged, with `git merge --no-edit main` in
+  its worktree first; every table row records the effective option set.
+- S3 (`wall_ms_max`): r1 strips `wall=`, `fps=`, `wall_ms_mean=`; row C6 and hold H4 say `wall_ms_mean`.
+- S4 (`png.c` is pure): `azh_png_level()` in `png.c` with `getenv`/`strtol` only; `run.c` writes the `png level=`
+  line once per process; `azh_pure.h` is in E1's rows.
+- S5 (env read at import): `slot_dir()` and `cap()` read the environment on every call; the live fixture takes its
+  real slots first, then sets the private folder and cap with `monkeypatch`.
+- S6 (merging main into G mid-step): main is merged into G's worktree only at "G done"; E fixes to files G edits are
+  held until step-g merges (section 4 step 5).
+- S7 (ABI 3 refuses ABI-2 states): Phase 2 takes the abi range (H3); risk 7 is gone; G adds m7 (an ABI-2 state
+  loads under ABI 3) and USING.md says ABI-2 states load.
+- S8 (`HostTimeout` text): `SlotTimeout(HostTimeout)` in `_slots.py` with its own message, exported.
+- S9 (no C(g) error-count test): the row is dropped; D's debug-text test is named (`test_c4_debug_text_needs_our_core`).
+- N1 (F2-0 already answered): the build-failed branch and the long wait are cut; F2-0 now checks the P9 rebuild
+  (key blob absent, version, symbols), since the binary F2 gates is a new one.
+- N2 (`azh_stats` after open is a no-op): F2's 3.1 is dropped (H6, row A4).
+- N3 (`AZH_MAX_FIELDS` moot): the branch and the 10,292 size are dropped; G asserts 137 rows.
+- N4 (Python mirror of `azh__watch_plan`): dropped; Python checks types and the 32-entry count only.
+- N5 (`--extra-rows` and a hanging barrier): the usage line names `--extra-rows` and `--only-extra`; the barrier has
+  a timeout and a broken barrier is a `CHECK FAIL slot` row.
+- N6 (`t_state` not in the log): `t_state` is defined as D does (H5), measured around b's `Emulator(...)`.
+- N7 (three throw-away slot holders): E1 commits `tools/hold_slot.py` (a tool file rather than `python -I -m`,
+  which cannot find the package under `-I`); G and the phase-end suite use it; F2 keeps its temporary one.
+- N8 (machine-wide only with one cap value): in `_slots`'s docstring and the Phase 4 USING line.
+- N9 (30 s close after an exit): the close after a returned `guest_exited` waits 5 s, then D's SIGKILL.
+- N10 (m3 checks the event line): listed as refinement R1 in section 5.
+- N11 (wrong C1 commit; `azh_watch` is a type): fixed in the header and section 12.
+- N12 (a second azhost runner): `gate_f2.py` imports `gate_c.run_azhost` and its summary parsing.
+- Guy Q1-Q3, review Q4-Q5: section 11; R2 and R3 in section 5; E's cap rule in phase-e.md section 7.
+- Phase 2's holds H1-H7 (D's fixtures, nice, abi range, `wall_ms_mean`, C merged at 7584a8d with `azh_stats`
+  after open, D3's 2.5 s state-boot bound): section 6; the steps they replace are dropped.
+- P9 (Phase 4): the main loop's rebuild before F2 (section 2, section 4 step 0); F2's first check is the key blob.
+- The step items' PLAN.md pointers: named as :296, :311, :317 here; the main loop corrects the item files at the
+  move (section 4 step 1).
+- Hour-saving pass redone (section 9): about 3.2 h, against revision 0's 3.35 h.
 
 ## 14. Changes from review 2
 
