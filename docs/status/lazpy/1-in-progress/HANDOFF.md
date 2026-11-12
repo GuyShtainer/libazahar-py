@@ -1,7 +1,7 @@
 <!-- handoff: slim v1 | current tasks only | rewritten whole from docs/status/templates/handoff.md | budget 80 lines | never append -->
 # libazahar-py handoff
 
-As of: 2026-11-12 21:05 (this project's own session)
+As of: 2026-11-12 21:10 (this project's own session)
 
 This file lives in docs/status/lazpy/1-in-progress/, beside its item files. It holds only what
 the next session needs to act now, and points at the rest. Goals, rules, decisions and history live elsewhere.
@@ -10,15 +10,13 @@ the next session needs to act now, and points at the rest. Goals, rules, decisio
 | What | Where | Agent id | It stops when |
 |---|---|---|---|
 | laz-220: step D complete on step-d 88cdbe6 (69 passed); waits for an opus slot for its as-built review | ../libazahar-py-d | main | review, fixes, merge |
-| laz-300: our core rebuilt with the console key blob off and -ffile-prefix-map (P9), detached, nice 10 | MAIN build-core/ (pid in build.pid) | main | build-core/build.exit; then check the blob is gone, commit tools/build-core.sh |
 | laz-300: Phase 3 plan revision 1 (opus, fresh author): edits `docs/plans/` (phase-3, e, f2, g) only | this repo | a848bdbe41c898002 | revision written; then review 2 |
 | laz-400: Phase 4 plan review 1 (opus): writes `docs/reviews/` (phase-4-review-1.md) only | this repo | ab421b8f1945fcdfa | review written; then revision 1 |
 
 ## Next steps, in order
 1. D fixes done: commit on step-d, then a fresh opus as-built review of D (writes docs/reviews/phase-2-d-as-built.md),
    fixes, merge step-d (runners.md and tools.md lines in the D reports, item 220's notes), items 220 and 200 to done.
-2. After D's emulator tests end: rebuild our core in MAIN with -DENABLE_BUILTIN_KEYBLOB=OFF and -ffile-prefix-map
-   in tools/build-core.sh (P9, item 400's notes), `nice -n 10 tools/build-core.sh --detach`, no timed run meanwhile.
+2. Our core is rebuilt with the key blob off (P9 done, item 300's notes); F2 gates that binary.
 3. Phase 3: revision 1 (above), then opus review 2 and revision 2; build after Phase 2 merges and the rebuild.
 4. Phase 4: review 1 (above), then revision 1, review 2, revision 2; the ip-legal consult (phase-i.md 9.1)
    when an opus slot is free. At most 2 opus at once.

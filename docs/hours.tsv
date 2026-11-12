@@ -59,3 +59,4 @@ date	bet	phase	agent_id	model	role	kind	start	end	hours	source
 2026-11-12	Step D fixes: 2.5 s bound, LAZ_CORE fixtures, nice, abi range	phase-2	ac94c1b1d3eddad30	sonnet	builder	agent	20:59	21:01	0.04	agent duration 151 s
 2026-11-12	Guy questions, three reports routed, rulings recorded, keys-off build script	phase-2	main	opus	main	process	20:04	21:02	0.25	session clock (includes waiting on Guy)
 2026-11-12	Step D guest-exit fix	phase-2	ac94c1b1d3eddad30	sonnet	builder	agent	21:01	21:03	0.04	agent duration 130 s (281 s total less the earlier 151 s)
+2026-11-12	D commit, keys-off build script, rebuild and blob checks	phase-3	main	opus	main	process	21:03	21:10	0.05	session clock (rebuild 5 min machine)

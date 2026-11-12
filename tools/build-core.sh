@@ -94,14 +94,22 @@ fi
 
 if ! cmake -S "$TREE" -B build-core/build -DENABLE_LIBRETRO=ON -DCMAKE_OSX_ARCHITECTURES=arm64 \
   -DCMAKE_BUILD_TYPE=Release -DFETCHCONTENT_FULLY_DISCONNECTED=ON -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
-  -DCITRA_WARNINGS_AS_ERRORS=OFF -DENABLE_LTO="${LAZ_CORE_LTO:-ON}" >build-core/configure.log 2>&1; then
+  -DCITRA_WARNINGS_AS_ERRORS=OFF -DENABLE_LTO="${LAZ_CORE_LTO:-ON}" \
+  -DENABLE_BUILTIN_KEYBLOB=OFF \
+  -DCMAKE_C_FLAGS="-ffile-prefix-map=$PWD/=" -DCMAKE_CXX_FLAGS="-ffile-prefix-map=$PWD/=" \
+  >build-core/configure.log 2>&1; then
   tail -n 30 build-core/configure.log
   die "configure failed"
 fi
+grep -q '^ENABLE_BUILTIN_KEYBLOB:BOOL=OFF$' build-core/build/CMakeCache.txt \
+  || die "the built-in console key blob is not OFF (we never ship console keys)"
 say "configure done: build-core/build"
 [ "$MODE" = --build ] || exit 0
 
 cmake --build build-core/build --target citra_libretro --config Release -j "${LAZ_CORE_JOBS:-4}"
+if find build-core/build -name '*.o.d' -exec grep -l 'default_keys\.h' {} + 2>/dev/null | grep -q .; then
+  die "an object still reads default_keys.h (the console key blob)"
+fi
 DYLIB=build-core/azahar_lazpy_libretro.dylib
 cp build-core/build/bin/Release/azahar_libretro.dylib "$DYLIB"
 strip -x "$DYLIB"

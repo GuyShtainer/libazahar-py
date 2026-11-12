@@ -51,3 +51,9 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
 - From the Phase 4 plan (item 400's notes): our built core carries Azahar's built-in console key blob
   (ENABLE_BUILTIN_KEYBLOB ON by default); P9 rebuilds with it off plus -ffile-prefix-map, before F2, so F2 gates
   the binary that ships.
+- P9 done by the main loop 21:04-21:09 (main loop's default for Guy's G1, the conservative side):
+  tools/build-core.sh configures -DENABLE_BUILTIN_KEYBLOB=OFF and -ffile-prefix-map=$PWD/= for C and C++, refuses
+  to go on unless CMakeCache shows OFF, and refuses to copy the dylib if any *.o.d names default_keys.h. The
+  rebuild took 5 min (exit 0). Checks: CMakeCache ENABLE_BUILTIN_KEYBLOB:BOOL=OFF; 0 .o.d files name
+  default_keys.h (key.cpp.o.d did before); the first 32 blob bytes of default_keys.h are not in the dylib;
+  0 strings contain /Users/ (461 before); version string still -lazpy.1; 3 lazpy_ exports. F2 gates this binary.
