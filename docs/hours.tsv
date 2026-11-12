@@ -61,3 +61,4 @@ date	bet	phase	agent_id	model	role	kind	start	end	hours	source
 2026-11-12	Step D guest-exit fix	phase-2	ac94c1b1d3eddad30	sonnet	builder	agent	21:01	21:03	0.04	agent duration 130 s (281 s total less the earlier 151 s)
 2026-11-12	D commit, keys-off build script, rebuild and blob checks	phase-3	main	opus	main	process	21:03	21:10	0.05	session clock (rebuild 5 min machine)
 2026-11-12	Phase 3 plan revision 1	phase-3	a848bdbe41c898002	opus	planner	agent	20:59	21:15	0.27	session clock (launch to report)
+2026-11-12	Phase 4 plan review 1	phase-4	ab421b8f1945fcdfa	opus	reviewer	agent	21:00	21:17	0.28	agent duration 1023 s

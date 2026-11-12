@@ -169,7 +169,8 @@ Each check prints `PASS <name>` or `FAIL <name>: <reason>`; any FAIL exits 1. Th
 5. **linkage**: `otool -L` shows only `/System/Library/...` and `/usr/lib/...` plus its own `@rpath` id; no
    `libMoltenVK`, no `libvulkan`; `strings` holds no `MoltenVK` implementation marker (`MVKInstance`, `MVKDevice`).
 6. **private**: no string in the core, the zip's text files, the build asset or `testapp.3dsx` matches `/Users/`,
-   `@gmail`, `.local` email forms, an IPv4 other than 0.0.0.0/127.x, a MAC address, or `[redacted address]`. (The prefix map
+   personal email forms, `.local` email forms, an IPv4 other than 0.0.0.0/127.x, a MAC address, or any entry of the
+   untracked privacy denylist outside the repo (never name its entries in a tracked file; phase-4 review 1 B2). (The prefix map
    of P9 makes the core pass; a FAIL here on the core means P9's rebuild was not done.)
 7. **notices**: `mknotices.py` re-run to a temp file is byte-equal to the committed `NOTICES.md` (so the notices
    match the binary's real link line and DEPS); `NOTICES.md` in the zip equals the repo's.

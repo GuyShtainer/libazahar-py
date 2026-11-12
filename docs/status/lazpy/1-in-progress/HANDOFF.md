@@ -1,7 +1,7 @@
 <!-- handoff: slim v1 | current tasks only | rewritten whole from docs/status/templates/handoff.md | budget 80 lines | never append -->
 # libazahar-py handoff
 
-As of: 2026-11-12 21:16 (this project's own session)
+As of: 2026-11-12 21:18 (this project's own session)
 
 This file lives in docs/status/lazpy/1-in-progress/, beside its item files. It holds only what
 the next session needs to act now, and points at the rest. Goals, rules, decisions and history live elsewhere.
@@ -11,7 +11,7 @@ the next session needs to act now, and points at the rest. Goals, rules, decisio
 |---|---|---|---|
 | laz-220: step D as-built review (opus), writes `docs/reviews/` (phase-2-d-as-built.md) only | MAIN, reads ../libazahar-py-d (88cdbe6) | a1685c2425484d723 | fix list for D's builder (ac94c1b1d3eddad30); then merge step-d |
 | laz-300: Phase 3 plan revision 1 written (committed); review 2 waits for an opus slot | this repo | main | review 2 (fresh opus), then revision 2 |
-| laz-400: Phase 4 plan review 1 (opus): writes `docs/reviews/` (phase-4-review-1.md) only | this repo | ab421b8f1945fcdfa | review written; then revision 1 |
+| laz-400: Phase 4 plan review 1 written (committed); revision 1 waits for an opus slot | this repo | main | revision 1, then review 2 |
 
 ## Next steps, in order
 1. D fixes done: commit on step-d, then a fresh opus as-built review of D (writes docs/reviews/phase-2-d-as-built.md),
@@ -22,6 +22,9 @@ the next session needs to act now, and points at the rest. Goals, rules, decisio
    when an opus slot is free. At most 2 opus at once.
 
 ## Waiting on Guy (only what blocks a step above)
+- G8: rewrite this repo's history before the first push: commit 15d0323 names his personal address's local part
+  (item 400's notes, review B2). Nothing is pushed; no remote exists.
+- G3: the core links LibreSSL, whose licence the review reads as incompatible with GPLv3 (item 400's notes).
 - Phase 4's G1-G7 (item 400's notes): G1, rebuilding our core with the built-in key blob off before F2, is
   the main loop's default (more conservative); the rest block Phase 4's release, not its reviews.
 The full list is generated into `docs/status/README.md`.
