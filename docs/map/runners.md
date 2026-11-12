@@ -12,7 +12,17 @@ PATH=/opt/devkitpro/devkitARM/bin:/opt/devkitpro/tools/bin:$PATH make testapp   
 tests/gate-a.sh build/testapp.3dsx               # step A's gate
 RUNNER=azhost tests/gate-b.sh                    # step B's gate through azhost (default runner: fe2)
 build/azhost run <app.3dsx> --sys runs/x/sys --out runs/x/out --frames 600 --shot 300,600
+make test-host                                   # pure host modules, seconds: "test-host: 307679 checks, 0 failed"
+build/azhost layout                              # the ABI table, also checked by the check target
 ```
+
+Step C's gate, a few minutes, needs our core and build/testapp.3dsx; run it in the background and wait on the rc file
+(delete runs/c-gate.rc first; `--only a1,b,...` picks scenarios, `--plant-red` must fail a1/a2):
+```
+rm -f runs/c-gate.rc; PATH=/opt/devkitpro/devkitARM/bin:/opt/devkitpro/tools/bin:$PATH nice -n 10 python3 -I tests/gate_c.py > runs/c-gate.log 2>&1
+```
+Expect "gate_c: 28 passed, 0 failed". azhost's per-batch summary field is `wall_ms_mean`. A guest exit or guest
+error ends azhost with exit code 10 or 11; a break stop continues the run.
 
 Our patched core (detached, nice'd; `--configure-only` stops after the patches and configure):
 ```

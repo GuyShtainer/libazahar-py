@@ -10,6 +10,9 @@
 - `tools/fetch.sh`: the stock core, MoltenVK and headers into `dl/`, sha256-pinned.
 - `tests/gate-a.sh <app.3dsx>`: step A's gate (8 checks in a temporary fresh copy; `KEEP=1` keeps it).
 - `tests/gate-b.sh`: step B's gate (`RUNNER=fe2` default, or `RUNNER=azhost`); one PASS/FAIL line per check.
+- `tests/gate_c.py`: step C's gate (scenarios a1, a2, b-f: frame-exact input, touch, circle pad, stops, raw shots,
+  SD seeding; 28 checks); `tests/checks_c.py` its checkers, `tests/testapp_log.py` the test app's log parser.
+- `tests/host/`: the pure host modules' unit tests, built by `make test-host`.
 - `tests/check_testapp.py`: `markers`, `log` and `event` checks on the test app's output; exports
   `read_png_rgba(path)`, a filter-0 PNG decoder (import it with the absolute `tests/` path; `-I` drops the script
   folder from `sys.path`). Copied from Gen3D on 2026-11-12 (3DPlatinum's design).

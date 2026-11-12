@@ -16,12 +16,14 @@ Batches with input records, touch and circle pad, the SD log stop rule, stop rea
 The gate in `docs/PLAN.md` line 265 ("Phase C"), run headless on this Mac with a pass/fail answer.
 
 ## Evidence
-none yet
+- 2026-11-12 19:59, merge 7584a8d (step-c ba21233): make check, make, test-host 307,679 checks 0 failed;
+  gate_c 28 passed, 0 failed (rc 0, runs/c-gate.log), after the as-built fixes B1 and S1-S4
+  (`docs/reviews/phase-2-c-as-built.md`). New ids in the gate: a2.N.hid and a2.N.irrst.
 
 ## Pointers
 - Plan section: `docs/PLAN.md:265`
-- Phase plan: none yet
-- Review: none yet
+- Phase plan: `docs/plans/phase-c.md`
+- Review: `docs/reviews/phase-2-c-as-built.md`
 
 ## Lessons and notes
 Read this part only when you work on this item. Blockers, numbers and Guy's words go here verbatim.
@@ -65,3 +67,7 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   azh__counters_set writes the map; S4 gate_c kills its child on SIGTERM. All eight builder deviations accepted
   (deviation 1: the local extern and prototypes move into host/azh_internal.h). N1 (dbg_text race, our core only)
   goes to F2. Fix list sent to C's builder 19:56 with B1, S1-S4, deviation 1, N2, N3, N5.
+- C fixes report (acae9a26ca38daf7c, 19:58): B1, S1-S4, deviation 1 (shared prototypes into host/azh_internal.h), N2
+  (has_dotdot refuses a ".." component only), N3 (each gate scenario in try/except), N5 done; N1 (F2), N4, N6 left.
+  Lessons: BSD sed needs `sed -i ''`; grep after scripted edits to confirm each landed; never rebuild build/azhost
+  while a gate runs; delete the rc file before starting a job, or a waiter sees the old one.

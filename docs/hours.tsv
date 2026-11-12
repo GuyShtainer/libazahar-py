@@ -50,3 +50,5 @@ date	bet	phase	agent_id	model	role	kind	start	end	hours	source
 2026-11-12	Step D1+D2 builder: Python package, worker, state files	phase-2	a8301022e123dfae3	sonnet	builder	agent	19:39	19:47	0.14	agent duration 511 s
 2026-11-12	Phase 3 plan revision 0: phase-3, e, f2, g	phase-3	aed5ccfac0370b719	opus	planner	agent	19:16	19:51	0.59	agent duration 2121 s
 2026-11-12	Step C as-built review	phase-2	a9e8f589eeba79788	opus	reviewer	agent	19:47	19:56	0.15	agent duration 523 s
+2026-11-12	Step C fixes from the as-built review	phase-2	acae9a26ca38daf7c	sonnet	builder	agent	19:56	19:58	0.04	agent duration 149 s
+2026-11-12	C review routing, C commit and merge, D record, Phase 3 commit, Phase 4 launch	phase-2	main	opus	main	process	19:47	20:00	0.12	session clock
