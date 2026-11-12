@@ -37,3 +37,5 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   Phase 2 also assumes 17 things of A and 9 of B (`docs/plans/phase-2.md` section 5): reconcile at revision.
 - Main loop's choice (2026-11-12): one combined opus as-built review over F1, A and B once A and B have reported
   (fewer, larger opus runs, Guy's delegation rule), not one per step. Phase 1 = 2.85 h after revision 1.
+- For Phase 1's revision 2 (from Phase 2's review 1): the test app must never exit on START (B10); expose
+  `check_testapp.py`'s PNG decoder as a function so D reuses it; raw screen pixels (`AZH_FMT_RAW`) move to step C2.
