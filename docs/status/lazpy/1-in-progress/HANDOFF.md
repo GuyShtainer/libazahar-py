@@ -19,10 +19,10 @@ the pre-commit hook runs status_check on main (Guy's yes, 2026-11-12). Nothing p
 4. Agent budget: 1 expensive (plus 1 extra Guy allowed for now) and up to 6 cheap at once.
 
 ## Waiting on Guy (only what blocks a step above)
-- Nothing blocks the steps above. The progress page is not made yet: the call that makes it was blocked twice by
-  the auto-mode classifier and needs Guy to approve or run it (`docs/status/lazpy/3-waiting-on-guy/ask-01-progress-page.md`).
+- Nothing.
 The full list is generated into `docs/status/README.md`.
 
 ## Pointers
+- Progress page: https://claude.ai/artifact/TFaGBKNbr5pDFZGDCNJUgH (version 2); republish only inside the progress command or when Guy asks.
 - The plan: `docs/PLAN.md` (its two questions for Guy, section 7, block nothing before phase F).
 - Rules that bite every turn: `docs/map/rules.md`. Commands: `docs/map/runners.md`. Everything else: `docs/map/README.md`.
