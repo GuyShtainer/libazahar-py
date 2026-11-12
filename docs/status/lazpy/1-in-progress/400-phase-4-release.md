@@ -79,3 +79,10 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   ip-legal question 7 asks whether fetching the stock core is within policy. Open for review 2: Q5 (README route on
   our core), Q6 (G8 timing), Q7 (brew cat as OpenSSL's build-script source). For Guy: G5, G6, G7 (plus hygiene
   defaults), G9 (spike 2's game: default say nothing), whether macOS 11-14 users matter for v0.1.0.
+- Review 2 (a520c6028898077dc, opus) and the ip-legal consult of phase-i.md 9.1 (aee2a9ba07ce653cf; its brief
+  names the four drop entries) launched 01:05. Review 2 also gets Gen3D's first use (Gen3D
+  docs/phase2-safe/LAZPY-TRY-1.md, f8d3830 in Gen3D: 36000 frames at 222.6 fps in one run(), stock core, no crash,
+  boot 0.9 s, peak RSS 848 MB): (1) run(timeout=) bounds the whole batch, a no-progress timeout asked about;
+  (2) an input at frame 0 raises a plain ValueError from inputs.fold, not a LibAzaharError, and USING.md's run()
+  line lacks the 1-based rule; (3) shot keys are batch frames, shot file names whole-run frames; (4) a reused
+  workdir keeps the old SD with the warm shader cache. H's docs carry 2-4; 1 and 2's error class are code.

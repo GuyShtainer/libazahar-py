@@ -1,7 +1,7 @@
 <!-- handoff: slim v1 | current tasks only | rewritten whole from docs/status/templates/handoff.md | budget 80 lines | never append -->
 # libazahar-py handoff
 
-As of: 2026-11-13 00:58 (this project's own session)
+As of: 2026-11-13 01:05 (this project's own session)
 
 This file lives in docs/status/lazpy/1-in-progress/, beside its item files. It holds only what
 the next session needs to act now, and points at the rest. Goals, rules, decisions and history live elsewhere.
@@ -9,16 +9,22 @@ the next session needs to act now, and points at the rest. Goals, rules, decisio
 ## Running now
 | What | Where | Agent id | It stops when |
 |---|---|---|---|
-| laz-300: Phase 3 plan revision 2 (opus, fresh; final, with OpenSSL 3 and patches 0007/0008) | this repo | ae13bb77d6994c473 | revision written; then reconcile its step 0 with P9b (done, 5e95423) and launch E1 and F2 |
-| laz-400: Phase 4 plan revision 1 (opus, fresh) | this repo | a739c8de18f2e6992 | revision written; then review 2 |
+| laz-300: step 0 core rebuild as revision 2 writes it (detached, niced) | MAIN build-core/ | main (pid 40445) | build-core/build.exit appears (waiter bounded 150 min) |
+| laz-400: Phase 4 plan review 2 (opus; also Gen3D's friction list) | this repo | a520c6028898077dc | docs/reviews/phase-4-review-2.md written; then revision 2 |
+| laz-400: ip-legal consult, phase-i.md 9.1 | this repo | aee2a9ba07ce653cf | docs/reviews/release-ip-legal.md written |
 
 ## Next steps, in order
-1. P9b is done (item 300's notes: every check passed). Rerun `test_state_boot` alone when the load average is
-   under 12 (it failed at 5.50 s on the stock core under load 45, another session's build); runners.md line 31.
-2. When Phase 3's revision 2 reports: commit it, reconcile its step 0 with P9b, message Gen3D before timed runs,
-   then E1 and F2 builders in worktrees made at main (`docs/plans/phase-3.md` order section).
-3. When Phase 4's revision 1 reports: commit it, then opus review 2 and revision 2.
-4. Before the first push: the history rewrite (Guy's G8, item 400's notes), then release-legal-audit.
+1. When build.exit is 0: put `cat build-core/build.inputs`, `otool -L` of the dylib and the count of
+   "built for newer" lines into item 300; run F2's f1 checks by hand only if F2 is late (F2 owns them).
+2. Then G8, the history rewrite, exactly as `docs/plans/phase-i.md` section 8.1 (preconditions: build ended, no
+   agent editing tracked files in MAIN; the consult and review only create new files). Remove the merged
+   ../libazahar-py-c and -d worktrees first (status --porcelain --ignored empty), or check 8.1 step 1's ancestor rule.
+3. Then `docs/plans/phase-3.md` section 4 step 1: items 310 and 320 to 1-in-progress (PLAN.md pointers :296, :311),
+   worktrees step-e and step-f2 from main, the E and F2 sonnet builders together (briefs `docs/plans/phase-e.md`,
+   `phase-f2.md`); their ids here.
+4. Rerun `test_state_boot` alone when load is under 12 (5.50 s under load 45 on the stock core); rule T.
+5. When review 2 and the consult report: commit both, then Phase 4 revision 2 (opus).
+6. Gen3D was told at 01:05 that timed runs start; message it when Phase 3's timed runs end.
 
 ## Waiting on Guy (only what blocks a step above)
 - Phase 4's G5-G7 (repo creation, the word "push", publishing the draft): item 400's notes. G1 (keys off, done), G3 and G8 answered;
