@@ -57,3 +57,5 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   (the fail is B-X1), so A and B fit. F1's patches checked by hand against 2126.2 signatures; no C++ compiled yet.
   At merge: add host/azh_pure.h to code.md; note lazpy_movie_play's -5 in phase-c; until A-X2 lands, copy vendor in
   the integration clone. untar_checked.py needs Python 3.12+ (filter=).
+- Re-check (19:24, appended to the as-built review): A, B, F1 all mergeable; F1 leftovers N5 (`${OUT##*members=}`
+  returns the whole output when no members= line) and N6 (OUT reused for the dylib path) optional, sent to F1.

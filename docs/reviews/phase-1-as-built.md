@@ -268,3 +268,65 @@ only `build/`, `configure.log` and `patch.log` sit in `build-core/`. `git status
 
 **Verdict: mergeable as is.** F1-S1 is a correctness fix for a path the pin makes unreachable today. Land it in
 the same round as the A and B fixes, or as the first change of the build step, but it does not block the merge.
+
+## Re-check (fix rounds, 2026-11-12)
+
+Each fixed item was re-checked by reading it in its worktree against what this review asked for. No gate was
+re-run, because every fix can be judged by reading, and the builders report fresh gate runs: A 8/8 in the
+worktree and twice in a clone with a symlinked `vendor`; B 14/14 from a fresh tree on both runners; F1 a clean
+`--configure-only` plus 5 reds.
+
+### A
+
+- A-X1 is fixed. `host/log.c:113-118` checks the threshold first, then calls `azh_log((int)level, "%s", fmt)`, with
+  a comment citing backend.cpp:97-98.
+- A-X2 is fixed. `tests/gate-a.sh:24-28` drops `vendor` and `dl` from the NUL list (`grep -zvE`) and uses
+  `ln -sfn`.
+- A-S1 is fixed. `gate-a.sh:31-35` requires exit 0, only `have` lines, and at least one.
+- A-S2 is fixed. Check 5 expects `Failed to obtain loader` and `Failed to load ROM` after `BootError:`.
+- A-S3 is fixed. Check 4 FAILs when lsappinfo exits non-zero or prints nothing.
+- A-S4 is fixed. `setenv` (no overwrite) is the first step of `open_steps` (`host/api.c:118`), before the core is
+  opened, and the level is logged.
+- A-S5 is fixed. Assert counts are now api.c 21 over 22 functions, azhost_main.c 22/12, vk.c 40/30, version.c 2/1
+  and run.c 7/4, and they check real invariants.
+- A-N1 is fixed. `opened_once` is set only after a successful open, and a second open returns `AZH_E_ORDER`.
+- A-N2 is fixed. `host/core.c:125-127` calls `context_destroy` before `unload_game`.
+- A-N4 is fixed. `frame.c` sets `frame_kind = 0` when the realloc fails.
+- A-N3 was skipped, as agreed.
+
+**A: mergeable.** Nothing remains.
+
+### B
+
+- B-X1 is fixed. `tests/gate-b.sh:7-8` runs `cd "$REPO"` and then `mkdir -p runs build`.
+- B-S1 is fixed. `make -C testapp clean` runs before the zero-warning build.
+- B-S2 is fixed. `cmd_event` requires `--runs` for every event except exit, plus `0 <= runs - last_f <= 120`. The
+  gate passes `--runs "$FRAMES"` to all four event runs and to the log check.
+- B-S3 is fixed. `read_png_rgba` checks chunk-header and chunk bounds, the IHDR length, the compression and filter
+  methods, and the decompressed size, and wraps `zlib.error`. Every path now raises ValueError.
+- B-S4 is fixed. Assert counts are control 3, record 10, font 2, main 7, scene3d 4 (including
+  `g_uloc_projection >= 0`) and sdlog 3.
+- B-N2 is fixed. A non-zero azhost exit is a FAIL (`gate-b.sh:50`).
+- B-N4 is fixed. Runs that pass are removed unless `KEEP=1`.
+- B-N1 and B-N3 are reported done. I did not re-read them; they are nice items only.
+
+**B: mergeable.** Nothing remains.
+
+### F1
+
+- F1-S1 is fixed. `tools/build-core.sh:71-78` uses `OUT="$(python3 -I ...)" || { print, rm -rf, die }`, then
+  `N="${OUT##*members=}"` and a check that N is non-empty. F1's new red 4 runs an evil tarball through the full
+  script and gets REFUSED, then "unpack REFUSED or failed (tree removed)", exit 1.
+- F1-N1 is fixed. 0002 requires a leading digit before `stoull`; otherwise it keeps 946681277.
+- F1-N2 is fixed. 0006 clears the movie on an empty path and returns 0. The return codes are documented above the
+  function.
+- F1-N3 is fixed. `build-core.sh:39` checks that all seven pin values are non-empty; red 5 covers it.
+- ShellCheck `-s sh` is clean, and the script is 110 lines (the cap).
+- Two leftovers, both nice only:
+  - **F1-N5:** when the output holds no `members=`, `${OUT##*members=}` returns the whole output, so the `-n` check
+    cannot fire. Use `case $OUT in *members=*) ;; *) die "unpack printed no member count";; esac`.
+  - **F1-N6:** `OUT` is reused for the dylib path at :105. Rename one of the two.
+- The C++ is still uncompiled. 0002 now catches `const std::exception&`, which `<string>` brings in through
+  libc++. The build step is the first real compile.
+
+**F1: mergeable.** N5 and N6 are optional.
