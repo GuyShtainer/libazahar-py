@@ -16,7 +16,9 @@ Every step's gate passes (each step file names its PLAN.md line). Before any ste
 (`docs/plans/`), opus review 1, revision, opus review 2, revision (Guy's rule: two loops per phase).
 
 ## Evidence
-none yet
+- 2026-11-13 00:42: step C merged 7584a8d (gate_c 28 passed), step D merged a113cf6 (69 passed, 0 skipped); plan
+  revision 2 after two opus reviews (5f77e28); as-built reviews `docs/reviews/phase-2-c-as-built.md` and
+  `docs/reviews/phase-2-d-as-built.md`, every should-fix done.
 
 ## Pointers
 - Plan section: `docs/PLAN.md` section 3

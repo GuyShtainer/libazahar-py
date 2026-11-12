@@ -58,10 +58,12 @@ date	bet	phase	agent_id	model	role	kind	start	end	hours	source
 2026-11-12	Phase 4 plan revision 0: phase-4, h, i	phase-4	a867570428c4f7738	opus	planner	agent	20:00	20:20	0.33	agent duration 1171 s
 2026-11-12	Step D fixes: 2.5 s bound, LAZ_CORE fixtures, nice, abi range	phase-2	ac94c1b1d3eddad30	sonnet	builder	agent	20:59	21:01	0.04	agent duration 151 s
 2026-11-12	Guy questions, three reports routed, rulings recorded, keys-off build script	phase-2	main	opus	main	process	20:04	21:02	0.25	session clock (includes waiting on Guy)
-2026-11-12	Step D guest-exit fix	phase-2	ac94c1b1d3eddad30	sonnet	builder	agent	21:01	21:03	0.04	agent duration 130 s (281 s total less the earlier 151 s)
+2026-11-12	Step D guest-exit fix	phase-2	ac94c1b1d3eddad30	sonnet	builder	agent	21:01	21:06	0.08	agent duration 281 s
 2026-11-12	D commit, keys-off build script, rebuild and blob checks	phase-3	main	opus	main	process	21:03	21:10	0.05	session clock (rebuild 5 min machine)
 2026-11-12	Phase 3 plan revision 1	phase-3	a848bdbe41c898002	opus	planner	agent	20:59	21:15	0.27	session clock (launch to report)
 2026-11-12	Phase 4 plan review 1	phase-4	ab421b8f1945fcdfa	opus	reviewer	agent	21:00	21:17	0.28	agent duration 1023 s
 2026-11-12	Step D as-built review	phase-2	a1685c2425484d723	opus	reviewer	agent	21:16	21:28	0.19	agent duration 701 s
 2026-11-12	Phase 3 plan review 2	phase-3	aa4b2b6826aa2442e	opus	reviewer	agent	21:19	21:38	0.32	agent duration 1152 s
 2026-11-13	Review routing, privacy fix, Guy questions, three launches	phase-3	main	opus	main	process	21:15	00:38	0.20	session clock (most of it waiting on Guy)
+2026-11-13	Step D as-built fixes	phase-2	ac94c1b1d3eddad30	sonnet	builder	agent	00:38	00:42	0.06	agent duration 212 s
+2026-11-13	progress page v5, D commit and merge, Phase 2 close	phase-2	main	opus	main	process	00:38	00:45	0.08	session clock

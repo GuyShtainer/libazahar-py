@@ -16,12 +16,16 @@ hours: -
 The gate in `docs/PLAN.md` line 276 ("Phase D"), run headless on this Mac with a pass/fail answer.
 
 ## Evidence
-none yet
+- 2026-11-13 00:42, merge a113cf6 (step-d 721209f): make check, make, test-host 307,743 checks 0 failed; fast
+  pytest 49 passed; `LAZ_REQUIRE_EMULATOR=1` full suite 69 passed in 71 s, 0 skipped (SIGSEGV to HostCrashed
+  0.428 s, SIGSTOP to HostTimeout 3.11 s, 200,000 frames in 39.5 s); C's checks on our core 10 passed; planted red
+  fails ("12 lines differ"); state boot t_state=1.47 s against Guy's 2.5 s bound (t_boot=5.24, ratio 0.280,
+  fixed 0.221, recorded only). As-built review `docs/reviews/phase-2-d-as-built.md`: S1-S6 fixed.
 
 ## Pointers
 - Plan section: `docs/PLAN.md:276`
-- Phase plan: none yet
-- Review: none yet
+- Phase plan: `docs/plans/phase-d.md`
+- Review: `docs/reviews/phase-2-d-as-built.md`
 
 ## Lessons and notes
 Read this part only when you work on this item. Blockers, numbers and Guy's words go here verbatim.
@@ -99,3 +103,6 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   Mac's user name). H1-H6 hold, H7 on our core. Fix list sent to the builder 00:38 with N1-N3, N5, N9-N11, N14
   and Phase 4's S13 (USING section 11 "Stock: exact repeats"). Merge lines: the review's runners.md block and
   tools.md entry.
+- D as-built fixes (ac94c1b1d3eddad30, 00:38-00:42): S1-S6, N1-N3, N5, N9-N11, N14; state-times
+  t_core_start=0.40 t_boot=5.24 t_state=1.47 ratio=0.280 fixed_ratio=0.221 k=0; drain_ms=389.1
+  unserialize_ms=555.6 bytes=266783. Committed step-d 721209f, merged a113cf6.

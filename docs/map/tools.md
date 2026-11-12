@@ -12,6 +12,14 @@
 - `tests/gate-b.sh`: step B's gate (`RUNNER=fe2` default, or `RUNNER=azhost`); one PASS/FAIL line per check.
 - `tests/gate_c.py`: step C's gate (scenarios a1, a2, b-f: frame-exact input, touch, circle pad, stops, raw shots,
   SD seeding; 28 checks); `tests/checks_c.py` its checkers, `tests/testapp_log.py` the test app's log parser.
+- `tests/python/`: step D's pytest suite. Fast (no emulator): inputs, errors, the map, the worker client against
+  `tests/python/fakeworker.py`, the ABI check. Slow (`slow` marker, needs the core and `build/testapp.3dsx`): C's
+  checks through Python, crashes and stalls, the 200,000-frame batch, savestates and state boot (`runs/d-pytest/`,
+  times in `runs/d-pytest/state-times.txt`). `conftest.py` has the fixtures (`host_paths`, `stock_core`,
+  `lazpy_core`) and the core header line; `d_helpers.py` the shared boot and log helpers. Every crash test leaves a
+  Python crash report in ~/Library/Logs/DiagnosticReports.
+- `python/libazahar/`: the package: `emulator.py` (Emulator), the worker and its client, the ABI and map readers,
+  paths, inputs, results, errors. `docs/USING.md` is the user guide.
 - `tests/host/`: the pure host modules' unit tests, built by `make test-host`.
 - `tests/check_testapp.py`: `markers`, `log` and `event` checks on the test app's output; exports
   `read_png_rgba(path)`, a filter-0 PNG decoder (import it with the absolute `tests/` path; `-I` drops the script

@@ -12,7 +12,7 @@ PATH=/opt/devkitpro/devkitARM/bin:/opt/devkitpro/tools/bin:$PATH make testapp   
 tests/gate-a.sh build/testapp.3dsx               # step A's gate
 RUNNER=azhost tests/gate-b.sh                    # step B's gate through azhost (default runner: fe2)
 build/azhost run <app.3dsx> --sys runs/x/sys --out runs/x/out --frames 600 --shot 300,600
-make test-host                                   # pure host modules, seconds: "test-host: 307679 checks, 0 failed"
+make test-host                                   # pure host modules, seconds: "test-host: 307743 checks, 0 failed"
 build/azhost layout                              # the ABI table, also checked by the check target
 ```
 
@@ -23,6 +23,19 @@ rm -f runs/c-gate.rc; PATH=/opt/devkitpro/devkitARM/bin:/opt/devkitpro/tools/bin
 ```
 Expect "gate_c: 28 passed, 0 failed". azhost's per-batch summary field is `wall_ms_mean`. A guest exit or guest
 error ends azhost with exit code 10 or 11; a break stop continues the run.
+
+The Python package and step D's tests (the slow ones run one Emulator at a time):
+```
+python3 -m venv .venv && .venv/bin/pip install -e .          # the Python package (editable install only)
+nice -n 10 python3 -m pytest -q -m "not slow" tests/python  # fast tests, no emulator: "49 passed"
+LAZ_REQUIRE_EMULATOR=1 nice -n 10 python3 -m pytest -q -rs tests/python   # step D's gate, about 70 s: "69 passed", 0 skipped
+LAZ_CORE=build-core/azahar_lazpy_libretro.dylib LAZ_REQUIRE_EMULATOR=1 nice -n 10 python3 -m pytest -q tests/python/test_c_checks.py   # C's checks on our core: "10 passed"
+LAZ_TEST_PLANT_RED=1 LAZ_REQUIRE_EMULATOR=1 nice -n 10 python3 -m pytest -q tests/python/test_state.py -k test_state_boot   # must FAIL: "lines differ"
+build/azhost run <app.3dsx> --frames N --save runs/x.state   # a state from the command line (--state boots one; not gated in D)
+```
+`LAZ_REQUIRE_EMULATOR=1` turns a missing host, core or app into a failure; `LAZ_CORE` picks the core (the header
+line prints its kind); the debug-text check c4 always uses the stock core. In a worktree, link MAIN's
+build-core/azahar_lazpy_libretro.dylib into its own build-core/ first; never run tools/build-core.sh there.
 
 Our patched core (detached, nice'd; `--configure-only` stops after the patches and configure):
 ```
