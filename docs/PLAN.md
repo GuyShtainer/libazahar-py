@@ -284,7 +284,10 @@ on the test app, launched in the background; the full suite once per large batch
 
 ## 7. Questions for Guy
 
-None block Phase A or B. Two later ones:
-- Phase F branch 2: may we open a pull request on Azahar's GitHub (under your account) to refresh the memory map?
-- Phase I: the public name `libazahar-py` names the Azahar project (not a Nintendo mark); the legal agent checks it
-  at release, and Azahar's maintainers might prefer a heads-up. Fine as is?
+Answered 2026-11-12:
+- Phase F: yes to a pull request on Azahar's GitHub under Guy's account, and we patch and build the core ourselves so
+  memory reads work (Guy: "cant we update the core ourselves so it does?"). Spike 2 showed the stock core 2126.2
+  exposes no heap or FCRAM. The revision makes our own patched build the main route. Opening the PR still waits for
+  Guy's go when it's ready.
+- Phase I: the name `libazahar-py` is approved (Guy: "its informative and excct. so if its clear we use it"), subject
+  to the legal agent's check at release.
