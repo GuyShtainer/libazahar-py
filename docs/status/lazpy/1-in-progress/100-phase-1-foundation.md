@@ -35,3 +35,5 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   log line after svcBreak, but SVC::Break only sets status 14 and returns, so the guest runs on (PLAN gate C(e)).
   Slow boot: B's slow-boot frames are idle; D's "state boot under 10 % of the boot's wall time" needs them CPU-busy.
   Phase 2 also assumes 17 things of A and 9 of B (`docs/plans/phase-2.md` section 5): reconcile at revision.
+- Main loop's choice (2026-11-12): one combined opus as-built review over F1, A and B once A and B have reported
+  (fewer, larger opus runs, Guy's delegation rule), not one per step. Phase 1 = 2.85 h after revision 1.

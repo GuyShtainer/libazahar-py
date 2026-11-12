@@ -21,3 +21,4 @@ date	bet	phase	agent_id	model	role	kind	start	end	hours	source
 2026-11-12	Phase 1 plan: docs/plans/phase-1, f1, a, b	phase-1	ad1f072f69021fa61	opus	planner	agent	17:03	17:29	0.43	agent duration 1562 s
 2026-11-12	Phase 2 plan: docs/plans/phase-2, c, d	phase-2	a4bcf09ec00640830	opus	planner	agent	17:09	17:40	0.52	session clock
 2026-11-12	Phase 1 review 1 docs/reviews/phase-1-review-1.md	phase-1	aa338033502fcbfa8	opus	reviewer	agent	17:29	17:52	0.38	session clock
+2026-11-12	Phase 1 plan revision 1	phase-1	ad1f072f69021fa61	opus	planner	agent	17:51	18:08	0.28	session clock

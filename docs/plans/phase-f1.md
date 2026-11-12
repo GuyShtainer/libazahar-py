@@ -1,7 +1,8 @@
 # Phase 1, step F1: our core's patches and the build script (item laz-110)
 
-Opus step plan, 2026-11-12, **draft for Phase 1's two opus review loops. Nobody builds from it until the reviews
-pass and the main loop launches the step.** Index of the phase: `docs/plans/phase-1.md`. For one sonnet builder
+Opus step plan, 2026-11-12, revision 1 (after `docs/reviews/phase-1-review-1.md`), **draft for Phase 1's second
+opus review loop. Nobody builds from it until the reviews pass and the main loop launches the step.** Index of the
+phase, and what changed in this revision: `docs/plans/phase-1.md`. For one sonnet builder
 working alone in its own git worktree. It refines `docs/PLAN.md` section 2.7 and the "Phase F1" paragraph of
 section 3; where they disagree on a goal, PLAN.md wins and the builder stops and reports. Where they disagree on a
 source line number, `docs/research/azahar-source-check.md` (laz-100, measured in the unpacked tarball) wins.
@@ -13,8 +14,11 @@ Builder reads first: `docs/map/rules.md`, PLAN.md 2.4 and 2.7, `docs/research/az
 
 Goal: `core/PIN`, `core/patches/000N-*.patch`, `tools/build-core.sh` (plus one small Python helper) and the notices,
 so one command turns Azahar's pinned unified source tarball into `build-core/azahar_lazpy_libretro.dylib`; the
-Movie-playback check (PLAN 2.3) written into the item; then the first full build, launched detached. The build's
+Movie-playback check (PLAN 2.3) written into the report; then the first full build, launched detached. The build's
 result is step F2's job.
+
+Where you are: in the worktree the main loop made, branch `step-f1` (create no branch). The main checkout, read and
+copy only, is `/Users/guyshtainer/VSCodeProjects/3ds-toolkit/projects/libazahar-py` (called MAIN below).
 
 Gate (PLAN.md section 3, "Phase F1"), made concrete. From the worktree root, after a clean `rm -rf
 dl/azahar-src/build-src build-core` (the tarball may be seeded by copy, see step 0):
@@ -26,17 +30,20 @@ Expected, in this order (the script prints full paths):
 build-core: pin 2126.2 commit 219d743a1e698101fe1ab8bef43e6563126c3c27
 build-core: have dl/azahar-src/src.tar.xz (43224348 bytes, sha256 ok)     <- "fetch ... ok" if it downloaded
 build-core: unpacked 21133 members into dl/azahar-src/build-src/azahar-unified-source-2126.2 (path check ok)
+build-core: patch 0000-lazpy-notices.patch ok
 build-core: patch 0001-lazpy-memory-exports.patch ok
-...                                                                         <- one line per patch
+...                                                                         <- one line per patch, in order
 build-core: applied <P> patches, 0 rejects
 build-core: configure done: build-core/build
 exit=0
 ```
 Then three planted reds (shell rule 10), each exits non-zero with the quoted text:
-1. `LAZ_CORE_PIN=<scratch copy of core/PIN, one sha256 digit changed, SRC_FILE pointing at a scratch copy of the
-   tarball>` → `SHA256 MISMATCH`; the real tarball and tree are untouched.
-2. A scratch copy of `core/patches/` with one context line altered, used through `LAZ_CORE_PATCHES=<dir>` →
-   `patch <name> REJECTED`, printed by the dry run before the tree is touched.
+1. `LAZ_CORE_PIN=<scratch copy of core/PIN, one sha256 digit changed, SRC_FILE set to the absolute path of a
+   scratch copy of the tarball>` → `SHA256 MISMATCH`, exit 1; the file is present, so it is neither deleted nor
+   downloaded again; the real tarball and tree are untouched.
+2. A scratch copy of `core/patches/` with one context line of `0003` altered, used through `LAZ_CORE_PATCHES=<dir>`
+   → `patch 0003-... REJECTED`, exit 1, and `dl/azahar-src/build-src/` no longer exists (the half-patched tree is
+   removed). Then a normal `--configure-only` rebuilds it.
 3. `python3 -I tools/untar_checked.py <scratch>/evil.tar.xz <scratch>/out` on a hand-made tar holding `../evil` and
    `/abs` members → `REFUSED: ...`; `<scratch>/out` stays empty.
 
@@ -45,7 +52,7 @@ Then the detached launch: `tools/build-core.sh --detach` prints the pid, the log
 
 ## 2. Facts checked for this plan (reviewers: verify these)
 
-"SRC" = the main checkout's pristine tree `dl/azahar-src/unpacked/azahar-unified-source-2126.2/` (laz-100: tarball
+"SRC" = MAIN's pristine tree `dl/azahar-src/unpacked/azahar-unified-source-2126.2/` (laz-100: tarball
 sha256 verified before unpacking, 21,133 members, none absolute or `..`, GIT-COMMIT
 `219d743a1e698101fe1ab8bef43e6563126c3c27`, GIT-TAG `2126.2`, 429 MB, 41 externals all present). Lines below were read
 there on 2026-11-12, by laz-100 or by this plan's author.
@@ -108,8 +115,11 @@ Patch targets (SRC):
   take the synchronous FS path only when `!async_fs_operations` (eight FS calls); `src/core/core_timing.cpp:38`
   seeds the base ticks from `init_ticks_override` when `init_ticks_type == Fixed`, else from `std::random_device`.
   So repeatable runs need all five: PLAN 2.4's three plus `async_fs_operations = false` and `init_ticks_type =
-  Fixed`. This plan adds the two (PLAN 2.4 aims at "deterministic guest I/O and a fixed start clock"; these are the
-  rest of it). **Reviewer: confirm or cut.**
+  Fixed`. Review 1 confirmed both: with `deterministic_async_operations` on, the async FS branches still sleep the
+  guest for "modelled delay minus host-measured time" (`fs_user.cpp:108-114`), so only `async_fs_operations = false`
+  takes the modelled-delay branch (`fs_user.cpp:70-84`, also `file.cpp:288, 317, 348`, `directory.cpp:76, 92`); and
+  `init_ticks_type = Random` seeds the base ticks from `std::random_device` (`core_timing.cpp:37-44`), which would
+  make the test app's `s=` tick column differ on every run.
 - `src/citra_libretro/environment.cpp:267-273` `retro_get_system_info`; :270 `info->library_version =
   Common::g_build_fullname;`. (SET_MEMORY_MAPS is sent only at environment.cpp:119; not patched, PLAN 2.7.)
 - Movie (for the check, step 6): `src/core/movie.h:31` class `Movie`; Qt calls `movie.PrepareForPlayback(path)` at
@@ -125,13 +135,25 @@ Assumptions (not checked; the builder checks each and records the answer):
 - A2: Azahar's configure downloads nothing for a libretro build (`FETCHCONTENT_FULLY_DISCONNECTED=ON` is passed
   anyway). The builder greps SRC's CMake files for `file(DOWNLOAD`, `FetchContent_Declare`, `ExternalProject_Add`,
   `CPMAddPackage` and records which a libretro build reaches.
-- A3: 4 jobs plus LTO fit in memory beside other sessions' emulators. If the detached build dies in the LTO link,
-  F2 reruns with `LAZ_CORE_LTO=OFF` (the script supports it).
+- A3: 4 jobs plus LTO fit in memory beside other sessions' emulators. CMake gives AppleClang `-flto=thin`
+  (Homebrew CMake `Modules/Compiler/Clang.cmake:79`), whose link backend uses every core whatever `-j` says; it is
+  nice'd, so that is accepted. If the detached build dies in the LTO link, F2 reruns with `LAZ_CORE_LTO=OFF` (the
+  script supports it).
+- For F2, recorded only: the tarball build's `g_scm_rev` comes from GIT-COMMIT (`CMakeModules/GenerateBuildInfo.cmake:
+  13-16`), the same `219d743a...` as the stock core, and the savestate revision test (`savestate.cpp:65-71`) compares
+  exactly that, so stock savestates very likely load into our core. F2 still checks it.
 
-## 3. What the patches do (PLAN 2.7; one concern per patch; `diff -u` against SRC, `a/` `b/` prefixes, `-p1`)
+## 3. What the patches do (PLAN 2.7; one concern per patch; `diff -u`, `a/` `b/` prefixes, `-p1`)
 
-Every patched file gets, under its license lines, `// Modified by libazahar-py on 2026-11-12: <what changed>.
-Licensed GPLv2 or later, as this file.` (a `#` line in the `.def`). Hunks stay GPLv2-or-later (rules.md 3).
+**The patches form a stack.** Several touch the same file (`citra_libretro.cpp` gets 0000, 0001, 0003, 0004 and
+maybe 0006; `libretro.osx.def` gets 0000, 0001 and maybe 0006), so patch N is made against SRC with patches 0000 to
+N-1 already applied, in a scratch tree you patch as you go (step 2), and it is applied in that order with
+`--fuzz 0`. One patch, `0000-lazpy-notices.patch`, adds every notice: under the license lines of each of the four
+files, `// Modified by libazahar-py, 2026: <every lazpy change to this file, one clause each>. Licensed GPLv2 or
+later, as this file.` (a `#` line in the `.def`). Patches 0001-0006 add no notice lines, so no two patches edit the
+same lines. If 0006 is skipped, its clause is left out of 0000. Hunks stay GPLv2-or-later (rules.md 3).
+
+0. `0000-lazpy-notices.patch` (the four files above): the notices only.
 
 1. `0001-lazpy-memory-exports.patch` (citra_libretro.cpp, libretro.osx.def):
    ```cpp
@@ -149,7 +171,10 @@ Licensed GPLv2 or later, as this file.` (a `#` line in the `.def`). Hunks stay G
 2. `0002-lazpy-options.patch` (core_settings.cpp). Rows at the end of `option_definitions[]`, category
    `config::category::system`, keys from `config::citra_setting(BaseKeys::<name>)` declared in the `config::system`
    block. Defaults equal stock behaviour, so our core under a stock profile acts like stock:
-   | key | values (first = default) | sets |
+   Each row's own `default_value` field (the last field of the entry, as the existing rows) is set to the first
+   value below; the order inside the values list does not decide the default (`core_settings.cpp:785-805` puts the
+   default first when it builds the V0 string).
+   | key | values (default first) | sets |
    |---|---|---|
    | `citra_deterministic_async_operations` | `disabled`, `enabled` | `Settings::values.deterministic_async_operations` |
    | `citra_async_fs_operations` | `enabled`, `disabled` | `Settings::values.async_fs_operations` |
@@ -172,28 +197,34 @@ Licensed GPLv2 or later, as this file.` (a `#` line in the `.def`). Hunks stay G
    `context_reset`; returns -3 on null or empty, -2 if the file is missing, -4 if `ValidateMovie` says `Invalid`);
    `do_load_game()` (:371) calls `Movie().PrepareForPlayback(path)` before `Load` and `StartPlayback(path)` after a
    Success. About 20 lines; `_lazpy_movie_play` in the `.def`. A later rebuild costs 40-90 min of machine time,
-   so a small hook goes in now. If the check finds a blocker, skip it and write the design into the item.
+   so a small hook goes in now. If the check finds a blocker, skip it and write the design into the report.
 
 ## 4. Files the builder creates (and owns)
 
 | Path | Role |
 |---|---|
 | `core/PIN` | `KEY=value` lines, never sourced: `AZAHAR_TAG=2126.2`, `AZAHAR_COMMIT=219d743a1e698101fe1ab8bef43e6563126c3c27`, `SRC_URL=<the URL above>`, `SRC_SHA256=85c8b56fac703df04720125044b8ff887997911858a6cde545dfb1107ba4cd26`, `SRC_SIZE=43224348`, `SRC_FILE=dl/azahar-src/src.tar.xz`, `SRC_TOP=azahar-unified-source-2126.2`, `LAZPY_REV=1`. Read with `sed -n 's/^KEY=//p'`. |
-| `core/patches/0001-...` to `0005-...` (`0006` if step 6 passes) | section 3 |
+| `core/patches/0000-...` to `0005-...` (`0006` if step 6 passes) | section 3 |
 | `core/options-lazpy.txt` | profile lines our core's runs add on top of Phase A's `host/options-default.txt`: `citra_deterministic_async_operations=enabled`, `citra_async_fs_operations=disabled`, `citra_instant_debug_log=enabled`, `citra_init_clock=FixedTime`, `citra_init_time=946681277`, `citra_init_ticks_type=Fixed` |
 | `core/README.md` | short and plain: what our core is, the pin, one line per patch, the licenses (patches GPLv2-or-later; any published binary ships with the unchanged tarball plus these patches, PLAN 2.7), the one build command. No speed claims. |
 | `tools/build-core.sh` | POSIX `sh`, `set -eu`, ShellCheck clean, about 110 lines at most (shell rule 9); modes below |
 | `tools/untar_checked.py` | `untar_checked.py <tar.xz> <dest>`: `tarfile` pre-scan refuses (prints `REFUSED: <member>`, exit 1, writes nothing) a member that is absolute, has a `..` component, is a device or fifo, is not under one single top folder, or is a link whose resolved target leaves that top folder; else `extractall(dest, filter="data")` and prints `top=<name> members=<N>`. Functions under 60 lines. |
-| item `docs/status/lazpy/1-in-progress/110-step-f1-core-build.md` (the main loop moves it there from 2-next/ at launch) | only its "Lessons and notes" section: the Movie verdict, A1-A3 answers, configure time, pid and log path |
+
+No item files: the Movie verdict, the A1-A3 answers, the configure time, the pid and the log path go in the report's
+"Lessons and notes" block (section 8), which the main loop pastes into item laz-110 when it commits.
 
 `build-core.sh`. `ROOT` from the script's location, or `LAZPY_ROOT` (as `tools/fetch.sh`); pin `LAZ_CORE_PIN`
 (default `core/PIN`); patches `LAZ_CORE_PATCHES` (default `core/patches`). Shared stages, one `build-core:` line each:
-refuse root (`id -u` is 0); read the pin; tarball: download to `SRC_FILE` with `curl -fsSL --retry 2` only when it
-is missing or wrong, then check size and sha256 before anything else, and on a mismatch delete only a file this run
-downloaded (copy `get`/`verify` from `tools/fetch.sh`); unpack with `untar_checked.py` into `dl/azahar-src/build-src/`
-when the stamp `build-src/.unpacked-<sha256>` is absent; patches: when the stamp `build-src/.patched-<sha256 of the
-patch files in order>` is absent, re-unpack fresh, `patch -p1 --forward --batch --dry-run` every patch first (a
-failure prints `patch <name> REJECTED`, exit 1), then apply all and write the stamp; configure (section 2's command
+refuse root (`id -u` is 0); read the pin (`SRC_FILE` may be absolute; a relative one is under `ROOT`); tarball: only
+a **missing** file is downloaded, to `SRC_FILE` with `curl -fsSL --retry 2`; then size and sha256 are checked before
+anything else. A present file with the wrong size or sha256 is refused (`SHA256 MISMATCH`, exit 1) and never deleted
+or downloaded again; a file this run downloaded is deleted on a mismatch. (This differs from `tools/fetch.sh`'s `get`,
+`fetch.sh:53-71`, which deletes and refetches; do not copy that part.) Tree: when the stamp
+`build-src/.ready-<tarball sha256>-<sha256 of the patch files, concatenated in order>` is absent, `rm -rf` the old
+`build-src/`, unpack fresh with `untar_checked.py` into `dl/azahar-src/build-src/`, then apply each patch in name
+order with `patch -p1 --forward --batch --fuzz 0` (BSD `patch` here; its default fuzz is 2, hence the flag). The tree
+is a throwaway unpack, so there is no dry-run stage: a failure prints `patch <name> REJECTED`, removes
+`build-src/`, and exits 1. After the last patch, write the stamp. Configure (section 2's command
 plus `-S <tree> -B build-core/build -DCMAKE_BUILD_TYPE=Release -DFETCHCONTENT_FULLY_DISCONNECTED=ON
 -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -DCITRA_WARNINGS_AS_ERRORS=OFF -DENABLE_LTO=${LAZ_CORE_LTO:-ON}`, default
 generator as CI) into `build-core/configure.log`, printing its tail on failure. `rm -rf` only on `${ROOT:?}/dl/
@@ -215,28 +246,34 @@ of RAM shared with other sessions' emulators.
 
 ## 5. Steps, with a checkpoint after each (save files as you go; never commit)
 
-0. Setup (5 min). Own worktree, branch `phase-f1`. Seed the tarball by copy:
-   `mkdir -p dl/azahar-src && cp <main checkout>/dl/azahar-src/src.tar.xz dl/azahar-src/` (the script re-verifies
+0. Setup (5 min). You are in the worktree (branch `step-f1`). Seed the tarball by copy:
+   `mkdir -p dl/azahar-src && cp MAIN/dl/azahar-src/src.tar.xz dl/azahar-src/` (the script re-verifies
    it). No core, MoltenVK or headers needed. Checkpoint: `git status --short` empty; `which cmake spirv-opt
    shellcheck patch` all resolve.
 1. `core/PIN` and `tools/untar_checked.py`; make the evil tar in the scratchpad. Checkpoint: red 3 passes, and
    `python3 -I tools/untar_checked.py dl/azahar-src/src.tar.xz <scratch>/t` reports `members=21133` (then delete
    `<scratch>/t`).
-2. Make the patches: copy each file you change from SRC (`<main checkout>/dl/azahar-src/unpacked/
-   azahar-unified-source-2126.2/`, read-only, never edited) into `<scratchpad>/work/` with the same relative path,
-   read around the cited lines, edit, `diff -u` into `core/patches/`. No C++ is compiled here; re-read each hunk
-   for `extern "C"`, the `.def` underscore, the notice, and warnings you can see by eye (unused parameters, sign
-   compares, narrowing). Checkpoint: 0001-0005 on disk, each `patch -p1 --dry-run` clean against a scratch copy.
+2. Make the patches as a stack. Copy the four target files from SRC (`MAIN/dl/azahar-src/unpacked/
+   azahar-unified-source-2126.2/`, read-only, never edited) into `<scratchpad>/stack/` with the same relative paths.
+   For each patch in order: copy the current `stack/` to `stack.prev/`, edit `stack/`, then `diff -u` the changed
+   files from `stack.prev/` to `stack/` (labels `a/<path>` and `b/<path>`) into `core/patches/`. So each patch
+   assumes all earlier ones. Make 0000 first: its clauses are known from section 3 (write the 0006 clause too). If
+   step 6 later skips 0006, edit the clause out of 0000 by hand; the notice lines sit far from every other hunk, so
+   0001-0005 still apply with `--fuzz 0` (the checkpoint proves it). No C++ is compiled here. Re-read each hunk for `extern "C"`, the `.def` underscore, and warnings you can see by
+   eye (unused parameters, sign compares, narrowing). Checkpoint: 0000-0005 on disk, and the whole stack applies in
+   order with `patch -p1 --forward --batch --fuzz 0` to a fresh scratch unpack
+   (`python3 -I tools/untar_checked.py dl/azahar-src/src.tar.xz <scratch>/u`); then delete `<scratch>/u`.
 3. `tools/build-core.sh`; run the gate command in the foreground, nice'd, 10-minute timeout. If configure fails, read
-   `build-core/configure.log`, fix, rerun; note each fix and A1/A2 in the item. Checkpoint: section 1's output.
+   `build-core/configure.log`, fix, rerun; note each fix and A1/A2 for the report. Checkpoint: section 1's output.
 4. Reds 1 and 2 in scratch copies; `shellcheck -s sh tools/build-core.sh` and `sh -n` clean. Checkpoint: the three
    reds quoted in the notes.
 5. `core/options-lazpy.txt`, `core/README.md`.
 6. The Movie check, 15 minutes by the clock, reading SRC only: confirm section 2's Movie facts, check that
    `PrepareForPlayback`/`StartPlayback` need nothing the libretro glue lacks (a `System` already set up, the
    loader's program id), and whether the movie's program id is checked against the app. Verdict (yes / no / yes with
-   conditions) and the call order go into the item. If yes: patch 0006, then rerun step 3 (the patch stamp
-   changes, so it re-unpacks).
+   conditions) and the call order go into the report. If yes: patch 0006 on top of the stack, then rerun step 3
+   (the stamp changes, so it re-unpacks and re-applies the whole stack). If no: remove 0006's clause from 0000 and
+   rerun the step 2 checkpoint and step 3.
 7. Launch: `tools/build-core.sh --detach`; `kill -0 <pid>`; read the first lines of `build-core/build.log` once.
    Checkpoint: the pid is alive. End the run.
 
@@ -252,35 +289,38 @@ of RAM shared with other sessions' emulators.
 ## 7. Files the builder must not touch
 
 Everything outside section 4: `host/`, `Makefile`, `testapp/`, `tests/`, `.gitignore`, `docs/map/*`, `README.md`,
-`docs/PLAN.md`, `docs/plans/*`, `docs/hours.tsv`, the handoff, other items, `tools/fetch.sh`, `prototype/`, and the
+`docs/PLAN.md`, `docs/plans/*`, `docs/hours.tsv`, the handoff, every item file, `tools/fetch.sh`, `prototype/`, and the
 main checkout's `dl/` (read and copy only). `.gitignore` lines it wants go in its report (section 8).
 `build-core/` and `dl/` are already ignored (`build-*/`, `dl/`).
 
 ## 8. The builder's report
 
-The gate output and the three reds as printed; pid, log and exit-file paths; the patch list with line counts; the
-Movie verdict; A1-A3; anything in configure.log worth knowing; time per step; `.gitignore` lines for the main loop:
-`*.tar.xz`, `*.tar.gz`, `*.orig`, `*.rej`.
+The gate output and the three reds as printed; pid, log and exit-file paths; the patch list with line counts;
+anything in configure.log worth knowing; time per step; `.gitignore` lines for the main loop: `*.tar.xz`, `*.tar.gz`,
+`*.orig`, `*.rej`. It ends with a block headed `Lessons and notes` (the Movie verdict and call order, the A1-A3
+answers, the configure time) for the main loop to paste into item laz-110. The builder writes no item file.
 
 ## 9. Hours (agent wall time)
 
-Builder 0.65 h (script and helper 0.2, patches 0.25, Movie check 0.15, configure and launch 0.05), plus the opus diff
-review and the commit, about 0.35 h: **1.0 h**, as PLAN.md. Machine time (detached, not booked): the build, 15-25 min
+Builder 0.6 h (script and helper 0.15, with no dry-run stage and no download in the reds; patches as a stack 0.25;
+Movie check 0.15; configure and launch 0.05), plus its share of the opus diff review and the commit (section 9 of
+`docs/plans/phase-1.md`: one review for the three steps, about 0.2 h each): **0.8 h** (PLAN.md: 1.0). Machine time (detached, not booked): the build, 15-25 min
 quiet, 40-90 min at today's load, more if LTO's link swaps.
 
 ## 10. Review checklist (the opus diff review)
 
-1. Every patch applies to a fresh unpack with `patch -p1 --dry-run`, no fuzz; each patched file has the dated notice;
-   hunks touch only citra_libretro.cpp, core_settings.cpp, environment.cpp and libretro.osx.def (PLAN 2.7) and stay
-   minimal.
+1. The whole stack applies in order to a fresh unpack with `patch -p1 --forward --batch --fuzz 0`; each patched file
+   has one notice (from 0000) naming every change to it; hunks touch only citra_libretro.cpp, core_settings.cpp,
+   environment.cpp and libretro.osx.def (PLAN 2.7) and stay minimal.
 2. Memory exports: `extern "C"`, both names in the `.def` with the underscore, arguments checked (null, zero, cap,
    2^32 wrap), every page checked before one Read/WriteBlock on the same process object, no exception escapes.
-3. Options: defaults equal stock; keys from `citra_setting(BaseKeys::...)`; parsing cannot throw out of
-   `ParseCoreOptions`; the two keys beyond PLAN 2.4 cite fs_user.cpp and core_timing.cpp:38.
+3. Options: defaults equal stock (each row's `default_value` field set); keys from `citra_setting(BaseKeys::...)`;
+   parsing cannot throw out of `ParseCoreOptions`; the two keys beyond PLAN 2.4 cite fs_user.cpp and core_timing.cpp.
 4. `retro_run`: the one `break;` after :304. Log filter: Info, with `Debug_Emulated` at Debug. Version: ends in
    `-lazpy.1`, storage outlives the call. Movie hook (if any): Prepare before Load, Start after Success.
-5. `build-core.sh`: `set -eu`, ShellCheck clean, every expansion quoted, size and sha256 checked before unpack, the
-   pin never sourced, root refused, nice'd, detach survives the shell (setsid) and records pid and exit code, a
+5. `build-core.sh`: `set -eu`, ShellCheck clean, every expansion quoted, size and sha256 checked before unpack, a
+   present bad tarball refused and kept (never refetched), a reject removes the tree, the pin never sourced, root
+   refused, nice'd, detach survives the shell (setsid) and records pid and exit code, a
    second launch refused while the first lives, `rm -rf` only under `${ROOT:?}/dl/azahar-src/build-src`,
    `unpacked/` never touched. About 110 lines at most.
 6. `untar_checked.py`: `-I`, stdlib, pre-scan before any write, `filter="data"`, accepts the 7 inside symlinks.
