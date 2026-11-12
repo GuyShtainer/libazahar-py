@@ -68,3 +68,14 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   phase-4.md's P9 contingency (lines 138, 293), R1 holds after F2, re-read R2's size and R4's link line on the
   new build; docs items listed in the report (cap 1-4 provisional, SlotTimeout, tools/hold_slot.py, profile
   applied first, watch size from the layout).
+- Review 2 (aa4b2b6826aa2442e, opus, 21:19-21:38; docs/reviews/phase-3-review-2.md): 3 blockers, 7 should fix,
+  10 nice; all 26 review-1 findings fixed. B1 F2 would gate a binary that still holds ClCertA (http_c.cpp:37-38,
+  2281-2289; MAIN's http_c.cpp.o.d names both headers): main-loop step 0 "P9b" (patch 0007 no default ClCertA,
+  optional 0008 no key loading, LAZ_CORE_DROP in core/PIN, build.inputs, atomic install) and keyblob_findings().
+  B2 lazpy_core falls back to <checkout>/build-core/, absent in worktrees: link MAIN's dylib in each step 0. B3
+  E1's slot acquire in WorkerClient.spawn would make fake-worker tests take real slots: slot=None. Ready after
+  revision 2 takes section 8's list; no third loop.
+- Guy 2026-11-13 00:3x, on LibreSSL (Phase 4 review 1): "Switch to OpenSSL 3": the P9b rebuild links a static
+  OpenSSL 3 (Homebrew openssl@3 3.6.5, /opt/homebrew/opt/openssl@3/lib/libssl.a, libcrypto.a) through
+  USE_SYSTEM_OPENSSL. Main-loop default for Q6: patch 0008 (load no keys) goes in the same rebuild.
+- Revision 2 launched 00:41 (ae13bb77d6994c473, fresh opus).

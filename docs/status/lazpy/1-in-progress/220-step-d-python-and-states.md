@@ -89,3 +89,13 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
 - D exit fix (ac94c1b1d3eddad30, 21:03): emulator.py run() closes after a guest_exited result (both cores);
   USING.md section 7 and the run() docstring say so. Fast 48 passed; test_c_checks on our core 10 passed; full
   suite on stock 69 passed in 70 s, 0 skipped. Committed on step-d 88cdbe6 (D3 complete).
+- As-built review (a1685c2425484d723, opus, 21:16-21:28; docs/reviews/phase-2-d-as-built.md): 0 blockers, 6
+  should fix, 18 nice; mergeable after S1-S6 (held state after an early stop; the 2.5 s assert back in
+  test_state_boot; the abi literal; a failed restore after the SD swap leaves the instance DEAD; USING.md seed
+  order, wall_ms_mean, msg_seq; .venv/ in code.md). 14 of 15 departures accepted. Correction: the state times on
+  disk after the 21:04 run are t_core_start=0.40 t_boot=5.09 t_state=1.62 ratio=0.317 fixed_ratio=0.259 k=0
+  drain_ms=433.0 unserialize_ms=643.6; k was 0 in every save. Every SIGSEGV test run (fake ones too) writes a
+  Python-*.ips crash report in ~/Library/Logs/DiagnosticReports. The meta's app= holds the absolute path (the
+  Mac's user name). H1-H6 hold, H7 on our core. Fix list sent to the builder 00:40 with N1-N3, N5, N9-N11, N14
+  and Phase 4's S13 (USING section 11 "Stock: exact repeats"). Merge lines: the review's runners.md block and
+  tools.md entry.

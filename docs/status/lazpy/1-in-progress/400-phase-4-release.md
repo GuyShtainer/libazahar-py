@@ -63,3 +63,7 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   default (a); G5 git pushes with a fine-grained PAT that may not cover a new repo. Q1 (a) with bsdtar @archive
   --exclude (no release_pack.py); Q2 no host dylib; Q3 keep pytest, installed explicitly; Q4 commit the notes.
   Hours about 2.05 h. USING section 11's "Stock: exact repeats" contradicts PLAN's risk 3 (S13, D fixes).
+- Guy 2026-11-13 00:3x: G8 "Rewrite before push (Recommended)": rewrite this repo's history before the first
+  push so no commit names his personal address or its local part. G3 "Switch to OpenSSL 3" (static OpenSSL 3 in
+  Phase 3's P9b rebuild; Phase 4 offers its exact source and carries its Apache-2.0 licence).
+- Revision 1 launched 00:41 (a739c8de18f2e6992, fresh opus), with Phase 3 review 2's asks and both rulings.
