@@ -1,0 +1,21 @@
+old	new	subject
+15d0323	1844a5d	Phase 3 review 1, Phase 4 plan revision 0 (key blob found), D3 green; Guy's rulings recorded
+0928a6f	d83e628	Handoff: next steps after D, the keys-off rebuild, Phase 3 and 4 loops
+7725e7d	e93b391	Step D fixes: 69 passed, 2.5 s state-boot bound; guest exit closes the Emulator on both cores
+18b243d	e87551e	Step D complete on step-d (88cdbe6); keys-off core rebuild running
+e40e59c	43f1fb1	build-core: console key blob off, build paths stripped, both checked (P9); core rebuilt
+8a16f9e	f3e6f00	Phase 3 plan revision 1 (all review-1 findings, Guy's answers, P9); D as-built review launched
+8f3ad2e	c7ee250	Phase 4 review 1 (Nintendo HTTPS cert found, LibreSSL licence); private name removed from the plan
+254b76b	9c960da	Phase 3 review 2 launched
+4e76fd1	10fb1ce	D as-built review, Phase 3 review 2; Guy: OpenSSL 3, history rewrite before push
+8ec6765	150401b	Handoff: Waiting on Guy trimmed to G5-G7
+d61ea5a	dadd85c	progress: Phase 1 done, Phase 2 nearly merged, Phase 3 final revision, Phase 4 revision 1; page version 5
+a113cf6	ccb3c8a	Merge step D: the Python package, worker, savestates and state boot, USING.md
+028eb0a	cdd154e	Phase 2 done: step D merged (ccb3c8a), 69 passed; runners and tools maps
+5e95423	a00119c	core: P9b, no default ClCertA (0007), no key loading (0008), drop list, static OpenSSL 3, build.inputs
+4d76406	8a8e0de	handoff: P9b rebuild running in MAIN
+3023e0d	f3dbddd	item 300: P9b rebuild verified (no keys, no ClCertA, static OpenSSL 3)
+1e84749	c727db0	plans: Phase 3 revision 2 (final)
+799e8c3	7c33f38	core: step 0 as revision 2 writes it (libressl dropped, keg prefix, version and link guards)
+027553b	7d51534	plans: Phase 4 revision 1
+7306148	bf73f3c	handoff: step 0 rebuild, Phase 4 review 2 and the legal consult running; G8 next

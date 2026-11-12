@@ -13,14 +13,14 @@ hours: -
 Gate our built core: its exported symbols and version, the Phase C and D tests on it, identical repeats and state boots, the exact debug-text stop.
 
 ## Exit gate
-The gate in `docs/PLAN.md` line 304 ("Phase F2"), run headless on this Mac with a pass/fail answer.
+The gate in `docs/PLAN.md` line 311 ("Phase F2"), run headless on this Mac with a pass/fail answer.
 
 ## Evidence
 none yet
 
 ## Pointers
-- Plan section: `docs/PLAN.md:304`
-- Phase plan: none yet
+- Plan section: `docs/PLAN.md:311`
+- Phase plan: `docs/plans/phase-f2.md` (the builder brief), `docs/plans/phase-3.md`
 - Review: none yet
 
 ## Lessons and notes

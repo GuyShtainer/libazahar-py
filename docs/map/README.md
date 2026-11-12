@@ -11,3 +11,4 @@
 | The scripts in `tools/` | `docs/map/tools.md` |
 | What we know so far (spikes, prior art, Gen3D's needs) | `docs/research/` |
 | Generated lists: plan headings, make targets | `docs/map/gen/anchors.md`, `docs/map/gen/targets.md` |
+| SHAs older than the history rewrite (2026-11-13) in plans, reviews, items, `hours.tsv` and `build-core/build.inputs` | `docs/commit-map-g8.tsv` |

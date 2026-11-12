@@ -86,3 +86,9 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   (2) an input at frame 0 raises a plain ValueError from inputs.fold, not a LibAzaharError, and USING.md's run()
   line lacks the 1-based rule; (3) shot keys are batch frames, shot file names whole-run frames; (4) a reused
   workdir keeps the old SD with the warm shader cache. H's docs carry 2-4; 1 and 2's error class are code.
+- G8 done by the main loop 01:06-01:08 (phase-i.md 8.1): before scan as expected (6 commits 15d0323-8a16f9e, one
+  path, 0 messages, 0 at HEAD, no tags); backup bundle verified, outside the repo; git filter-repo --force with
+  --replace-text and --replace-message; after: HEAD tree unchanged, 98 commits before and after, identities
+  unchanged, no refs/replace, fsck clean, 0 hits in every commit and message, step-c and step-d keep their SHAs,
+  both worktrees clean. 20 commits rewritten (15d0323 -> 1844a5d onward): docs/commit-map-g8.tsv, pointed at from
+  docs/map/README.md. Checks rerun: status_check, map_check, mkprogress, make check. The I3 audit runs after this.

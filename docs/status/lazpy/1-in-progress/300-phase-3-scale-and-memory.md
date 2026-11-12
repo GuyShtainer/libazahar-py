@@ -115,3 +115,8 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   cache USE_SYSTEM_OPENSSL ON, both libraries the keg .a (/opt/homebrew/Cellar/openssl@3/3.6.5), keyblob OFF,
   FIND_PACKAGE_MESSAGE_DETAILS_OpenSSL v3.6.5; configure.log found suitable version "3.6.5". The 00:52 build had
   605 stale .o.d under build-core/build/externals/libressl; (d) removes them.
+- Step 0 rebuild (799e8c3, now 7c33f38 after G8) 01:02-01:06, exit 0, 21,828,992 bytes, minos 11.0, 944 "built
+  for newer macOS" lines. build.inputs: the plan's split keys, openssl_prefix /opt/homebrew/Cellar/openssl@3/3.6.5,
+  clean=yes, head=799e8c3 (pre-rewrite), cmake= with <repo>. otool -L: no SSL dylib. Strings: 0 libressl (any
+  case), 0 /Users/, one line "-lazpy.1", "OpenSSL 3.6.5" present, "ClCertA file missing, using default" absent;
+  3 lazpy_ exports; 0 of 1,054 .o.d name a drop entry. F2's f1 gates this build.
