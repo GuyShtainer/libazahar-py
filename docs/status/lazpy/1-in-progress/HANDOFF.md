@@ -11,8 +11,6 @@ the pre-commit hook runs status_check on main (Guy's yes, 2026-11-12). Nothing p
 |---|---|---|---|
 | laz-05: second test, memory reads and real 3D-scene speed (run by the Gen3D session) | Gen3D session's scratchpad | a8bc5d5c | done or 60 min (about 16:46) |
 | laz-10: the whole-scope plan, opus, writes `docs/` (PLAN.md) only | this repo | aa56e6986026ffbe0 | draft done, then laz-11 |
-| laz-02: the download script `tools/` (fetch.sh) (sonnet), tested on a temp copy only | this repo | a445421c9b1810c3e | script tested, not committed |
-| laz-06: can libretro.py host the core? (sonnet), writes `docs/research/` (libretro-py-probe.md) | this repo + scratch venv | af4e0b90795498306 | verdict or 45 min (about 17:00) |
 
 ## Next steps, in order
 1. When the plan agent reports: read `docs/` (PLAN.md), add it to `ANCHOR_FILES` in `tools/mkmap.py`, run the checks,

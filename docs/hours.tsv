@@ -1,3 +1,6 @@
 date	bet	phase	agent_id	model	role	kind	start	end	hours	source
 2026-11-12	project setup (repo, status, maps, research copied from the Gen3D spikes)	setup	main	opus	main	process	15:58	16:01	0.07	session clock
 2026-11-12	take over the project from the Gen3D session (read the setup, Guy's three answers, hook, plan launch)	plan	main	opus	main	process	16:00	16:10	0.17	session clock
+2026-11-12	fetch script tools/fetch.sh	build	a445421c9b1810c3e	sonnet	builder	agent	16:09	16:12	0.05	agent duration 154 s
+2026-11-12	libretro.py probe	build	af4e0b90795498306	sonnet	researcher	agent	16:09	16:12	0.05	agent duration 165 s
+2026-11-12	plan support: verify and close the two side items	plan	main	opus	main	process	16:12	16:16	0.07	session clock
