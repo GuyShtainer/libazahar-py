@@ -16,7 +16,13 @@ Every step's gate passes (each step file names its PLAN.md line). Before any ste
 (`docs/plans/`), opus review 1, revision, opus review 2, revision (Guy's rule: two loops per phase).
 
 ## Evidence
-none yet
+- 2026-11-12: plan, review 1 (eea12c4), revision 1 (21a152c), review 2 (6d421e2), revision 2 (62fa531); built in
+  three worktrees, as-built review and re-check (`docs/reviews/phase-1-as-built.md`), integration run on int-1 green
+  (gate-a 8/8, RUNNER=azhost gate-b 14/14, zero warnings), merged to main 570eebf; steps 110, 120, 130 done.
+- 2026-11-12 19:40: our core's first build in MAIN, `build-core/build.exit` = 0 after 14 min (nice'd, load ~28):
+  `build-core/azahar_lazpy_libretro.dylib` (19,195,472 bytes) exports `lazpy_read_memory`, `lazpy_write_memory`,
+  `lazpy_movie_play`; version string carries `-lazpy.1`; the one warning is ld's duplicate-library note. The core's
+  test-set gate is step F2 (Phase 3).
 
 ## Pointers
 - Plan section: `docs/PLAN.md` section 3

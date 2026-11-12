@@ -45,3 +45,4 @@ date	bet	phase	agent_id	model	role	kind	start	end	hours	source
 2026-11-12	branch commits, integration run, merge to main	phase-1	main	opus	main	process	19:22	19:28	0.10	session clock
 2026-11-12	Step C1 builder: frozen headers, pure modules, unit tests	phase-2	acae9a26ca38daf7c	sonnet	builder	agent	19:27	19:38	0.18	agent duration 647 s
 2026-11-12	core build launch, waiter, C1 commit, D launch	phase-2	main	opus	main	process	19:26	19:40	0.10	session clock
+2026-11-12	core build check, Phase 1 close, worktree cleanup	phase-1	main	opus	main	process	19:41	19:43	0.03	session clock
