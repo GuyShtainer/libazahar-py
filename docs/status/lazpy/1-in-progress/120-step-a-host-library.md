@@ -50,3 +50,11 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   SET_MESSAGE in context_reset, a missing file in retro_load_game; fetch.sh is not executable (gate runs `sh
   tools/fetch.sh`); `.gitignore` dir patterns don't match symlinks, so symlink dl/* children, not dl/; host.log's 32
   option lines are counted with -ge 32, so our core's extra keys pass.
+- Fix round (19:17): A-X1, A-X2, A-S1..S5, A-N1, A-N2, A-N4 done; A-N3 skipped (review: UsageError exit 2 is fine for
+  Phase 1). Changed: host/log.c, api.c, vk.c, core.c, frame.c, run.c, version.c, azhost_main.c, tests/gate-a.sh.
+  gate-a 8/8 in the worktree and twice in a scratch clone with vendor a symlink (MAIN's vendor/ untouched);
+  `make check` clean; shellcheck clean. The `%` guest line was not run through the new log path (code change only).
+  A second azh_open returns AZH_E_ORDER (flag set only after a successful open); the MoltenVK log-level setenv is at
+  the start of open_steps in api.c and logged. Lessons: BSD grep has no `\|` in basic regex (use grep -zvE on NUL
+  lists); a clone lists a symlinked vendor as untracked, so copy gates exclude it and use ln -sfn; setenv before the
+  core makes threads.
