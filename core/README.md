@@ -46,7 +46,7 @@ drop list, the OpenSSL archives (sha256 each), the repo head and whether the tre
 ## Licenses
 
 Azahar is GPLv2 or later. Every patch hunk is GPLv2 or later, as the file it patches. Any published binary of this
-core ships with the unchanged source tarball plus these patches. OpenSSL 3 is Apache-2.0, which is compatible with GPLv3 but
+core ships with its source (below), never the unchanged tarball. OpenSSL 3 is Apache-2.0, which is compatible with GPLv3 but
 not GPLv2, so a published binary of this core is distributed under GPLv3 (Azahar's "or later" allows it). Its
 source is the tarball minus the drop list, plus these patches and `tools/build-core.sh`, plus OpenSSL 3.6.5's source.
 

@@ -80,3 +80,6 @@ date	bet	phase	agent_id	model	role	kind	start	end	hours	source
 2026-11-13	Step F2 builder, second run (nice fix, batch rerun launched)	phase-3	a83e1355c6bcddc1f	sonnet	builder	agent	01:16	01:18	0.02	agent duration 74 s
 2026-11-13	Release IP and legal consult	phase-4	aee2a9ba07ce653cf	opus	ip-legal	agent	01:05	01:21	0.26	agent duration 943 s
 2026-11-13	F2 batch read, timed rerun, key-fragment rewording, consult notes	phase-4	main	opus	main	process	01:19	01:26	0.12	session clock
+2026-11-13	Step F2 as-built review	phase-3	a5b06264cc6ce5406	opus	reviewer	agent	01:27	01:38	0.19	agent duration 692 s
+2026-11-13	Handoff rewrite, learn skill row	phase-4	main	opus	main	process	01:27	01:29	0.03	session clock
+2026-11-13	F2 review fixes, checks, step-f2 commit	phase-3	main	opus	main	process	01:38	01:41	0.05	session clock

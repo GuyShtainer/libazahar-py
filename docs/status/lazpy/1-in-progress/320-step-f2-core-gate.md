@@ -60,3 +60,16 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   r2.2 4.88 s, state_boot failed; correctness parts passed. drain_ms and unserialize_ms carry the time (about
   0.5-1.4 s each), so the bound is a load floor. runs/f2/quiet-rerun.sh waits until the 1-min load is under 10
   and the 5-min under 14, then reruns both once (waiter bi08wz1d9, 4 h at most). The bound stays as planned.
+- As-built review (a5b06264cc6ce5406, docs/reviews/step-f2-as-built.md): merge after B1 and S1-S5; checklist 0-9
+  PASS. Fixed by the main loop 01:39 and committed on step-f2 as 6578c3c: B1 keyblob_findings fails when the tree
+  has no CMakeLists.txt (lexists for the drop entries); S1 no sys.path change at import; S2 the nice test covers
+  starts 5/10/15/20 and checks the exact value (9 passed, 1 skipped at this session's nice); S3 gate_c f2 asserts
+  exit_code 0 on our core; S4 core/README says the binary ships with its source, never the unchanged tarball (in
+  MAIN); S5 no window offset in the failure text; N1 a nice failure is sent as fatal. keyblob and symbols rerun:
+  PASS. S3's gate_c --only f run on our core is added to runs/f2/rerun.sh (the quiet rerun).
+- r2's t_state misses are load: the stock core missed the same bound in the same window (3.26 s); quiet runs
+  measured 1.47-1.68 s. drain_ms includes a full serialize that retro_serialize_size() throws away (Azahar
+  citra_libretro.cpp:692-709), 24-35 % of t_state, so not a Phase 4 item by the plan's rule.
+- After merging step E: E's machine slot is taken inside Emulator(), so slot waits count inside t_state (subtract
+  or record slot.txt's waited_s) and gate_f2 under an outer hold_slot needs a second slot; wrap only the azhost
+  runs in tools/hold_slot.py.
