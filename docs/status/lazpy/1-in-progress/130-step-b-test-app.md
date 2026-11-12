@@ -40,3 +40,10 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   the licence audit); shell traps: `&&`-chained `cat <<EOF` silently skips on an earlier failure, a global `name` in a
   helper clobbers the caller's loop variable. Not exercised: gate-b's azhost branch, the split-PNG markers form,
   svcOutputDebugString forwarding.
+- Fix round (19:18): B-X1, B-S1..S4, B-N1..N4 done. Changed: tests/gate-b.sh, tests/check_testapp.py,
+  testapp/source/ main.c, scene3d.c/.h, control.c, record.c, font.c, sdlog.c. gate-b 14/14 PASS from a fresh tree
+  with RUNNER=fe2, and 14/14 with RUNNER=azhost (A's build copied in, host/ symlinked, all removed after; azhost boot
+  offset 12, 588 log lines for 600 frames). Lessons: azhost reads host/options-default.txt relative to the working
+  directory and needs the dylib beside it (standalone runs without host/ fail with IOError); the new exit-code check
+  caught a broken first run as exit 6; asserts stay on (no -DNDEBUG); scene3d_begin() is void (SYNCDRAW without
+  NONBLOCK always returns true); fe2's log checks need --runs from the DONE line.

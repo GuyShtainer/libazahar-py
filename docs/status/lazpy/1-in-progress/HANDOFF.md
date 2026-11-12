@@ -12,7 +12,7 @@ the next session needs to act now, and points at the rest. Goals, rules, decisio
 | laz-300: Phase 3 plan (opus): writes `docs/plans/` (phase-3, e, f2, g) only | this repo | aed5ccfac0370b719 | plan written; then review 1 |
 | laz-110: step F1, our core's pin, patches, options profile, build script; configure and planted reds only, no build (sonnet) | ../libazahar-py-f1 (step-f1) | a85f3abcf6d608824 | fixing F1-S1 and nice items from the as-built review (mergeable as is); then the integration run |
 | laz-120: step A, host library and azhost CLI, gate-a (sonnet) | ../libazahar-py-a (step-a) | a4e8c6931d1122bf4 | fixes done 19:17 (gate-a 8/8, twice in a symlinked clone); waits for the re-check |
-| laz-130: step B, test app and checker, gate-b (sonnet) | ../libazahar-py-b (step-b) | ab76e8c1f445db1b3 | fixing B-X1, B-S1..S4 and nice items; then the integration run |
+| laz-130: step B, test app and checker, gate-b (sonnet) | ../libazahar-py-b (step-b) | ab76e8c1f445db1b3 | fixes done 19:18 (gate-b 14/14 on fe2 and azhost); waits for the re-check |
 
 ## Next steps, in order
 1. Phase 2's plan is final (5f77e28; fix check all DONE, item 200's notes). C and D build after Phase 1 merges.
