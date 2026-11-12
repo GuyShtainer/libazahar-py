@@ -22,9 +22,8 @@ the next session needs to act now, and points at the rest. Goals, rules, decisio
    when an opus slot is free. At most 2 opus at once.
 
 ## Waiting on Guy (only what blocks a step above)
-- Phase 4's G5-G7 (repo creation, the word "push", publishing the draft): item 400's notes. G3 and G8 answered.
-- Phase 4's G1-G7 (item 400's notes): G1, rebuilding our core with the built-in key blob off before F2, is
-  the main loop's default (more conservative); the rest block Phase 4's release, not its reviews.
+- Phase 4's G5-G7 (repo creation, the word "push", publishing the draft): item 400's notes. G1 (keys off, done), G3 and G8 answered;
+  the rest block Phase 4's release, not its reviews.
 The full list is generated into `docs/status/README.md`.
 
 ## Pointers
