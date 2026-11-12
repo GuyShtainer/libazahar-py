@@ -5,7 +5,7 @@
 #   tools/build-core.sh --detach           run --build in its own session; pid -> build-core/build.pid,
 #                                          exit code -> build-core/build.exit, log -> build-core/build.log
 # Env: LAZPY_ROOT, LAZ_CORE_PIN (default core/PIN), LAZ_CORE_PATCHES (default core/patches), LAZ_CORE_LTO (ON),
-#      LAZ_CORE_JOBS (4), LAZ_OPENSSL_ROOT (default: the pin's OPENSSL_ROOT; a static OpenSSL of the pinned version). The pin file is read with sed, never sourced. Output and rules: core/README.md.
+#      LAZ_CORE_JOBS (4), LAZ_OPENSSL_PREFIX (default: the pin's OPENSSL_PREFIX; a static OpenSSL of the pinned version, resolved to its real path). The pin file is read with sed, never sourced. Output and rules: core/README.md.
 set -eu
 SELF="$(cd "$(dirname "$0")" && pwd)/$(basename "$0")"
 ROOT="${LAZPY_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
@@ -22,7 +22,7 @@ if [ "$MODE" = --detach ]; then
   if [ -f build-core/build.pid ] && kill -0 "$(cat build-core/build.pid)" 2>/dev/null; then
     die "a build is already running (pid $(cat build-core/build.pid))"
   fi
-  rm -f build-core/build.exit
+  rm -f build-core/build.exit build-core/build.inputs
   nohup nice -n 10 python3 -I -c 'import os,sys; os.setsid(); os.execvp(sys.argv[1], sys.argv[1:])' \
     "$SELF" --build </dev/null >build-core/build.log 2>&1 &
   echo "$!" >build-core/build.pid
@@ -36,8 +36,8 @@ case "$PATCHES" in /*) ;; *) PATCHES="$ROOT/$PATCHES" ;; esac
 pin() { sed -n "s/^$1=//p" "$PIN"; }
 TAG="$(pin AZAHAR_TAG)"; COMMIT="$(pin AZAHAR_COMMIT)"; URL="$(pin SRC_URL)"; WANT_SHA="$(pin SRC_SHA256)"
 WANT_SIZE="$(pin SRC_SIZE)"; FILE="$(pin SRC_FILE)"; TOP="$(pin SRC_TOP)"
-DROP="$(pin LAZ_CORE_DROP)"; SSL_VER="$(pin OPENSSL_VERSION)"; SSL_ROOT="${LAZ_OPENSSL_ROOT:-$(pin OPENSSL_ROOT)}"
-for V in "$TAG" "$COMMIT" "$URL" "$WANT_SHA" "$WANT_SIZE" "$FILE" "$TOP" "$DROP" "$SSL_VER" "$SSL_ROOT"; do
+DROP="$(pin LAZ_CORE_DROP)"; SSL_VER="$(pin OPENSSL_VERSION)"; SSL_PIN="${LAZ_OPENSSL_PREFIX:-$(pin OPENSSL_PREFIX)}"
+for V in "$TAG" "$COMMIT" "$URL" "$WANT_SHA" "$WANT_SIZE" "$FILE" "$TOP" "$DROP" "$SSL_VER" "$SSL_PIN"; do
   [ -n "$V" ] || die "pin $PIN is missing a value"
 done
 case "$FILE" in /*) TARBALL="$FILE" ;; *) TARBALL="$ROOT/$FILE" ;; esac
@@ -67,9 +67,11 @@ fi
 if [ "$DOWNLOADED" -eq 1 ]; then say "fetch $FILE ok"; else say "have $FILE ($SIZE bytes, sha256 ok)"; fi
 
 # OpenSSL: a static OpenSSL of exactly the pinned version replaces Azahar's bundled LibreSSL (GPLv3-compatible).
-SSL_GOT="$("$SSL_ROOT/bin/openssl" version 2>/dev/null | cut -d' ' -f1-2)" || SSL_GOT=""
-[ "$SSL_GOT" = "OpenSSL $SSL_VER" ] || die "OpenSSL at $SSL_ROOT is '$SSL_GOT', the pin wants OpenSSL $SSL_VER"
-for A in libssl.a libcrypto.a; do [ -f "$SSL_ROOT/lib/$A" ] || die "no static $SSL_ROOT/lib/$A"; done
+SSL_ROOT="$(cd -P "$SSL_PIN" 2>/dev/null && pwd)" || die "no OpenSSL at $SSL_PIN (brew install openssl@3)"
+for A in lib/libssl.a lib/libcrypto.a include/openssl/opensslv.h; do [ -f "$SSL_ROOT/$A" ] || die "no $SSL_ROOT/$A"; done
+SSL_GOT="$(sed -n 's/^# *define OPENSSL_VERSION_STR "\(.*\)"$/\1/p' "$SSL_ROOT/include/openssl/opensslv.h")"
+[ "$SSL_GOT" = "$SSL_VER" ] || die "OpenSSL at $SSL_ROOT is '$SSL_GOT', core/PIN pins $SSL_VER"
+strings -a "$SSL_ROOT/lib/libcrypto.a" | grep -q "OpenSSL $SSL_VER " || die "libcrypto.a at $SSL_ROOT is not OpenSSL $SSL_VER"
 say "OpenSSL $SSL_VER static at $SSL_ROOT"
 
 STAMP="$BUILD_SRC/.ready-$SHA-$({ cat "$PATCHES"/*.patch; echo "drop=$DROP"; } | shasum -a 256 | cut -d' ' -f1)"
@@ -84,12 +86,14 @@ if [ ! -f "$STAMP" ]; then
   N="${OUT##*members=}"
   say "unpacked $N members into dl/azahar-src/build-src/$TOP (path check ok)"
   # the drop list: files that must never be built or shipped (console keys, Nintendo's ClCertA)
+  set -f
   for D in $DROP; do
     case "$D" in /* | *..* | "") rm -rf "$BUILD_SRC"; die "unsafe drop-list entry '$D'" ;; esac
-    [ -f "$TREE/$D" ] || { rm -rf "$BUILD_SRC"; die "drop-list entry $D is not in the tree"; }
-    rm -f "${TREE:?}/${D:?}"
+    [ -e "$TREE/$D" ] || { rm -rf "$BUILD_SRC"; die "drop-list entry $D is not in the tree"; }
+    rm -rf -- "${TREE:?}/${D:?}"
     say "dropped $D"
   done
+  set +f
   COUNT=0
   for P in "$PATCHES"/*.patch; do
     if ! (cd "$TREE" && patch -p1 --forward --batch --fuzz 0 <"$P") >build-core/patch.log 2>&1; then
@@ -106,24 +110,30 @@ else
   say "tree up to date (stamp ok)"
 fi
 
-if ! cmake -S "$TREE" -B build-core/build -DENABLE_LIBRETRO=ON -DCMAKE_OSX_ARCHITECTURES=arm64 \
+# stale objects of the bundled LibreSSL from earlier builds (their .o.d files name it)
+rm -rf build-core/build/externals/libressl
+set -- cmake -S "$TREE" -B build-core/build -DENABLE_LIBRETRO=ON -DCMAKE_OSX_ARCHITECTURES=arm64 \
   -DCMAKE_BUILD_TYPE=Release -DFETCHCONTENT_FULLY_DISCONNECTED=ON -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
   -DCITRA_WARNINGS_AS_ERRORS=OFF -DENABLE_LTO="${LAZ_CORE_LTO:-ON}" \
   -DENABLE_BUILTIN_KEYBLOB=OFF \
-  -DUSE_SYSTEM_OPENSSL=ON -DOPENSSL_ROOT_DIR="$SSL_ROOT" -DOPENSSL_USE_STATIC_LIBS=TRUE \
-  -DCMAKE_C_FLAGS="-ffile-prefix-map=$PWD/=" -DCMAKE_CXX_FLAGS="-ffile-prefix-map=$PWD/=" \
-  >build-core/configure.log 2>&1; then
+  -DUSE_SYSTEM_OPENSSL=ON -DOPENSSL_USE_STATIC_LIBS=TRUE -DOPENSSL_ROOT_DIR="$SSL_ROOT" \
+  -DOPENSSL_INCLUDE_DIR="$SSL_ROOT/include" -DOPENSSL_SSL_LIBRARY="$SSL_ROOT/lib/libssl.a" \
+  -DOPENSSL_CRYPTO_LIBRARY="$SSL_ROOT/lib/libcrypto.a" \
+  -DCMAKE_C_FLAGS="-ffile-prefix-map=$PWD/=" -DCMAKE_CXX_FLAGS="-ffile-prefix-map=$PWD/="
+if ! "$@" >build-core/configure.log 2>&1; then
   tail -n 30 build-core/configure.log
   die "configure failed"
 fi
 grep -q '^ENABLE_BUILTIN_KEYBLOB:BOOL=OFF$' build-core/build/CMakeCache.txt \
   || die "the built-in console key blob is not OFF (we never ship console keys)"
-for L in SSL CRYPTO; do
-  case "$(sed -n "s/^OPENSSL_${L}_LIBRARY:FILEPATH=//p" build-core/build/CMakeCache.txt)" in
-    "$SSL_ROOT"/lib/lib*.a) ;;
-    *) die "configure did not pick the static OpenSSL $L library under $SSL_ROOT" ;;
-  esac
+CACHE=build-core/build/CMakeCache.txt
+grep -q '^USE_SYSTEM_OPENSSL:BOOL=ON$' "$CACHE" || die "configure did not take USE_SYSTEM_OPENSSL"
+for L in SSL:libssl CRYPTO:libcrypto; do
+  grep -Eq "^OPENSSL_${L%%:*}_LIBRARY:[A-Z]*=$SSL_ROOT/lib/${L#*:}\.a\$" "$CACHE" \
+    || die "configure did not pick $SSL_ROOT/lib/${L#*:}.a"
 done
+grep '^FIND_PACKAGE_MESSAGE_DETAILS_OpenSSL:INTERNAL=' "$CACHE" | grep -qF "v$SSL_VER" \
+  || die "configure did not find OpenSSL $SSL_VER"
 say "configure done: build-core/build"
 [ "$MODE" = --build ] || exit 0
 
@@ -137,10 +147,13 @@ CLEAN=no
   echo "script=$(sha "$SELF")"
   for P in "$PATCHES"/*.patch; do echo "patch $(basename "$P")=$(sha "$P")"; done
   echo "drop=$DROP"
-  echo "openssl=$SSL_VER $SSL_ROOT libssl.a=$(sha "$SSL_ROOT/lib/libssl.a") libcrypto.a=$(sha "$SSL_ROOT/lib/libcrypto.a")"
+  echo "openssl_version=$SSL_VER"
+  echo "openssl_prefix=$SSL_ROOT"
+  echo "openssl_libssl_sha256=$(sha "$SSL_ROOT/lib/libssl.a")"
+  echo "openssl_libcrypto_sha256=$(sha "$SSL_ROOT/lib/libcrypto.a")"
   echo "head=$(git -C "$ROOT" rev-parse HEAD 2>/dev/null || echo none)"
   echo "clean=$CLEAN"
-  echo "cmake=$(sed -n 's/^CMAKE_COMMAND:INTERNAL=//p' build-core/build/CMakeCache.txt) -S <tree> -B build-core/build (flags above in tools/build-core.sh)"
+  printf 'cmake='; printf ' %s' "$@" | sed "s|$ROOT|<repo>|g; s|^ ||"; echo
 } >build-core/build.inputs.tmp
 mv -f build-core/build.inputs.tmp build-core/build.inputs
 
@@ -151,14 +164,19 @@ for D in $DROP; do
     die "an object still reads $(basename "$D") (on the drop list)"
   fi
 done
+LINK=build-core/build/src/citra_libretro/CMakeFiles/citra_libretro.dir/link.txt
+for A in libssl.a libcrypto.a; do grep -qF "$SSL_ROOT/lib/$A" "$LINK" || die "the link line lacks $SSL_ROOT/lib/$A"; done
+if grep -qi libressl "$LINK"; then die "the link line still names libressl"; fi
 OUTLIB=build-core/build/bin/Release/azahar_libretro.dylib
-if otool -L "$OUTLIB" | grep -Eq 'libssl|libcrypto|libtls'; then die "the core links an SSL dylib; it must be static"; fi
-strings -a "$OUTLIB" | grep -q 'LibreSSL' && die "LibreSSL is still in the core"
-strings -a "$OUTLIB" | grep -q "OpenSSL $SSL_VER" || say "note: no 'OpenSSL $SSL_VER' string in the core (dead-stripped?)"
+if strings -a "$OUTLIB" | grep -qi 'libressl'; then die "LibreSSL is still in the core"; fi
+if strings -a "$OUTLIB" | grep -q "OpenSSL $SSL_VER"; then :; else say "note: no 'OpenSSL $SSL_VER' string in the core"; fi
 DYLIB=build-core/azahar_lazpy_libretro.dylib
 cp "$OUTLIB" "$DYLIB.tmp"
 strip -x "$DYLIB.tmp"
 codesign --force -s - "$DYLIB.tmp"
 codesign -v "$DYLIB.tmp"
+if otool -L "$DYLIB.tmp" | grep -Eq 'libssl|libcrypto|libtls'; then
+  rm -f "$DYLIB.tmp"; die "the core links an SSL dylib (static OpenSSL only; stop and report)"
+fi
 mv -f "$DYLIB.tmp" "$DYLIB"
 say "built $DYLIB"

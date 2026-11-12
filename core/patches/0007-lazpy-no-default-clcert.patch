@@ -1,15 +1,14 @@
 --- a/src/core/hle/service/http/http_c.cpp
 +++ b/src/core/hle/service/http/http_c.cpp
-@@ -1,6 +1,8 @@
+@@ -1,6 +1,7 @@
  // Copyright 2014-2026 Citra Emulator Project / Azahar Emulator Project
  // Licensed under GPLv2 or any later version
  // Refer to the license.txt file included.
-+// Modified by libazahar-py, 2026: removes the built-in ClCertA certificate and key (no default is used when the
-+// console's own file is missing). Licensed GPLv2 or later, as this file.
++// Modified by libazahar-py, 2026: removes the built-in default ClCertA (the ctr-common-1 certificate and key); without the console's own ClCertA file the HTTP service has no client certificate. Licensed GPLv2 or later, as this file.
  
  #include <algorithm>
  #include <atomic>
-@@ -34,8 +36,6 @@
+@@ -34,8 +35,6 @@
  
  namespace Service::HTTP {
  
@@ -18,7 +17,7 @@
  
  namespace ErrCodes {
  enum {
-@@ -2279,13 +2279,8 @@
+@@ -2279,13 +2278,8 @@
      open_mode.read_flag.Assign(1);
      auto file_result = archive.OpenFile(file_path, open_mode, 0);
      if (file_result.Failed()) {

@@ -108,3 +108,10 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   build.inputs keys (openssl_version, openssl_prefix, openssl_*_sha256), cmake= with <repo>, the link.txt check,
   otool on the .tmp before install. The main loop aligns the script to it and rebuilds, so F2's f1 gates the
   plan's format.
+- Step 0 aligned to revision 2 by the main loop: core/PIN drop list gains externals/libressl, OPENSSL_ROOT ->
+  OPENSSL_PREFIX; 0007 and 0008 regenerated with the plan's notice lines, 0008 now replaces GetKeysStream's body
+  (default_keys_enc count 0, was 2 in dead code); build-core.sh takes the plan's (a)-(i). --configure-only in MAIN:
+  4 dropped lines, 9 patches 0 rejects, configure done; ctr_common_1 0, default_keys_enc 0, one notice per file;
+  cache USE_SYSTEM_OPENSSL ON, both libraries the keg .a (/opt/homebrew/Cellar/openssl@3/3.6.5), keyblob OFF,
+  FIND_PACKAGE_MESSAGE_DETAILS_OpenSSL v3.6.5; configure.log found suitable version "3.6.5". The 00:52 build had
+  605 stale .o.d under build-core/build/externals/libressl; (d) removes them.
