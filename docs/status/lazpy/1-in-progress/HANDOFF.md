@@ -1,7 +1,7 @@
 <!-- handoff: slim v1 | current tasks only | rewritten whole from docs/status/templates/handoff.md | budget 80 lines | never append -->
 # libazahar-py handoff
 
-As of: 2026-11-12 21:18 (this project's own session)
+As of: 2026-11-12 21:19 (this project's own session)
 
 This file lives in docs/status/lazpy/1-in-progress/, beside its item files. It holds only what
 the next session needs to act now, and points at the rest. Goals, rules, decisions and history live elsewhere.
@@ -10,7 +10,7 @@ the next session needs to act now, and points at the rest. Goals, rules, decisio
 | What | Where | Agent id | It stops when |
 |---|---|---|---|
 | laz-220: step D as-built review (opus), writes `docs/reviews/` (phase-2-d-as-built.md) only | MAIN, reads ../libazahar-py-d (88cdbe6) | a1685c2425484d723 | fix list for D's builder (ac94c1b1d3eddad30); then merge step-d |
-| laz-300: Phase 3 plan revision 1 written (committed); review 2 waits for an opus slot | this repo | main | review 2 (fresh opus), then revision 2 |
+| laz-300: Phase 3 plan review 2 (opus, fresh), writes `docs/reviews/` (phase-3-review-2.md) only; includes Phase 4 review 1's asks (ClCertA patch) | this repo | aa4b2b6826aa2442e | review written; then revision 2 |
 | laz-400: Phase 4 plan review 1 written (committed); revision 1 waits for an opus slot | this repo | main | revision 1, then review 2 |
 
 ## Next steps, in order
