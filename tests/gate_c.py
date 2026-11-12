@@ -1,5 +1,6 @@
 """Step C's gate (docs/plans/phase-c.md section 8): headless, stock core, test app, 2D. Prints PASS/FAIL per check."""
 import argparse
+import os
 import shutil
 import signal
 import subprocess
@@ -20,6 +21,10 @@ COMBOS = [(1 << 0) | (1 << 1), (1 << 8) | (1 << 9) | (1 << 14) | (1 << 15), (1 <
 CIRCLES = [(32767, 0), (0, 32767), (-32767, -32767), (16384, -16384), (0, 0)]
 TOUCHES = [(0, 0), (319, 0), (0, 239), (319, 239), (160, 120), (10, 63), (20, 125), (30, 126), (40, 127), (1, 1),
            (318, 238), (100, 62), (200, 64), (50, 200), (250, 30), (10, 128), (300, 124), (159, 159), (160, 63), (80, 126)]
+CORE_FLAGS: list[str] = []      # --core PATH when main() was given one; run_azhost appends it
+KIND = "stock"                  # "stock" or "lazpy": which expectations the scenarios use
+NM = "/usr/bin/nm"
+EXIT_PATH_LINE = "the guest stopped the host; the host process exits now"     # host/env.c exit_path()
 passed = failed = 0
 
 
@@ -39,7 +44,7 @@ def run_azhost(ident: str, flags: list[str], control: dict, timeout: int = 600) 
         (base / name).mkdir(parents=True)
     tl.write_control(base / "seed", **control)
     cmd = ["nice", "-n", "10", "build/azhost", "run", APP, "--sys", str(base / "sys"), "--out", str(base / "out"),
-           "--sd-seed", str(base / "seed")] + flags
+           "--sd-seed", str(base / "seed")] + CORE_FLAGS + flags
     child = subprocess.Popen(cmd, cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
     try:
         out, err = child.communicate(timeout=timeout)
@@ -192,6 +197,11 @@ def scenario_c() -> None:
     report("c3", ok_stop and s[1]["wall"] <= bound, f"wall={s[1]['wall'] if len(s) == 2 else None} bound={bound:.2f}",
            slow=ok_stop)
     res = run_azhost("c4", ["--frames", "600", "--debug-stop", "ready f="], {"ready_at": 200})
+    if KIND == "lazpy":     # our core honours the debug-text stop (instant_debug_log); the batch ends before frame 600
+        s0 = res["summaries"][0] if res["summaries"] else {}
+        report("c4", res["rc"] == 0 and s0.get("stop") == "debug_text" and s0.get("last", 600) < 600,
+               f"rc={res['rc']} stop={s0.get('stop')} last={s0.get('last')}")
+        return
     report("c4", res["rc"] == 7 and res["stderr"].startswith("NeedsLazpyCore:"), f"rc={res['rc']} stderr={res['stderr'][:60]!r}")
 
 
@@ -230,24 +240,51 @@ def scenario_e() -> None:
 
 def scenario_f() -> None:
     res = run_azhost("f", ["--frames", "100,1,1,1,1,1,1,1,600", "--print-last-line", LOG], {"exit_at": 200})
-    cs, c_min = c_values("f", res)
+    ours = KIND == "lazpy"
+    sums = res["summaries"]
+    cs, c_min = c_values("f", {**res, "summaries": sums[:8]} if ours else res)     # batch 9 stops at the exit
     m = cc.read_map(res["out"] / "host.map", layout_rows())
     lines, events = get_log(res)
     ev = [e for e in events if e["kind"] == "exit"]
-    report("f1", res["rc"] == 10, f"rc={res['rc']}")
-    report("f2", m["stop_code"] == 4 and m["exit_code"] == 10 and "(16)" in m["message"], f"stop={m['stop_code']} exit={m['exit_code']} msg={m['message'][:50]!r}")
-    d = m["frame_total"] - (ev[0]["v"] + c_min) if ev else None
-    report("f3", d is not None and 0 <= d <= 10, f"frame_total={m['frame_total']} exit delay={d}")
+    host_log = (res["out"] / "host.log").read_text(errors="replace") if (res["out"] / "host.log").exists() else ""
+    if ours:    # status 16 does not _exit: a summary with stop=guest_exited, then azhost exits 10; no exit-path line
+        report("f1", res["rc"] == 10 and len(sums) == 9 and sums[8]["stop"] == "guest_exited" and "(16)" in sums[8]["msg"],
+               f"rc={res['rc']} summaries={len(sums)} stop={sums[8]['stop'] if len(sums) == 9 else None}")
+        report("f2", EXIT_PATH_LINE not in host_log and m["stop_code"] == 4 and m["exit_code"] == 0 and "(16)" in sums[-1]["msg"] if sums else False,
+               f"stop={m['stop_code']} exit={m['exit_code']} no exit-path line={EXIT_PATH_LINE not in host_log}")
+        d = (sums[8]["last"] - (ev[0]["v"] + c_min)) if len(sums) == 9 and ev else None
+        report("f3", d is not None and 0 <= d <= 10, f"summary last={sums[8]['last'] if len(sums) == 9 else None} exit delay={d}")
+    else:
+        report("f1", res["rc"] == 10, f"rc={res['rc']}")
+        report("f2", m["stop_code"] == 4 and m["exit_code"] == 10 and "(16)" in m["message"], f"stop={m['stop_code']} exit={m['exit_code']} msg={m['message'][:50]!r}")
+        d = m["frame_total"] - (ev[0]["v"] + c_min) if ev else None
+        report("f3", d is not None and 0 <= d <= 10, f"frame_total={m['frame_total']} exit delay={d}")
     text = res["log"].read_text().strip().splitlines() if res["log"].exists() else [""]
     report("f4", text[-1].startswith("exit f=200 "), f"last line {text[-1][:40]!r}")
+
+
+def core_kind(core: str, want: str) -> str:
+    """auto: ``nm -gU`` lists _lazpy_read_memory -> lazpy, else stock."""
+    if want != "auto":
+        return want
+    out = subprocess.run([NM, "-gU", core], capture_output=True, text=True, check=False).stdout
+    return "lazpy" if "_lazpy_read_memory" in out else "stock"
 
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--only", default="a,b,c,d,e,f")
+    ap.add_argument("--core", default=None, help="core to run (default: azhost's own: LAZ_CORE, else the stock core)")
+    ap.add_argument("--core-kind", choices=("auto", "stock", "lazpy"), default="auto")
     ap.add_argument("--plant-red", action="store_true", help="shift the expected button frames by 2 (must FAIL a2)")
     args = ap.parse_args()
     only = set(args.only.split(","))
+    global KIND
+    core = args.core or os.environ.get("LAZ_CORE") or "dl/azahar/azahar_libretro.dylib"
+    KIND = core_kind(core, args.core_kind)
+    if args.core:
+        CORE_FLAGS[:] = ["--core", args.core]
+    print(f"core={core} kind={KIND}", flush=True)
     RC_FILE.parent.mkdir(parents=True, exist_ok=True)
     RC_FILE.unlink(missing_ok=True)
     rc = 1

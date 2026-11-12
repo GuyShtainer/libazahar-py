@@ -7,7 +7,7 @@ from typing import Optional
 
 from .errors import HostError
 
-__all__ = ["repo_root", "host_path", "core_path", "mvk_path", "profile_path"]
+__all__ = ["repo_root", "host_path", "core_path", "mvk_path", "profile_path", "lazpy_profile"]
 
 MVK_DEFAULT = "dl/moltenvk/MoltenVK/MoltenVK/dynamic/dylib/macOS/libMoltenVK.dylib"
 
@@ -46,3 +46,18 @@ def profile_path() -> Path:
     """The option profile: ``LAZ_PROFILE``, else ``<root>/host/options-default.txt``."""
     env = os.environ.get("LAZ_PROFILE")
     return (Path(env) if env else repo_root() / "host" / "options-default.txt").resolve()
+
+
+def lazpy_profile() -> Optional[Path]:
+    """The option lines our core adds: ``LAZ_LAZPY_PROFILE`` (the text ``none`` gives None; a missing file it names is a
+    HostError), else ``<root>/core/options-lazpy.txt``, or None when that file is not there (a pip install has no core/)."""
+    env = os.environ.get("LAZ_LAZPY_PROFILE")
+    if env == "none":
+        return None
+    if env:
+        path = Path(env).resolve()
+        if not path.is_file():
+            raise HostError(f"LAZ_LAZPY_PROFILE {path} is not a file")
+        return path
+    path = (repo_root() / "core" / "options-lazpy.txt").resolve()
+    return path if path.is_file() else None

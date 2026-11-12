@@ -9,12 +9,12 @@ import faulthandler
 import os
 from multiprocessing.connection import Connection
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Sequence, Tuple
 
 from . import _abi, _host
 from .errors import HostCallError, LibAzaharError
 
-__all__ = ["main"]
+__all__ = ["main", "option_plan"]
 
 MAX_REQUESTS = 1 << 40
 _REC_BYTES = 4 * _abi.AZH_INPUT_INTS
@@ -24,10 +24,17 @@ def _c_str(text: str) -> bytes:
     return text.encode("utf-8")
 
 
+def option_plan(is_lazpy: bool, lazpy_options: Sequence[Tuple[str, str]],
+                options: Sequence[Tuple[str, str]]) -> List[Tuple[str, str]]:
+    """The order options are set in: our core's own lines first (only on our core, the stock core refuses them), then
+    the profile and the caller's options (later wins)."""
+    return (list(lazpy_options) if is_lazpy else []) + list(options)
+
+
 def _op_start(lib: ctypes.CDLL, args: Tuple[Any, ...]) -> Any:
-    core, sysdir, log, mapfile, options, app, state = args
+    core, sysdir, log, mapfile, options, app, state, lazpy_options = args
     _host.call(lib, "azh_open", _c_str(core), _c_str(sysdir), _c_str(log), _c_str(mapfile))
-    for key, value in options:
+    for key, value in option_plan(_stats(lib)["is_lazpy_core"], lazpy_options, options):
         _host.call(lib, "azh_set_option", _c_str(key), _c_str(value))
     _host.call(lib, "azh_boot", _c_str(app), _c_str(state) if state else None)
     return _stats(lib)
@@ -108,12 +115,24 @@ def _serve(conn: Connection, lib: ctypes.CDLL) -> int:
     return 1
 
 
+def raise_nice_floor(floor: int = 10) -> int:
+    """At least nice 10: raise only when the parent is nicer. getpriority/setpriority, because os.nice(0) raises EPERM at nice 20 on macOS."""
+    now = os.getpriority(os.PRIO_PROCESS, 0)
+    if now < floor:
+        os.setpriority(os.PRIO_PROCESS, 0, floor)
+        now = floor
+    return now
+
+
 def main(fd: int) -> int:
     """Worker entry: nice at least 10, faulthandler, hello (or fatal), then the request loop. Returns the exit code."""
-    if os.nice(0) < 10:                 # at least nice 10: raise only when the parent is nicer
-        os.nice(10 - os.nice(0))
     faulthandler.enable()
     conn = Connection(fd)
+    try:
+        raise_nice_floor()
+    except OSError as exc:
+        conn.send(("fatal", f"cannot set the worker's nice value: {exc}"))
+        return 1
     try:
         lib, layout = _host.load(Path(os.environ["LAZ_HOST"]))
     except (OSError, KeyError, HostCallError, LibAzaharError) as exc:
