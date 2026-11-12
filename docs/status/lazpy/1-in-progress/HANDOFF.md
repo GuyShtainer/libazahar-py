@@ -14,11 +14,13 @@ the next session needs to act now, and points at the rest. Goals, rules, decisio
 | laz-400: Phase 4 plan review 1 (opus): writes `docs/reviews/` (phase-4-review-1.md) only | this repo | ab421b8f1945fcdfa | review written; then revision 1 |
 
 ## Next steps, in order
-1. Phase 2's plan is final (5f77e28; fix check all DONE, item 200's notes). C and D build after Phase 1 merges.
-2. Phase 1 is done (item 100 in `5-done/`); our core is built (`build-core/azahar_lazpy_libretro.dylib`, 14 min),
-   so Phase 2's timed gates may run (one at a time).
-3. Phase 2's steps (C, D) build after Phase 1 merges. Phase 3: revision 1 runs (above), then review 2 and revision 2. Guy answered Q1-Q3 and the state-boot bound (items 300, 220).
-4. After D's tests end: rebuild our core in MAIN with the key blob off and -ffile-prefix-map (P9, item 400), detached and niced. Phase 4: review 1 runs (above); then revision 1, review 2, revision 2; the ip-legal consult (phase-i.md 9.1) when an opus slot is free.
+1. D fixes done: commit on step-d, then a fresh opus as-built review of D (writes docs/reviews/phase-2-d-as-built.md),
+   fixes, merge step-d (runners.md and tools.md lines in the D reports, item 220's notes), items 220 and 200 to done.
+2. After D's emulator tests end: rebuild our core in MAIN with -DENABLE_BUILTIN_KEYBLOB=OFF and -ffile-prefix-map
+   in tools/build-core.sh (P9, item 400's notes), `nice -n 10 tools/build-core.sh --detach`, no timed run meanwhile.
+3. Phase 3: revision 1 (above), then opus review 2 and revision 2; build after Phase 2 merges and the rebuild.
+4. Phase 4: review 1 (above), then revision 1, review 2, revision 2; the ip-legal consult (phase-i.md 9.1)
+   when an opus slot is free. At most 2 opus at once.
 
 ## Waiting on Guy (only what blocks a step above)
 - Phase 4's G1-G7 (item 400's notes): G1, rebuilding our core with the built-in key blob off before F2, is
