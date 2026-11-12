@@ -49,3 +49,16 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   the drain (retro_serialize_size) set flags the next frame clears, so they are not reported as stops; compare
   msg_seq before and after to warn. px_frame is -1 during a raw copy. c3 through Python: bound 3.0 + max(1.0,
   5 * wall_s / frames) from batch 1. N6: D's integration tests exercise --stop-new.
+- D3 interim (a8301022e123dfae3, forced hand-back at about 215k tokens, 20:04), work-in-progress commit on step-d
+  c1e614e after main merged at 1cf3609: GuestError for stopped_by == "guest_error" on either core (.result set,
+  Emulator stays open); exit 11 also GuestError (Emulator closed): the one rule for USING.md. save_state makes the
+  state's parent folder. .gitignore has `*.egg-info/`. New tests: d_helpers.py (not in the brief's list),
+  test_c_checks.py (10 passed alone with LAZ_REQUIRE_EMULATOR=1, incl. stop_new; a2 hid m=0 counts {0: 1, 1: 29},
+  irrst m=1 {1: 6}, circle m=1 {1: 5}; c3 wall 3.00 s vs bound 4.00 s; b's touch offsets are in runs/d-cc.log),
+  test_live_errors.py (never run), test_api.py and test_state.py (last run had at least one F, not read).
+  State-boot timing, runs/d-pytest/state-times.txt: t_core_start=0.50 t_boot=6.83 t_state=1.68 ratio=0.247
+  fixed_ratio=0.186 k=0 frame_total=6030 v_save=6027; `state load meta_ms=0.0 sha_ms=0.1 read_ms=0.2
+  drain_ms=503.7 sd_ms=0.5 unserialize_ms=643.0 bytes=268966`. The restore works (counters matched); BOTH ratios
+  fail the 10 % gate: the drain is a whole throwaway serialize (about 0.5 s), unserialize drains again inside the
+  core, and t_boot is short because the seed's boot_frames=6000 runs fast. Nothing tuned (phase-2.md risk 3): Guy's
+  call.
