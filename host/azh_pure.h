@@ -17,10 +17,14 @@ int azh_version_ok(const char *v, int any_core);
 typedef struct { uint32_t x, y, w, h; } azh_rect;
 int azh_crop_rects(uint32_t fw, uint32_t fh, azh_rect *top, azh_rect *bottom);
 
-/* png.c: 8-bit RGBA PNG, filter 0, zlib level 6. azh_png_init() builds the CRC table once and must come first.
+/* png.c: 8-bit RGBA PNG, filter 0, zlib level from azh_png_level() (default 1). azh_png_init() builds the CRC table once and must come first.
  * px points at the first pixel, stride is the byte distance between rows. Returns 0, -1 (bad argument), -2 (I/O). */
 void azh_png_init(void);
 int azh_png_write(const char *path, const uint8_t *px, uint32_t w, uint32_t h, size_t stride);
+/* The zlib level: LAZ_PNG_LEVEL (0-9) read once on the first call; default 1; a bad text gives 1. */
+int azh_png_level(void);
+/* NULL when LAZ_PNG_LEVEL was fine or unset, else the bad text (cut at 31 bytes) for the caller's log line. */
+const char *azh_png_level_bad(void);
 
 /* input.c */
 typedef struct { uint32_t buttons; int32_t touch_x, touch_y, touch_down, circle_x, circle_y;

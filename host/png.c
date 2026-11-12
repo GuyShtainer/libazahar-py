@@ -8,11 +8,45 @@
 
 #include "azh_pure.h"
 
-#define PNG_LEVEL 6                 /* step E tunes this */
+#define PNG_LEVEL_DEFAULT 1         /* PLAN: zlib level 1 (step E) */
 #define PNG_MAX_DIM 65535u
 
 static uint32_t crc_table[256];
 static int crc_ready;
+static int png_level = PNG_LEVEL_DEFAULT;       /* read once from LAZ_PNG_LEVEL */
+static int png_level_read;
+static int png_level_bad;
+static char png_level_text[32];                 /* the bad text, cut short, for the caller's log line */
+
+int azh_png_level(void)
+{
+    const char *text;
+    char *end = NULL;
+    long v;
+
+    if (png_level_read != 0) {
+        return png_level;
+    }
+    png_level_read = 1;
+    text = getenv("LAZ_PNG_LEVEL");
+    if (text == NULL) {
+        return png_level;
+    }
+    v = strtol(text, &end, 10);
+    if (end == text || *end != '\0' || v < 0 || v > 9) {
+        png_level_bad = 1;
+        (void)snprintf(png_level_text, sizeof png_level_text, "%s", text);
+        return png_level;
+    }
+    png_level = (int)v;
+    return png_level;
+}
+
+const char *azh_png_level_bad(void)
+{
+    (void)azh_png_level();
+    return png_level_bad != 0 ? png_level_text : NULL;
+}
 
 void azh_png_init(void)
 {
@@ -133,7 +167,7 @@ int azh_png_write(const char *path, const uint8_t *px, uint32_t w, uint32_t h, s
         return -2;
     }
     fill_rows(raw, px, w, h, stride);
-    if (compress2(z, &z_len, raw, (uLong)raw_len, PNG_LEVEL) != Z_OK) {
+    if (compress2(z, &z_len, raw, (uLong)raw_len, azh_png_level()) != Z_OK) {
         rc = -2;
     } else {
         rc = write_file(path, z, (size_t)z_len, w, h);

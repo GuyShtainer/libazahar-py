@@ -15,6 +15,7 @@ static azh_held held;                   /* the held input state; written only be
 static int64_t vblanks_total;           /* input_poll_cb calls since boot */
 static pthread_t run_thread;            /* the thread inside retro_run, for the callbacks' assert */
 static int run_active;
+static int64_t last_run_ns;             /* wall of the last retro_run call (azh__run_one_frame) */
 
 static int16_t input_state_cb(unsigned port, unsigned device, unsigned index, unsigned id)
 {
@@ -85,6 +86,14 @@ static double now_s(void)
     return (double)t.tv_sec + (double)t.tv_nsec * 1e-9;
 }
 
+static int64_t now_ns(void)
+{
+    struct timespec t;
+
+    (void)clock_gettime(CLOCK_MONOTONIC, &t);     /* CLOCK_MONOTONIC cannot fail on macOS */
+    return (int64_t)t.tv_sec * 1000000000 + (int64_t)t.tv_nsec;
+}
+
 /* first retro_run since boot: a NULL or 0x0 frame means System::Load failed (docs/PLAN.md 2.6, case 3) */
 static int check_first_frame(void)
 {
@@ -102,13 +111,16 @@ static int check_first_frame(void)
 int azh__run_one_frame(void)
 {
     int rc = AZH_OK;
+    int64_t t_run;
 
     assert(azh_g.phase == AZH_PH_BOOTED && azh_g.core.run != NULL);
     azh_g.cb_calls = 0;
     azh__msg_begin_run(&azh_msgs);
     run_thread = pthread_self();
     run_active = 1;
+    t_run = now_ns();
     azh_g.core.run();
+    last_run_ns = now_ns() - t_run;
     run_active = 0;
     azh_g.abs_frames++;
     if (azh_g.first_run_done == 0) {
@@ -210,6 +222,8 @@ typedef struct {
     char sd_path[AZH_PATH_MAX + 64];
     int debug_on;
     double t0;
+    int64_t core_ns;                    /* sum of the retro_run walls (callbacks from inside retro_run count here) */
+    int64_t shot_ns;                    /* sum of the PNG and RAW shot walls */
 } batch_t;
 
 /* the records of frame i, in order: the last one wins */
@@ -307,6 +321,42 @@ static int stop_after(batch_t *c, int32_t i, int *sd_error)
     return (i == b->frames) ? AZH_STOP_FRAMES : -1;
 }
 
+/* once per process, at the first batch: the PNG level in use (png.c stays pure, so the log line is here) */
+static void log_png_level_once(void)
+{
+    static int logged;
+    const char *bad;
+
+    if (logged != 0) {
+        return;
+    }
+    logged = 1;
+    bad = azh_png_level_bad();
+    if (bad != NULL) {
+        azh_log(AZH_LOG_INFO, "png level=%d (bad LAZ_PNG_LEVEL \"%s\", using 1)", azh_png_level(), bad);
+    } else {
+        azh_log(AZH_LOG_INFO, "png level=%d", azh_png_level());
+    }
+}
+
+static const char *stop_name(int reason)
+{
+    static const char *const names[] = { "frames", "sd_text", "debug_text", "guest_break", "guest_exited",
+                                         "guest_error", "wall_limit" };
+
+    return (reason >= 0 && reason < (int)(sizeof names / sizeof names[0])) ? names[reason] : "unknown";
+}
+
+/* the batch timing line: core_ms is the retro_run walls (the core's callbacks run inside it), host_ms the rest */
+static void log_batch_timing(const batch_t *c)
+{
+    int64_t wall_ns = (int64_t)(c->out->wall_s * 1e9);
+
+    azh_log(AZH_LOG_INFO, "batch frames=%d wall_ms=%.3f core_ms=%.3f host_ms=%.3f shot_ms=%.3f stop=%s",
+            (int)c->out->frames_run, (double)wall_ns / 1e6, (double)c->core_ns / 1e6,
+            (double)(wall_ns - c->core_ns) / 1e6, (double)c->shot_ns / 1e6, stop_name(c->out->stop_reason));
+}
+
 static int run_frames(batch_t *c)
 {
     const azh_batch *b = c->b;
@@ -315,15 +365,19 @@ static int run_frames(batch_t *c)
     int rc = AZH_OK;
     int sd_error = 0;
     int stop = -1;
+    int64_t t_shot;
 
     c->out->first_frame = azh_g.abs_frames + 1;
     for (i = 1; i <= b->frames && stop < 0 && rc == AZH_OK && sd_error == 0; i++) {
         apply_inputs(c, i);
         rc = azh__run_one_frame();
+        c->core_ns += last_run_ns;
         c->out->frames_run = i;
         c->out->vblanks = azh__vblanks_total() - v0;
         if (rc == AZH_OK && i >= c->lo && i <= c->hi) {
+            t_shot = now_ns();
             rc = take_shots(b, i, &c->out->shots_done);
+            c->shot_ns += now_ns() - t_shot;
         }
         if (rc == AZH_OK) {
             stop = stop_after(c, i, &sd_error);
@@ -344,6 +398,7 @@ int azh_run_batch_inputs(const int32_t *inputs, int32_t n, const azh_batch *b, a
     assert(b != NULL && out != NULL);
     assert(b->frames >= 1 && b->n_shots >= 0 && b->n_shots <= AZH_MAX_SHOTS);
     out->shots_done = 0;
+    log_png_level_once();
     rc = batch_init(&c, inputs, n, b, out);
     if (rc != AZH_OK) {
         return rc;
@@ -356,6 +411,9 @@ int azh_run_batch_inputs(const int32_t *inputs, int32_t n, const azh_batch *b, a
     }
     azh_map_set_stop(out->stop_reason);
     out->wall_s = now_s() - c.t0;
+    if (rc == AZH_OK) {
+        log_batch_timing(&c);
+    }
     return rc;
 }
 
