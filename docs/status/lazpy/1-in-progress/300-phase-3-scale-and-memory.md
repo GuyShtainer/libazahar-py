@@ -88,3 +88,15 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   clean), the .o.d guard over every drop entry, an atomic install through $DYLIB.tmp. 0007 and 0008 apply with
   --fuzz 0 on a fresh 2126.2 tree after 0000-0006 with the drop files gone; the remaining references are
   under #ifdef ENABLE_BUILTIN_KEYBLOB (OFF) or file-name strings. The rebuild runs next in MAIN, detached.
+- P9b rebuild 00:49-00:52, exit 0, 21,828,992 bytes (19,145,936 before). build-core/build.inputs: head 5e95423,
+  clean=yes, 9 patches, the drop list, openssl=3.6.5 with both .a sha256. Checks: 3 files dropped, 9 patches ok;
+  CMakeCache keyblob OFF, USE_SYSTEM_OPENSSL ON, both libraries the static .a; 0 .o.d name a drop file; otool -L
+  shows no SSL dylib; 0 LibreSSL strings, "OpenSSL 3.6.5 29 Sep 2026" present; 0 /Users/ strings; -lazpy.1;
+  3 lazpy_ exports; "ClCertA file missing" present, "using default" absent; 0 of the 32-byte windows of
+  ctr-common-1-cert.h, ctr-common-1-key.h, default_keys.h found in the dylib (the same check on the old core
+  found 5 of 5 cert and 5 of 5 key windows, 0 blob). C's checks on the new core: 10 passed. D gate: 68 passed,
+  1 failed: test_state_boot 5.50 s against the 2.5 s bound, on the stock core (host_paths), under load 45 on 12
+  cores (another session's devkitARM LTO build), so load, not P9b; rerun it alone on a quiet machine.
+  For Phase 4: Homebrew's libcrypto.a objects are built for macOS 15.0 while the core says minos 11.0 (ld warns
+  per object); OpenSSL's OPENSSLDIR/ENGINESDIR/MODULESDIR /opt/homebrew strings are in the core (not private).
+  Both sent to Phase 4 revision 1 (a739c8de18f2e6992). Scratch tree deleted.
