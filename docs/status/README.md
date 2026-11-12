@@ -1,5 +1,5 @@
 ---
-asof: 2026-11-12 17:12
+asof: 2026-11-12 18:31
 ---
 # libazahar-py status: read this first
 
@@ -7,12 +7,14 @@ A headless, scriptable host for the Azahar 3DS emulator's libretro core, plus a 
 publish-ready. What to do this hour: `docs/status/lazpy/1-in-progress/HANDOFF.md`.
 
 ## Now
-- The plan is final (`docs/PLAN.md`): two full reviews, two revisions and a short source check. Ten phases, about 11 h of agent time plus 1-2 h of machine time for the first core build.
+- The whole plan is final (`docs/PLAN.md`). The work is four phases, each planned and reviewed twice before it is built. Nothing is built yet.
 - Tests so far: the core runs a 3DS homebrew app with no window and screenshots both screens; a real 3D scene runs about 5.6x real time on a busy machine, and three copies give about 3.2x one copy's total. Memory reads need our own patched core (the stock one exposes no game memory).
-- The work is four phases, each planned and reviewed twice before it is built. Phase 1 (our patched core build, the host library, the test app) and Phase 2 (input, stop rules, the Python layer, savestates) are being planned side by side; Azahar's source package is being fetched and checked against the plan's facts.
+- Phase 1 (our patched core build, the host library, the test app): both reviews done; the last one found two plan errors (a record's size, missing interface notes) and moved the long core build to after review. One revision left, then building.
+- Phase 2 (input, stop rules, the Python layer, savestates): one review and one revision done, about 4.4 h of build work; one review loop left.
+- Session paused by a slow stop at 18:11; nothing running.
 
 ## Next
-- Two review loops for Phase 1's plan, then three builders side by side and our core's first build in the background; Phase 2's reviews right behind. Gen3D starts using the tool at the end of Phase 2.
+- Phase 1's last revision and Phase 2's second review, side by side (briefs ready in `docs/plans/next-briefs.md`); then Phase 1's three builders and our core's first build. Gen3D starts using the tool at the end of Phase 2.
 - Then many copies at once with a speed table, our core passing the full test set, memory reads, docs, the legal audit and the public release.
 
 ## Where each item is
