@@ -16,7 +16,10 @@ Our own Azahar core build: the pinned source tarball, our patches (memory read/w
 The gate in `docs/PLAN.md` line 298 ("Phase F1"), run headless on this Mac with a pass/fail answer.
 
 ## Evidence
-none yet
+- 2026-11-12 19:26, step-f1 75759a6, merged to main: the 7 patches apply to a fresh unpack with `--fuzz 0`, 0
+  rejects, configure exit 0; five planted reds exit 1 (sha mismatch, a rejected hunk, an unsafe tar member, an unsafe
+  tarball through the whole script, an empty pin value). As-built review and re-check: mergeable
+  (`docs/reviews/phase-1-as-built.md`). The build itself is step F2's evidence (run in MAIN after this merge).
 
 ## Pointers
 - Plan section: `docs/PLAN.md:298`

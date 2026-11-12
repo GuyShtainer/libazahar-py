@@ -9,17 +9,14 @@ the next session needs to act now, and points at the rest. Goals, rules, decisio
 ## Running now
 | What | Where | Agent id | It stops when |
 |---|---|---|---|
+| laz-100: our core's first build, detached and nice'd in MAIN (`tools/build-core.sh --detach`) | MAIN build-core/ | main | `build-core/build.exit` written (or the pid dies); waiter reports |
 | laz-300: Phase 3 plan (opus): writes `docs/plans/` (phase-3, e, f2, g) only | this repo | aed5ccfac0370b719 | plan written; then review 1 |
-| laz-100: integration run: int-1 = main + step-a (6c75c8a) + step-b (58bf72d), fresh clone, make, make testapp, gate-a, RUNNER=azhost gate-b | ../libazahar-py-int1 and a temp clone; logs in the session scratchpad int1-out/ | main | rc file int1-out/rc written; then the merge to main |
-| laz-110: step F1, our core's pin, patches, options profile, build script; configure and planted reds only, no build (sonnet) | ../libazahar-py-f1 (step-f1) | a85f3abcf6d608824 | mergeable; doing two optional leftovers (F1-N5, N6); then the merge to main |
-| laz-120: step A, host library and azhost CLI, gate-a (sonnet) | ../libazahar-py-a (step-a) | a4e8c6931d1122bf4 | mergeable, committed on step-a 6c75c8a |
-| laz-130: step B, test app and checker, gate-b (sonnet) | ../libazahar-py-b (step-b) | ab76e8c1f445db1b3 | mergeable, committed on step-b 58bf72d |
 
 ## Next steps, in order
 1. Phase 2's plan is final (5f77e28; fix check all DONE, item 200's notes). C and D build after Phase 1 merges.
-2. Phase 1 builders fixing the as-built review's lists (`docs/reviews/phase-1-as-built.md`); a short re-check of the
-| laz-100: integration run: int-1 = main + step-a (6c75c8a) + step-b (58bf72d), fresh clone, make, make testapp, gate-a, RUNNER=azhost gate-b | ../libazahar-py-int1 and a temp clone; logs in the session scratchpad int1-out/ | main | rc file int1-out/rc written; then the merge to main |
-   core build in MAIN and its waiter. Every step is in `docs/plans/phase-1.md` "Merge and launch".
+2. Phase 1 merged to main (A, B, F1 done). When the core build exits: record it in item 100, close Phase 1, remove the
+   four worktrees (`git status --porcelain` empty first) and branch int-1. Then Phase 2's builders (C, D) per
+   `docs/plans/phase-2.md`; their timed gates wait for `build-core/build.exit`.
 3. Phase 2's steps (C, D) build after Phase 1 merges. Phase 3's plan is being written (above); then two review loops. Phase 4: plan later.
 
 ## Waiting on Guy (only what blocks a step above)

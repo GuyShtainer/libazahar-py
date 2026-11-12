@@ -16,7 +16,9 @@ Our own 3DS test app (libctru, GPLv3): reads a seeded control file before its fi
 The gate in `docs/PLAN.md` line 255 ("Phase B"), run headless on this Mac with a pass/fail answer.
 
 ## Evidence
-none yet
+- 2026-11-12 19:26, step-b 58bf72d, merged to main: in the int-1 fresh clone `RUNNER=azhost tests/gate-b.sh` 14/14
+  PASS (offset 7, vjumps 0, markers exact in 2D, 3D and after busy boot, four events), zero build warnings; also 14/14
+  on fe2 from a fresh tree. As-built review and re-check: mergeable.
 
 ## Pointers
 - Plan section: `docs/PLAN.md:255`

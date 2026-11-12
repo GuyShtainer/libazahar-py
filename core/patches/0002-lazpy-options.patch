@@ -1,0 +1,158 @@
+--- a/src/citra_libretro/core_settings.cpp
++++ b/src/citra_libretro/core_settings.cpp
+@@ -47,6 +47,13 @@
+ static constexpr const char* is_new_3ds = citra_setting(BaseKeys::is_new_3ds);
+ static constexpr const char* region_value = citra_setting(BaseKeys::region_value);
+ static constexpr const char* language_value = citra_setting(BaseKeys::language_value);
++static constexpr const char* deterministic_async_operations =
++    citra_setting(BaseKeys::deterministic_async_operations);
++static constexpr const char* async_fs_operations = citra_setting(BaseKeys::async_fs_operations);
++static constexpr const char* instant_debug_log = citra_setting(BaseKeys::instant_debug_log);
++static constexpr const char* init_clock = citra_setting(BaseKeys::init_clock);
++static constexpr const char* init_time = citra_setting(BaseKeys::init_time);
++static constexpr const char* init_ticks_type = citra_setting(BaseKeys::init_ticks_type);
+ } // namespace system
+ 
+ namespace audio {
+@@ -709,7 +716,93 @@
+             { nullptr, nullptr }
+         },
+         "1.0"
++    },
++
++    // libazahar-py: repeatable-run options. Defaults equal stock behaviour.
++    {
++        config::system::deterministic_async_operations,
++        "Deterministic Async Operations",
++        "Deterministic Async",
++        "Run async kernel work synchronously (hle_ipc.h). Off in stock Azahar.",
++        nullptr,
++        config::category::system,
++        {
++            { config::disabled, "Disabled" },
++            { config::enabled, "Enabled" },
++            { nullptr, nullptr }
++        },
++        config::disabled
++    },
++    {
++        config::system::async_fs_operations,
++        "Async File System Operations",
++        "Async FS",
++        "Asynchronous FS calls with host-measured delays (fs_user.cpp). On in stock Azahar; "
++        "turn off for repeatable timing.",
++        nullptr,
++        config::category::system,
++        {
++            { config::enabled, "Enabled" },
++            { config::disabled, "Disabled" },
++            { nullptr, nullptr }
++        },
++        config::enabled
++    },
++    {
++        config::system::instant_debug_log,
++        "Instant Debug Log",
++        "Instant Debug Log",
++        "Flush the emulated program's debug log without delay.",
++        nullptr,
++        config::category::system,
++        {
++            { config::disabled, "Disabled" },
++            { config::enabled, "Enabled" },
++            { nullptr, nullptr }
++        },
++        config::disabled
++    },
++    {
++        config::system::init_clock,
++        "Initial Clock",
++        "Initial Clock",
++        "Start the emulated clock from the system time or from a fixed time.",
++        nullptr,
++        config::category::system,
++        {
++            { "SystemTime", "System Time" },
++            { "FixedTime", "Fixed Time" },
++            { nullptr, nullptr }
++        },
++        "SystemTime"
+     },
++    {
++        config::system::init_time,
++        "Initial Time",
++        "Initial Time",
++        "Seconds since 1970-01-01 used when the initial clock is Fixed Time. The host may send any decimal.",
++        nullptr,
++        config::category::system,
++        {
++            { "946681277", "946681277" },
++            { nullptr, nullptr }
++        },
++        "946681277"
++    },
++    {
++        config::system::init_ticks_type,
++        "Initial Ticks",
++        "Initial Ticks",
++        "Seed the base CPU ticks randomly or with a fixed value (core_timing.cpp). Fixed keeps runs repeatable.",
++        nullptr,
++        config::category::system,
++        {
++            { "Random", "Random" },
++            { "Fixed", "Fixed" },
++            { nullptr, nullptr }
++        },
++        "Random"
++    },
+ 
+     // Terminator
+     { nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, { { nullptr, nullptr } }, nullptr }
+@@ -1125,7 +1218,39 @@
+             ",engine:libretro";
+     } else {
+         Settings::values.current_input_profile.motion_device = "engine:motion_emu";
++    }
++}
++
++static void ParseLazpyOptions(void) {
++    Settings::values.deterministic_async_operations =
++        LibRetro::FetchVariable(config::system::deterministic_async_operations, config::disabled) ==
++        config::enabled;
++    Settings::values.async_fs_operations =
++        LibRetro::FetchVariable(config::system::async_fs_operations, config::enabled) ==
++        config::enabled;
++    Settings::values.instant_debug_log =
++        LibRetro::FetchVariable(config::system::instant_debug_log, config::disabled) ==
++        config::enabled;
++    Settings::values.init_clock =
++        LibRetro::FetchVariable(config::system::init_clock, "SystemTime") == "FixedTime"
++            ? Settings::InitClock::FixedTime
++            : Settings::InitClock::SystemTime;
++    Settings::values.init_ticks_type =
++        LibRetro::FetchVariable(config::system::init_ticks_type, "Random") == "Fixed"
++            ? Settings::InitTicks::Fixed
++            : Settings::InitTicks::Random;
++    // init_ticks_override stays at its default of 0.
++    unsigned long long init_time = 946681277ULL;
++    try {
++        const std::string text = LibRetro::FetchVariable(config::system::init_time, "946681277");
++        // A leading digit is required: stoull would accept "-1" (wraps) and leading spaces.
++        if (!text.empty() && text[0] >= '0' && text[0] <= '9') {
++            init_time = std::stoull(text);
++        }
++    } catch (const std::exception&) {
++        init_time = 946681277ULL;
+     }
++    Settings::values.init_time = init_time;
+ }
+ 
+ void ParseCoreOptions(void) {
+@@ -1146,6 +1271,7 @@
+     ParseLayoutOptions();
+     ParseStorageOptions();
+     ParseInputOptions();
++    ParseLazpyOptions();
+ }
+ 
+ } // namespace LibRetro

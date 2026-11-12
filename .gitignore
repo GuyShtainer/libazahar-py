@@ -5,6 +5,8 @@ vendor/
 *.dylib
 *.zip
 *.tar
+*.tar.xz
+*.tar.gz
 # Game and system data: never committed
 roms/
 sdmc/
@@ -30,5 +32,14 @@ temp/
 __pycache__/
 .pytest_cache/
 *.o
+*.orig
+*.rej
+*.plist
+*.dSYM/
+*.elf
+*.smdh
+*.shbin
+*.lst
+*.map
 build/
 .DS_Store

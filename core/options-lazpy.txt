@@ -1,0 +1,6 @@
+citra_deterministic_async_operations=enabled
+citra_async_fs_operations=disabled
+citra_instant_debug_log=enabled
+citra_init_clock=FixedTime
+citra_init_time=946681277
+citra_init_ticks_type=Fixed

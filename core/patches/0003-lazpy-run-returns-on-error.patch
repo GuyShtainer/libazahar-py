@@ -1,0 +1,11 @@
+--- a/src/citra_libretro/citra_libretro.cpp
++++ b/src/citra_libretro/citra_libretro.cpp
+@@ -303,6 +303,8 @@
+             }
+ 
+             LibRetro::DisplayMessage(msg.c_str());
++            // libazahar-py: return to the host instead of looping; the next retro_run loops until a frame as before.
++            break;
+         }
+     }
+ }

@@ -1,0 +1,89 @@
+--- a/src/citra_libretro/citra_libretro.cpp
++++ b/src/citra_libretro/citra_libretro.cpp
+@@ -38,6 +38,7 @@
+ #if CITRA_ARCH(x86_64)
+ #include "common/x64/cpu_detect.h"
+ #endif
++#include "common/file_util.h"
+ #include "common/logging/backend.h"
+ #include "common/logging/filter.h"
+ #include "common/settings.h"
+@@ -50,6 +51,7 @@
+ #include "core/hle/kernel/process.h"
+ #include "core/loader/loader.h"
+ #include "core/memory.h"
++#include "core/movie.h"
+ 
+ #ifdef HAVE_LIBRETRO_VFS
+ #include <streams/file_stream_transforms.h>
+@@ -373,8 +375,15 @@
+         LibRetro::SetMemoryMaps(&map);
+     }
+ }
++
++// libazahar-py: movie to play back from the next boot (empty: none). Set by lazpy_movie_play.
++static std::string lazpy_movie_path;
+ 
+ static bool do_load_game() {
++    if (!lazpy_movie_path.empty()) {
++        // Prepare before Load: Load reads the movie's override init time and base ticks.
++        Core::System::GetInstance().Movie().PrepareForPlayback(lazpy_movie_path);
++    }
+     const Core::System::ResultStatus load_result{
+         Core::System::GetInstance().Load(*emu_instance->emu_window, LibRetro::settings.file_path)};
+ 
+@@ -410,6 +419,10 @@
+         return false;
+     }
+ 
++    if (!lazpy_movie_path.empty()) {
++        Core::System::GetInstance().Movie().StartPlayback(lazpy_movie_path);
++    }
++
+     u64 program_id{};
+     Core::System::GetInstance().GetAppLoader().ReadProgramId(program_id);
+     Core::System::GetInstance().GPU().ApplyPerProgramSettings(program_id);
+@@ -785,6 +798,36 @@
+     return process;
+ }
+ 
++// Play a .ctm movie from the next boot (do_load_game also runs from retro_reset, which replays it).
++// Call after retro_load_game and before the host's context_reset: with a hardware renderer the boot happens in
++// context_reset. 0 ok; -2 file missing; -3 null path (an empty path clears the movie, 0); -4 not a movie file; -5 already booted (the
++// software renderer boots inside retro_load_game, so there it is always too late).
++extern "C" int lazpy_movie_play(const char* path) {
++    try {
++        if (path == nullptr) {
++            return -3;
++        }
++        if (path[0] == '\0') {
++            lazpy_movie_path.clear(); // an empty path clears a movie set earlier
++            return 0;
++        }
++        if (!FileUtil::Exists(path)) {
++            return -2;
++        }
++        if (emu_instance != nullptr && emu_instance->game_loaded) {
++            return -5;
++        }
++        if (Core::System::GetInstance().Movie().ValidateMovie(path) ==
++            Core::Movie::ValidationResult::Invalid) {
++            return -4;
++        }
++        lazpy_movie_path = path;
++        return 0;
++    } catch (...) {
++        return -4;
++    }
++}
++
+ // Guest memory by virtual address in the current process. Call only between frames.
+ // 0 ok; -1 not running or no process; -2 a page in the range is unmapped; -3 bad arguments.
+ extern "C" int lazpy_read_memory(uint32_t vaddr, void* buf, uint32_t len) {
+--- a/src/citra_libretro/libretro.osx.def
++++ b/src/citra_libretro/libretro.osx.def
+@@ -28,3 +28,4 @@
+ _retro_get_memory_size
+ _lazpy_read_memory
+ _lazpy_write_memory
++_lazpy_movie_play

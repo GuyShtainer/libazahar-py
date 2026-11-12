@@ -41,3 +41,5 @@ date	bet	phase	agent_id	model	role	kind	start	end	hours	source
 2026-11-12	Step B fix round from the as-built review	phase-1	ab76e8c1f445db1b3	sonnet	builder	agent	19:14	19:18	0.06	agent duration 218 s
 2026-11-12	Step F1 fix round from the as-built review	phase-1	a85f3abcf6d608824	sonnet	builder	agent	19:14	19:22	0.12	agent duration 440 s
 2026-11-12	Phase 1 as-built re-check	phase-1	a9d6a1a04a7ae2c40	opus	reviewer	agent	19:22	19:24	0.03	agent duration 103 s
+2026-11-12	Step F1 leftovers N5, N6	phase-1	a85f3abcf6d608824	sonnet	builder	agent	19:24	19:26	0.03	agent duration 96 s
+2026-11-12	branch commits, integration run, merge to main	phase-1	main	opus	main	process	19:22	19:28	0.10	session clock

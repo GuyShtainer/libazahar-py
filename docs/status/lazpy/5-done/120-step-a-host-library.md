@@ -16,7 +16,9 @@ The C host library split from the prototypes (fe2.c, fe3.c) into small files, wi
 The gate in `docs/PLAN.md` line 241 ("Phase A"), run headless on this Mac with a pass/fail answer.
 
 ## Evidence
-none yet
+- 2026-11-12 19:26, step-a 6c75c8a, merged to main: gate-a 8/8 PASS in a fresh clone of int-1 (main + A + B) on
+  `build/testapp.3dsx`, zero build warnings, `make check` clean; also 8/8 twice in a clone with vendor a symlink. As-built
+  review and re-check: mergeable (`docs/reviews/phase-1-as-built.md`).
 
 ## Pointers
 - Plan section: `docs/PLAN.md:241`
