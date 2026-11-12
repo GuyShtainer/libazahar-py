@@ -1,7 +1,7 @@
 <!-- handoff: slim v1 | current tasks only | rewritten whole from docs/status/templates/handoff.md | budget 80 lines | never append -->
 # libazahar-py handoff
 
-As of: 2026-11-13 01:09 (this project's own session)
+As of: 2026-11-13 01:17 (this project's own session)
 
 This file lives in docs/status/lazpy/1-in-progress/, beside its item files. It holds only what
 the next session needs to act now, and points at the rest. Goals, rules, decisions and history live elsewhere.
@@ -9,21 +9,20 @@ the next session needs to act now, and points at the rest. Goals, rules, decisio
 ## Running now
 | What | Where | Agent id | It stops when |
 |---|---|---|---|
-| laz-310: step E1 builder (sonnet; no emulator this run) | ../libazahar-py-e (step-e) | a444b28ace71428a3 | reports "E1 done"; progress in its runs/e/progress.md |
-| laz-320: step F2 builder (sonnet; F2-0 to F2-2, the only emulator user now) | ../libazahar-py-f2 (step-f2) | a76e4f3e6572c2142 | reports "F2 done"; progress in its runs/f2/progress.md |
-| laz-400: Phase 4 plan review 2 (opus; also Gen3D's friction list) | this repo | a520c6028898077dc | docs/reviews/phase-4-review-2.md written; then revision 2 |
+| laz-320: step F2 builder, second run (nice-20 worker fix, batch rerun; the only emulator user) | ../libazahar-py-f2 (step-f2) | a83e1355c6bcddc1f | reports "F2 done"; progress in its runs/f2/progress.md |
 | laz-400: ip-legal consult, phase-i.md 9.1 | this repo | aee2a9ba07ce653cf | docs/reviews/release-ip-legal.md written |
 
+Not running: step-e at a74aaec (E1 committed, parked until step-f2 merges).
+
 ## Next steps, in order
-1. At "E1 done": commit exactly E1's paths on step-e, note the sha; do not resume E yet (phase-3.md section 4 step 2).
-2. At "F2 done": opus as-built review of step-f2 (phase-f2.md section 12); fixes, reruns under rule T; commit;
-   merge step-f2; item 320 to 5-done with its notes (section 4 step 3).
-3. Then section 4 step 4: merge main into ../libazahar-py-e, resume E for E2 (tell Gen3D "hold now" first, "free"
-   after); item 330 to 1-in-progress (PLAN.md :317); worktree step-g with E1's sha merged; launch G (phase-g.md).
-4. When review 2 and the consult report: commit both, then Phase 4 revision 2 (opus; at most 2 opus at once).
-5. `test_state_boot` (5.50 s under load 45 on the stock core) reruns alone after F2-2, before E2; rule T.
-6. Message Gen3D when Phase 3's timed runs end. Phase 4's ask to set MACOSX_DEPLOYMENT_TARGET=15.0 waits for
-   review 2 (the gated build stays as it is).
+1. At "F2 done": opus as-built review of step-f2 (phase-f2.md section 12; include the _worker.py nice fix);
+   fixes, reruns under rule T; commit; merge step-f2; item 320 to 5-done (phase-3.md section 4 step 3).
+2. Then section 4 step 4: merge main into ../libazahar-py-e, resume E (a444b28ace71428a3, or a fresh sonnet with
+   item 310's notes) for E2: tell Gen3D "hold now" first, "free" after; item 330 to 1-in-progress (PLAN.md :317);
+   worktree step-g, merge a74aaec into it, launch G (phase-g.md).
+3. When the consult reports: commit it and review 2, then Phase 4 revision 2 (opus) on review 2 plus the consult.
+4. `test_state_boot` (5.50 s under load 45 on the stock core) reruns alone after F2, before E2; rule T.
+5. Message Gen3D when Phase 3's timed runs end.
 
 ## Waiting on Guy (only what blocks a step above)
 - Phase 4's G5-G7 (repo creation, the word "push", publishing the draft), G9 (spike 2's game: default say

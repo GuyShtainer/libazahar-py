@@ -92,3 +92,14 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   unchanged, no refs/replace, fsck clean, 0 hits in every commit and message, step-c and step-d keep their SHAs,
   both worktrees clean. 20 commits rewritten (15d0323 -> 1844a5d onward): docs/commit-map-g8.tsv, pointed at from
   docs/map/README.md. Checks rerun: status_check, map_check, mkprogress, make check. The I3 audit runs after this.
+- Review 2 (a520c6028898077dc, opus, 01:05-01:17; docs/reviews/phase-4-review-2.md): 4 blockers, 9 should fix,
+  7 nice; ready after revision 2, no third loop. B1 the drop list's directory entry (externals/libressl) breaks
+  I's per-entry sha256 note member, its text and check 10; SOURCE/NOTICES still claim an unbuilt LibreSSL ships.
+  B2 I's links to step 0 are stale (KEG path vs /opt/homebrew/Cellar/openssl@3/3.6.5, check 6's old openssl= key,
+  check 2's keyblob_findings arguments, LAZ_OPENSSL_ROOT -> LAZ_OPENSSL_PREFIX, old SHAs). B3 docs_check forbids
+  "macOS 11" in STATUS.md while STATUS must state the 11.0 header mismatch. B4 build/testapp.3dsx holds 6 /Users/
+  strings from assert() paths (testapp/Makefile:22-23 has no prefix map): step I gets one -ffile-prefix-map line
+  there plus a strings count. Q5 keep P16; Q6 settled (G8 done); Q7 use the keg's .brew/openssl@3.rb, offline.
+  Gen3D friction: USING lines in H now; ArgumentError(LibAzaharError, ValueError) and a fresh_sd option after
+  v0.1.0 (0.1 h each). Hours about 2.15. For Guy later: may rules.md 2's exception cover building OpenSSL from
+  its pinned tarball (with risk 9's macOS 11 build)? Revision 2 waits for the ip-legal consult, then takes both.
