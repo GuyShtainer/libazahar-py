@@ -1,6 +1,8 @@
 <!-- handoff: slim v1 | current tasks only | rewritten whole from docs/status/templates/handoff.md | budget 80 lines | never append -->
 # libazahar-py handoff
 
+SLOWSTOP 2026-11-12 18:11 (Guy). Nothing new starts. Still running: the two agents in "Running now" (Phase 1 review 2, Phase 2 revision 1). No background commands, no merges in flight. Their follow-ups (Phase 1 revision 2, Phase 1 builders, Phase 2 review 2) wait for the next session.
+
 As of: 2026-11-12 18:09 (this project's own session, which took over from the Gen3D session)
 
 New project, nothing built yet. The repo, status folders, maps and research are in place (setup commit 2288e94);
