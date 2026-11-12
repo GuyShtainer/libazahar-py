@@ -1,7 +1,7 @@
 <!-- handoff: slim v1 | current tasks only | rewritten whole from docs/status/templates/handoff.md | budget 80 lines | never append -->
 # libazahar-py handoff
 
-As of: 2026-11-12 18:34 (this project's own session; Guy said continue after the SlowStop)
+As of: 2026-11-12 18:53 (this project's own session)
 
 This file lives in docs/status/lazpy/1-in-progress/, beside its item files. It holds only what
 the next session needs to act now, and points at the rest. Goals, rules, decisions and history live elsewhere.
@@ -9,16 +9,17 @@ the next session needs to act now, and points at the rest. Goals, rules, decisio
 ## Running now
 | What | Where | Agent id | It stops when |
 |---|---|---|---|
+| laz-110: step F1, our core's pin, patches, options profile, build script; configure and planted reds only, no build (sonnet) | ../libazahar-py-f1 (step-f1) | a85f3abcf6d608824 | report; then the as-built review |
+| laz-120: step A, host library and azhost CLI, gate-a (sonnet) | ../libazahar-py-a (step-a) | a4e8c6931d1122bf4 | report; then the as-built review |
+| laz-130: step B, test app and checker, gate-b (sonnet) | ../libazahar-py-b (step-b) | ab76e8c1f445db1b3 | report; then the as-built review |
 | laz-200: Phase 2 plan review 2 (opus, fresh), writes `docs/reviews/` (phase-2-review-2.md) only | this repo | a9a87f41abaabc096 | review written, then revision 2 by `a4bcf09ec00640830` |
 
 ## Next steps, in order
-1. Both briefs from `docs/plans/next-briefs.md` are running (see above).
-2. Commit each report and book its hours in `docs/hours.tsv`. Then Phase 2 revision 2 (resume `a4bcf09ec00640830`).
-3. After Phase 1 revision 2: launch the three Phase 1 builders as the revised `docs/plans/phase-1.md` says
-   (F1 core build, A host library, B test app; sonnet, worktrees at main; items 110/120/130 to `1-in-progress/`
-   first). Review 2 changed the launch: F1 stops after configure; the main loop runs the core build in the main
-   checkout after the as-built review.
-4. Phase 2's steps (C, D) build after Phase 1 merges. Phases 3 and 4: plan with two review loops each, later.
+1. Phase 2 review 2 running (above): commit it, book hours, then Phase 2 revision 2 (resume `a4bcf09ec00640830`).
+2. Phase 1 builders running (above). When A and B have reported (F1 reports first and waits): one opus as-built
+   review over all three worktrees, then branch commits, the integration run on `int-1`, the merge to main, then the
+   core build in MAIN and its waiter. Every step is in `docs/plans/phase-1.md` "Merge and launch".
+3. Phase 2's steps (C, D) build after Phase 1 merges. Phases 3 and 4: plan with two review loops each, later.
 
 ## Waiting on Guy (only what blocks a step above)
 - Nothing.
