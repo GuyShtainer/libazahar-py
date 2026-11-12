@@ -321,11 +321,33 @@ static int run_it(const args_t *a)
     return rc;
 }
 
+/* "azhost layout": the ABI table, one line per fields[] entry */
+static int print_layout(void)
+{
+    static azh_layout lay;
+    int32_t i;
+
+    if (azh_abi_layout(&lay) != AZH_OK) {
+        fprintf(stderr, "HostError: %s\n", azh_error());
+        return AZH_EXIT_USAGE;
+    }
+    printf("abi=%u\n", (unsigned)lay.abi);
+    for (i = 0; i < lay.n_fields && i < AZH_MAX_FIELDS; i++) {
+        printf("%s %d %d\n", lay.fields[i].name, (int)lay.fields[i].offset, (int)lay.fields[i].size);
+    }
+    return AZH_EXIT_OK;
+}
+
 int main(int argc, char **argv)
 {
     args_t a;
-    int rc = parse_args(argc, argv, &a);
+    int rc;
     int code;
+
+    if (argc == 2 && strcmp(argv[1], "layout") == 0) {
+        return print_layout();
+    }
+    rc = parse_args(argc, argv, &a);
 
     if (rc != AZH_OK) {
         return rc;

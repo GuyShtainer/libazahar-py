@@ -118,3 +118,19 @@ void azh_core_log(enum retro_log_level level, const char *fmt, ...)
     }
     azh_log((int)level, "%s", fmt);
 }
+
+/* C2 fills the debug-text observer; until then nothing is armed and nothing is hit */
+void azh__log_set_debug_stop(const char *text_or_null)
+{
+    (void)text_or_null;
+}
+
+int azh__log_debug_hit(void)
+{
+    return 0;
+}
+
+int azh__log_fd(void)
+{
+    return log_fd;
+}

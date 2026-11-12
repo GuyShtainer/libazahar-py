@@ -28,6 +28,12 @@
 #define AZH_MAP_MSG_MAX 1024u
 #define AZH_MAP_OFF_SIZES 1056u
 #define AZH_MAP_OFF_PXFRAME 1072u
+#define AZH_MAP_OFF_FRAME_TOTAL 1080u
+#define AZH_MAP_OFF_VBLANKS_TOTAL 1088u
+#define AZH_MAP_OFF_MSG_SEQ 1096u
+#define AZH_MAP_OFF_PID 1100u
+#define AZH_MAP_OFF_EXIT_CODE 1104u
+#define AZH_MAP_VERSION 2u
 
 /* ---- log levels (same numbers as retro_log_level) ---- */
 enum { AZH_LOG_DEBUG = 0, AZH_LOG_INFO = 1, AZH_LOG_WARN = 2, AZH_LOG_ERROR = 3 };
@@ -39,7 +45,7 @@ enum { AZH_PH_NONE = 0, AZH_PH_OPEN = 1, AZH_PH_BOOTED = 2, AZH_PH_DEAD = 3 /* b
 #define AZH_OPT_KEY_MAX 64
 #define AZH_OPT_VAL_MAX 128
 #define AZH_SEEN_MAX 64
-#define AZH_MSG_MAX 1024
+#define AZH_LASTMSG_MAX 1024                    /* the last SET_MESSAGE text kept in the state */
 
 typedef struct {
     char key[AZH_OPT_KEY_MAX];
@@ -147,7 +153,7 @@ typedef struct {
     /* boot failure detection */
     int in_reset;                               /* context_reset is running */
     int boot_failed;
-    char last_msg[AZH_MSG_MAX];                 /* last SET_MESSAGE text */
+    char last_msg[AZH_LASTMSG_MAX];                 /* last SET_MESSAGE text */
     /* frames */
     int64_t abs_frames;                         /* retro_run calls since boot */
     int first_run_done;
@@ -189,7 +195,13 @@ int azh_map_create(const char *path);
 void azh_map_close(void);
 void azh_map_heartbeat(void);
 void azh_map_set_stop(int32_t code);
-void azh_map_set_message(const char *msg);
+void azh_map_set_message(const char *msg);                  /* copies it, sets the length, msg_seq + 1 */
+void azh_map_set_counters(int64_t frame_total, int64_t vblanks_total);   /* release stores */
+void azh_map_set_exit_code(int32_t code);
+void azh_map_sync(void);                                    /* msync(MS_SYNC) of the whole map */
+uint8_t *azh_map_pixels(void);                              /* the pixel area (4096 on), NULL when no map */
+void azh_map_raw_begin(const uint32_t dims[4]);             /* px_frame = -1, then the dims */
+void azh_map_raw_end(int64_t px_frame);                     /* px_frame = the frame, release store */
 
 /* options.c */
 void azh_opts_register(const struct retro_variable *vars);
@@ -223,5 +235,29 @@ const struct retro_hw_render_interface_vulkan *azh_vk_iface(void);
 
 /* run.c */
 int azh_run_batch(const azh_batch *b, azh_result *out);
+/* input glue (run.c): the held state, the two libretro input callbacks, the vblank counter */
+void azh__input_set(const azh_held *h);
+void azh__input_get(azh_held *h);
+void azh__input_install(void);                          /* api.c calls it at the end of azh_open */
+int64_t azh__vblanks_total(void);
+/* sdcopy.c (POSIX only) */
+int azh__copy_tree(const char *src, const char *dst);   /* dst must not exist; regular files and dirs only */
+int azh__clear_tree(const char *dir);                   /* removes dir's contents, keeps dir */
+/* log.c additions */
+void azh__log_set_debug_stop(const char *text_or_null); /* arms or disarms; clears the hit flag */
+int azh__log_debug_hit(void);                           /* atomic */
+int azh__log_fd(void);
+/* run.c additions, for step D */
+int azh__run_one_frame(void);   /* one retro_run with the message, heartbeat and counter handling of a batch frame,
+                                   including A's first-frame boot check, which it marks done so the next batch does
+                                   not repeat it; AZH_E_BOOT on a NULL or 0x0 frame; no shots, no stops */
+void azh__counters_set(int64_t frame_total, int64_t vblanks_total);
+void azh__counters_get(int64_t *frame_total, int64_t *vblanks_total);
+int azh__sd_root(char *buf, size_t cap);                /* <sysdir>/Azahar/sdmc */
+/* state.c: step D owns it; C1 creates the stub */
+void azh__state_note_app(const char *app);              /* api.c's azh_boot calls it on every boot */
+int azh__state_boot(const char *app, const char *state_path);
+int azh__state_save(const char *path, int32_t *k_out);
+int azh__state_load(const char *path);
 
 #endif

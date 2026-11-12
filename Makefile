@@ -37,7 +37,18 @@ build/test-version: tests/test_version.c host/version.c $(HEADERS)
 testapp:
 	$(MAKE) -C testapp
 
-clean:
-	rm -rf build/libazhost.dylib build/azhost build/test-version build/obj
+# step C's pure-C unit tests: no core, no Vulkan. -ffp-contract=off keeps the float32 touch model exact.
+TEST_SRC = host/input.c host/match.c host/msg.c host/rawcopy.c host/crop.c host/png.c host/sdcopy.c host/statemeta.c \
+           $(wildcard tests/host/*.c)
 
-.PHONY: all check test-version testapp clean
+test-host: build/test-host
+	build/test-host
+
+build/test-host: $(TEST_SRC) $(HEADERS) $(wildcard tests/host/*.h)
+	@mkdir -p build
+	$(CC) $(CFLAGS) -ffp-contract=off -Itests/host -o $@ $(TEST_SRC) -lz -lm
+
+clean:
+	rm -rf build/libazhost.dylib build/azhost build/test-version build/test-host build/obj
+
+.PHONY: all check test-version test-host testapp clean

@@ -1,0 +1,16 @@
+# <expected status> <action on the stock core> <action on our core> <message text>
+# the text decodes \n to a newline and \\ to a backslash (the azhost summary's escaping).
+# C1: synthetic lines. C3 adds the real (14) break and (16) messages copied from the gate's host.log files.
+14 BREAK BREAK Fatal Error encountered (14): Thread: 1\nProcess: testapp\nException Type: Break\nR0=00000000
+14 ERROR ERROR Fatal Error encountered (14): Thread: 1\nProcess: testapp\nException Type: Undefined Instruction\nR0=00000000
+14 ERROR ERROR Fatal Error encountered (14): Thread: 1\nException Type: Unmapped Read\nR0=00000000
+14 ERROR ERROR Fatal Error encountered (14): Thread: 1\nException Type: Data Abort\nR0=00000000
+14 ERROR ERROR Fatal Error encountered (14): no report at all
+16 EXIT_EXITED EXITED Fatal Error encountered (16): Shutdown requested
+17 ERROR ERROR Fatal Error encountered (17): unknown error
+0 ERROR ERROR Fatal Error encountered (0): zero
+-1 ERROR ERROR Azahar was unable to locate a 3DS system archive: sysdata\\0004013000008002
+-1 ERROR ERROR Fatal Error encountered (1x): z
+-1 ERROR ERROR Fatal Error encountered (): z
+-1 ERROR ERROR Fatal Error encountered (9999): z
+-1 ERROR ERROR some other message

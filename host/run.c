@@ -6,6 +6,61 @@
 
 #include "azh_internal.h"
 
+static azh_held held;                   /* the held input state; written only between retro_run calls */
+static int64_t vblanks_total;           /* input_poll_cb calls since boot (C2 counts them) */
+
+void azh__input_set(const azh_held *h)
+{
+    assert(h != NULL);
+    held = *h;
+}
+
+void azh__input_get(azh_held *h)
+{
+    assert(h != NULL);
+    *h = held;
+}
+
+void azh__input_install(void)
+{
+    /* C2: passes the input callbacks through the core table */
+    assert(azh_g.core.set_input_state != NULL);
+}
+
+int64_t azh__vblanks_total(void)
+{
+    return vblanks_total;
+}
+
+void azh__counters_set(int64_t frame_total, int64_t vblanks)
+{
+    assert(frame_total >= 0 && vblanks >= 0);
+    azh_g.abs_frames = frame_total;
+    vblanks_total = vblanks;
+}
+
+void azh__counters_get(int64_t *frame_total, int64_t *vblanks)
+{
+    assert(frame_total != NULL && vblanks != NULL);
+    *frame_total = azh_g.abs_frames;
+    *vblanks = vblanks_total;
+}
+
+int azh__sd_root(char *buf, size_t cap)
+{
+    int n;
+
+    assert(buf != NULL && cap > 0u);
+    n = snprintf(buf, cap, "%s/Azahar/sdmc", azh_g.sysdir);
+    return (n > 0 && (size_t)n < cap) ? AZH_OK : AZH_E_ARG;
+}
+
+int azh__run_one_frame(void)
+{
+    /* C2 */
+    return AZH_E_UNSUPPORTED;
+}
+
 static double now_s(void)
 {
     struct timespec t;
