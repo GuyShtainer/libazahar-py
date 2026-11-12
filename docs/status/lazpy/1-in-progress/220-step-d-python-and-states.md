@@ -86,3 +86,6 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   (test_c_checks.py:183): stopped_by "guest_exited" but the Emulator stayed open, since our core's host survives
   a guest exit. Main-loop ruling 21:02 (reversible default, phase-d.md 4.4 said "closed" for exit 10 only): one
   rule on both cores, a guest_exited result closes the Emulator; sent to the builder.
+- D exit fix (ac94c1b1d3eddad30, 21:03): emulator.py run() closes after a guest_exited result (both cores);
+  USING.md section 7 and the run() docstring say so. Fast 48 passed; test_c_checks on our core 10 passed; full
+  suite on stock 69 passed in 70 s, 0 skipped. Committed on step-d 88cdbe6 (D3 complete).

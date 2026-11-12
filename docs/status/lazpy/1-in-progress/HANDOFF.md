@@ -1,7 +1,7 @@
 <!-- handoff: slim v1 | current tasks only | rewritten whole from docs/status/templates/handoff.md | budget 80 lines | never append -->
 # libazahar-py handoff
 
-As of: 2026-11-12 21:02 (this project's own session)
+As of: 2026-11-12 21:05 (this project's own session)
 
 This file lives in docs/status/lazpy/1-in-progress/, beside its item files. It holds only what
 the next session needs to act now, and points at the rest. Goals, rules, decisions and history live elsewhere.
@@ -9,7 +9,8 @@ the next session needs to act now, and points at the rest. Goals, rules, decisio
 ## Running now
 | What | Where | Agent id | It stops when |
 |---|---|---|---|
-| laz-220: step D guest-exit fix (a guest_exited result closes the Emulator on both cores; sonnet), ends with "D exit fix done" | ../libazahar-py-d (step-d over c1e614e) | ac94c1b1d3eddad30 | report; then commit, the opus as-built review of D, merge |
+| laz-220: step D complete on step-d 88cdbe6 (69 passed); waits for an opus slot for its as-built review | ../libazahar-py-d | main | review, fixes, merge |
+| laz-300: our core rebuilt with the console key blob off and -ffile-prefix-map (P9), detached, nice 10 | MAIN build-core/ (pid in build.pid) | main | build-core/build.exit; then check the blob is gone, commit tools/build-core.sh |
 | laz-300: Phase 3 plan revision 1 (opus, fresh author): edits `docs/plans/` (phase-3, e, f2, g) only | this repo | a848bdbe41c898002 | revision written; then review 2 |
 | laz-400: Phase 4 plan review 1 (opus): writes `docs/reviews/` (phase-4-review-1.md) only | this repo | ab421b8f1945fcdfa | review written; then revision 1 |
 
