@@ -22,7 +22,7 @@ The tarball is verified (size and sha256) before anything is unpacked; a present
 | `0005-lazpy-version.patch` | library version string gets the suffix `-lazpy.1` |
 | `0006-lazpy-movie-play.patch` | `lazpy_movie_play(path)` plays a `.ctm` movie from the next boot |
 | `0007-lazpy-no-default-clcert.patch` | the HTTP service no longer falls back to a built-in ClCertA certificate and key; a missing console file is an error |
-| `0008-lazpy-no-key-loading.patch` | `GetKeysStream()` returns an empty stream: no AES keys are ever loaded (no `aes_keys.txt`, no built-in blob) |
+| `0008-lazpy-no-key-loading.patch` | `GetKeysStream()` returns an empty stream: no AES, RSA or ECC keys are ever loaded (Azahar's `sysdata/keys.txt` is never read, and there is no built-in blob). The patch's own comment says `aes_keys.txt`, the older Citra name; it is corrected at the next core revision |
 
 ## Dropped from the tree
 
@@ -46,7 +46,7 @@ drop list, the OpenSSL archives (sha256 each), the repo head and whether the tre
 ## Licenses
 
 Azahar is GPLv2 or later. Every patch hunk is GPLv2 or later, as the file it patches. Any published binary of this
-core ships with the unchanged source tarball plus these patches. OpenSSL 3 is Apache-2.0, which is compatible with GPLv3 but
+core ships with its source (below), never the unchanged tarball. OpenSSL 3 is Apache-2.0, which is compatible with GPLv3 but
 not GPLv2, so a published binary of this core is distributed under GPLv3 (Azahar's "or later" allows it). Its
 source is the tarball minus the drop list, plus these patches and `tools/build-core.sh`, plus OpenSSL 3.6.5's source.
 

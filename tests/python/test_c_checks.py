@@ -139,6 +139,13 @@ def test_c4_debug_text_needs_our_core(host_paths, stock_core, workdir, seed):
             emu.run(600, debug_text="ready f=")
 
 
+def test_c4_debug_text_on_our_core(host_paths, lazpy_core, workdir, seed):
+    """Our core honours the debug-text stop (it names itself, whatever ``LAZ_CORE`` says); the batch ends early."""
+    with dh.boot(host_paths, workdir, seed(ready_at=200), core=lazpy_core) as emu:
+        result = emu.run(600, debug_text="ready f=")
+        assert result.stopped_by == "debug_text" and result.last_frame < 600
+
+
 def test_d_counters_and_raw_screens(host_paths, workdir):
     with dh.boot(host_paths, workdir) as emu:
         first = emu.run(300, shots=[300])

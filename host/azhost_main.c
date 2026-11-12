@@ -10,6 +10,7 @@
 #include "azh_internal.h"
 
 #define DEFAULT_PROFILE "host/options-default.txt"
+#define DEFAULT_LAZPY_PROFILE "core/options-lazpy.txt"
 #define DEFAULT_CORE "dl/azahar/azahar_libretro.dylib"
 #define MAX_OPTS 64
 #define LINE_MAX_LEN 512
@@ -20,7 +21,7 @@ static int printed;     /* the error line for the current failure is already on 
 static int guest_exit;  /* AZH_EXIT_GUEST_EXITED or _ERROR when a batch stopped that way on our core */
 
 typedef struct {
-    const char *app, *sys, *out, *profile, *core, *mvk, *state;
+    const char *app, *sys, *out, *profile, *lazpy_profile, *core, *mvk, *state;
     long frames[MAX_BATCHES];
     int n_batches;
     const char *shot_list;
@@ -37,7 +38,7 @@ static int usage_error(const char *what)
     assert(AZH_EXIT_USAGE == 2);
     fprintf(stderr, "UsageError: %s\n", what);
     fprintf(stderr, "usage: azhost run <app> --sys <dir> --out <dir> --frames N[,N2,...] [--shot f1,f2,...]\n"
-                    "              [--opt key=value]... [--profile file] [--core path] [--mvk path] [--state file]\n"
+                    "              [--opt key=value]... [--profile file] [--lazpy-profile file|none] [--core path] [--mvk path] [--state file]\n"
                     "              [--inputs file] [--sd-seed dir] [--stop-file rel --stop-text t [--stop-every k] [--stop-new]]\n"
                     "              [--debug-stop t] [--wall-limit-ms ms] [--raw-shot f] [--print-last-line rel] [--save file]\n"
                     "       azhost layout\n");
@@ -103,6 +104,8 @@ static int set_flag(args_t *a, const char *flag, const char *val)
         a->out = val;
     } else if (strcmp(flag, "--profile") == 0) {
         a->profile = val;
+    } else if (strcmp(flag, "--lazpy-profile") == 0) {
+        a->lazpy_profile = val;
     } else if (strcmp(flag, "--core") == 0) {
         a->core = val;
     } else if (strcmp(flag, "--mvk") == 0) {
@@ -152,6 +155,7 @@ static int parse_args(int argc, char **argv, args_t *a)
     assert(argc >= 1);
     memset(a, 0, sizeof *a);
     a->profile = DEFAULT_PROFILE;
+    a->lazpy_profile = DEFAULT_LAZPY_PROFILE;
     a->core = getenv("LAZ_CORE");
     if (a->core == NULL || *a->core == '\0') {
         a->core = DEFAULT_CORE;
@@ -460,6 +464,20 @@ static int seed_sd(const args_t *a)
     return rc;
 }
 
+/* our core only: its profile first (the six lazpy keys exist only there), then --profile, then each --opt */
+static int apply_lazpy_profile(const args_t *a)
+{
+    struct azh_stats st;
+    int rc;
+
+    assert(a != NULL && a->lazpy_profile != NULL);
+    rc = azh_stats(&st);
+    if (rc != AZH_OK || !st.is_lazpy_core || strcmp(a->lazpy_profile, "none") == 0) {
+        return rc;
+    }
+    return apply_profile(a->lazpy_profile);
+}
+
 static int open_and_configure(const args_t *a)
 {
     char log[AZH_PATH_MAX];
@@ -492,7 +510,10 @@ static int open_and_configure(const args_t *a)
     if (rc != AZH_OK) {
         return rc;
     }
-    rc = apply_profile(a->profile);
+    rc = apply_lazpy_profile(a);
+    if (rc == AZH_OK) {
+        rc = apply_profile(a->profile);
+    }
     for (i = 0; i < a->n_opts && rc == AZH_OK; i++) {
         rc = apply_pair(a->opts[i]);
     }

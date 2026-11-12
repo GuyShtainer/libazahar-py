@@ -25,3 +25,11 @@ none yet
 
 ## Lessons and notes
 Read this part only when you work on this item. Blockers, numbers and Guy's words go here verbatim.
+- E1 (a444b28ace71428a3, sonnet, 01:09-01:16) committed on step-e at a74aaec: _slots.py, pool.py,
+  tools/hold_slot.py, tools/speed_table.py, test_slots.py, test_pool.py, test_pool_live.py (written, not run);
+  host/png.c (azh_png_level, LAZ_PNG_LEVEL 0-9, default 1), host/run.c (png level line once; per batch
+  "batch frames= wall_ms= core_ms= host_ms= shot_ms= stop=<name>"), _client.py (slot acquired before the Pipe,
+  a _popen helper releases the slot fd on failure), __init__.py exports Pool, LoadWarning, SlotTimeout.
+  make check, make, test-host 307743/0; pytest not slow 61 passed. Departures: g1/g2/g4 one test; the fixture takes
+  min(3, cap) slots; speed_table sets LAZ_MAX_INSTANCES=4 in main(); LoadWarning shows at load 58. E2 next, after
+  step-f2 merges (phase-3.md section 4 step 4).

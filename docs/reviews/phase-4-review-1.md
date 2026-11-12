@@ -20,7 +20,7 @@ position.
   `src/CMakeLists.txt:186-187`; `src/core/CMakeLists.txt:501-503` (the only CMake reference to the header);
   `src/core/hw/default_keys.h` 46,817 bytes, `#error` guard at :7-9, array at :11, size at :477;
   `src/core/hw/aes/key.cpp:21-23` (include under `#ifdef`), `:302-312` (where it is read). The 19:40 build had
-  `ENABLE_BUILTIN_KEYBLOB:BOOL=ON` (`CMakeCache.txt:728`), the whole [removed] array in the binary,
+  `ENABLE_BUILTIN_KEYBLOB:BOOL=ON` (`CMakeCache.txt:728`), the whole array in the binary,
   and exactly one `.o.d` naming the header (`citra_core.dir/hw/aes/key.cpp.o.d`, of 1,659). **The 21:09 rebuild**
   (the uncommitted `build-core.sh` edit; 19,145,936 bytes): cache line `OFF`, the array absent, no `.o.d` names
   the header, 0 `/Users/` strings (paths now read `dl/azahar-src/build-src/...`). The generator constant is not
@@ -233,7 +233,7 @@ position.
 - **N8.** map_check (tools/map_check.py:5-8) fails when a top-level file or a script folder is not in the maps:
   `STATUS.md`, `NOTICES.md`, `examples/`, `docs/release-notes/` need their map lines **in the same commit** as H1 and
   I1, not later (the plan lists them in the reports, which is right; say "same commit").
-- **N9.** Section 0 says the blob is read is correct; worth adding that
+- **N9.** Section 0's description of how the blob is read is correct; worth adding that
   `default_keys.h` itself carries a "GPLv2 or later" header: the licence header does not make Nintendo's keys
   shippable (the audit should not be swayed by it).
 - **N10.** phase-h.md:172: "`build/azhost layout` output verbatim in a collapsed block, with the date and commit":

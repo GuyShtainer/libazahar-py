@@ -25,3 +25,51 @@ none yet
 
 ## Lessons and notes
 Read this part only when you work on this item. Blockers, numbers and Guy's words go here verbatim.
+- Builder a76e4f3e6572c2142 (sonnet), launched 01:09 in ../libazahar-py-f2 (step-f2 at 6898a4b), forced hand-back
+  mid-batch. F2-0 done (make test-host 307743 checks 0 failed; 49 passed). F2-1 done: --lazpy-profile in
+  host/azhost_main.c, _paths.lazpy_profile(), _worker.option_plan() and an 8th start element, emulator.py reads
+  the lazpy profile and closes after guest_exited via a private _close(graceful); gate_c.py --core/--core-kind;
+  test_c4_debug_text_on_our_core; new tests/python/test_lazpy_profile.py (6) and tests/gate_f2.py
+  (keyblob_findings, keyblob_records, symbol_findings; scenarios keyblob, symbols, version, dbg, r1, r2, cross,
+  stock_r1). make check rc 0; 55 passed. Keyblob check on the stock core: 30 findings (not vacuous).
+  PASS f1 keyblob (OURS 21,828,992 bytes; both .a sha256 still match; 70 OpenSSL strings; link line frameworks
+  Cocoa, AVFoundation, IOSurface, no -l; otool lists no SSL), f2 symbols (28 ours, 25 stock), f3 version
+  2126.2-lazpy.1 and the 6 option keys logged; f4 gate_c on OURS 28 passed 0 failed. Its "built for newer macOS:
+  0" RECORD is wrong: the linker writes built for newer 'macOS' version (quotes); the count is 944.
+  Departures: hold_slot around whole processes (one slot each, children inherit); batch.sh first removes
+  runs/c-gate and runs/d-pytest; exit-path grep text is host/env.c's write(2) payload. The batch (runs/f2/batch.sh,
+  started 01:14:44 under load 24-40) runs on; f4's pytest and f5-f9 pending; the builder is resumed on
+  runs/f2-batch.rc.
+- Batch result 01:14-01:15: every failure (pytest OURS 21, gate_f2 1, smoke pytest 3) is the worker dying at
+  start: os.nice(0) raises PermissionError at nice 20 on macOS (the batch nested nice -n 10 twice); works at 0,
+  10, 15; os.getpriority/setpriority work at 20. A real bug in hold H2 (_worker.py:120): any caller at nice 20
+  kills every Emulator. Second builder a83e1355c6bcddc1f (sonnet, fresh; the first ran out of context) fixes it
+  with getpriority/setpriority plus a unit test, fixes the batch's nesting and the 'macOS' quote in the count,
+  and reruns the batch.
+- Second run (a83e1355c6bcddc1f): _worker.raise_nice_floor(floor=10) with getpriority/setpriority, no os.nice
+  left; test_worker_nice_step_survives_nice_20 (not slow; 56 passed); batch.sh has one nice layer and logs its
+  nice; gate_f2.py counts built for newer 'macOS' version. make check rc 0, test-host 307743/0. Batch rerun
+  started 01:17:47 at nice 15 (session at nice 5 plus nice -n 10), load 15-32; a restart to nice 10 was denied,
+  so the nice-15 batch stands. The main loop waits on runs/f2-batch.rc and collects f4-f9 itself.
+- Batch rerun ended 01:21:11 (runs/f2/*.rc in the F2 worktree): gate_c 0, pytest 0, smoke gate_c 0, smoke pytest 0,
+  gate_f2 1; 0 lines in exitpath-ours.txt. gate_f2: every f-check PASS (keyblob, symbols ours/stock, version
+  2126.2-lazpy.1, options, dbg d1-d4, r1 identical, r2 boot and restored equal, cross both ways ok) except
+  r2.1.t_state 2.80 s (bound 2.5) at load 28; r2.2 1.91 s. RECORD: 944 built-for-newer-macOS lines; the libssl.a
+  and libcrypto.a sha256 still match; stock_r1 differs only in log fields s and t (shots match).
+- 01:24 rerun of r2 alone plus test_state_boot (Gen3D held; load rose to 46 from other sessions' builds): r2.1 2.60 s,
+  r2.2 4.88 s, state_boot failed; correctness parts passed. drain_ms and unserialize_ms carry the time (about
+  0.5-1.4 s each), so the bound is a load floor. runs/f2/quiet-rerun.sh waits until the 1-min load is under 10
+  and the 5-min under 14, then reruns both once (waiter bi08wz1d9, 4 h at most). The bound stays as planned.
+- As-built review (a5b06264cc6ce5406, docs/reviews/step-f2-as-built.md): merge after B1 and S1-S5; checklist 0-9
+  PASS. Fixed by the main loop 01:39 and committed on step-f2 as 6578c3c: B1 keyblob_findings fails when the tree
+  has no CMakeLists.txt (lexists for the drop entries); S1 no sys.path change at import; S2 the nice test covers
+  starts 5/10/15/20 and checks the exact value (9 passed, 1 skipped at this session's nice); S3 gate_c f2 asserts
+  exit_code 0 on our core; S4 core/README says the binary ships with its source, never the unchanged tarball (in
+  MAIN); S5 no window offset in the failure text; N1 a nice failure is sent as fatal. keyblob and symbols rerun:
+  PASS. S3's gate_c --only f run on our core is added to runs/f2/rerun.sh (the quiet rerun).
+- r2's t_state misses are load: the stock core missed the same bound in the same window (3.26 s); quiet runs
+  measured 1.47-1.68 s. drain_ms includes a full serialize that retro_serialize_size() throws away (Azahar
+  citra_libretro.cpp:692-709), 24-35 % of t_state, so not a Phase 4 item by the plan's rule.
+- After merging step E: E's machine slot is taken inside Emulator(), so slot waits count inside t_state (subtract
+  or record slot.txt's waited_s) and gate_f2 under an outer hold_slot needs a second slot; wrap only the azhost
+  runs in tools/hold_slot.py.

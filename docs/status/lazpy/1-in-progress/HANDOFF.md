@@ -1,7 +1,7 @@
 <!-- handoff: slim v1 | current tasks only | rewritten whole from docs/status/templates/handoff.md | budget 80 lines | never append -->
 # libazahar-py handoff
 
-As of: 2026-11-13 01:05 (this project's own session)
+As of: 2026-11-13 01:41 (this project's own session)
 
 This file lives in docs/status/lazpy/1-in-progress/, beside its item files. It holds only what
 the next session needs to act now, and points at the rest. Goals, rules, decisions and history live elsewhere.
@@ -9,26 +9,27 @@ the next session needs to act now, and points at the rest. Goals, rules, decisio
 ## Running now
 | What | Where | Agent id | It stops when |
 |---|---|---|---|
-| laz-300: step 0 core rebuild as revision 2 writes it (detached, niced) | MAIN build-core/ | main (pid 40445) | build-core/build.exit appears (waiter bounded 150 min) |
-| laz-400: Phase 4 plan review 2 (opus; also Gen3D's friction list) | this repo | a520c6028898077dc | docs/reviews/phase-4-review-2.md written; then revision 2 |
-| laz-400: ip-legal consult, phase-i.md 9.1 | this repo | aee2a9ba07ce653cf | docs/reviews/release-ip-legal.md written |
+| laz-320: waiter that reruns r2, test_state_boot and gate_c --only f (our core) once the load is low (1-min under 10, 5-min under 14; 4 h at most) | ../libazahar-py-f2 runs/f2/quiet-rerun.sh | main (background bi08wz1d9) | runs/f2/rerun-*.rc written |
+| laz-400: Phase 4 plan revision 2 (opus, final) on review 2 plus the ip-legal consult | phase-4.md, phase-h.md, phase-i.md | aa4336428ee833bdf | its report; the main loop commits |
+
+Not running: step-e at a74aaec (E1 committed, parked until step-f2 merges); step-f2 at 6578c3c (built, reviewed,
+fixes in; all green except r2's state-load timing under load 28-46; item 320's last notes).
 
 ## Next steps, in order
-1. When build.exit is 0: put `cat build-core/build.inputs`, `otool -L` of the dylib and the count of
-   "built for newer" lines into item 300; run F2's f1 checks by hand only if F2 is late (F2 owns them).
-2. Then G8, the history rewrite, exactly as `docs/plans/phase-i.md` section 8.1 (preconditions: build ended, no
-   agent editing tracked files in MAIN; the consult and review only create new files). Remove the merged
-   ../libazahar-py-c and -d worktrees first (status --porcelain --ignored empty), or check 8.1 step 1's ancestor rule.
-3. Then `docs/plans/phase-3.md` section 4 step 1: items 310 and 320 to 1-in-progress (PLAN.md pointers :296, :311),
-   worktrees step-e and step-f2 from main, the E and F2 sonnet builders together (briefs `docs/plans/phase-e.md`,
-   `phase-f2.md`); their ids here.
-4. Rerun `test_state_boot` alone when load is under 12 (5.50 s under load 45 on the stock core); rule T.
-5. When review 2 and the consult report: commit both, then Phase 4 revision 2 (opus).
-6. Gen3D was told at 01:05 that timed runs start; message it when Phase 3's timed runs end.
+1. When runs/f2/rerun-*.rc are written: green, merge step-f2 into main and move item 320 to 5-done with Evidence
+   (phase-3.md section 4 step 3); a timing miss at low load gets judged in item 320 first.
+2. Then section 4 step 4: merge main into ../libazahar-py-e, resume E (a444b28ace71428a3, or a fresh sonnet with
+   item 310's notes) for E2: tell Gen3D "hold now" first, "free" after; item 330 to 1-in-progress (PLAN.md :317);
+   worktree step-g, merge a74aaec into it, launch G (phase-g.md). After E merges, apply item 320's slot notes.
+3. At revision 2's report: commit the three plan files; items 410/420 stay in 0 until Phase 3 ends.
+4. Before the push: G8b (second history rewrite, item 400's last notes), then release-legal-audit.
+5. Message Gen3D when Phase 3's timed runs end.
 
 ## Waiting on Guy (only what blocks a step above)
-- Phase 4's G5-G7 (repo creation, the word "push", publishing the draft): item 400's notes. G1 (keys off, done), G3 and G8 answered;
-  the rest block Phase 4's release, not its reviews.
+- Phase 4's G5-G7 (repo creation, the word "push", publishing the draft), G9 (spike 2's game: default say
+  nothing), and whether macOS 11-14 users matter for v0.1.0 (default: "macOS 15 or later"): item 400's notes.
+- Q7 from the ip-legal consult: remove the scripted stock-core download (recommended) or accept its YELLOW grade;
+  docs/reviews/release-ip-legal.md section 7. G1, G3 and G8 are answered and done.
 The full list is generated into `docs/status/README.md`.
 
 ## Pointers

@@ -93,11 +93,13 @@ class Emulator:
         if sd_seed is not None and state is None:
             shutil.copytree(sd_seed, self._sd, symlinks=False, dirs_exist_ok=True)
         pairs = _read_profile(_paths.profile_path()) + _pairs(options)
+        lazpy_file = _paths.lazpy_profile()
+        lazpy_pairs = _read_profile(lazpy_file) if lazpy_file is not None else []
         self._client.spawn(self.boot_timeout)
         self._finalizer = weakref.finalize(self, reap_process, self._client.proc)
         args = (str(_paths.core_path(None if core is None else str(core))), str(self.workdir / "sys"),
                 str(self.workdir / "host.log"), str(self.workdir / "host.map"), pairs, str(self.app),
-                str(Path(state).resolve()) if state is not None else None)
+                str(Path(state).resolve()) if state is not None else None, lazpy_pairs)
         _, stats = self._client.request("start", args, Wait(total=self.boot_timeout))
         self._is_lazpy = bool(stats["is_lazpy_core"])
         if sd_seed is not None and state is not None:
@@ -170,7 +172,7 @@ class Emulator:
         if result.stopped_by == "guest_error":
             raise GuestError(result.message or "the guest stopped with a fatal error", result)
         if result.stopped_by == "guest_exited":      # one rule on both cores: after a guest exit the Emulator is closed
-            self.close()
+            self._close(min(self.timeout, 5.0))      # a stalled retro_unload_game costs 5 s, not 30
         return result
 
     def _build_batch(self, frames: int, shots: Iterable[int], stop_file: Optional[str], stop_text: Optional[str],
@@ -311,7 +313,10 @@ class Emulator:
     # ---- closing ----
     def close(self) -> None:
         """Stop the worker (graceful, then SIGKILL of our own worker) and reap it. Safe to call twice."""
-        self._client.close(self.timeout)
+        self._close(self.timeout)
+
+    def _close(self, graceful: float) -> None:
+        self._client.close(graceful)
         if self._finalizer is not None:
             self._finalizer.detach()
 

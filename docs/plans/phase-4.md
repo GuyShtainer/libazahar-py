@@ -65,8 +65,8 @@ not counted.
    `release_check` never compares `head=` (it compares the input hashes), and SOURCE.md translates it through
    `docs/commit-map-g8.tsv`.
 6. **New in revision 1: the stock core carries the blob and ClCertA too.** Azahar's own macOS libretro build, which
-   `tools/fetch.sh` downloads and revision 0's README route used, holds the key [removed]
-   blob and the ClCertA arrays [removed] (`python3 -I` byte search of
+   `tools/fetch.sh` downloads and revision 0's README route used, holds the key blob and the ClCertA arrays
+   (`python3 -I` byte search of
    `dl/azahar/azahar_libretro.dylib`, 2026-11-13). We never re-host it, but our script fetches it. So the README's
    default route becomes **our core and the test app from our release** (`tools/fetch.sh --moltenvk --headers
    --lazpy-core --testapp`), the stock core is optional (plain `tools/fetch.sh`, for contributors comparing cores),
@@ -285,7 +285,7 @@ Only Guy can do or decide these. Every item has a safe default, so nothing below
 | Fact | Where |
 |---|---|
 | `option(ENABLE_BUILTIN_KEYBLOB ... ON)`; the define when on; `default_keys.h` added to `citra_core` only when on (the only CMake reference) | SRC CMakeLists.txt:154; src/CMakeLists.txt:186-187; src/core/CMakeLists.txt:501-503 |
-| `default_keys.h` 46,817 bytes, `#error` guard :7-9, array :11; `key.cpp` includes it under `#ifdef` (:21-23) and decrypts it [removed] (:302-312); every key path goes through `GetKeysStream()` (:292-314) | SRC src/core/hw/ |
+| `default_keys.h` 46,817 bytes, `#error` guard :7-9, array :11; `key.cpp` includes it under `#ifdef` (:21-23) and reads it (:302-312); every key path goes through `GetKeysStream()` (:292-314) | SRC src/core/hw/ |
 | ClCertA: `ctr-common-1-cert.h` (1,264-byte array) and `ctr-common-1-key.h` (1,232) included without `#ifdef` at `http_c.cpp:37-38`; fallback at :2281-2289; `DecryptClCertA()` returns at the missing slot 0x0D (:2262-2266); in no CMake file | SRC src/core/hle/service/http/; review 1 A; Phase 3 review 2 B1, N1 |
 | The 21:09 build: cache `ENABLE_BUILTIN_KEYBLOB:BOOL=OFF` (:728), the blob absent, no `.o.d` names `default_keys.h`, 0 `/Users/` strings, ClCertA arrays present, one `.o.d` names `ctr-common-1-*` | review 1 A; Phase 3 review 2 section 3 |
 | STOCK holds the blob and both ClCertA arrays; 198 `libressl` strings | `python3 -I` byte search, 2026-11-13 |
