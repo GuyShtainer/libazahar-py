@@ -76,8 +76,8 @@ to Success at its start (core.cpp:111), so the guest runs on. A guest exit is st
 (core.cpp:144, 150). The core never sends RETRO_ENVIRONMENT_SHUTDOWN (`LibRetro::Shutdown()`, environment.cpp:164,
 has no caller). So the environment callback's SET_MESSAGE case reads N and:
 - N = 14: flag `guest_break`; the batch stops when `retro_run` returns (it does: the guest keeps submitting frames).
-- N = 16: write `guest_exited` and the message into the map and `_exit(EXIT_GUEST_EXITED)` at once (nothing follows
-  a guest exit, and `retro_run` would never return).
+- N = 16: write `guest_exited` and the message into the map and `_exit(EXIT_GUEST_EXITED)` at once (nothing useful
+  follows a guest exit). Status 10's message and boot-time messages carry no "(N)" (check 3).
 - Any other N: flag `guest_error`; if one `retro_run` gets 3 such messages without returning, write the reason and
   `_exit(EXIT_GUEST_ERROR)`. `_exit` in our own worker replaces longjmp (C rule 1).
 - On our core, a 3-line patch makes `retro_run` return on a non-Success status (2.7), so all three come back as

@@ -18,11 +18,13 @@ determinism and clock settings, unmapped-memory reads, the source tarball's pin,
 the split into phase items.
 
 ## Evidence
-none yet
+2026-11-12, opus a970bc3a4c214b531: `docs/reviews/plan-check-3.md`, all six claims hold at tag 2126.2 (commit 219d743a);
+the tarball's published sha256 `85c8b56fac703df04720125044b8ff887997911858a6cde545dfb1107ba4cd26` matches. One
+wording fix made in PLAN.md 2.2 (the guest-exit bullet). Ready to split.
 
 ## Pointers
 - Plan: `docs/PLAN.md` section 9
-- Review: `docs/reviews/plan-review-2.md`
+- Review: `docs/reviews/plan-check-3.md`
 
 ## Lessons and notes
 Read this part only when you work on this item. Blockers, numbers and Guy's words go here verbatim.

@@ -1,0 +1,26 @@
+---
+id: laz-60
+title: lazpy
+order: 60
+kind: phase
+page: Reading and writing the game's memory
+hours: phase-g
+---
+# Phase G: reading and writing the game's memory
+
+## What it is
+Memory reads and writes through our core's exported calls, the per-frame watch list, a clear error on the stock core.
+
+## Exit gate
+The gate in `docs/PLAN.md` line 310 ("Phase G"), run headless on this Mac with a pass/fail answer.
+
+## Evidence
+none yet
+
+## Pointers
+- Plan section: `docs/PLAN.md:310`
+- Phase plan: none yet
+- Review: none yet
+
+## Lessons and notes
+Read this part only when you work on this item. Blockers, numbers and Guy's words go here verbatim.
