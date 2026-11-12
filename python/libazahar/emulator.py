@@ -10,7 +10,7 @@ from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
 from . import _abi, _paths
 from ._client import Wait, WorkerClient, reap_process
 from .errors import GuestError, HostError
-from .inputs import Buttons, Circle, Held, Item, Touch, _TouchUp, apply_item, check_buttons, fold
+from .inputs import Buttons, Circle, Held, Item, Touch, _TouchUp, apply_item, check_buttons, fold, held_after
 from .results import RunResult, SaveInfo, Shot, Stats
 
 __all__ = ["Emulator"]
@@ -123,7 +123,7 @@ class Emulator:
     def frame_total(self) -> int:
         """Frames run since boot (a state's frame count plus its k after a load), read from the map."""
         hostmap = self._client.host_map()
-        return hostmap.frame_total() if hostmap is not None else 0
+        return hostmap.frame_total() if hostmap is not None else self._client.final_frame_total
 
     def _live(self) -> None:
         if self._client.closed:
@@ -137,13 +137,15 @@ class Emulator:
         """Run ``frames`` guest frames (one frame = one guest VBlank, 1-based within the batch).
 
         ``inputs`` are ``(frame, item)`` pairs; an item is Buttons/int (the whole button mask), ``Touch(x, y)``,
-        ``Touch.up`` or ``Circle(x, y)``, and changes only its part of the held state, which stays after the batch.
+        ``Touch.up`` or ``Circle(x, y)``, and changes only its part of the held state; the state reached by the last
+        frame run stays after the batch.
         ``shots`` are batch frames to save as PNG (``result.shots[f]``). ``stop_file`` (relative to the SD folder) with
         ``stop_text`` stops the batch when the file holds the text, checked every ``stop_every`` frames and after the
         last; ``stop_new`` looks only at text written after the batch starts. ``debug_text`` needs our core.
         ``wall_limit`` is in seconds. ``timeout`` replaces the heartbeat timeout for this call. Returns a RunResult;
         a guest exit gives ``stopped_by == "guest_exited"`` and a closed Emulator on both cores (on our core the
-        worker is shut down cleanly after the result is built). A guest crash raises GuestError (with
+        worker is shut down cleanly after the result is built). On the stock core the exit result has ``wall_s`` 0.0 and
+        no ``shots`` even if PNGs were written before the exit. A guest crash raises GuestError (with
         ``.result`` when the batch ended with ``guest_error``; the Emulator stays open then; the third error in one
         frame ends the worker and the Emulator is closed). Raises ValueError for bad arguments, GuestError,
         HostTimeout, HostCrashed.
@@ -151,16 +153,20 @@ class Emulator:
         self._live()
         batch, shot_frames = self._build_batch(frames, shots, stop_file, stop_text, stop_every, stop_new,
                                                debug_text, wall_limit)
-        records, held = fold(inputs, frames, self._held)
+        prev = self._held
+        records, _ = fold(inputs, frames, prev)
         before = self.frame_total
         wait = Wait(heartbeat=self.timeout if timeout is None else float(timeout), first_heartbeat=self.boot_timeout)
         kind, payload = self._client.request("run", (records.tobytes(), bytes(batch)), wait, frame_before=before)
-        self._held = held
         if kind == "exited":
-            return RunResult(frames=payload["frames"], stopped_by="guest_exited", first_frame=before + 1,
-                             last_frame=payload["frame_total"], frame_total=payload["frame_total"],
-                             vblanks=payload["vblanks"], wall_s=0.0, message=payload["message"])
+            self._held = held_after(records, payload["frames"], prev)
+            result = RunResult(frames=payload["frames"], stopped_by="guest_exited", first_frame=before + 1,
+                               last_frame=payload["frame_total"], frame_total=payload["frame_total"],
+                               vblanks=payload["vblanks"], wall_s=0.0, message=payload["message"])
+            self.close()
+            return result
         result = self._result(_abi.Result.from_buffer_copy(payload), shot_frames, before)
+        self._held = held_after(records, result.frames, prev)
         if result.stopped_by == "guest_error":
             raise GuestError(result.message or "the guest stopped with a fatal error", result)
         if result.stopped_by == "guest_exited":      # one rule on both cores: after a guest exit the Emulator is closed
@@ -292,7 +298,7 @@ class Emulator:
         return SaveInfo(path=target, k=int(k), frame_total=self.frame_total)
 
     def load_state(self, path: Union[str, Path]) -> None:
-        """Restore a state made by the same app. The SD folder is replaced by the state's snapshot. Raises StateError."""
+        """Restore a state made by the same app; the SD folder becomes the snapshot's. Raises StateError."""
         self._live()
         self._client.request("load_state", (str(Path(path).resolve()),), Wait(total=self.timeout + STATE_EXTRA_S))
 

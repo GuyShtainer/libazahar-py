@@ -8,7 +8,7 @@ from typing import ClassVar, Iterable, Tuple, Union
 
 from . import _abi
 
-__all__ = ["Buttons", "Touch", "Circle", "Held", "fold"]
+__all__ = ["Buttons", "Touch", "Circle", "Held", "fold", "held_after"]
 
 TOUCH_W = 320
 TOUCH_H = 240
@@ -157,3 +157,13 @@ def fold(inputs: Iterable[Tuple[int, Item]], frames: int, held: Held) -> Tuple["
             index += 1
         out.extend(held.as_record(frame))
     return out, held
+
+
+def held_after(records: "array[int]", frames_run: int, held: Held) -> Held:
+    """The held state the host has after a batch that ran ``frames_run`` frames: its last record at or before then,
+    else ``held`` (the state before the batch)."""
+    step = _abi.AZH_INPUT_INTS
+    for start in range(len(records) - step, -1, -step):
+        if records[start] <= frames_run:
+            return Held(*records[start + 1:start + step])
+    return held

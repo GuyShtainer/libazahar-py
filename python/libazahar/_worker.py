@@ -100,6 +100,8 @@ def _serve(conn: Connection, lib: ctypes.CDLL) -> int:
             reply: List[Any] = ["ok", handler(lib, tuple(args))]
         except HostCallError as exc:
             reply = ["err", exc.code, exc.text]
+        except (ctypes.ArgumentError, TypeError, ValueError) as exc:
+            reply = ["err", _abi.AZH_E_ARG, f"{op}: {exc}"]
         conn.send(tuple(reply))
         if op == "close":
             return 0

@@ -68,6 +68,8 @@ class WorkerClient:
         self._proc: Optional[subprocess.Popen] = None
         self._conn: Optional[Connection] = None
         self._map: Optional[_map.HostMap] = None
+        self._map_closed = False
+        self.final_frame_total = 0          # the map's frame count, kept when close() unmaps it
         self._hb_base = 0
         self._hb_moved = False
         self.closed = False
@@ -85,7 +87,7 @@ class WorkerClient:
 
     def host_map(self) -> Optional[_map.HostMap]:
         """The worker's map once it exists and is valid, else None."""
-        if self._map is None and self.map_path.is_file():
+        if self._map is None and not self._map_closed and self.map_path.is_file():
             try:
                 candidate = _map.HostMap(self.map_path)
             except (OSError, ValueError):
@@ -117,8 +119,13 @@ class WorkerClient:
         pkg_parent = Path(__file__).resolve().parents[1]
         argv = self._argv(child.fileno()) if self._argv else worker_argv(child.fileno(), pkg_parent)
         with open(self.err_path, "ab") as err_file:
-            self._proc = subprocess.Popen(argv, pass_fds=(child.fileno(),), stdin=subprocess.DEVNULL,
-                                          stdout=err_file, stderr=err_file, env=self._env, cwd=self.workdir)
+            try:
+                self._proc = subprocess.Popen(argv, pass_fds=(child.fileno(),), stdin=subprocess.DEVNULL,
+                                              stdout=err_file, stderr=err_file, env=self._env, cwd=self.workdir)
+            except BaseException:
+                parent.close()
+                child.close()
+                raise
         child.close()
         self._conn = parent
         kind, payload = self._wait("hello", Wait(total=boot_timeout), 0)
@@ -248,8 +255,10 @@ class WorkerClient:
                 pass
         self._reap()
         if self._map is not None:
+            self.final_frame_total = self._map.frame_total()
             self._map.close()
             self._map = None
+        self._map_closed = True
 
     def kill_own_worker(self, sig: int = signal.SIGKILL) -> None:
         """Send a signal to our own worker (tests use it; never anything else's process)."""

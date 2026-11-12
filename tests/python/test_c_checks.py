@@ -39,7 +39,8 @@ def check_runs(lines, buttons, c_min):
             if not (0 <= first - p <= 3 and abs(count - length) <= 1):
                 bad.append(f"bit {bit}: run at {first} x{count}, planned {p} x{length}")
     for mask in gate_c.COMBOS:
-        starts = [cc.bit_runs(lines, b, c_min)[-1][0] for b in gate_c.BITS if mask >> b & 1 and cc.bit_runs(lines, b, c_min)]
+        starts = [cc.bit_runs(lines, b, c_min)[-1][0] for b in gate_c.BITS
+                  if mask >> b & 1 and cc.bit_runs(lines, b, c_min)]
         if starts and max(starts) - min(starts) > 1:
             bad.append(f"combo {mask:#x} spread {min(starts)}..{max(starts)}")
     assert not bad, "; ".join(bad[:4])

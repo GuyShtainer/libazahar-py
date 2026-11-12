@@ -1,7 +1,7 @@
 """Buttons, Touch, Circle and the fold (no emulator)."""
 import pytest
 
-from libazahar.inputs import Buttons, Circle, Held, Touch, fold
+from libazahar.inputs import Buttons, Circle, Held, Touch, fold, held_after
 
 LIBCTRU = {"A": 1, "B": 2, "SELECT": 4, "START": 8, "DRIGHT": 16, "DLEFT": 32, "DUP": 64, "DDOWN": 128, "R": 256,
            "L": 512, "X": 1024, "Y": 2048, "ZL": 16384, "ZR": 32768}
@@ -40,3 +40,10 @@ def test_held_carries_in():
 def test_validation_errors(bad):
     with pytest.raises(ValueError):
         fold([bad], 10, Held())
+
+
+def test_held_after_an_early_stop():
+    out, _ = fold([(2, Buttons.A), (50, Touch(5, 6))], 100, Held())
+    assert held_after(out, 10, Held()) == Held(buttons=1)
+    assert held_after(out, 50, Held()) == Held(1, 5, 6, 1, 0, 0)
+    assert held_after(out, 1, Held(buttons=8)) == Held(buttons=8)

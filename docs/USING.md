@@ -15,13 +15,16 @@ must set `LAZ_ROOT`. `make` builds the host; `tools/fetch.sh` fetches the stock 
 `LAZ_PROFILE`, `LAZ_LOG_LEVEL`, `LAZ_ANY_CORE`, `LAZ_STATE_ANY_APP` (see section 10), `LAZ_REQUIRE_EMULATOR` (tests:
 a missing emulator fails instead of skipping), `MVK_CONFIG_LOG_LEVEL` (1 unless set). An instance folder `workdir/`
 holds `host.log`, `host.map`, `shots/` and `sys/Azahar/sdmc/` (the SD card; `emu.sd` is that path). `sd_seed` is a
-folder whose contents are copied onto the SD card before boot.
+folder (never named `sdmc`) whose contents are copied onto the SD card: before boot, or with `state=` after the
+restore, so seed files land on top of the snapshot.
 
 ## 3. Frames
 
 One `run` frame is one guest VBlank. Frames are 1-based inside a batch (`run(10, inputs=[(1, ...)])` acts on the
 first frame). Shot names carry absolute frame numbers. `frame_total` counts every frame since boot. The frame the
-guest exits on counts.
+guest exits on counts. `RunResult.wall_s` is the batch's wall time; `azhost run` prints one summary per batch,
+`frames= wall= fps= shots= stop= first= last= vblanks= wall_ms_mean= batch= msg=` (the mean frame time; there is no
+max).
 
 ## 4. Inputs
 
@@ -62,7 +65,7 @@ our core the worker is shut down cleanly once the result is built).
 
 `azh_result.message` is the stopping kind's message cut to 255 bytes. The map's message (1023 bytes, with `msg_seq`)
 and `host.log` hold more. Messages that arrive while the host drains for a savestate are not reported as stops;
-compare `msg_seq` before and after to notice them.
+each is in `host.log` as a `core message:` line.
 
 ## 8. Errors and timeouts
 
@@ -70,8 +73,9 @@ compare `msg_seq` before and after to notice them.
 `HostTimeout`: the heartbeat stopped for `timeout` seconds (Emulator-wide default 30, or per call); the worker is
 killed and reaped. `HostCrashed`: the worker died (a signal gives a negative code). `StateError`: section 10.
 `NeedsLazpyCore`: the call needs our patched core. `HostError`: wrong call order, I/O, memory, ABI mismatch, missing
-host. `ValueError` for bad arguments. `boot_timeout` (default 300 s) covers boot and the first frames' shader
-compiles. A long batch is not a hang while the heartbeat moves.
+host, an unsupported call, a guest exit outside `run`. `ValueError` for bad arguments. The crash tests leave a macOS
+crash report each run. On the stock core a guest-exit result has `wall_s` 0.0 and no `shots`. `boot_timeout`
+(default 300 s) covers boot and the first frames' shader compiles. A long batch is not a hang while the heartbeat moves.
 
 ## 9. Screens
 
@@ -83,15 +87,20 @@ to keep one. `shots=[frames]` saves PNGs and returns them in `result.shots`.
 `save_state(path)` writes three files: the state, its meta and an SD snapshot (`<path>.sd`); it makes the parent
 folder. `SaveInfo.k >= 0`: a state taken at frame N is at N + k. `Emulator(app, workdir, state=path)` boots the app,
 checks its sha256 against the meta (the core's own program-id check does nothing for a `.3dsx`; set
-`LAZ_STATE_ANY_APP=1` after a deliberate rebuild), restores the SD snapshot (after any seed) and the state. States
+`LAZ_STATE_ANY_APP=1` after a deliberate rebuild), restores the SD snapshot (then the seed on top) and the state. States
 may not survive a core change. NAND files are not snapshotted (they reopen from the new instance's NAND) and the
 app's RomFS reopens from the new app path. `load_state` replaces the SD folder: read logs before it. Restore steps
 are timed in `host.log` (`state load ...`). Reusing an instance's `sys/` folder (without `Azahar/sdmc/`) keeps the
-shader cache. Gate on the test app (Guy's ruling): a state boot takes under 2.5 s (measured about 1.6 s against about 5.7 s for the cold boot). The ratios are only recorded.
+shader cache. Gate on the test app (Guy's ruling): a state boot takes under 2.5 s (1.6 s
+measured); a real game's state is larger, so time your own. A `load_state` that fails after the SD folder was replaced
+leaves the instance unusable (later calls raise HostError); close it and boot again. The meta's `app=` is the absolute
+app path, so a shared state carries it. An I/O failure while saving is a HostError, not a StateError.
 
 ## 11. Stock core and our core
 
-Stock: exact repeats, SD text stops, guest errors, savestates. Our patched core adds debug text, memory reads (Phase
+Stock: SD text stops, guest errors, savestates (the same log fields after a state restore, gated on the test app).
+Repeats are exact only on our core, where the repeat gates run (PLAN 2.4); on the stock core they record the
+difference only. Our patched core adds debug text, memory reads (Phase
 G) and poll-exact movies if Phase F confirms them. Calls that need it raise `NeedsLazpyCore`.
 
 ## 12. The Gen3D mapping

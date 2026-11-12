@@ -25,6 +25,7 @@ typedef struct {
     azh_state_meta meta;
     double meta_ms, sha_ms, read_ms, drain_ms, sd_ms, unserialize_ms;
     size_t bytes;
+    int replaced;                                /* the SD folder was replaced: a later failure leaves no usable guest */
 } restore_t;
 
 static char noted_app[AZH_PATH_MAX];
@@ -333,13 +334,13 @@ int azh__state_save(const char *path, int32_t *k_out)
     if (rc != AZH_OK) {
         return rc;
     }
+    azh__counters_get(&frame_total, &vblanks);
+    azh__counters_set(frame_total + k, vblanks);       /* a state "at frame N" is at N + k (PLAN 2.9) */
     t0 = now_ms();
     if (snapshot_sd(path, sd_root) != AZH_OK) {
         return azh_fail(AZH_E_IO, "cannot snapshot the SD folder %s into %s.sd", sd_root, path);
     }
     ms_sd = now_ms() - t0;
-    azh__counters_get(&frame_total, &vblanks);
-    azh__counters_set(frame_total + k, vblanks);       /* a state "at frame N" is at N + k (PLAN 2.9) */
     rc = write_meta(path, k, &ms_sha);
     if (rc != AZH_OK) {
         return rc;
@@ -444,6 +445,7 @@ static int restore_core(const char *path, const void *buf, restore_t *r)
     }
     r->drain_ms = now_ms() - t0;
     t0 = now_ms();
+    r->replaced = 1;
     rc = replace_sd(path);
     r->sd_ms = now_ms() - t0;
     if (rc != AZH_OK) {
@@ -518,5 +520,10 @@ int azh__state_load(const char *path)
     if (rc != AZH_OK) {
         return rc;
     }
-    return restore_apply(path, &r);
+    rc = restore_apply(path, &r);
+    if (rc != AZH_OK && r.replaced != 0) {
+        azh_g.phase = AZH_PH_DEAD;      /* SD replaced, guest not restored: nothing after this is trustworthy */
+        azh_log(AZH_LOG_ERROR, "load_state failed after the SD folder was replaced; the instance is closed");
+    }
+    return rc;
 }

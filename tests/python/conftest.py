@@ -5,7 +5,7 @@ import os
 import re
 import sys
 from pathlib import Path
-from typing import Callable, Dict, NamedTuple
+from typing import Callable, NamedTuple
 
 import pytest
 
@@ -111,9 +111,3 @@ def seed(workdir: Path) -> Callable[..., Path]:
 def repo_root() -> Path:
     """The repo root."""
     return REPO
-
-
-def pytest_collection_modifyitems(items: list) -> None:
-    """Nothing is skipped here: slow tests are selected with -m."""
-    _: Dict[str, int] = {}
-    assert _ == {}
