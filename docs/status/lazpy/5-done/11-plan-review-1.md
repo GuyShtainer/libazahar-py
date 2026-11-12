@@ -16,7 +16,9 @@ The review file and the revised plan committed. The revision goes back to the pl
 (aa56e6986026ffbe0), which keeps its context.
 
 ## Evidence
-none yet
+2026-11-12: review `docs/reviews/plan-review-1.md` (opus a178c51a6cde6b1c3; 3 blockers, 11 should fix, 8 nice), commit
+91c91ef. Revision 1 by the plan's author (aa56e6986026ffbe0): PLAN.md 380 lines, every blocker and should-fix item
+answered in its section 8, open questions none; phases A to I about 9.5 h agent wall time plus 1-2 h machine.
 
 ## Pointers
 - Plan: `docs/PLAN.md`

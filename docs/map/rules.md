@@ -17,8 +17,8 @@
    `Co-Authored-By: <model> <noreply@anthropic.com>`. Exact paths, never `commit -a`. **No push** unless Guy says;
    `release-legal-audit` runs before the first push and every release.
 5. **Never open a window, never steal focus.** That is the point of the tool. The machine is shared with other
-   sessions' emulators: each headless instance took about 1.4 cores and 1.2 GB in spike 1, and three at once shared
-   one throughput ceiling. Cap instance counts; never kill another session's processes.
+   sessions' emulators: on a real 3D scene each headless instance took about 0.5-0.8 GB, and three at once gave
+   about 3.2x one instance's total (spike 2; spike 1's idle-menu ceiling did not hold). Cap instance counts; never kill another session's processes.
 6. **Plans and reviews are opus only**: plan, two review loops, then execute. Cheap agents (sonnet) build from briefs.
 7. **Never quote a speed from an idle screen as the tool's speed.** Spike 1's ~50x was an idle menu. Speed claims
    need a guest-time check on a real scene.

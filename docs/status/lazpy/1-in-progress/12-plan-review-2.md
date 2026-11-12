@@ -18,7 +18,8 @@ The review file and the revised plan committed.
 none yet
 
 ## Pointers
-- Plan: `docs/` (PLAN.md, once written)
+- Plan: `docs/PLAN.md`
+- Review: `docs/reviews/` (plan-review-2.md, being written; a fresh reviewer, reads review 1 only after its own findings)
 
 ## Lessons and notes
 Read this part only when you work on this item. Blockers, numbers and Guy's words go here verbatim.
