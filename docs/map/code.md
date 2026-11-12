@@ -17,4 +17,5 @@
 - `tools/`: the status and map scripts (see `docs/map/tools.md`).
 - `README.md` (public, honest status), `LICENSE` (GPLv3), `CLAUDE.md` (agent guide), `.gitignore`.
 - Ignored, never committed: `dl/` (the downloaded Azahar libretro core and MoltenVK), `vendor/` (libretro and Vulkan
-  headers), `runs/`, `roms/`, `sdmc/`.
+  headers), `runs/`, `roms/`, `sdmc/`, `build/` (host and test app output), `build-core/` (our core's build: `build.log`,
+  `build.pid`, `build.exit`, `azahar_lazpy_libretro.dylib`).
