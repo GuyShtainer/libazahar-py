@@ -10,7 +10,7 @@ the next session needs to act now, and points at the rest. Goals, rules, decisio
 | What | Where | Agent id | It stops when |
 |---|---|---|---|
 | laz-210: step C as-built review (opus), writes `docs/reviews/` (phase-2-c-as-built.md) only | MAIN, reads ../libazahar-py-c | a9e8f589eeba79788 | fix list for C's builder (acae9a26ca38daf7c, reported 19:46: gate_c 28/28, uncommitted C2+C3) |
-| laz-220: step D1 + D2 (Python package, worker, errors; state.c, statemeta.c; sonnet), ends with the "D1+D2 done" report | ../libazahar-py-d (step-d from 0651a8d) | a8301022e123dfae3 | report; after C merges, main merged into step-d and D resumed for D3 |
+| laz-220: step D1 + D2 (Python package, worker, errors; state.c, statemeta.c; sonnet), ends with the "D1+D2 done" report | ../libazahar-py-d (step-d from 0651a8d) | a8301022e123dfae3 | D1+D2 committed b24c436; waits for C's api.c fix and C's merge, then main merged into step-d and D resumed for D3 |
 | laz-300: Phase 3 plan (opus): writes `docs/plans/` (phase-3, e, f2, g) only | this repo | aed5ccfac0370b719 | plan written; then review 1 |
 
 ## Next steps, in order

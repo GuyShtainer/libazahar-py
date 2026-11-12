@@ -47,3 +47,4 @@ date	bet	phase	agent_id	model	role	kind	start	end	hours	source
 2026-11-12	core build launch, waiter, C1 commit, D launch	phase-2	main	opus	main	process	19:26	19:40	0.10	session clock
 2026-11-12	core build check, Phase 1 close, worktree cleanup	phase-1	main	opus	main	process	19:41	19:43	0.03	session clock
 2026-11-12	Step C2+C3 builder: run loop, inputs, stops, raw shots, gate_c	phase-2	acae9a26ca38daf7c	sonnet	builder	agent	19:39	19:46	0.12	session clock (resumed run)
+2026-11-12	Step D1+D2 builder: Python package, worker, state files	phase-2	a8301022e123dfae3	sonnet	builder	agent	19:39	19:47	0.14	agent duration 511 s
