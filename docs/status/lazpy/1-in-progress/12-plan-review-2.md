@@ -23,3 +23,8 @@ none yet
 
 ## Lessons and notes
 Read this part only when you work on this item. Blockers, numbers and Guy's words go here verbatim.
+- For revision 2 (Gen3D session, 2026-11-12, from Guy's question "can you use save states to skip the menu loading
+  time?"): booting from a saved whole-console state is a first-class feature, not an extra. Save a state at frame N to
+  a file; a later run starts from that file instead of booting. Gen3D uses it to skip the app boot, world build and
+  game title on every run after the first. Phase D's gate must show a run started from a state file reaching the same
+  screen and log lines. Windowed Azahar can't load states without GUI focus, so this is something only we offer.
