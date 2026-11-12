@@ -13,7 +13,6 @@ the next session needs to act now, and points at the rest. Goals, rules, decisio
 | laz-110: step F1, our core's pin, patches, options profile, build script; configure and planted reds only, no build (sonnet) | ../libazahar-py-f1 (step-f1) | a85f3abcf6d608824 | reported 19:03, configure + 3 reds ok, uncommitted; in the as-built review |
 | laz-120: step A, host library and azhost CLI, gate-a (sonnet) | ../libazahar-py-a (step-a) | a4e8c6931d1122bf4 | reported 18:59, gate-a 8/8 PASS, uncommitted; in the as-built review |
 | laz-130: step B, test app and checker, gate-b (sonnet) | ../libazahar-py-b (step-b) | ab76e8c1f445db1b3 | reported 18:57, gate-b 14/14 PASS (fe2), uncommitted; in the as-built review |
-| laz-200: Phase 2 plan revision 2 from `docs/reviews/phase-2-review-2.md` (the plan's author, opus), edits `docs/plans/` (phase-2, c, d) only | this repo | a4bcf09ec00640830 | revised plan; then a main-loop check of each fix, then C and D after Phase 1 merges |
 
 ## Next steps, in order
 1. Phase 2 revision 2 running (above): commit it, check each review-2 fix is in the text (no third loop).

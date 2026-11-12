@@ -43,3 +43,9 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   svcBreak (exception_handler.cpp:80-142), so read the "Exception Type" line. S5 touches Phase 1's log.c (the core
   passes the finished line as the format string; write it literally), sent to the as-built review. S10: C3's gate and
   D3 wait for `build-core/build.exit`. Re-read C1's frozen header once before C1 starts.
+- Revision 2 (a4bcf09ec00640830, 19:13): X1 and S1-S10 taken (S5 is Phase 1's as-built fix), N1-N15 taken; approved
+  departures P1-P6 in phase-2.md section 5; declined: the X-macro header generator (C rule 8; const rows catch drift),
+  the numpy touch oracle, debug-text stops on the stock core (late log thread; P5). C 2.0 h, D 2.1 h, phase about
+  4.6 h. Frozen sizes: batch 3348, result 304, stats 240, layout 6452 (AZH_MAX_FIELDS 160). Still from Phase 1:
+  log.c writes the core's line literally; optionally a getter for an option's current value. PLAN.md's state-boot
+  line now says sha256, not program id (P4).

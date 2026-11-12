@@ -213,7 +213,8 @@ load_game false, a SET_MESSAGE during `context_reset`, or a NULL frame on the fi
   USING.md says so. The size varies per call (628-630), so the buffer is allocated per call with one owner.
 - SD files are not in the state, and the guest may hold them open, so `save_state` also copies the instance's SD
   folder to `<state>.sd/` by default; a state boot restores it into the new instance's folder first.
-- State boot: `azh_boot(app, state)` loads the app (the state checks the program id), completes the Vulkan setup and
+- State boot: `azh_boot(app, state)` loads the app (the core's program-id check is 0 for every `.3dsx`, so our state meta stores the app's sha256 and
+  refuses another app; Phase 2 departure P4), completes the Vulkan setup and
   the first `retro_run`, loads the state, and counts frames from there as N + k. The windowed Qt app cannot load
   states without GUI focus, so this is something only we offer.
 
