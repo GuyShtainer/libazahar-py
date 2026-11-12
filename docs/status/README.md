@@ -1,5 +1,5 @@
 ---
-asof: 2026-11-12 18:31
+asof: 2026-11-13 00:40
 ---
 # libazahar-py status: read this first
 
@@ -7,15 +7,21 @@ A headless, scriptable host for the Azahar 3DS emulator's libretro core, plus a 
 publish-ready. What to do this hour: `docs/status/lazpy/1-in-progress/HANDOFF.md`.
 
 ## Now
-- The whole plan is final (`docs/PLAN.md`). The work is four phases, each planned and reviewed twice before it is built. Nothing is built yet.
-- Tests so far: the core runs a 3DS homebrew app with no window and screenshots both screens; a real 3D scene runs about 5.6x real time on a busy machine, and three copies give about 3.2x one copy's total. Memory reads need our own patched core (the stock one exposes no game memory).
-- Phase 1 (our patched core build, the host library, the test app): both reviews done; the last one found two plan errors (a record's size, missing interface notes) and moved the long core build to after review. One revision left, then building.
-- Phase 2 (input, stop rules, the Python layer, savestates): one review and one revision done, about 4.4 h of build work; one review loop left.
-- Session paused by a slow stop at 18:11; nothing running.
+- Phase 1 is done: our patched core builds (now with Azahar's built-in console keys turned off and no build paths in
+  the binary), the host library and the test app pass their gates.
+- Phase 2: button, touch and circle-pad input and the stop rules are merged (28 gate checks). The Python layer
+  passes its full test run (69 tests, state boot about 1.6 s against Guy's 2.5 s bound); its review asked for six
+  small fixes, being made now; then it merges and Phase 2 is done.
+- Phase 3 (many copies, our core's full test run, memory reads): two reviews done; the final revision is being
+  written. It adds one more core rebuild: OpenSSL 3 instead of LibreSSL (Guy), Nintendo's HTTPS client
+  certificate removed, and no console keys loaded.
+- Phase 4 (docs, legal audit, release): plan and one review done; revision 1 is being written (history rewrite
+  before the first push, OpenSSL's source offered with the release).
 
 ## Next
-- Phase 1's last revision and Phase 2's second review, side by side (briefs ready in `docs/plans/next-briefs.md`); then Phase 1's three builders and our core's first build. Gen3D starts using the tool at the end of Phase 2.
-- Then many copies at once with a speed table, our core passing the full test set, memory reads, docs, the legal audit and the public release.
+- Merge the Python layer and close Phase 2; the core rebuild; then Phase 3's builders (worker pool and speed table,
+  core gate, memory reads). Gen3D can start using the tool once Phase 2 is merged.
+- Phase 4's second review and revision, then docs and the release. Pushing waits on Guy (repo, "push", publish).
 
 ## Where each item is
 <!-- generated:begin (python3 -I tools/mkprogress.py; do not edit by hand) -->

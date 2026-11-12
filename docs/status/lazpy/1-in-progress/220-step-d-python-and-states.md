@@ -96,6 +96,6 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   disk after the 21:04 run are t_core_start=0.40 t_boot=5.09 t_state=1.62 ratio=0.317 fixed_ratio=0.259 k=0
   drain_ms=433.0 unserialize_ms=643.6; k was 0 in every save. Every SIGSEGV test run (fake ones too) writes a
   Python-*.ips crash report in ~/Library/Logs/DiagnosticReports. The meta's app= holds the absolute path (the
-  Mac's user name). H1-H6 hold, H7 on our core. Fix list sent to the builder 00:40 with N1-N3, N5, N9-N11, N14
+  Mac's user name). H1-H6 hold, H7 on our core. Fix list sent to the builder 00:38 with N1-N3, N5, N9-N11, N14
   and Phase 4's S13 (USING section 11 "Stock: exact repeats"). Merge lines: the review's runners.md block and
   tools.md entry.

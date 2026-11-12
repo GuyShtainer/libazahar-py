@@ -66,4 +66,4 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
 - Guy 2026-11-13 00:3x: G8 "Rewrite before push (Recommended)": rewrite this repo's history before the first
   push so no commit names his personal address or its local part. G3 "Switch to OpenSSL 3" (static OpenSSL 3 in
   Phase 3's P9b rebuild; Phase 4 offers its exact source and carries its Apache-2.0 licence).
-- Revision 1 launched 00:41 (a739c8de18f2e6992, fresh opus), with Phase 3 review 2's asks and both rulings.
+- Revision 1 launched 00:38 (a739c8de18f2e6992, fresh opus), with Phase 3 review 2's asks and both rulings.

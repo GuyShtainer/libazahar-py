@@ -78,4 +78,4 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
 - Guy 2026-11-13 00:3x, on LibreSSL (Phase 4 review 1): "Switch to OpenSSL 3": the P9b rebuild links a static
   OpenSSL 3 (Homebrew openssl@3 3.6.5, /opt/homebrew/opt/openssl@3/lib/libssl.a, libcrypto.a) through
   USE_SYSTEM_OPENSSL. Main-loop default for Q6: patch 0008 (load no keys) goes in the same rebuild.
-- Revision 2 launched 00:41 (ae13bb77d6994c473, fresh opus).
+- Revision 2 launched 00:38 (ae13bb77d6994c473, fresh opus).
