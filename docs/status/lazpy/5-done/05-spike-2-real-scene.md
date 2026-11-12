@@ -17,7 +17,11 @@ and tests memory reads (the libretro memory map first, the gdb stub second). Run
 Its hand-back, copied into `docs/research/` (spike-2-real-scene.md) with the verdicts and the speed table.
 
 ## Evidence
-none yet
+2026-11-12, Gen3D session's agent a8bc5d5c (sonnet, 15:46-16:20, hours in Gen3D's ledger): hand-back copied into
+`docs/research/spike-2-real-scene.md`, frontend `prototype/fe3.c` (frame-exact scripted input; touch untested).
+Memory reads: do not work in core 2126.2 (memory map has only 0x0FFFC000 and VRAM; gdb stub ignores config).
+Speed: about 5.6-5.7x real time on a 3D scene at load 27, about 2.2x at load 58-96; one retro_run = one guest
+vblank, checked two ways. A clean quiet-machine measurement is still owed.
 
 ## Pointers
 - Brief: in the Gen3D repo (not this one), docs/phase1-flip, file BRIEF-headless-check.md.
