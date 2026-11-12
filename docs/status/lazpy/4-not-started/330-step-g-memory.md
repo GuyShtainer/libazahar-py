@@ -1,12 +1,13 @@
 ---
-id: laz-60
+id: laz-330
 title: lazpy
-order: 60
-kind: phase
+order: 330
+kind: step
+parent: laz-300
 page: Reading and writing the game's memory
-hours: phase-g
+hours: -
 ---
-# Phase G: reading and writing the game's memory
+# Step G: reading and writing the game's memory
 
 ## What it is
 Memory reads and writes through our core's exported calls, the per-frame watch list, a clear error on the stock core.

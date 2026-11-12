@@ -9,7 +9,7 @@ publish-ready. What to do this hour: `docs/status/lazpy/1-in-progress/HANDOFF.md
 ## Now
 - The plan is final (`docs/PLAN.md`): two full reviews, two revisions and a short source check. Ten phases, about 11 h of agent time plus 1-2 h of machine time for the first core build.
 - Tests so far: the core runs a 3DS homebrew app with no window and screenshots both screens; a real 3D scene runs about 5.6x real time on a busy machine, and three copies give about 3.2x one copy's total. Memory reads need our own patched core (the stock one exposes no game memory).
-- Building has started: our patched core's build script, the host library and the test app, side by side. Their build briefs are being written.
+- The work is four phases, each planned and reviewed twice before it is built. Phase 1 (our patched core build, the host library, the test app) is being planned.
 
 ## Next
 - Buttons, touch and stop rules; then the Python layer with savestates and starting a run from a saved state, where Gen3D starts using the tool.
@@ -18,10 +18,11 @@ publish-ready. What to do this hour: `docs/status/lazpy/1-in-progress/HANDOFF.md
 ## Where each item is
 <!-- generated:begin (python3 -I tools/mkprogress.py; do not edit by hand) -->
 ### libazahar-py (`docs/status/lazpy/`)
-- in-progress: `docs/status/lazpy/1-in-progress/20-phase-f1-core-build.md`
-- in-progress: `docs/status/lazpy/1-in-progress/21-phase-a-host-library.md`
-- in-progress: `docs/status/lazpy/1-in-progress/22-phase-b-test-app.md`
-- files: 0 in `3-waiting-on-guy/`, 7 in `4-not-started/`, 9 in `5-done/`, 0 in `6-parked/`
+- in-progress: `docs/status/lazpy/1-in-progress/100-phase-1-foundation.md`
+- next: `docs/status/lazpy/2-next/110-step-f1-core-build.md`
+- next: `docs/status/lazpy/2-next/120-step-a-host-library.md`
+- next: `docs/status/lazpy/2-next/130-step-b-test-app.md`
+- files: 0 in `3-waiting-on-guy/`, 10 in `4-not-started/`, 9 in `5-done/`, 0 in `6-parked/`
 <!-- generated:end -->
 
 ## How to change a status (one step)

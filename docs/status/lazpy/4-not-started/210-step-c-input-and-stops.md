@@ -1,12 +1,13 @@
 ---
-id: laz-30
+id: laz-210
 title: lazpy
-order: 30
-kind: phase
+order: 210
+kind: step
+parent: laz-200
 page: Buttons, touch and the circle pad, frame-exact; stop rules and why a run stopped
-hours: phase-c
+hours: -
 ---
-# Phase C: buttons, touch and the circle pad, frame-exact; stop rules and why a run stopped
+# Step C: buttons, touch and the circle pad, frame-exact; stop rules and why a run stopped
 
 ## What it is
 Batches with input records, touch and circle pad, the SD log stop rule, stop reasons from the core's messages, the heartbeat and wall limit, SD seeding; host unit tests.

@@ -1,12 +1,13 @@
 ---
-id: laz-22
+id: laz-130
 title: lazpy
-order: 22
-kind: phase
+order: 130
+kind: step
+parent: laz-100
 page: A small test app built from source, so tests need no commercial game
-hours: phase-b
+hours: -
 ---
-# Phase B: a small test app built from source, so tests need no commercial game
+# Step B: a small test app built from source, so tests need no commercial game
 
 ## What it is
 Our own 3DS test app (libctru, GPLv3): reads a seeded control file before its first frame to pick a mode, draws corner markers, logs one line per frame to the SD card and the debug channel.

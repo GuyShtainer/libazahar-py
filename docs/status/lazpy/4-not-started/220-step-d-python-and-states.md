@@ -1,12 +1,13 @@
 ---
-id: laz-40
+id: laz-220
 title: lazpy
-order: 40
-kind: phase
+order: 220
+kind: step
+parent: laz-200
 page: The Python layer, savestates and starting a run from a saved state
-hours: phase-d
+hours: -
 ---
-# Phase D: the Python layer, savestates and starting a run from a saved state
+# Step D: the Python layer, savestates and starting a run from a saved state
 
 ## What it is
 `python/libazahar/`, one worker process per instance, typed errors, savestates and state boot with the SD snapshot; pytest on the test app; the Gen3D mapping in USING.md. Gen3D starts its adapter here.

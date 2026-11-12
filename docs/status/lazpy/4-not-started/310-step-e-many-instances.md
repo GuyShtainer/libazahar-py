@@ -1,12 +1,13 @@
 ---
-id: laz-50
+id: laz-310
 title: lazpy
-order: 50
-kind: phase
+order: 310
+kind: step
+parent: laz-300
 page: Many copies at once with a machine-wide cap, and the speed table
-hours: phase-e
+hours: -
 ---
-# Phase E: many copies at once with a machine-wide cap, and the speed table
+# Step E: many copies at once with a machine-wide cap, and the speed table
 
 ## What it is
 The instance pool, per-instance folders, the slot cap and nice; a 1-2-3 instance scaling run on the test app's 3D scene giving guest fps and CPU ms per guest frame.

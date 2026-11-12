@@ -1,12 +1,13 @@
 ---
-id: laz-70
+id: laz-410
 title: lazpy
-order: 70
-kind: phase
+order: 410
+kind: step
+parent: laz-400
 page: Docs: README, status, usage and API
-hours: phase-h
+hours: -
 ---
-# Phase H: docs: README, status, usage and API
+# Step H: docs: README, status, usage and API
 
 ## What it is
 README with honest status and measured numbers, STATUS.md, USING.md, HOST-API.md, NOTICES.md, examples.

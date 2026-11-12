@@ -1,12 +1,13 @@
 ---
-id: laz-80
+id: laz-420
 title: lazpy
-order: 80
-kind: phase
+order: 420
+kind: step
+parent: laz-400
 page: Legal audit and the public GitHub release
-hours: phase-i
+hours: -
 ---
-# Phase I: legal audit and the public GitHub release
+# Step I: legal audit and the public GitHub release
 
 ## What it is
 The release legal audit over repo, history and assets; a release with our core, Azahar's source tarball unchanged, our patches, notices and the test app. Push only on Guy's word.

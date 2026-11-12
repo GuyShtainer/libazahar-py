@@ -219,8 +219,14 @@ load_game false, a SET_MESSAGE during `context_reset`, or a NULL frame on the fi
 
 ## 3. Phases
 
-Each phase: an opus phase plan, sonnet builds from it, an opus review of the diff, the main loop commits (about
-0.35 h of each phase's hours). Every gate runs on this Mac, headless, as a command with a pass/fail answer.
+**Grouping (Guy 2026-11-12, after the split):** the ten units below are *steps* in four phases, and each phase
+gets Guy's full loop before anything in it is built: phase plan, opus review 1, revision, opus review 2, revision,
+then sonnet builds the steps, an opus as-built review per step, the main loop commits.
+Phase 1 foundation = F1, A, B. Phase 2 control = C, D. Phase 3 scale and memory = E, F2, G. Phase 4 release = H, I.
+The two loops add about 0.5 h per phase (about 2 h in all) to the step hours below.
+
+Each step: sonnet builds from the approved phase plan, an opus review of the diff, the main loop commits (about
+0.35 h of each step's hours). Every gate runs on this Mac, headless, as a command with a pass/fail answer.
 
 | Order | Phase | Needs first | Hours | Gen3D need it serves |
 |---|---|---|---|---|

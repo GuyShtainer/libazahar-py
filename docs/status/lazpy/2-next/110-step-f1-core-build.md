@@ -1,12 +1,13 @@
 ---
-id: laz-20
+id: laz-110
 title: lazpy
-order: 20
-kind: phase
+order: 110
+kind: step
+parent: laz-100
 page: Our patched core: patch files, version pin and build script; the first build started
-hours: phase-f1
+hours: -
 ---
-# Phase F1: our patched core: patch files, version pin and build script; the first build started
+# Step F1: our patched core: patch files, version pin and build script; the first build started
 
 ## What it is
 Our own Azahar core build: the pinned source tarball, our patches (memory read/write calls, repeatable-run and clock options, our version name), the build script, the notices. The first full build runs detached and nice'd.
