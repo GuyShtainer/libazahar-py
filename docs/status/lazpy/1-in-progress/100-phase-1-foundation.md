@@ -31,3 +31,7 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   tarball verified and unpacked in `dl/azahar-src/` (429 MB, all submodules). Four line-number corrections for
   PLAN 2.7 (memory.h 577/621, SET_MEMORY_MAPS at environment.cpp:119, ParseCoreOptions at citra_libretro.cpp:228,
   savestate revision check at savestate.cpp:65-71); CMake 4 needs `-DCMAKE_POLICY_VERSION_MINIMUM=3.5`.
+- For Phase 1's revision (from Phase 2's plan, 2026-11-12): two conflicts with B's draft. Break: B's gate expects no
+  log line after svcBreak, but SVC::Break only sets status 14 and returns, so the guest runs on (PLAN gate C(e)).
+  Slow boot: B's slow-boot frames are idle; D's "state boot under 10 % of the boot's wall time" needs them CPU-busy.
+  Phase 2 also assumes 17 things of A and 9 of B (`docs/plans/phase-2.md` section 5): reconcile at revision.
