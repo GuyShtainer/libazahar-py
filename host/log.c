@@ -16,6 +16,9 @@
 static int log_fd = -1;
 static int threshold = AZH_LOG_INFO;
 static pthread_mutex_t log_mx = PTHREAD_MUTEX_INITIALIZER;
+static int dbg_armed;                   /* atomic */
+static int dbg_hit;                     /* atomic */
+static char dbg_text[256];
 
 static int parse_level(const char *s)
 {
@@ -113,8 +116,37 @@ void azh_log(int level, const char *fmt, ...)
  * have passed are ignored. The threshold is checked first so filtered lines cost nothing. */
 void azh_core_log(enum retro_log_level level, const char *fmt, ...)
 {
-    if (fmt == NULL || (int)level < threshold) {
+    if (fmt == NULL) {
+        return;
+    }
+    if (__atomic_load_n(&dbg_armed, __ATOMIC_ACQUIRE) != 0 && strstr(fmt, dbg_text) != NULL) {
+        __atomic_store_n(&dbg_hit, 1, __ATOMIC_RELEASE);     /* whatever the line's level */
+    }
+    if ((int)level < threshold) {
         return;
     }
     azh_log((int)level, "%s", fmt);
+}
+
+/* the debug-text observer (our core only): armed by azh_run for one batch, a hit sets a flag the batch loop reads. The
+ * core's lines arrive whole, so no carry. The arm order (flag off, text, flag on) keeps a reader on another thread
+ * from seeing a half-written text. */
+void azh__log_set_debug_stop(const char *text_or_null)
+{
+    __atomic_store_n(&dbg_armed, 0, __ATOMIC_RELEASE);
+    __atomic_store_n(&dbg_hit, 0, __ATOMIC_RELEASE);
+    if (text_or_null != NULL && text_or_null[0] != '\0') {
+        (void)snprintf(dbg_text, sizeof dbg_text, "%s", text_or_null);
+        __atomic_store_n(&dbg_armed, 1, __ATOMIC_RELEASE);
+    }
+}
+
+int azh__log_debug_hit(void)
+{
+    return __atomic_load_n(&dbg_hit, __ATOMIC_ACQUIRE);
+}
+
+int azh__log_fd(void)
+{
+    return log_fd;
 }

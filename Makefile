@@ -16,8 +16,9 @@ build/libazhost.dylib: $(LIB_OBJ) host/libazhost.exports
 	$(CC) -dynamiclib -install_name @rpath/libazhost.dylib -Wl,-exported_symbols_list,host/libazhost.exports \
 	    -o $@ $(LIB_OBJ) -lz -lpthread
 
-build/azhost: build/obj/azhost_main.o build/libazhost.dylib
-	$(CC) -o $@ build/obj/azhost_main.o -Lbuild -lazhost -Wl,-rpath,@loader_path
+# azhost links sdcopy.o directly: azh__copy_tree is internal, not an exported symbol of the library
+build/azhost: build/obj/azhost_main.o build/obj/sdcopy.o build/libazhost.dylib
+	$(CC) -o $@ build/obj/azhost_main.o build/obj/sdcopy.o -Lbuild -lazhost -Wl,-rpath,@loader_path
 
 # static analysis: one pass per host source, no .plist output
 check:
@@ -37,7 +38,18 @@ build/test-version: tests/test_version.c host/version.c $(HEADERS)
 testapp:
 	$(MAKE) -C testapp
 
-clean:
-	rm -rf build/libazhost.dylib build/azhost build/test-version build/obj
+# step C's pure-C unit tests: no core, no Vulkan. -ffp-contract=off keeps the float32 touch model exact.
+TEST_SRC = host/input.c host/match.c host/msg.c host/rawcopy.c host/crop.c host/png.c host/sdcopy.c host/statemeta.c \
+           $(wildcard tests/host/*.c)
 
-.PHONY: all check test-version testapp clean
+test-host: build/test-host
+	build/test-host
+
+build/test-host: $(TEST_SRC) $(HEADERS) $(wildcard tests/host/*.h)
+	@mkdir -p build
+	$(CC) $(CFLAGS) -ffp-contract=off -Itests/host -o $@ $(TEST_SRC) -lz -lm
+
+clean:
+	rm -rf build/libazhost.dylib build/azhost build/test-version build/test-host build/obj
+
+.PHONY: all check test-version test-host testapp clean
