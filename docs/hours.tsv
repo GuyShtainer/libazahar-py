@@ -73,3 +73,4 @@ date	bet	phase	agent_id	model	role	kind	start	end	hours	source
 2026-11-13	Phase 4 plan revision 1	phase-4	a739c8de18f2e6992	opus	planner	agent	00:38	01:02	0.40	agent duration 1429 s
 2026-11-13	Step 0 aligned to revision 2, commits, rebuild launch, Phase 4 rev 1 routing, two launches	phase-3	main	opus	main	build	00:57	01:05	0.13	session clock
 2026-11-13	Step 0 rebuild checks, G8 history rewrite, commit map	phase-4	main	opus	main	process	01:05	01:08	0.05	session clock
+2026-11-13	Items 310/320 moved, worktrees, E1 and F2 launch, handoff	phase-3	main	opus	main	process	01:08	01:09	0.02	session clock
