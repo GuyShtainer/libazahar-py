@@ -1,7 +1,7 @@
 <!-- handoff: slim v1 | current tasks only | rewritten whole from docs/status/templates/handoff.md | budget 80 lines | never append -->
 # libazahar-py handoff
 
-As of: 2026-11-12 17:29 (this project's own session, which took over from the Gen3D session)
+As of: 2026-11-12 17:45 (this project's own session, which took over from the Gen3D session)
 
 New project, nothing built yet. The repo, status folders, maps and research are in place (setup commit 2288e94);
 the pre-commit hook runs status_check on main (Guy's yes, 2026-11-12). Nothing pushed. The downloaded core and MoltenVK are already in `dl/` (ignored), the headers in `vendor/`.
@@ -10,7 +10,7 @@ the pre-commit hook runs status_check on main (Guy's yes, 2026-11-12). Nothing p
 | What | Where | Agent id | It stops when |
 |---|---|---|---|
 | laz-100: Phase 1 plan review 1 (opus, fresh), writes `docs/reviews/` (phase-1-review-1.md) only | this repo | aa338033502fcbfa8 | review written, then revision 1 by the plan's author (ad1f072f69021fa61) |
-| laz-200: Phase 2's plan (input, stops, Python, state boot; opus, in parallel with Phase 1's), writes `docs/plans/` (phase-2.md, phase-c.md, phase-d.md) only | this repo | a4bcf09ec00640830 | three plan files written |
+| laz-200: Phase 2 plan review 1 (opus, fresh), writes `docs/reviews/` (phase-2-review-1.md) only | this repo | a9d1adf3a39bedca4 | review written, then revision 1 by the plan's author (a4bcf09ec00640830) |
 
 ## Next steps, in order
 1. Phase 1 (laz-100): plan drafted (`docs/plans/phase-1.md` and its three step files, commit dae8f49); review 1
