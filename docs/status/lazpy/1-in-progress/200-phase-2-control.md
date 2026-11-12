@@ -38,3 +38,8 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   tx 16, ty 18, cx 20, cy 22, tick 24); rows A4, A18, B10, B11 and abi_layout/error-before-open now hold as written;
   A19 (readback after retro_run returns; azh_shot reads the last frame after a batch) and A6 (sysdir already in the
   state struct) are stated.
+- Review 2 (`docs/reviews/phase-2-review-2.md`): 1 blocker, 10 should fix, 15 nice; ready after the fixes, no third
+  loop (a main-loop check that each fix is in the text). X1: status 14 is set for every guest exception, not only
+  svcBreak (exception_handler.cpp:80-142), so read the "Exception Type" line. S5 touches Phase 1's log.c (the core
+  passes the finished line as the format string; write it literally), sent to the as-built review. S10: C3's gate and
+  D3 wait for `build-core/build.exit`. Re-read C1's frozen header once before C1 starts.
