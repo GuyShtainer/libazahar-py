@@ -1,0 +1,8 @@
+AZAHAR_TAG=2126.2
+AZAHAR_COMMIT=219d743a1e698101fe1ab8bef43e6563126c3c27
+SRC_URL=https://github.com/azahar-emu/azahar/releases/download/2126.2/azahar-unified-source-2126.2.tar.xz
+SRC_SHA256=85c8b56fac703df04720125044b8ff887997911858a6cde545dfb1107ba4cd26
+SRC_SIZE=43224348
+SRC_FILE=dl/azahar-src/src.tar.xz
+SRC_TOP=azahar-unified-source-2126.2
+LAZPY_REV=1

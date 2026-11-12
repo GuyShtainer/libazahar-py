@@ -1,0 +1,81 @@
+--- a/src/citra_libretro/citra_libretro.cpp
++++ b/src/citra_libretro/citra_libretro.cpp
+@@ -746,8 +746,70 @@
+ 
+ size_t retro_get_memory_size(unsigned id) {
+     return 0;
++}
++
++// Checks one guest range and returns the process it lies in, or null with `status` set (-1 not running or no
++// process, -3 bad arguments, -2 a page in the range is unmapped). Every page is checked because ReadBlock zero-fills
++// and WriteBlock skips unmapped pages without failing.
++static std::shared_ptr<Kernel::Process> LazpyCheckRange(uint32_t vaddr, const void* buf, uint32_t len,
++                                                        int& status) {
++    if (buf == nullptr || len == 0 || len > 0x4000000u ||
++        static_cast<uint64_t>(vaddr) + len > 0x100000000ull) {
++        status = -3;
++        return nullptr;
++    }
++    auto& system = Core::System::GetInstance();
++    if (!system.IsPoweredOn()) {
++        status = -1;
++        return nullptr;
++    }
++    std::shared_ptr<Kernel::Process> process = system.Kernel().GetCurrentProcess();
++    if (!process) {
++        status = -1;
++        return nullptr;
++    }
++    const uint64_t last = static_cast<uint64_t>(vaddr) + len - 1;
++    for (uint64_t page = vaddr & ~static_cast<uint64_t>(Memory::CITRA_PAGE_MASK); page <= last;
++         page += Memory::CITRA_PAGE_SIZE) {
++        if (!system.Memory().IsValidVirtualAddress(*process, static_cast<VAddr>(page))) {
++            status = -2;
++            return nullptr;
++        }
++    }
++    status = 0;
++    return process;
+ }
+ 
++// Guest memory by virtual address in the current process. Call only between frames.
++// 0 ok; -1 not running or no process; -2 a page in the range is unmapped; -3 bad arguments.
++extern "C" int lazpy_read_memory(uint32_t vaddr, void* buf, uint32_t len) {
++    try {
++        int status = 0;
++        auto process = LazpyCheckRange(vaddr, buf, len, status);
++        if (!process) {
++            return status;
++        }
++        Core::System::GetInstance().Memory().ReadBlock(*process, vaddr, buf, len);
++        return 0;
++    } catch (...) {
++        return -1;
++    }
++}
++
++extern "C" int lazpy_write_memory(uint32_t vaddr, const void* buf, uint32_t len) {
++    try {
++        int status = 0;
++        auto process = LazpyCheckRange(vaddr, buf, len, status);
++        if (!process) {
++            return status;
++        }
++        Core::System::GetInstance().Memory().WriteBlock(*process, vaddr, buf, len);
++        return 0;
++    } catch (...) {
++        return -1;
++    }
++}
++
+ void retro_cheat_reset() {}
+ 
+ void retro_cheat_set(unsigned index, bool enabled, const char* code) {}
+--- a/src/citra_libretro/libretro.osx.def
++++ b/src/citra_libretro/libretro.osx.def
+@@ -26,3 +26,5 @@
+ _retro_get_region
+ _retro_get_memory_data
+ _retro_get_memory_size
++_lazpy_read_memory
++_lazpy_write_memory

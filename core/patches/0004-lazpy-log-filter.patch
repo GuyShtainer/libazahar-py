@@ -1,0 +1,21 @@
+--- a/src/citra_libretro/citra_libretro.cpp
++++ b/src/citra_libretro/citra_libretro.cpp
+@@ -57,7 +57,7 @@
+ 
+ class CitraLibRetro {
+ public:
+-    CitraLibRetro() : log_filter(Common::Log::Level::Debug) {}
++    CitraLibRetro() : log_filter(Common::Log::Level::Info) {}
+ 
+     Common::Log::Filter log_filter;
+     std::unique_ptr<EmuWindow_LibRetro> emu_window;
+@@ -71,6 +71,9 @@
+ void retro_init() {
+     emu_instance = new CitraLibRetro();
+     Common::Log::LibRetroStart(LibRetro::GetLoggingBackend());
++    // libazahar-py: keep the emulated program's debug output (Debug_Emulated) at Debug, everything else at Info.
++    emu_instance->log_filter.SetClassLevel(Common::Log::Class::Debug_Emulated,
++                                           Common::Log::Level::Debug);
+     Common::Log::SetGlobalFilter(emu_instance->log_filter);
+ 
+     LOG_DEBUG(Frontend, "Initializing core...");
