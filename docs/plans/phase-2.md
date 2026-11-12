@@ -1,14 +1,16 @@
 # Phase 2, control: the phase plan (item laz-200)
 
-Opus phase plan, 2026-11-12, **draft for Phase 2's two opus review loops. Nothing is built from it until both loops
-pass.** Steps: C (laz-210, `docs/plans/phase-c.md`) and D (laz-220, `docs/plans/phase-d.md`); each brief is complete
-on its own for one sonnet builder. This file is the index: order, file ownership, merge plan, hours, the interfaces
-assumed from Phase 1 (to reconcile at review), and the facts checked for the plan.
+Opus phase plan, 2026-11-12, **revision 1** (after `docs/reviews/phase-2-review-1.md`), **draft for the second
+opus review loop. Nothing is built from it until that loop passes.** Steps: C (laz-210, `docs/plans/phase-c.md`) and
+D (laz-220, `docs/plans/phase-d.md`). Each brief is complete on its own for one sonnet builder. This file is the
+index: order, checkpoints, file ownership, merge plan, hours, the interfaces taken from Phase 1, the checked facts,
+and the changes from review 1.
 
 Contract: `docs/PLAN.md` (final) sections 2.1-2.9, the grouping paragraph of section 3 and its Phase C and Phase D
 paragraphs. This plan refines them; where a brief seems to disagree with PLAN.md on a goal, PLAN.md wins and the
-builder stops and reports. Phase 1's plans (`docs/plans/phase-a.md` read 2026-11-12 17:25, not yet reviewed;
-`phase-f1.md` skimmed; `phase-b.md` read later the same day; `phase-1.md` the index) are the other input.
+builder stops and reports. Phase 1's revision 1 (commit 21a152c: `phase-1.md` with its "Interfaces for Phase 2",
+`phase-a.md`, `phase-b.md`, `phase-f1.md`) is the other input; its review 2 is running, so section 5 lists what
+Phase 1's revision 2 must still state.
 
 Hours are agent wall time (PLAN.md's unit). Machine time (emulator test batches in the background) is not counted.
 
@@ -16,118 +18,124 @@ Hours are agent wall time (PLAN.md's unit). Machine time (emulator test batches 
 
 | Step | Delivers | Gate (headless, this Mac, test app, stock core) | Hours |
 |---|---|---|---|
-| C, laz-210 | `azh_run` with input records, touch and circle pad; the SD and debug-text stop rules; stop reasons from one SET_MESSAGE detector; heartbeat and wall limit in the map; SD seeding; `azhost` flags; pure-C unit tests (`make test-host`); the frozen ABI header | `make test-host` passes; `python3 -I tests/gate_c.py` prints PASS for C(a)-(f); C(g) is in the unit tests | 1.85 |
-| D, laz-220 | `python/libazahar/` (Emulator, worker process, mapped file, typed errors, ctypes checked against `azh_abi_layout()`), `pyproject.toml`; `host/state.c`: savestates, the SD snapshot and state boot; pytest; `docs/USING.md` with the Gen3D mapping | `python3 -m pytest -q tests/python` all pass, 0 skipped: C's checks through Python, SIGSEGV gives `HostCrashed` within 1 s, SIGSTOP gives `HostTimeout` and no process, 200,000 frames not a hang, state boot same screen and log fields at under 10 % of the boot's wall time; a scratch venv `pip install -e .` imports | 2.10 |
+| C, laz-210 | `azh_run` with input records, touch and circle pad; raw shots into the map (`AZH_FMT_RAW`); the SD and debug-text stop rules; stop reasons from one SET_MESSAGE detector; heartbeat, frame and vblank totals and the wall limit in the map; SD seeding; `azhost` flags; pure-C unit tests (`make test-host`); the frozen ABI header | `make test-host` passes; `python3 -I tests/gate_c.py` prints PASS for C(a)-(f) and the raw-shot check; C(g) is in the unit tests | 1.9 |
+| D, laz-220 | `python/libazahar/` (Emulator, worker process, mapped file, typed errors, ctypes checked against `azh_abi_layout()`), `pyproject.toml`; `host/state.c`, `host/statemeta.c`: savestates, the SD snapshot and state boot; pytest; `docs/USING.md` with the Gen3D mapping | `python3 -m pytest -q tests/python` all pass, 0 skipped: C's checks through Python, SIGSEGV gives `HostCrashed` within 1 s, SIGSTOP gives `HostTimeout` and no process, 200,000 frames not a hang, state boot same screen and log fields at under 10 % of the boot's wall time; a scratch venv `pip install -e .` imports | 2.0 |
 
-Phase total: **3.95 h** of step work plus about 0.5 h for this plan's two review loops (PLAN.md section 3's
-grouping paragraph) = **about 4.45 h**, against PLAN.md's 2.0 + 2.25 + 0.5 = 4.75 h. Where the 0.3 h went: C does
-not own `azh_stats` (Phase A already ships it), and D reuses C's check functions for its "C through Python" tests.
+Phase total: **3.9 h** of step work plus about 0.5 h for the two review loops (PLAN.md section 3's grouping
+paragraph) = **about 4.4 h**, against PLAN.md's 2.0 + 2.25 + 0.5 = 4.75 h. The checkpoint choreography (two commits,
+one merge, two resumes) is main-loop time, about 0.15 h, booked to the main loop.
 
-## 2. Order and the parallel split
+## 2. Order, checkpoints and the parallel split
 
 ```
-Phase 1 merged on main (A and B at least; F1 not needed)
+Phase 1 merged on main (A and B; F1 not needed)
   |
-  C builder (sonnet, worktree wt-c at main) ---- C1: frozen header + pure modules + unit tests (about 0.5 h)
-  |                                                 | main loop commits C1 on branch step-c
-  |                                                 v
-  |                                       D builder (sonnet, worktree wt-d at the C1 commit)
-  |   C2: run loop, inputs, stops, map           D1: Python package, worker, errors, pure-Python tests
-  |   C3: azhost flags, seeding, gate_c.py       D2: host/state.c, statemeta.c, its unit tests
-  |   gate C in the background                    -> stops, reports "D1+D2 done", waits
+  C builder (sonnet, ../libazahar-py-c, branch step-c)
+  |  C1: frozen header + pure modules + unit tests + D's stubs; ENDS ITS RUN with the "C1 done" report
+  |     main loop commits C1 on step-c, creates ../libazahar-py-d (branch step-d) at the C1 commit
+  |     main loop resumes C (SendMessage "C1 committed at <sha>, go on with C2")
+  |     and launches the D builder (sonnet) with phase-d.md
+  |  C2: run loop, inputs, stops, raw shots           D1: Python package, worker, errors, pure tests
+  |  C3: azhost flags, seeding, gate_c.py              D2: state.c, statemeta.c, unit tests
+  |  gate C in the background                         D ENDS ITS RUN with the "D1+D2 done" report
   v
-  opus as-built review of C; main loop merges step-c into main
-                                                  main loop merges main into step-d (in wt-d)
-                                                  D builder resumed (SendMessage, same agent): D3 integration
-                                                  pytest + docs/USING.md; gate D in the background
-                                                  opus as-built review of D; main loop merges step-d
+  opus as-built review of C; fixes; main loop commits and merges step-c into main
+                                                      main loop: git merge main in ../libazahar-py-d
+                                                      main loop resumes D (SendMessage "main merged at <sha>,
+                                                      go on with D3"): integration pytest + docs/USING.md
+                                                      opus as-built review of D; main loop merges step-d
 ```
 
-- **D may start from C's frozen header** (PLAN.md section 3): the freeze is checkpoint C1, which also creates the
-  stub files D owns (`host/state.c`, `host/statemeta.c`, `tests/host/test_statemeta.c`) so the two builders never edit
-  the same file. After C1, C never edits D's files and D never edits C's. A header change after C1 needs a note to
-  the main loop, which tells the other builder; none is planned.
-- Only C's builder runs the emulator during the parallel window (D1 and D2 are unit tests only), so the machine never
-  has more than one of our instances per agent. D3 runs after C merged, one instance at a time.
-- If D1+D2 finish before C merges, the D builder reports and stops (it does not idle-poll); the main loop resumes the
-  same agent with SendMessage after the merge, so its context is kept.
+- **A builder never waits.** A subagent can report only by ending its run, so each checkpoint is the end of a run:
+  C after C1, D after D2. The main loop commits, then resumes the same agent with SendMessage, so its context is kept.
+  At each launch the main loop writes the builder's agent id into the handoff. If a resume fails (the id is lost or
+  the context gone), the fallback is a fresh sonnet given the brief, the earlier report and `git log step-c` (or
+  `step-d`); the reports are written to make that possible (each lists its exact paths and its measured values).
+- **D starts from C's frozen header** (PLAN.md section 3): the freeze is checkpoint C1, which also creates the stub
+  files D owns (`host/state.c`, `host/statemeta.c`, `tests/host/test_statemeta.c`) and real or stub versions of the
+  run.c functions D links against, so D's code builds from the C1 commit and the two builders never edit the same
+  file. After C1 nobody edits `azhost.h` or `azh_internal.h`; a needed change stops both builders and goes to the
+  main loop (then C and D run one after the other, the fallback order).
+- Only C's builder runs the emulator during the parallel window (D1 and D2 are unit tests only). D3 runs after C is
+  merged, one instance at a time.
+- Why parallel (review 1, Q2): D1 and D2 need only the frozen header, which saves about 1.1 h of elapsed time on the
+  path Gen3D waits on, for about 0.15 h of main-loop time.
 
 ## 3. File ownership (who creates or edits what)
 
-Phase 1 (A) creates the host files; Phase 2 edits named functions in them. Each file has one owner at a time.
+Phase 1's A creates the host files; Phase 2 edits named functions in them. Each file has one owner at a time.
 
 | File | Owner in Phase 2 | What changes |
 |---|---|---|
-| `host/azhost.h` | C (frozen at C1) | extended per phase-c.md section 3; nobody edits it after C1 |
-| `host/azh_internal.h` | C (frozen at C1) | the internal prototypes both steps use (phase-c.md section 3.6) |
+| `host/azhost.h`, `host/azh_internal.h` | C (frozen at C1) | phase-c.md section 3; nobody edits them after C1 |
 | `host/input.c`, `host/match.c`, `host/msg.c`, `host/sdcopy.c` | C | new pure modules |
-| `host/crop.c` | C | the crop function moved out of A's `frame.c` so the unit tests link it without Vulkan |
-| `host/run.c`, `host/env.c` (SET_MESSAGE case only), `host/log.c` (one observer call), `host/hostmap.c` (new fields), `host/api.c` (`azh_run`, `azh_set_input`, `azh_abi_layout`), `host/azhost_main.c` (run flags, `layout`), `Makefile` (`test-host`) | C | phase-c.md section 5 |
+| `host/run.c`, `host/env.c` (SET_MESSAGE case), `host/log.c` (the armed debug observer), `host/hostmap.c` (new fields, raw pixels), `host/frame.c` (the raw copy), `host/api.c` (`azh_run`, `azh_set_input`, `azh_shot`'s RAW branch, `azh_abi_layout`, the routing to `state.c`), `host/azhost_main.c` (run flags, `layout`), `Makefile` (`test-host`) | C | phase-c.md section 5 |
+| `host/crop.c` | A's; C edits it only if A's signature does not fit, and then owns that change | |
 | `tests/host/*.c` except `test_statemeta.c`, `tests/host/messages.txt`, `tests/testapp_log.py`, `tests/checks_c.py`, `tests/gate_c.py` | C | new |
 | `host/state.c`, `host/statemeta.c`, `tests/host/test_statemeta.c` | D (C1 creates stubs) | savestates and state boot |
-| `host/core.c` (the three serialize symbols, only if A's table lacks them; C never edits `core.c`) | D | phase-d.md section 5. C1 already routes `azh_boot`'s state branch, `azh_save_state`, `azh_load_state` and `azhost --save` to `state.c`, so D edits no C file |
 | `python/libazahar/**`, `pyproject.toml`, `tests/python/**`, `docs/USING.md` | D | new |
-| item files 210 and 220 | the builder of that step, "Lessons and notes" only | |
 
-Neither builder touches: `core/`, `testapp/`, `tests/gate-a.sh`, `tests/gate-b.sh`, `tests/check_testapp.py`,
-`.gitignore`, `docs/map/*`, `docs/PLAN.md`, `docs/plans/*`, `docs/hours.tsv`, the handoff, other items, `prototype/`,
-`tools/`, `README.md`. Lines the main loop must add (`.gitignore`, runners) go in the builder's report.
+Neither builder touches: `core/`, `testapp/`, `host/core.c` (A loads all 25 `retro_*` symbols), `tests/gate-a.sh`,
+`tests/gate-b.sh`, `tests/check_testapp.py` (both import its PNG decoder; neither edits it), `tests/test_version.c`,
+`.gitignore`, `docs/map/*`, `docs/PLAN.md`, `docs/plans/*`, `docs/hours.tsv`, the handoff, **every item file**,
+`prototype/`, `tools/`, `README.md`. Lines the main loop must add (`.gitignore`, runners) and the "Lessons and notes"
+block for the item go in the builder's report.
 
 ## 4. Merge plan (the main loop does every commit; agents never commit)
 
-1. Create `wt-c` with `git worktree add ../wt-c -b step-c main` (check `git worktree list` and the case-insensitive
-   name first); seed its ignored `dl/` and `vendor/` by `cp -R` from the main checkout (`dl/azahar`, `dl/moltenvk`,
-   not `dl/azahar-src`); copy `build/testapp.3dsx` in or let the builder run `make testapp` (devkitARM first in PATH).
-   Launch C with phase-c.md.
-2. When C reports C1: commit exactly C1's paths on `step-c` (`git add <paths>`, `git diff --cached --stat`), then
-   `git worktree add ../wt-d -b step-d <C1 commit>`, seed as in 1, launch D with phase-d.md.
-3. When C reports done: opus as-built review of the step-c diff (phase-c.md section 14), fixes by the C builder
-   if any, commit, merge `step-c` into main (no fast-forward needed), move item 210 with its Evidence line.
-4. In `wt-d`: `git merge main` (expect no conflicts: disjoint files). Resume the D builder for D3.
-5. When D reports done: opus as-built review (phase-d.md section 13), fixes, commit, merge `step-d` into main, move
-   item 220, then the phase item 200. Remove both worktrees only after `git status --porcelain` is empty in each.
+1. `git worktree list` and a case-insensitive name check first, then `git worktree add -b step-c
+   ../libazahar-py-c main`. Dispatch without isolation, cwd in the worktree. The builder seeds its ignored `dl/` and
+   `vendor/` itself (phase-c.md step 0). Write the agent id into the handoff.
+2. At "C1 done": commit exactly C1's paths on `step-c` (`git add <paths>`, `git diff --cached --stat`), then
+   `git worktree add -b step-d ../libazahar-py-d <C1 commit>`, launch D with phase-d.md (id into the handoff), and
+   resume C with "C1 committed at <sha>, go on with C2".
+3. At "C done": opus as-built review of the step-c diff (phase-c.md section 14); fixes by the resumed C builder if
+   any; commit; merge `step-c` into main; paste the report's "Lessons and notes" into item 210 and move it with its
+   Evidence line.
+4. At "D1+D2 done" (it may come before or after 3): commit D's paths on `step-d`. Once step 3 is done: in
+   `../libazahar-py-d`, `git merge main` (disjoint files, no conflicts expected); resume D with "main merged at <sha>,
+   go on with D3".
+5. At "D done": opus as-built review (phase-d.md section 13), fixes, commit, merge `step-d` into main; item 220 as in
+   3; then the phase item 200. Remove each worktree only after `git status --porcelain` is empty in it.
 6. Background test batches: each builder launches its own gate in the background and is woken on exit (never
    `sleep`-polls). The full suite (gates A, B, C, D) runs once after the phase merges, as one background batch.
 
-## 5. Interfaces assumed from Phase 1 (reconcile at review)
+## 5. Interfaces taken from Phase 1 (revision 1, commit 21a152c)
 
-From `docs/plans/phase-a.md` (read, unreviewed). If A's final plan changes any of these, the matching brief section
-changes with it.
+Every row is read from Phase 1's revision 1; "R2" marks what Phase 1's revision 2 must still state or change.
 
-| # | Assumption | Used by | Source |
+| # | What Phase 2 relies on | Source | State |
 |---|---|---|---|
-| A1 | `host/azhost.h` is A's section 3 header: `AZH_E_*` codes (-1 ARG, -2 STATE = call order, -3 CORE, -4 BOOT, -5 VULKAN, -6 IO, -7 NOMEM, -8 UNSUPPORTED, -9 NEEDS_LAZPY_CORE), `AZH_EXIT_*` (2 usage, 3 boot, 4 core, 5 vulkan, 6 io, 10 guest exited, 11 guest error), `AZH_SCREEN_*`, `AZH_FMT_*`, `AZH_STOP_*` 0-6, fixed-array structs `azh_shot_req`, `azh_batch`, `azh_result`, `azh_stats`, `azh_layout`, and the 15 functions | C, D | phase-a.md:148-193 |
-| A2 | "C may extend it, D freezes it": this plan moves the freeze to C's checkpoint C1 so D can start in parallel (PLAN.md: "D may start from C's frozen header") | C, D | phase-a.md:148 |
-| A3 | `azh_run(inputs, n, b, out)`: `n` is the number of 7-int32 records (not of ints); A returns `AZH_E_UNSUPPORTED` for `n > 0` | C | phase-a.md:182 (count unit not stated) |
-| A4 | Frames: 1-based within a batch; "frame k is the frame the k-th `retro_run` delivered"; shot PNGs `<shot_dir>/shot_<absolute frame %06lld>_<top|bottom>.png`, written after `retro_run` returns | C, D | phase-a.md:164, 168, 211-212, 234 |
-| A5 | `host.map`: 0 magic `LAZMAP1\0`, 8 version, 12 header size 4096, 16 u64 heartbeat (+1 after every `retro_run`), 24 i32 stop code, 28 i32 message length, 32 char[1024] last core message (A copies every SET_MESSAGE there), 1056 u32 x4 screen sizes, 1072 i64 pixel frame, 4096 pixels (top RGBA 400x240, then bottom 320x240); bytes 1080-4095 free for C | C, D | phase-a.md:195-200 |
-| A6 | One internal state struct in `host/azh_internal.h` with the core proc table, frame counters, a booted flag and the is-our-core flag (`azh_stats.is_lazpy_core`); file statics elsewhere | C, D | phase-a.md:223 |
-| A7 | `host/env.c` has a SET_MESSAGE handler that logs, copies to the map and sets the boot-failure flag during `context_reset`; the "(N)" parsing is C's | C | phase-a.md:69, 226 |
-| A8 | `host/log.c` serializes the core's log lines through one mutex and one formatted write; C adds one observer call there | C, D | phase-a.md:232 |
-| A9 | The crop to top and bottom lives in `host/frame.c` beside the video callback; C moves the pure crop function into `host/crop.c` (signature kept) so `make test-host` links without Vulkan | C | phase-a.md:229 |
-| A10 | `host/png.c` is pure (zlib only) and linkable by the unit tests | C | phase-a.md:230 |
-| A11 | `azhost run <app> --sys <dir> --out <dir> --frames N [--shot ...] [--opt k=v]... [--profile f] [--core p] [--mvk p] [--state f]`; `host.log` and `host.map` in `--out`; stdout summary `frames=<n> wall=<s> fps=<f> shots=<k>`; errors as `BootError:` etc. on stderr | C, D | phase-a.md:202-216 |
-| A12 | Defaults: profile `host/options-default.txt` (applied by `azhost` with `azh_set_option`, not by the library), core `$LAZ_CORE` else `dl/azahar/azahar_libretro.dylib`, MoltenVK `$LAZ_MVK` else `dl/moltenvk/MoltenVK/MoltenVK/dynamic/dylib/macOS/libMoltenVK.dylib` (how the library receives the MoltenVK path is A's; D's worker sets `LAZ_MVK` in its environment and assumes the library reads it) | D | phase-a.md:208-210 |
-| A13 | The profile sets `citra_analog_function=c_stick`, both touchscreen sources enabled, pointer timeout enabled, resolution factor 1 | C | phase-a.md:132-136 |
-| A14 | `core.c` loads the `retro_*` table by explicit `dlsym`; if it lacks `retro_serialize_size`, `retro_serialize`, `retro_unserialize`, D adds those three lines | D | phase-a.md:225 |
-| A15 | `make testapp` delegates to B's `testapp/` and produces `build/testapp.3dsx` | C, D | phase-a.md:247 |
-| A16 | Our core's extra profile is F1's `core/options-lazpy.txt`; F1's patch makes `retro_run` return after the SET_MESSAGE on a non-Success status | C (lazpy branch) | phase-f1.md:164, 183 |
-| A17 | Naming hazard, not a dependency: A's `AZH_E_STATE` means "call order", not savestate. C1 adds `AZH_E_SAVESTATE = -10` for savestate failures (Python `StateError`). Review may rename A's code to `AZH_E_ORDER`. | C, D | phase-a.md:154, 193 |
-
-From Phase B (`docs/plans/phase-b.md`, read 2026-11-12 after its draft appeared, not yet reviewed). Every log and
-control detail goes through one helper file (`tests/testapp_log.py`), so a format change touches one function.
-
-| # | Assumption | Used by | Source |
-|---|---|---|---|
-| B1 | `build/testapp.3dsx` from `make testapp` (needs `PATH=/opt/devkitpro/devkitARM/bin:/opt/devkitpro/tools/bin:$PATH`) | C, D | phase-b.md:146, 206 |
-| B2 | `sdmc:/testapp/control.txt` = `<sys>/Azahar/sdmc/testapp/control.txt`, read once before the first frame; keys `draw=2d|3d`, `break_at=N`, `exit_at=N`, `ready_at=N` (1 to 1,000,000), `boot_frames=N` (1 to 10,000) | C, D | phase-b.md:99-109 |
-| B3 | `log.txt` is truncated at start; lines: `start addr_global=... mode=...`; per frame `f=<loop frame from 1> v=<vblank callback count> s=<tick> t=<osGetTime ms> k=<hidKeysHeld %08lx> tx=<u> ty=<u> td=<0|1> cx=<d> cy=<d>`; events `ready f= v=`, `booted f= v=`, `break f= v=`, `exit f= v=`; each line one flushed `FSFILE_Write` | C, D | phase-b.md:125-131 |
-| B4 | Main loop: `hidScanInput`, record, log line, draw, swap, `gspWaitForVBlank0()`; so input is sampled right after each VBlank | C | phase-b.md:138-140 |
-| B5 | **Conflict to reconcile.** B's gate expects no per-frame line after `break` ("the guest stops"). Azahar's `SVC::Break` only logs and sets status 14, then the svc returns and the guest continues (SRC core/hle/kernel/svc.cpp:1148-1166; exception_handler.cpp:111-145). PLAN.md C(e) wants "the guest runs on". This plan asks B's app to keep looping after `svcBreak` (it will, unless B halts it on purpose); C(e) checks both the core (120 more frames, 120 VBlanks) and, if lines continue, the log | C | phase-b.md:37-38, 77, 104 |
-| B6 | **Conflict to reconcile.** B's `boot_frames` draws only the background and waits for VBlank, so it is idle: 6000 idle frames run in a few seconds and D's "state boot under 10 % of the boot's wall time" cannot pass (the core's own start, about 1-2 s, is most of a state boot). This plan asks B to keep the guest CPU busy during boot frames (no VBlank wait inside them; spin until the VBlank counter moves), as Gen3D's world build is. If B keeps it idle, D's gate prints the ratio and reports | D | phase-b.md:107; PLAN.md Phase B "stands in for Gen3D's world build" |
-| B7 | `exit_at` returns from `main` after `gfxExit()`; the status 16 path is B's assumption B2, checked by C(f) | C | phase-b.md:78-81 |
-| B8 | Markers: 8x8 squares at B's table; background `#202020`; the frame counter is on the top screen only, so the bottom screen is flat `#202020` in a 17x17 box around (160, 120); `tests/check_testapp.py markers --top a.png --bottom b.png` checks split PNGs; it holds a stdlib PNG decoder | C, D | phase-b.md:111-123, 157 |
-| B9 | `ready_at` writes `ready f= v=` and keeps running; `svcOutputDebugString` carries the same text (stock core logs it at debug level only) | C | phase-b.md:73-75, 106 |
+| A1 | A's header: `AZH_E_*` -1 ARG, -2 `AZH_E_ORDER` (call order), -3 CORE, -4 BOOT, -5 VULKAN, -6 IO, -7 NOMEM, -8 UNSUPPORTED, -9 NEEDS_LAZPY_CORE, -10 `AZH_E_SAVESTATE` (reserved for D); `AZH_EXIT_*` 0, 2-6, 10, 11; `AZH_SCREEN_*`, `AZH_FMT_*`, `AZH_STOP_*` 0-6; `AZH_INPUT_INTS 7`; fixed-array structs; 14 functions | phase-a.md:174-222 | holds; C1 adds no error code |
+| A2 | "Phase 2's C may extend it, then it freezes": the freeze is C1 | phase-a.md:174 | holds |
+| A3 | `n` counts records of `AZH_INPUT_INTS` int32 | phase-a.md:191, 211 | holds |
+| A4 | Frames 1-based in a batch; shot PNGs named by the absolute frame; PNGs written after `retro_run` returns; **`azh_boot` runs no `retro_run`, and the NULL-first-frame boot check happens in the first batch frame** | phase-a.md:250-251, 112-121 | **R2: A must state the bold part** (review 1 S9). Phase 2's rule either way: `frame_total` counts every `retro_run` since boot, batch or not; D's warm-up frame counts until the state's counters replace it |
+| A5 | `host.map`: 0 magic, 8 version, 12 header size, 16 heartbeat (+1 after every `retro_run`), 24 stop code (0 running), 28 message length, 32 message [1024] (every SET_MESSAGE copied), 1056 dims, 1072 pixel frame, bytes 1080-4095 free for C, 4096 pixels, total 695,296 | phase-a.md:232-239 | holds |
+| A6 | One internal state struct with frame counters, a booted flag and the is-our-core flag; file statics elsewhere | phase-a.md:263 | holds; C1 adds the sysdir to it if absent |
+| A7 | `env.c`'s SET_MESSAGE capture and the boot-failure flag; the "(N)" parsing is C's | phase-a.md:267 | holds |
+| A8 | `log.c`: one mutex around a formatted write; the level threshold; the core's variadic callback | phase-a.md:274 | holds; C makes the callback return before formatting when below the threshold and no debug stop is armed |
+| A9 | `host/crop.c` is A's (pure) | phase-a.md:271; phase-1.md "Interfaces" | holds; C does not move it |
+| A10 | `host/png.c` is pure (zlib) | phase-a.md:272 | holds |
+| A11 | `azhost run <app> --sys --out --frames N [--shot ...] [--opt k=v]... [--profile] [--core] [--mvk] [--state]`; summary `frames=<n> wall=<s> fps=<f> shots=<k>`; `BootError:` etc. on stderr; no `info` subcommand | phase-a.md:241-256 | holds; C adds the `layout` subcommand |
+| A12 | The library reads `LAZ_MVK`; `azhost --mvk` only sets it; default paths relative to the current directory | phase-a.md:228-231 | holds |
+| A13 | The profile: 32 keys, right stick C-stick only, pointer timeout on, both touchscreen sources, resolution factor 1; `azh_set_option` validates at once after `azh_open` | phase-a.md section 2; phase-1.md "Options" | holds |
+| A14 | `core.c` loads all 25 `retro_*` symbols, including the three serialize ones | phase-a.md:224-226 | holds; D adds no `dlsym` |
+| A15 | `make testapp` delegates to `testapp/`; `build/testapp.3dsx` | phase-a.md:292 | holds |
+| A16 | Our core's `retro_run` returns after the message on a non-Success status | phase-f1.md | holds (used only on our core) |
+| A18 | `AZH_FMT_RAW` is in the header and the pixel area exists; A returns `AZH_E_UNSUPPORTED` for RAW | phase-a.md:186, 238-239 | **R2: change "until D" to "until C" at phase-a.md:186 and :238-239** (review 1 X1: raw shots are C2's) |
+| A19 | A reads back the frame only on shot frames, and `azh_shot` can read back the current frame after a batch | phase-a.md:270 | C's RAW branch reuses that readback path |
+| B1 | `build/testapp.3dsx`, built with `PATH=/opt/devkitpro/devkitARM/bin:/opt/devkitpro/tools/bin:$PATH` | phase-b.md section 2 | holds |
+| B2 | `<sys>/Azahar/sdmc/testapp/control.txt`, read before the first frame; keys `draw=2d|3d`, `break_at`, `exit_at`, `ready_at` (1 to 1,000,000), `boot_frames` (1 to 10,000) | phase-b.md:134-143 | holds |
+| B3 | Log lines `start ...`; per frame `f=%lu v=%lu s=%llu t=%llu k=%08lx tx=%u ty=%u td=%u cx=%d cy=%d`; events `ready f= v=`, `booted f= v= sum=`, `break f= v=`, `exit f= v=`; `f` counts from 1 including boot frames; `v` is meaningful only in 2D (3D: citro3d's counter) | phase-b.md:174-186 | holds; **Phase 2's gates use 2D only** |
+| B4 | 2D loop: `hidScanInput`, record, log, events, draw, swap, `gspWaitForVBlank0()`: input sampled right after a VBlank | phase-b.md:193-199 | holds |
+| B5 | After `break f=N`, `svcBreak`, then `f=N+1` goes on | phase-b.md:139, 46-47 | resolved; C(e) e3 is unconditional |
+| B6 | Busy boot frames (bounded spin until the vblank counter moves, no VBlank wait), no per-frame lines, then `booted` | phase-b.md:145-152 | resolved; the time ratio still includes the core's start (D prints it) |
+| B7 | `exit_at` returns from `main`; libctru's exit path reaches APT close and status 16 | phase-b.md section 2 (apt.c:371-431, ctru_exit.c:32-36, applet_manager.cpp:1173-1177) | resolved by Phase 1 review 1 Q4 |
+| B8 | Markers table, background `#202020`, bottom screen is background plus markers only; `check_testapp.py markers --top --bottom --mode 2d` | phase-b.md:154-170 | holds |
+| B9 | `ready_at` writes `ready f= v=` and keeps running; `svcOutputDebugString` carries the same text | phase-b.md:141 | holds |
+| B10 | **The app never exits on START** (gate (a) presses START): it leaves only on `aptMainLoop()` false or the frame cap | phase-b.md:193 | holds; **R2: state it as a rule in phase-b section 3** so no later edit adds the examples' START exit |
+| B11 | **`tests/check_testapp.py` exposes `read_png_rgba(path) -> (width, height, rgba_bytes)`** (filter-0 decoder, RGB expanded to RGBA), importable with the CLI behind `if __name__ == "__main__"` | review 1 N8; decided by the main loop | **R2: Phase 1 revision 2 exposes it with this name and return shape** |
+| SD | SD file writes are synchronous on the emulator thread (file.cpp:198-217), so a line logged in frame F is on disk when `retro_run` F returns | phase-b.md section 2; phase-1.md PLAN notes | holds; C(c) and C(d) bounds are exact |
 
 ## 6. Facts checked for this plan (reviewers: verify these)
 
@@ -138,56 +146,90 @@ control detail goes through one helper file (`tests/testapp_log.py`), so a forma
 |---|---|
 | Joypad bindings: A=8, B=0, X=9, Y=1, Up=4, Down=5, Left=6, Right=7, L=10, R=11, Start=3, Select=2, ZL=12, ZR=13, Home=14 (L3) | SRC src/citra_libretro/citra_libretro.cpp:150-193 |
 | L3 also toggles the screen swap | SRC citra_libretro.cpp:243-244 |
-| Circle pad is `axis:0`, C-stick `axis:1` unless the analog function is Touchscreen | SRC citra_libretro.cpp:196-203 |
-| `retro_run` loops `while (!HasSubmittedFrame())` over `RunLoop()`; non-Success sends "Azahar was unable to locate a 3DS system archive: ..." (status 10) or "Fatal Error encountered (N): ..." via `DisplayMessage` | SRC citra_libretro.cpp:287-306 |
-| `DisplayMessage` is plain `RETRO_ENVIRONMENT_SET_MESSAGE` (6) with `struct retro_message {msg, frames}` | SRC src/citra_libretro/environment.cpp:169-174; vendor/libretro.h:835 |
-| `CheckInput` calls the frontend's `input_state_cb` directly; `PollInput` calls `input_poll_cb` | SRC environment.cpp:53-55, 219-221 |
-| Buttons are read at every HID poll through `CheckInput` (`LibRetroButton::GetStatus`) | SRC src/citra_libretro/input/input_factory.cpp:29-31; core/hle/service/hid/hid.cpp:205-218 |
-| Circle pad: `(float)CheckInput(..., ANALOG, 0, 0/1)`, returned as `(x / INT16_MAX, -y / INT16_MAX)` | SRC input_factory.cpp:60-66 |
-| HID circle pad: `roundf(f * 0x9A)`, then averaged with the 2 previous polls (`CIRCLE_PAD_AVERAGING = 3`, integer division) | SRC hid.cpp:227-241; hid.h:372 |
-| ZL and ZR reach the guest through ir:rst, not the HID pad | SRC core/hle/service/ir/ir_rst.cpp:56-59, 92-93 |
-| Touch: the pointer is read and the touch state set in `PollEvents`, once per VBlank, from `RendererBase::EndFrame` | SRC src/citra_libretro/emu_window/libretro_window.cpp:194-224; video_core/renderer_base.cpp:43-48; video_core/renderer_vulkan/renderer_vulkan.cpp:1182 (`EndFrame()` at the end of `SwapBuffers`), video_core/gpu.cpp:494 (VBlank calls `SwapBuffers`) |
-| Pointer to frame pixel: `static_cast<int>((p + 0x7fff) / (float)(0x7fff * 2) * bufferWidth)`; a point with p = (0, 0) is ignored; a new point applies only if it differs from the last one | SRC src/citra_libretro/input/mouse_tracker.cpp:164-189 |
-| Frame pixel to touch: `(float)(X - left) / (right - left)` and `(float)(Y - top) / (bottom - top)`; no swap when `is_rotated` (default layout: `upright` false, so `is_rotated` true) | SRC core/frontend/emu_window.cpp:155-192; core/frontend/framebuffer_layout.cpp:290 |
+| `retro_run` loops `while (!HasSubmittedFrame())` over `RunLoop()`; non-Success sends "Azahar was unable to locate a 3DS system archive: ..." (status 10) or "Fatal Error encountered (N): ..."; it is the only `DisplayMessage` during a run | SRC citra_libretro.cpp:287-306; other callers :379-603 |
+| `RunLoop` resets the status to Success first, so the guest runs on after svcBreak | SRC core/core.cpp:110-111 |
+| `SVC::Break` logs at critical, then `Core::LogException`, which sets status 14 and returns | SRC core/hle/kernel/svc.cpp:1148-1166; core/arm/exception_handler.cpp:142 |
+| Status numbers: 10 SystemFiles, 14 CoreExceptionRaised, 16 ShutdownRequested, 17 Unknown | SRC core/core.h:92-113; core.cpp:144, 150 |
+| `DisplayMessage` is `RETRO_ENVIRONMENT_SET_MESSAGE` (6) with `struct retro_message {msg, frames}` | SRC src/citra_libretro/environment.cpp:169-174 |
+| Buttons are read at every HID pad poll through `CheckInput`; the pad update runs at `clock / 234` (3.91 polls per VBlank) | SRC input/input_factory.cpp:29-31; core/hle/service/hid/hid.cpp:205-218; hid.h:342 |
+| Circle pad: `(x / INT16_MAX, -y / INT16_MAX)`; HID `roundf(f * 0x9A)`, averaged over 3 polls | SRC input_factory.cpp:60-66; hid.cpp:227-241; hid.h:372 |
+| ZL and ZR reach the guest through ir:rst (own update period); libctru's `hid.o` imports `irrstInit`, `irrstKeysHeld`, `APT_CheckNew3DS` | SRC core/hle/service/ir/ir_rst.cpp:56-59, 92-93, 144, 156; `arm-none-eabi-nm libctru.a` 2026-11-12 |
+| Touch: `PollEvents` reads the pointer and calls `input_poll_cb` once per VBlank, from `EndFrame` at the end of the renderer's `SwapBuffers` | SRC citra_libretro/emu_window/libretro_window.cpp:194-224; video_core/renderer_base.cpp:43-48; renderer_vulkan/renderer_vulkan.cpp:1183; video_core/gpu.cpp:494 |
+| Pointer to frame pixel: `static_cast<int>((p + 0x7fff) / (float)(0x7fff * 2) * bufferWidth)`; (0, 0) ignored; applied only if it differs from the last | SRC input/mouse_tracker.cpp:144-145, 171-189 |
+| Frame pixel to touch: float division; no swap, because `DefaultFrameLayout` calls `LargeFrameLayout`, whose result has `is_rotated = !upright` = true | SRC core/frontend/emu_window.cpp:155-192; core/frontend/framebuffer_layout.cpp:57-60, 160 |
 | HID: `static_cast<u16>(x * 320)`, `static_cast<u16>(y * 240)` | SRC hid.cpp:292-293 |
-| Recomputed here in float32 (Python `struct` round trips, 2026-11-12): p = floor((X + 0.5) * 65534 / 400) - 32767 (480 for Y) lands on the exact frame pixel for all X 40-359 and Y 240-479; guest x exact for all 320 columns; guest y = y - 1 for exactly y = 63, 125, 126, 127; examples x 0 -> -26132, 160 -> 81, 319 -> 26131; y 0 -> 68, 63 -> 8669, 239 -> 32698 | this plan; matches plan-check-3 section 6 |
-| Cursor: drawn in the Vulkan render pass only if visible; with the timeout on, visible needs right-stick movement in the last 4 s, which needs the analog function not `c_stick`; crosshair half-length 240 / 30 = 8 px | SRC mouse_tracker.cpp:191-238, 260-269; renderer_vulkan.cpp:1065-1080 |
-| Savestate: `retro_serialize_size` drains pending async ops (up to 5 s, presentation suppressed) then serializes and returns the size; `retro_serialize` copies it out; `retro_unserialize` drains, then `LoadStateBuffer` | SRC citra_libretro.cpp:665-738 |
-| During the drain `SwapBuffers` returns early (no frame), but `PollEvents` still runs every VBlank, so the host's input-poll count measures k | SRC libretro_window.cpp:68-71, 204; renderer_base.cpp:48 |
-| `LoadStateBuffer` checks the program id (:297) and the git revision (:303); `SaveStateBuffer` compresses with zstd (:253) | SRC core/savestate.cpp:281-310 |
-| Open guest files survive a state: `IOFile` serializes its path, open mode and position and reopens on load; SD files are opened `r+b`; paths are stored with placeholders (`%CITRA_USER_SDMC%`), so a state reopens the new instance's SD files | SRC common/file_util.h:82-104, 667-682; common/file_util.cpp:1058-1065; core/file_sys/archive_sdmc.cpp:105 |
+| float32 recompute: the pointer formula hits the exact frame pixel; guest x exact; guest y = y - 1 for exactly y = 63, 125, 126, 127 | this plan and review 1 N7 (numpy) |
+| Cursor: drawn only if visible; never visible with the timeout on and the right stick on C-stick; crosshair 8 px each side | SRC mouse_tracker.cpp:191-238, 243-269; renderer_vulkan.cpp:1065-1080 |
+| Savestate: `retro_serialize_size` drains while async work is pending (up to 5 s, presentation suppressed), returns 0 on timeout or error, then a full `SaveStateBuffer`; `retro_serialize` copies it; `retro_unserialize` drains, then `LoadStateBuffer` | SRC citra_libretro.cpp:647-738 |
+| During the drain the window's `SwapBuffers` returns early but `PollEvents` still runs every VBlank | SRC libretro_window.cpp:68-71, 204 |
+| `LoadStateBuffer` checks the program id and the build revision; zstd | SRC core/savestate.cpp:253, 297, 303 |
+| Open guest files survive a state: `IOFile` keeps path (with `%CITRA_USER_SDMC%`), mode and position and reopens on load; SD files open `r+b` | SRC common/file_util.h:82-104, 667-682; file_util.cpp:1058-1065; file_sys/archive_sdmc.cpp:105 |
 | libctru keys: A 0, B 1, SELECT 2, START 3, DRIGHT 4, DLEFT 5, DUP 6, DDOWN 7, R 8, L 9, X 10, Y 11, ZL 14, ZR 15, TOUCH 20, CSTICK 24-27, CPAD 28-31 | LIBCTRU:12-34 |
-| `touchPosition {u16 px, py}`, `circlePosition {s16 dx, dy}` | LIBCTRU:44-55 |
-| This Mac: python3 3.14.0; pytest 9.2.0 and numpy 2.5.0 installed, pytest only in the user site (`~/Library/Python/3.14`), so `python3 -I` cannot import pytest; setuptools not importable under `-I`; Pillow absent | `python3 -c` checks, 2026-11-12 |
+| macOS `copyfile(3)`: `COPYFILE_CLONE` (1<<24) clones on APFS and falls back to a copy | `$(xcrun --show-sdk-path)/usr/include/copyfile.h:113` |
+| This Mac: python3 3.14.0; pytest 9.2.0 and numpy 2.5.0 only in the user site; setuptools not importable under `-I`; Pillow absent | `python3 -c` checks, 2026-11-12 |
 
 ## 7. Risks for this phase
 
-1. **Input timing differs by kind.** Buttons are sampled at every HID poll inside the frame; touch is latched in
-   `PollEvents` at the end of the VBlank, so touch probably lands one frame after buttons. Mitigation: C(a) and C(b)
-   measure one offset per kind and require each to be constant; USING.md states them.
-2. **The 10 % state-boot wall check** compares against the test app's slow boot. If B's slow-boot mode idles, 6000
-   frames take seconds and the core's own start (dlopen, Vulkan, first frame, the drain, state load) can exceed 10 %.
-   Mitigation: assumption B6 (busy boot); the gate prints both times and the ratio; a fail is reported, not tuned away.
-3. **A state boot's warm-up frame touches the SD.** The fresh app's first frame may create or truncate its log
-   before the state loads. Mitigation (phase-d.md section 3.3): drain, then replace the SD folder with the snapshot,
-   then unserialize, all inside `azh_boot`; the gate compares the restored log bytes.
-4. **Stock-core async I/O** can delay the SD text by one check interval. C(c) records the measured delay; it must be
-   at most K frames plus one interval to pass, and the item notes the real number.
-5. **`-I` and the user-site pytest** on this Mac: the worker cannot use `-m libazahar._worker` unless the package is
-   installed into the interpreter, so D starts it with an explicit package root (phase-d.md section 4.2); USING.md
-   still says: install into a venv.
-6. **macOS crash reports** for a killed worker: not checked whether a SIGSEGV sent with `kill` makes ReportCrash
-   write a report (no window either way: the worker is not a GUI app); D's builder checks
-   `~/Library/Logs/DiagnosticReports` once after the test and reports, deleting nothing.
-7. **The 200,000-frame test** takes several minutes of machine time at today's load (the light 2D app at a few
-   hundred frames per second); it runs once per suite, in the background batch, marked `slow`.
+1. **Input timing jitters by one frame.** The pad poll's phase drifts against the VBlank (3.91 polls per frame), so a
+   change usually shows one frame after its record and sometimes on the same frame; touch is latched at the VBlank
+   and lands one frame later again. Mitigation: per kind, every change at o or o + 1, the dominant one at least 90 %,
+   counts printed; scenario (a) runs twice. Reviewers may tighten later; builders never do.
+2. **The 10 % state-boot wall check** includes the core's own start (dlopen, Vulkan, the first frame's shaders on a
+   fresh folder). Mitigation: the test prints `t_boot`, `t_core_start` (a plain boot, closed at once), `t_state` and
+   each restore step's time from host.log; a fail is reported, not tuned away.
+3. **The restore's drain is a full serialize** (`retro_serialize_size` is the only drain entry point). Mitigation:
+   timed in host.log; a 0 is an error; Phase G's core may export a drain-only call.
+4. **`-I` and the user-site pytest** on this Mac: the worker starts with an explicit package root (phase-d.md 4.2);
+   USING.md says: editable install into a venv.
+5. **Loaded-machine flakes** (c3 timing, SIGSTOP timing, the ratio): every check prints its measured value; a slow
+   result is a separate `FAIL slow <id>` line, and the builder reruns once before reporting.
+6. **macOS crash reports** for the SIGSEGV test: `kill(SIGSEGV)` is a signal, not a Mach exception; the test prints
+   the measured kill-to-raise delay and the builder checks `~/Library/Logs/DiagnosticReports` once, deleting nothing.
+7. **The 200,000-frame test** takes several minutes of machine time; it runs once per suite, marked `slow`.
 
-## 8. What the reviews should check in this plan
+## 8. Hour-saving pass (revision 1)
 
-That nothing contradicts PLAN.md 2.1-2.9 or the Phase C and D paragraphs; the refinements, each flagged in its brief:
-the freeze moved to C1 (A2); `AZH_E_SAVESTATE` (A17); k measured by input polls with the test app's vblank count as
-the cross-check (phase-d.md 2 and 3.2); the SD snapshot restore placed inside `azh_boot` between warm-up and unserialize,
-and also on `load_state` (phase-d.md 3.3, 3.4); the worker start line (risk 5); a `HostError` class for host codes that
-map to none of PLAN.md's six errors (phase-d.md 4.5); the ABI field table appended to `azh_layout` (phase-c.md 3.2); `azh_batch.sd_from_end` and
-`AZH_EXIT_NEEDS_LAZPY = 7` (phase-c.md 3.1, 3.2); azhost's multi-batch `--frames` and `--print-last-line` for gate
-C(d) (phase-c.md 6, 8); the state boot's pre-drain before the SD restore (phase-d.md 3.3, step 3).
+| Existing thing or cut | What it saves | Verdict |
+|---|---|---|
+| A's `crop.c`, A's 25-symbol `core.c`, A's reserved `AZH_E_SAVESTATE`, A's `AZH_INPUT_INTS` | C's crop move, D's `dlsym` edit, two header lines | taken (about 0.2 h) |
+| Raw shots in C2 beside A's readback (X1) | finding the gap in D3 and re-planning | taken (about 0.3 h of rework avoided; C +0.1 h) |
+| `fields[]` as the only layout source, no `off_*` duplicates (S14) | code and checks | taken |
+| B's PNG decoder (`read_png_rgba`) for C and D (N8) | a second decoder | taken (about 0.1 h) |
+| `copyfile(3)` with `COPYFILE_CLONE` per file, inside one `fts` walk | the 1 MiB copy loop; state saves and boots copy the SD in near-constant time on APFS | taken |
+| SD writes synchronous (Phase 1 N5) | the "one frame behind" tolerance in C(c) and C(d) | taken: exact bounds |
+| End-the-run checkpoints (X2) | no idle or polling builder | taken |
+| Per-call `timeout=` on `run` (S7) | a flaky SIGSTOP test and its reruns | taken |
+| `copyfile` `COPYFILE_RECURSIVE` for the whole tree | the `fts` walk too | declined: it copies symlinks as links, and the seed folder must refuse them; the walk is also needed by `clear_tree` |
+| Dropping `azhost --save` | a few lines | declined: two lines on C1's routing, and it gives a command-line state for Gen3D |
+| Running C's scenarios once, not again through Python | D3 machine time | declined: PLAN's Phase D gate asks for them; (a) runs once in D (twice only in C) |
+
+## 9. Changes from review 1
+
+| Finding | Outcome |
+|---|---|
+| X1 raw shots unowned | done: `AZH_FMT_RAW` is C2's (frame.c copy, map pixels and pixel frame, `azh_shot` branch, batch RAW shots), gate check d4 compares the map's pixels with the PNG of the same frame (phase-c 3.4, 5, 8); A18 asks Phase 1 R2 to say "until C"; `screens()` returns views that change at the next shot, said in its docstring and USING.md (phase-d 4.6, 9) |
+| X2 waiting builders | done: C ends its run at C1, D at D2; resumed by SendMessage; agent ids in the handoff; fresh-sonnet fallback (section 2; phase-c 9; phase-d 6) |
+| S1 offset jitter | done: o or o + 1 per change, dominant at least 90 %, counts printed, (a) run twice (phase-c 8) |
+| S2 a1 per bit | done: each bit's own rise and fall; combos within one line (phase-c 8) |
+| S3 restore drain | done: a 0 is `AZH_E_SAVESTATE` "drain timed out"; each restore step timed in host.log and printed by the test; note for G (phase-d 3.3, 8) |
+| S4 B6 resolved | done: B6 marked resolved; `t_core_start` printed; the pass rule unchanged (section 5; phase-d 8) |
+| S5 B5 resolved | done: e3 unconditional; the conflict row removed (section 5; phase-c 8) |
+| S6 c3 bound | done: `--frames 300,10000000 --wall-limit-ms 3000`, read on batch 2, bound 3000 ms plus batch 1's longest frame (phase-c 8) |
+| S7 SIGSTOP timeout | done: per-call `timeout=` on `run`/`run_until`; default for the Emulator, 3 s for the stopped call (phase-d 4.6, 8) |
+| S8 exit frame count | done: the exit path writes `frame_total + 1` (the frame that exited counts); gate f3 checks it against the `exit f=` line (phase-c 3.5, 8; phase-d 4.4) |
+| S9 first `retro_run` | done here (A4: Phase 2's counting rule either way), and listed for Phase 1 R2 |
+| S10 debug observer cost | done: below-threshold lines return before formatting unless a debug stop is armed (phase-c 4) |
+| S11 worktree names | done: `../libazahar-py-c` and `../libazahar-py-d` (sections 2, 4) |
+| S12 item files | done: builders edit no item file; reports end with "Lessons and notes" (section 3; phase-c 12; phase-d 11) |
+| S13 setuptools version | done: `setuptools>=77` (phase-d 5) |
+| S14 layout fields | done: no `off_*` additions; `_abi.py` checks every `map.*` row against `_map.py`'s constants (phase-c 3.2; phase-d 4.1) |
+| N1 citations | done: framebuffer_layout.cpp:57-60, 160; renderer_vulkan.cpp:1183; mouse_tracker.cpp:144-145 (section 6, phase-c 2) |
+| N2 function count | done: 14 (A1) |
+| N3 `--save` exit code | done: `AZH_EXIT_UNSUPPORTED = 8` added at C1 (phase-c 3.1) |
+| N4 stop code 0 | declined: the map's stop code is read only after a worker death, where 0 means "no stop recorded"; batch results carry the reason; changing A's enum values costs more than it gives |
+| N5 status 16 | done: B7 resolved with Phase 1's citations (section 5) |
+| N6 SIGSEGV delay | done: printed (phase-d 8) |
+| N7 editable install only | done: USING.md and `_paths.py` say the default root needs an editable install, else `LAZ_ROOT` (phase-d 4.1, 9) |
+| N8 PNG decoder | done: B11; C and D import `read_png_rgba` (phase-c 5; phase-d 5) |
+| N9 no START exit | done: B10 (section 5) |
+| Interface table rows A1, A3, A4, A6, A8, A9, A12, A14, A17, A18, `info`, item files, worktrees, B3, B5, B6, B10, PNG decode | done: section 5 rewritten against revision 1; R2 asks listed there |

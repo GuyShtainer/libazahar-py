@@ -1,7 +1,7 @@
 <!-- handoff: slim v1 | current tasks only | rewritten whole from docs/status/templates/handoff.md | budget 80 lines | never append -->
 # libazahar-py handoff
 
-SLOWSTOP 2026-11-12 18:11 (Guy). Nothing new starts. Still running: the two agents in "Running now" (Phase 1 review 2, Phase 2 revision 1). No background commands, no merges in flight. Their follow-ups (Phase 1 revision 2, Phase 1 builders, Phase 2 review 2) wait for the next session.
+SLOWSTOP 2026-11-12 18:11 (Guy). Nothing new starts. Still running: Phase 1 review 2 (see "Running now"). Phase 2 revision 1 finished 18:20. No background commands, no merges in flight. Their follow-ups (Phase 1 revision 2, Phase 1 builders, Phase 2 review 2) wait for the next session.
 
 As of: 2026-11-12 18:09 (this project's own session, which took over from the Gen3D session)
 
@@ -12,7 +12,6 @@ the pre-commit hook runs status_check on main (Guy's yes, 2026-11-12). Nothing p
 | What | Where | Agent id | It stops when |
 |---|---|---|---|
 | laz-100: Phase 1 plan review 2 (opus, fresh; reads review 1 only after its own findings), writes `docs/reviews/` (phase-1-review-2.md) only | this repo | a3e46afeb4c8d10cf | review written, then revision 2 by the plan's author (ad1f072f69021fa61) |
-| laz-200: Phase 2 plan revision 1 from `docs/reviews/phase-2-review-1.md` (the plan's author, opus), edits `docs/plans/` (phase-2, c, d) only | this repo | a4bcf09ec00640830 | revised plan, then Phase 2 review 2 |
 
 ## Next steps, in order
 1. Phase 1 (laz-100): plan drafted (`docs/plans/phase-1.md` and its three step files, commit dae8f49); review 1
