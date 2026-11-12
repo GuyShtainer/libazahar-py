@@ -1,9 +1,7 @@
 <!-- handoff: slim v1 | current tasks only | rewritten whole from docs/status/templates/handoff.md | budget 80 lines | never append -->
 # libazahar-py handoff
 
-SLOWSTOP DONE 2026-11-12 18:27
-
-As of: 2026-11-12 18:27 (this project's own session, end of Guy's SlowStop)
+As of: 2026-11-12 18:34 (this project's own session; Guy said continue after the SlowStop)
 
 This file lives in docs/status/lazpy/1-in-progress/, beside its item files. It holds only what
 the next session needs to act now, and points at the rest. Goals, rules, decisions and history live elsewhere.
@@ -11,11 +9,11 @@ the next session needs to act now, and points at the rest. Goals, rules, decisio
 ## Running now
 | What | Where | Agent id | It stops when |
 |---|---|---|---|
-| Nothing (laz-100 and laz-200 are planning; no agent, job, worktree or merge open) | main at 6d421e2 | main | - |
+| laz-100: Phase 1 plan revision 2 (opus, the plan's author), edits `docs/plans/` (phase-1, f1, a, b) only | this repo | ad1f072f69021fa61 | revised plan, then the Phase 1 builders |
+| laz-200: Phase 2 plan review 2 (opus, fresh), writes `docs/reviews/` (phase-2-review-2.md) only | this repo | a9a87f41abaabc096 | review written, then revision 2 by `a4bcf09ec00640830` |
 
 ## Next steps, in order
-1. Both briefs are ready at `docs/plans/next-briefs.md`; dispatch them side by side (2 opus at once is allowed):
-   Phase 1 plan revision 2 (laz-100, resume `ad1f072f69021fa61`) and Phase 2 plan review 2 (laz-200, a fresh opus).
+1. Both briefs from `docs/plans/next-briefs.md` are running (see above).
 2. Commit each report and book its hours in `docs/hours.tsv`. Then Phase 2 revision 2 (resume `a4bcf09ec00640830`).
 3. After Phase 1 revision 2: launch the three Phase 1 builders as the revised `docs/plans/phase-1.md` says
    (F1 core build, A host library, B test app; sonnet, worktrees at main; items 110/120/130 to `1-in-progress/`
