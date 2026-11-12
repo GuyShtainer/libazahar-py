@@ -27,3 +27,7 @@ none yet
 Read this part only when you work on this item. Blockers, numbers and Guy's words go here verbatim.
 - Guy 2026-11-12 chose four phases over ten small ones ("4 phases (Recommended)"), each with one plan and two
   review loops; the ten PLAN.md phases became steps.
+- Fact-check before review 1 (sonnet a224ebd3b67974496, 2026-11-12): `docs/research/azahar-source-check.md`. The
+  tarball verified and unpacked in `dl/azahar-src/` (429 MB, all submodules). Four line-number corrections for
+  PLAN 2.7 (memory.h 577/621, SET_MEMORY_MAPS at environment.cpp:119, ParseCoreOptions at citra_libretro.cpp:228,
+  savestate revision check at savestate.cpp:65-71); CMake 4 needs `-DCMAKE_POLICY_VERSION_MINIMUM=3.5`.

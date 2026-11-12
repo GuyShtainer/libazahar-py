@@ -16,3 +16,5 @@ date	bet	phase	agent_id	model	role	kind	start	end	hours	source
 2026-11-12	check 3 support: Guy's choice, item, launch	plan	main	opus	main	process	16:53	16:56	0.05	session clock
 2026-11-12	plan check 3 docs/reviews/plan-check-3.md	plan	a970bc3a4c214b531	opus	reviewer	agent	16:54	16:59	0.09	agent duration 311 s
 2026-11-12	check 3 close, the phase split, progress-page attempts	plan	main	opus	main	process	16:56	17:02	0.10	session clock
+2026-11-12	Phase 1 fact-check: Azahar source tarball and patch facts	phase-1	a224ebd3b67974496	sonnet	researcher	agent	17:10	17:12	0.03	agent duration 77 s
+2026-11-12	regroup into four phases, Phase 2 launch, /progress	phase-1	main	opus	main	process	17:06	17:13	0.13	session clock
