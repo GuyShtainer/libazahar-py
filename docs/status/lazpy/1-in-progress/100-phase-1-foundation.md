@@ -39,3 +39,8 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   (fewer, larger opus runs, Guy's delegation rule), not one per step. Phase 1 = 2.85 h after revision 1.
 - For Phase 1's revision 2 (from Phase 2's review 1): the test app must never exit on START (B10); expose
   `check_testapp.py`'s PNG decoder as a function so D reuses it; raw screen pixels (`AZH_FMT_RAW`) move to step C2.
+- Phase 2's revision 1 (c54a7dd) adds for revision 2: phase-a says `azh_boot` runs no `retro_run` and the
+  missing-first-frame check happens in the first batch frame (A4); "until D" becomes "until C" at phase-a.md:186,
+  :238-239 and in phase-1.md's Interfaces for Phase 2 (A18); never-exit-on-START stated as a rule in phase-b section 3
+  (B10); `read_png_rgba(path) -> (width, height, rgba_bytes)` in check_testapp.py, RGB expanded to RGBA, CLI behind
+  `__main__`, importable under `python3 -I` (B11).
