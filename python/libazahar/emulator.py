@@ -142,8 +142,10 @@ class Emulator:
         ``stop_text`` stops the batch when the file holds the text, checked every ``stop_every`` frames and after the
         last; ``stop_new`` looks only at text written after the batch starts. ``debug_text`` needs our core.
         ``wall_limit`` is in seconds. ``timeout`` replaces the heartbeat timeout for this call. Returns a RunResult;
-        a guest exit gives ``stopped_by == "guest_exited"`` and a closed Emulator. Raises ValueError for bad
-        arguments, GuestError, HostTimeout, HostCrashed.
+        a guest exit gives ``stopped_by == "guest_exited"`` and a closed Emulator. A guest crash raises GuestError (with
+        ``.result`` when the batch ended with ``guest_error``; the Emulator stays open then; the third error in one
+        frame ends the worker and the Emulator is closed). Raises ValueError for bad arguments, GuestError,
+        HostTimeout, HostCrashed.
         """
         self._live()
         batch, shot_frames = self._build_batch(frames, shots, stop_file, stop_text, stop_every, stop_new,
@@ -158,7 +160,7 @@ class Emulator:
                              last_frame=payload["frame_total"], frame_total=payload["frame_total"],
                              vblanks=payload["vblanks"], wall_s=0.0, message=payload["message"])
         result = self._result(_abi.Result.from_buffer_copy(payload), shot_frames, before)
-        if result.stopped_by == "guest_error" and self._is_lazpy:
+        if result.stopped_by == "guest_error":
             raise GuestError(result.message or "the guest stopped with a fatal error", result)
         return result
 
@@ -282,6 +284,7 @@ class Emulator:
         VBlanks the save's drain ran; a state "at frame N" is at N + k. Raises StateError."""
         self._live()
         target = str(Path(path).resolve())
+        Path(target).parent.mkdir(parents=True, exist_ok=True)
         _, k = self._client.request("save_state", (target,), Wait(total=self.timeout + STATE_EXTRA_S))
         return SaveInfo(path=target, k=int(k), frame_total=self.frame_total)
 
