@@ -37,3 +37,25 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   rule won); moved to the start of C2. Lessons: a brief can't promise "headers differ from section 3: nothing" (name
   clashes and map-writer prototypes only show in code); list the hostmap prototypes in the plan; say whether a C1
   by-hand run is allowed. -ffp-contract=off plus a FLT_EVAL_METHOD static assert keep the touch model exact.
+- C2+C3 report (acae9a26ca38daf7c, 19:46, worktree ../libazahar-py-c, uncommitted after C1): `gate_c: 28 passed, 0
+  failed`, rc 0, first full run, no FAIL slow, no build wait (build.exit already 0); planted red (`--only a
+  --plant-red`) fails a1/a2 with negative offsets, rc 1. make check, make, test-host (307,679 checks, 0 failed),
+  test-version clean. Measured: buttons (hid) land +0 or +1 host frames (counts {0: 1, 1: 29}); ZL/ZR (irrst) +1 for
+  all 6; circle +1 for all 5; touch +2 for all 40 with the exact float32 values; c = 3 at every batch end (c_min 3);
+  SD stop delay 3 frames at every 30, 0 at every 1; wall-limit stop 3.0 s (bound 4.0); debug-text stop on the stock
+  core exits 7 NeedsLazpyCore; RAW shot pixels equal the PNGs (d4); break stops at frame 128 (break v=125) and the
+  guest runs on; exit rc 10, map frame_total 214 (exit v=205), message `Fatal Error encountered (16): ` (empty body).
+  Real status-14 text holds `Exception Type: Break` (the map keeps 1023 bytes). About 1000 fps on the test app; the
+  gate takes about 2 min. Files: edited Makefile, host/api.c, azhost_main.c (660 lines), env.c, log.c, run.c,
+  tests/host/messages.txt; new tests/checks_c.py, gate_c.py, testapp_log.py. Runners: `make test-host`; `build/azhost
+  run <app> ... --inputs f --stop-file REL --stop-text T --frames N[,N2] [--raw-shot F]`; `build/azhost layout`;
+  python3 -I tests/gate_c.py [--only a,b]. No .gitignore lines.
+  Deviations for the main loop: (1) three shared symbols declared locally in two .c files, not in the frozen
+  azh_internal.h (`extern azh_msgstate azh_msgs`, `azh_run_batch_inputs`, `azh_run_raw_shot`); (2) no per-frame max
+  in azh_result, so azhost prints wall_ms_mean and c3's bound is 3.0 s + max(1.0 s, 5 x batch 1's mean frame);
+  (3) azhost links build/obj/sdcopy.o directly (azh__copy_tree not exported); (4) gate ids a2.N.hid / a2.N.irrst;
+  (5) a frame asked for PNG and RAW reads back twice (pixels equal); (6) the thread-check assert is armed only inside
+  retro_run; (7) one message per run, stronger kind wins; (8) a guest exit or error ends azhost with 10 or 11 and no
+  later batches, a break continues. Not exercised: our core's debug-text stop and AZH_ACT_EXITED path.
+  Lessons: input jitter far below the brief's fear; the 90 % rule is tight for irrst (6 changes); list cross-file
+  state (batch inputs, message state) in the frozen prototypes next time; c3 wants a per-frame max wall time.
