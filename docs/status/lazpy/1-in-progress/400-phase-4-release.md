@@ -67,3 +67,15 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   push so no commit names his personal address or its local part. G3 "Switch to OpenSSL 3" (static OpenSSL 3 in
   Phase 3's P9b rebuild; Phase 4 offers its exact source and carries its Apache-2.0 licence).
 - Revision 1 launched 00:38 (a739c8de18f2e6992, fresh opus), with Phase 3 review 2's asks and both rulings.
+- Revision 1 (a739c8de18f2e6992, opus, 00:38-01:02; phase-4.md section 13, one line per review-1 finding): all of
+  review 1 taken except N10 (the full layout listing stays, collapsed). Hours H 0.45, I 0.65, one joint as-built
+  review 0.2, main loop and legal agents 0.5, loops 0.4: about 2.2 h against PLAN.md's 1.1. P9b facts taken:
+  v0.1.0 says "macOS 15 or later" (Homebrew's libcrypto.a objects are minos 15.0; R31: libazhost and azhost already
+  15.0; building OpenSSL for macOS 11 declined, a Phase 5 candidate, risk 9); OPENSSLDIR/ENGINESDIR/MODULESDIR
+  strings expected (R30, risk 14); R2 21,828,992 bytes. For Phase 3 (section 12): brew pin openssl@3 (done 01:04 by
+  the main loop), keep keyblob_findings importable, keep MAIN's build-core/build and build.inputs until the release,
+  G8 after P9b and before Phase 3's worktrees (the main loop does it so), optional MACOSX_DEPLOYMENT_TARGET=15.0 at
+  the next core rebuild. Stock core also embeds the key blob and ClCertA, so the README route uses our core (P16);
+  ip-legal question 7 asks whether fetching the stock core is within policy. Open for review 2: Q5 (README route on
+  our core), Q6 (G8 timing), Q7 (brew cat as OpenSSL's build-script source). For Guy: G5, G6, G7 (plus hygiene
+  defaults), G9 (spike 2's game: default say nothing), whether macOS 11-14 users matter for v0.1.0.

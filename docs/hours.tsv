@@ -70,3 +70,4 @@ date	bet	phase	agent_id	model	role	kind	start	end	hours	source
 2026-11-13	P9b: patches 0007/0008, drop list, static OpenSSL 3, build.inputs	phase-3	main	opus	main	build	00:45	00:49	0.08	session clock
 2026-11-13	P9b rebuild, checks, tests on the new core	phase-3	main	opus	main	build	00:49	00:57	0.13	session clock (rebuild 3 min, gate 2 min)
 2026-11-13	Phase 3 plan revision 2 (final)	phase-3	ae13bb77d6994c473	opus	planner	agent	00:38	00:57	0.31	agent duration 1105 s
+2026-11-13	Phase 4 plan revision 1	phase-4	a739c8de18f2e6992	opus	planner	agent	00:38	01:02	0.40	agent duration 1429 s
