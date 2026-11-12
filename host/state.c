@@ -392,8 +392,8 @@ static int restore_check(const char *app, const char *path, restore_t *r)
         return azh_fail(AZH_E_SAVESTATE, "not a complete state (%s is missing or damaged)", mpath);
     }
     r->meta_ms = now_ms() - t0;
-    if (r->meta.abi != AZH_ABI_VERSION) {
-        return azh_fail(AZH_E_SAVESTATE, "state was made with host abi %d, this host is abi %d", (int)r->meta.abi,
+    if (r->meta.abi < 2 || r->meta.abi > AZH_ABI_VERSION) {
+        return azh_fail(AZH_E_SAVESTATE, "state was made with host abi %d, this host reads abi 2 to %d", (int)r->meta.abi,
                         AZH_ABI_VERSION);
     }
     if (!is_dir(sdpath)) {

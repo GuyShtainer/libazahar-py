@@ -39,16 +39,49 @@ def host_lib() -> Path:
     return path
 
 
+def _kind(core: Path) -> str:
+    """``lazpy`` for our patched core (its file name says so), else ``stock``."""
+    return "lazpy" if "lazpy" in core.name else "stock"
+
+
+def pytest_report_header(config: pytest.Config) -> str:
+    """One line at session start: the core the default tests use."""
+    from libazahar import _paths
+    core = _paths.core_path()
+    return f"core={core} kind={_kind(core)}"
+
+
 @pytest.fixture(scope="session")
 def host_paths(host_lib: Path) -> HostPaths:
-    """The host library, the stock core and the test app (skip, or fail under LAZ_REQUIRE_EMULATOR=1)."""
-    core = REPO / "dl" / "azahar" / "azahar_libretro.dylib"
+    """The host library, the core (``LAZ_CORE`` wins) and the test app (skip, or fail under LAZ_REQUIRE_EMULATOR=1)."""
+    from libazahar import _paths
+    core = _paths.core_path()
     app = REPO / "build" / "testapp.3dsx"
     if not core.is_file():
-        _missing(core, "run tools/fetch.sh")
+        _missing(core, "run tools/fetch.sh or set LAZ_CORE")
     if not app.is_file():
         _missing(app, "run make testapp")
     return HostPaths(host_lib, core, app)
+
+
+@pytest.fixture(scope="session")
+def stock_core() -> Path:
+    """The stock core (the default path under the repo), for tests that need it whatever ``LAZ_CORE`` says."""
+    core = REPO / "dl" / "azahar" / "azahar_libretro.dylib"
+    if not core.is_file():
+        _missing(core, "run tools/fetch.sh")
+    return core
+
+
+@pytest.fixture(scope="session")
+def lazpy_core() -> Path:
+    """Our patched core: ``LAZ_CORE`` when it names one, else build-core/ under the repo."""
+    from libazahar import _paths
+    chosen = _paths.core_path()
+    core = chosen if _kind(chosen) == "lazpy" else REPO / "build-core" / "azahar_lazpy_libretro.dylib"
+    if not core.is_file():
+        _missing(core, "build our core or set LAZ_CORE")
+    return core
 
 
 @pytest.fixture

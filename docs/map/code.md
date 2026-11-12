@@ -13,9 +13,11 @@
   movie play), `core/options-lazpy.txt`, `core/README.md`.
 - `tests/`: step gates and checkers (see `docs/map/tools.md`); `tests/test_version.c` is the host test of the
   version rule.
+- `python/`: the Python package `python/libazahar/` (installed editable through `pyproject.toml`); `docs/USING.md` is
+  its user guide.
 - `docs/`: status folders, maps, research, the plan (once written), `docs/hours.tsv`, the generated `docs/progress.html`.
 - `tools/`: the status and map scripts (see `docs/map/tools.md`).
-- `README.md` (public, honest status), `LICENSE` (GPLv3), `CLAUDE.md` (agent guide), `.gitignore`.
+- `README.md` (public, honest status), `LICENSE` (GPLv3), `CLAUDE.md` (agent guide), `.gitignore`, `pyproject.toml` (the editable install).
 - Ignored, never committed: `dl/` (the downloaded Azahar libretro core and MoltenVK), `vendor/` (libretro and Vulkan
-  headers), `runs/`, `roms/`, `sdmc/`, `build/` (host and test app output), `build-core/` (our core's build: `build.log`,
+  headers), `runs/`, `.pytest_cache/`, `roms/`, `sdmc/`, `build/` (host and test app output), `build-core/` (our core's build: `build.log`,
   `build.pid`, `build.exit`, `azahar_lazpy_libretro.dylib`).

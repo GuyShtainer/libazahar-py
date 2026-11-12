@@ -142,7 +142,8 @@ class Emulator:
         ``stop_text`` stops the batch when the file holds the text, checked every ``stop_every`` frames and after the
         last; ``stop_new`` looks only at text written after the batch starts. ``debug_text`` needs our core.
         ``wall_limit`` is in seconds. ``timeout`` replaces the heartbeat timeout for this call. Returns a RunResult;
-        a guest exit gives ``stopped_by == "guest_exited"`` and a closed Emulator. A guest crash raises GuestError (with
+        a guest exit gives ``stopped_by == "guest_exited"`` and a closed Emulator on both cores (on our core the
+        worker is shut down cleanly after the result is built). A guest crash raises GuestError (with
         ``.result`` when the batch ended with ``guest_error``; the Emulator stays open then; the third error in one
         frame ends the worker and the Emulator is closed). Raises ValueError for bad arguments, GuestError,
         HostTimeout, HostCrashed.
@@ -162,6 +163,8 @@ class Emulator:
         result = self._result(_abi.Result.from_buffer_copy(payload), shot_frames, before)
         if result.stopped_by == "guest_error":
             raise GuestError(result.message or "the guest stopped with a fatal error", result)
+        if result.stopped_by == "guest_exited":      # one rule on both cores: after a guest exit the Emulator is closed
+            self.close()
         return result
 
     def _build_batch(self, frames: int, shots: Iterable[int], stop_file: Optional[str], stop_text: Optional[str],

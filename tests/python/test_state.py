@@ -25,6 +25,9 @@ def keyed(frames, floor, shift=0):
     return {row["v"] + shift: tuple(row[k] for k in FIELDS) for row in frames if row["v"] > floor}
 
 
+TIMES: dict[str, float] = {}      # filled by test_state_boot, read by the wall-ratio test below
+
+
 def test_state_boot(host_paths, workdir, seed):
     plant = os.environ.get("LAZ_TEST_PLANT_RED") == "1"
     wd_a, wd_b = workdir / "a", workdir / "b"
@@ -64,6 +67,7 @@ def test_state_boot(host_paths, workdir, seed):
               f"fixed_ratio={fixed:.3f} k={info.k} frame_total={info.frame_total} v_save={v_save}\n{load_line}\n"
               f"copied into b/sys: {copied}\n")
     print(report, file=sys.stderr)
+    TIMES.update(ratio=ratio, fixed=fixed, t_state=t_state)
     out = Path(workdir.parent) / "state-times.txt"
     out.write_text(report)
     for frame in SHOTS:
@@ -75,8 +79,13 @@ def test_state_boot(host_paths, workdir, seed):
     assert len(window) >= 590
     mismatches = [(v, x, got.get(v)) for v, x in window.items() if got.get(v) != x]
     assert not mismatches, f"{len(mismatches)} lines differ, first {mismatches[:2]}"
-    assert t_state < 0.10 * t_boot, f"t_state/t_boot = {ratio:.3f}"
     assert result_a.frames == result_b.frames == 600 and frames_before
+
+
+def test_state_boot_wall_ratio():
+    """Guy's ruling: the state boot gate is an absolute bound on the test app; the ratios are only recorded."""
+    assert TIMES, "test_state_boot did not run first"
+    assert TIMES["t_state"] < 2.5, TIMES
 
 
 def quick_state(host_paths, workdir):
@@ -102,3 +111,14 @@ def test_other_app(host_paths, workdir, monkeypatch):
     monkeypatch.setenv("LAZ_STATE_ANY_APP", "1")
     with Emulator(other, workdir / "d", state=state) as emu:
         assert emu.run(10).stopped_by == "frames"
+
+
+def test_newer_abi_refused(host_paths, workdir):
+    """A state whose meta names an abi above this host's is refused; the current abi is accepted (test_state_boot)."""
+    state = quick_state(host_paths, workdir)
+    meta = Path(f"{state}.meta")
+    text = meta.read_text()
+    assert "abi=2\n" in text
+    meta.write_text(text.replace("abi=2\n", "abi=99\n", 1))
+    with pytest.raises(StateError, match="abi"):
+        Emulator(host_paths.app, workdir / "n", state=state)

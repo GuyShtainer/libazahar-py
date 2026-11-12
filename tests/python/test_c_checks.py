@@ -131,8 +131,9 @@ def test_c3_wall_limit(host_paths, workdir):
         assert second.stopped_by == "wall_limit" and second.wall_s <= bound
 
 
-def test_c4_debug_text_needs_our_core(host_paths, workdir, seed):
-    with dh.boot(host_paths, workdir, seed(ready_at=200)) as emu:
+def test_c4_debug_text_needs_our_core(host_paths, stock_core, workdir, seed):
+    """Debug text is refused on the stock core, so this test names it whatever ``LAZ_CORE`` says."""
+    with dh.boot(host_paths, workdir, seed(ready_at=200), core=stock_core) as emu:
         with pytest.raises(NeedsLazpyCore):
             emu.run(600, debug_text="ready f=")
 

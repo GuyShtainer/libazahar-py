@@ -107,8 +107,9 @@ def _serve(conn: Connection, lib: ctypes.CDLL) -> int:
 
 
 def main(fd: int) -> int:
-    """Worker entry: nice 10, faulthandler, hello (or fatal), then the request loop. Returns the exit code."""
-    os.nice(10)
+    """Worker entry: nice at least 10, faulthandler, hello (or fatal), then the request loop. Returns the exit code."""
+    if os.nice(0) < 10:                 # at least nice 10: raise only when the parent is nicer
+        os.nice(10 - os.nice(0))
     faulthandler.enable()
     conn = Connection(fd)
     try:
