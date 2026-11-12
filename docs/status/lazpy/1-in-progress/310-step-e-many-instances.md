@@ -33,3 +33,10 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   make check, make, test-host 307743/0; pytest not slow 61 passed. Departures: g1/g2/g4 one test; the fixture takes
   min(3, cap) slots; speed_table sets LAZ_MAX_INSTANCES=4 in main(); LoadWarning shows at load 58. E2 next, after
   step-f2 merges (phase-3.md section 4 step 4).
+- E2 run 1 (a444b28ace71428a3 resumed 01:56, forced hand-back 01:58): main merged into step-e at 8c06e26; make
+  clean, pytest not slow 71 passed. Gate 2: test_pool_live.py 2 passed, 0 skipped (g1 the 4th Emulator waits with
+  no slot.txt; g2 kill-to-acquire 0.063 s; g4 nice [10, 10, 10]); g3 fixed in the test (one seed folder per job,
+  own_seed()). Gate 3: the speed table runs detached (speed_table.py, both cores, --extra-rows, out runs/e-speed;
+  an EXIT trap writes runs/e-speed.rc). Left: read the table, the cap_rule line, set DEFAULT_CAP in _slots.py
+  (stays 3 if any cap-core row is CHECK FAIL), write docs/research/speed-table-e.md (phase-e.md section 7). Only
+  tests/python/test_pool_live.py changed since a74aaec.
