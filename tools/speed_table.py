@@ -91,13 +91,16 @@ def batch_line(workdir):
     return found
 
 
+OPTION_RE = re.compile(r"\] option (\w+=.*)$")
+
+
 def option_lines(workdir):
     """The ``option key=value`` lines of a host.log (the effective option set), without the log prefix."""
     out = []
     for line in (Path(workdir) / "host.log").read_text(errors="replace").splitlines():
-        at = line.find("option ")
-        if at >= 0:
-            out.append(line[at + 7:].strip())
+        match = OPTION_RE.search(line)
+        if match:
+            out.append(match.group(1).strip())
     return out
 
 
@@ -250,7 +253,7 @@ def write_outputs(args, data):
         parts.append(md_core_table(core, rows))
     if data.get("cap"):
         parts.append(f"Cap rule on {data['cap_core']}: cap {data['cap']['cap']} (provisional, light scene). "
-                     + " ".join(data["cap"]["reasons"]) + "\n")
+                     + "; ".join(data["cap"]["reasons"]) + "\n")
     if data.get("round_trip"):
         parts.append(f"Round trip: {json.dumps(data['round_trip'])}\n")
     if data.get("shots"):
