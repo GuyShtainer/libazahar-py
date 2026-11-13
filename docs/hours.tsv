@@ -160,3 +160,4 @@ date	bet	phase	agent_id	model	role	kind	start	end	hours	source
 2026-11-13	V0b: hold, merge, pin edit, main core build, gates, hold released, worktree removed	phase-6	main	opus	main	build	12:23	12:35	0.20	session clock
 2026-11-13	V4: version 1.0.0, fetch.sh pins TBD, STATUS, README, USING poll-exact, runners, release notes v1.0.0	phase-6	a314e8caceb3949b7	sonnet	builder	build	12:36	12:38	0.03	agent duration 75 s
 2026-11-13	step L close, V4 review (three STATUS lines added, rewraps), checks, commits	phase-6	main	opus	main	build	12:35	12:38	0.05	session clock
+2026-11-13	V6: Gen3D state-restore crash, A/B over four cores, cause found (shader-cache switch), item 660	phase-6	main	opus	main	build	12:39	12:49	0.17	session clock
