@@ -16,7 +16,7 @@ from multiprocessing.connection import Connection
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
 
-from . import _abi, _map
+from . import _abi, _map, _slots
 from .errors import GuestError, HostCrashed, HostError, HostTimeout, from_code
 
 __all__ = ["Wait", "WorkerClient", "worker_argv", "tail_lines"]
@@ -55,16 +55,24 @@ def tail_lines(path: Path, count: int = TAIL_LINES) -> str:
 
 class WorkerClient:
     """One worker process and its pipe. ``request`` returns ``("ok", payload)`` or, when the guest exited during a
-    ``run``, ``("exited", info)``; every other outcome raises a LibAzaharError."""
+    ``run``, ``("exited", info)``; every other outcome raises a LibAzaharError.
+
+    ``slot`` (step E): ``None`` takes a machine-wide slot (``_slots.acquire``) only for the real worker (``argv`` is
+    None); ``True`` takes one for a fake worker too; ``False`` never does. So the pure tests, which pass no keyword,
+    never touch the real slot folder or the cap. The worker inherits the slot's lock fd (``pass_fds``; its number is
+    ``argv[3]``) and the parent closes its copy right after ``Popen``: the slot is free the moment the worker dies,
+    however it dies; the parent never holds a lock, so a parent killed with SIGKILL leaks nothing; ``close()`` frees
+    the slot by reaping the worker. ``<workdir>/slot.txt`` records the slot after ``Popen``."""
 
     def __init__(self, workdir: Path, map_path: Path, log_path: Path, env: Dict[str, str],
-                 argv: Optional[Callable[[int], List[str]]] = None) -> None:
+                 argv: Optional[Callable[[int], List[str]]] = None, slot: Optional[bool] = None) -> None:
         self.workdir = Path(workdir)
         self.map_path = Path(map_path)
         self.log_path = Path(log_path)
         self.err_path = self.workdir / "worker.err"
         self._env = dict(env)
         self._argv = argv
+        self._take_slot = (argv is None) if slot is None else bool(slot)
         self._proc: Optional[subprocess.Popen] = None
         self._conn: Optional[Connection] = None
         self._map: Optional[_map.HostMap] = None
@@ -115,22 +123,49 @@ class WorkerClient:
             self.map_path.unlink()
         except FileNotFoundError:
             pass
-        parent, child = multiprocessing.Pipe(duplex=True)
-        pkg_parent = Path(__file__).resolve().parents[1]
-        argv = self._argv(child.fileno()) if self._argv else worker_argv(child.fileno(), pkg_parent)
-        with open(self.err_path, "ab") as err_file:
-            try:
-                self._proc = subprocess.Popen(argv, pass_fds=(child.fileno(),), stdin=subprocess.DEVNULL,
-                                              stdout=err_file, stderr=err_file, env=self._env, cwd=self.workdir)
-            except BaseException:
-                parent.close()
-                child.close()
-                raise
+        slot = _slots.acquire() if self._take_slot else None        # may wait; nothing to undo if it raises
+        try:
+            parent, child = multiprocessing.Pipe(duplex=True)
+        except BaseException:
+            if slot is not None:
+                slot.release()
+            raise
+        try:
+            self._proc = self._popen(child.fileno(), slot)
+        except BaseException:
+            parent.close()
+            child.close()
+            if slot is not None:
+                slot.release()
+            raise
+        if slot is not None:
+            slot.release()                  # the worker keeps the lock
         child.close()
         self._conn = parent
+        if slot is not None:
+            self._write_slot_txt(slot)
         kind, payload = self._wait("hello", Wait(total=boot_timeout), 0)
         assert kind == "ok"
         self._hb_base = self._heartbeat()
+
+    def _popen(self, child_fd: int, slot: "Optional[_slots.Slot]") -> subprocess.Popen:
+        """Start the worker with the pipe fd (and the slot fd, appended as ``argv[3]`` of the worker)."""
+        pkg_parent = Path(__file__).resolve().parents[1]
+        argv = self._argv(child_fd) if self._argv else worker_argv(child_fd, pkg_parent)
+        fds = (child_fd,)
+        if slot is not None:
+            argv = [*argv, str(slot.fd)]
+            fds = (child_fd, slot.fd)
+        with open(self.err_path, "ab") as err_file:
+            return subprocess.Popen(argv, pass_fds=fds, stdin=subprocess.DEVNULL, stdout=err_file,
+                                    stderr=err_file, env=self._env, cwd=self.workdir)
+
+    def _write_slot_txt(self, slot: "_slots.Slot") -> None:
+        """``slot.txt`` in the workdir: which slot the worker holds (written after Popen)."""
+        assert self._proc is not None
+        text = (f"slot={slot.index} pid={self._proc.pid} acquired={slot.acquired:.6f} "
+                f"waited_s={slot.waited_s:.3f}\n")
+        (self.workdir / "slot.txt").write_text(text)
 
     # ---- request ----
     def request(self, op: str, args: Sequence[Any], wait: Wait, frame_before: int = 0) -> Tuple[str, Any]:
