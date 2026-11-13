@@ -146,3 +146,9 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   status_check, map_check, docs_check and make check pass.
 - 2026-11-13 19:22, V8 re-stage after G8d: mkrelease at 19:20 (rc 0). The core zip is now ced9a362… (NOTICES and
   SOURCE.md changed), the test app still ba106998…; the new zip sha is written into tools/fetch.sh's pin.
+- 2026-11-13 19:27, V8 pre-push: mkrelease again at 19:23 after the pin commit (9e11fe2): zip ced9a362… and test app
+  ba106998… unchanged, only the build-files asset differs (it embeds HEAD). `release_check --pre-push` with the
+  private needles (63): rc 0, 16 PASS, history-bytes 1298 blobs 0 hits. Positive control: the same history needle
+  check on a clone of the pre-G8d bundle gives FAIL. After this record's commit, mkrelease and the pre-push check
+  run once more (log runs/g8d/prepush-final.log) and nothing is committed until the tag. V8 is then done; V9 waits
+  on Guy's word.

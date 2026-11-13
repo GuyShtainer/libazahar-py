@@ -1,7 +1,7 @@
 <!-- handoff: slim v1 | current tasks only | rewritten whole from docs/status/templates/handoff.md | budget 80 lines | never append -->
 # libazahar-py handoff
 
-As of: 2026-11-13 19:19 (this project's own session)
+As of: 2026-11-13 19:27 (this project's own session)
 
 This file lives in docs/status/lazpy/1-in-progress/, beside its item files. It holds only what
 the next session needs to act now, and points at the rest. Goals, rules, decisions and history live elsewhere.
@@ -9,18 +9,16 @@ the next session needs to act now, and points at the rest. Goals, rules, decisio
 ## Running now
 | What | Where | Agent id | Item | Ends |
 |---|---|---|---|---|
-| V8 re-stage after G8d and the pre-push check | MAIN | main | laz-600 | release_check --pre-push 16 of 16 |
+| V8's last stage and pre-push check, after this commit | MAIN | main | laz-600 | rc 0 and 16 PASS in runs/g8d/prepush-final.log |
 
 V6, V3 and V7 are done; V8's clone_check passed and the audit says SHIPPABLE WITH CHANGES (item 600's notes,
 `docs/reviews/release-legal-audit-v1.0.0.md`). Guy asked for v1.0.0 (item laz-600, `docs/plans/phase-v1.md`).
 
 ## Next steps, in order
-1. G8d done (item 600's notes, `docs/commit-map-g8d.tsv`). Tell the PC worker (3ds-toolkit-11) its copies hold the
-   old history.
-2. Re-stage: `sh tools/mkrelease.sh v1.0.0` (the zip changes: NOTICES), new LAZPY_CORE_SHA in tools/fetch.sh,
-   commit, mkrelease again (zip and test app sha stable), then `LAZ_PRIVATE_NEEDLES=<private file> python3 -I
-   tools/release_check.py runs/release/v1.0.0 --pre-push`: 16 of 16, with a positive control on the pre-G8d
-   bundle. No commit after that until the tag.
+1. V8 is done once runs/g8d/prepush-final.log shows rc 0 and 16 PASS (G8d, the re-stage, the fetch.sh pin
+   ced9a362… and the positive control are in item 600's notes). Make no commit until the tag: the build-files asset
+   embeds HEAD. A commit made anyway means `sh tools/mkrelease.sh v1.0.0` and the pre-push check run again.
+2. Tell Guy v1.0.0 is ready for his word (the push and release steps: `docs/plans/phase-i.md` 8.2, with v1.0.0).
 3. No core/ edit or build-core.sh run on main (the gated build is 64026f4a…, build.inputs head 4e830e5).
 4. V9: Guy's word for the tag and push. After he publishes: I5 (`docs/plans/phase-i.md` section 6) against v1.0.0,
    items 420, 400 and 600 closed, the private history bundles and .git/filter-repo deleted, and tell the PC worker
