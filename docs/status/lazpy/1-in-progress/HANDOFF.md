@@ -1,7 +1,7 @@
 <!-- handoff: slim v1 | current tasks only | rewritten whole from docs/status/templates/handoff.md | budget 80 lines | never append -->
 # libazahar-py handoff
 
-As of: 2026-11-13 04:12 (this project's own session)
+As of: 2026-11-13 04:26 (this project's own session)
 
 This file lives in docs/status/lazpy/1-in-progress/, beside its item files. It holds only what
 the next session needs to act now, and points at the rest. Goals, rules, decisions and history live elsewhere.
@@ -9,16 +9,16 @@ the next session needs to act now, and points at the rest. Goals, rules, decisio
 ## Running now
 | What | Where | Agent id | It stops when |
 |---|---|---|---|
-| laz-420: I2, the release staged in MAIN (phase-i.md 6, I2 steps 1-5; review S9's order) | MAIN | main | `clone ok` in runs/clone-i2 |
+| laz-420: I3, the release legal audit (phase-i.md 9.2, plus the history's old stock-core URL and hash) | MAIN, read only; notes in runs/i3/ | aa81b7f45c2e7eb9b | its report (saved as runs/i3/release-legal-audit-v0.1.0.md) |
 
-Not running: steps H and I are merged (H's item 410 done; I's fixes 3c11544, item 420's Evidence); the joint review is done (docs/reviews/phase-4-as-built.md; item 400's notes). Phase 3 done; G8b, Gen3D's copy check, the downloads done.
+Not running: I2 is done (staged at 50ac6c1, pre-push 16/16, clone ok; item 420's Evidence); steps H and I are merged (H's item 410 done; I's fixes 3c11544, item 420's Evidence); the joint review is done (docs/reviews/phase-4-as-built.md; item 400's notes). Phase 3 done; G8b, Gen3D's copy check, the downloads done.
 
 ## Next steps, in order
-1. I2 in MAIN (phase-i.md section 6, I2 steps 2-5): the test app from the README's build block, mkrelease, the
-   two pins into tools/fetch.sh (commit it alone), mkrelease again (zip and test app sha256 unchanged),
-   release_check with LAZ_PRIVATE_NEEDLES, docs_check, clone_check in the background (Monitor, 45 min).
-2. I3: release-legal-audit with phase-i.md 9.2, plus: history before 083cc56 still holds the stock core's asset URL
-   and hash (review S7); report to docs/reviews/release-legal-audit-v0.1.0.md. Then I4 fixes and re-stage.
+1. On the audit's report: save it verbatim to docs/reviews/release-legal-audit-v0.1.0.md and commit it.
+   BLOCKERs go to I4 (a sonnet builder with exact fixes), then re-stage: mkrelease v0.1.0, release_check
+   --pre-push with LAZ_PRIVATE_NEEDLES (the private replace file plus the needles), clone_check (phase-i.md 6, I2
+   steps 3-5), and a re-audit of only the changed items. SHOULD items go to Guy's list.
+2. Any commit after the last staging: mkrelease again before the push (check 10 compares with HEAD).
 3. The push and the release wait for Guy (G5-G7, Q1-Q9).
 
 ## Waiting on Guy (only what blocks a step above)
