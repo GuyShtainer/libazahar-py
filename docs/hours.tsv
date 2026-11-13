@@ -122,3 +122,4 @@ date	bet	phase	agent_id	model	role	kind	start	end	hours	source
 2026-11-13	after G8c: mkrelease x3, pins (012c329), notes-rule fix (1132bc1), pre-push 16/16, clone ok, re-audit launch	phase-4	main	opus	main	process	04:51	04:56	0.10	session clock
 2026-11-13	I3 re-audit after G8c (B1, S1-S3, the re-staged zip)	phase-4	a88334b832afbc276	opus	reviewer	review	04:56	05:04	0.14	agent duration 493 s
 2026-11-13	re-audit saved, S1r and the NOTE text fixed, final re-stage, handoff	phase-4	main	opus	main	process	05:04	05:05	0.05	session clock
+2026-11-13	morning: taskcheck, /learn (playbook, KB), /handoff, /progress	phase-4	main	opus	main	process	08:00	08:07	0.15	session clock
