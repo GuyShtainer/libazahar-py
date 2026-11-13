@@ -1,15 +1,16 @@
 /* azh_pure.h: prototypes of the pure modules (version.c, crop.c, png.c, input.c, match.c, msg.c, rawcopy.c,
- * statemeta.c, watch.c). They include only this header, azhost.h and <stdint.h>/<string.h>/zlib, never libretro or Vulkan,
+ * statemeta.c, watch.c, profile.c). They include only this header, azhost.h and <stdint.h>/<string.h>/zlib, never libretro or Vulkan,
  * so the unit tests can link them alone. */
 #ifndef AZH_PURE_H
 #define AZH_PURE_H
 
 #include <stddef.h>
+#include <stdio.h>
 #include <stdint.h>
 
 #include "azhost.h"
 
-/* version.c: 1 when v is the pinned stock version, the stock version plus AZH_LAZPY_SUFFIX exactly, or any_core. */
+/* version.c: 1 when v is the pinned stock version, the stock version plus one of AZH_LAZPY_SUFFIXES exactly, or any_core. */
 int azh_version_ok(const char *v, int any_core);
 
 /* crop.c: where the two screens sit in a core frame (default layout at resolution factor f: the frame is
@@ -54,8 +55,27 @@ enum { AZH_ACT_NONE = 0, AZH_ACT_BREAK, AZH_ACT_ERROR, AZH_ACT_EXITED, AZH_ACT_E
 typedef struct { int32_t brk, err, exited, err_count; char first[AZH_MSG_MAX]; } azh_msgstate;
 int azh__msg_status(const char *text);
 int azh__msg_is_break(const char *text);
+/* msg.c: a summary line's msg= text: backslash as two, a quote as backslash-quote, a newline as backslash-n, CR dropped */
+void azh__print_escaped(FILE *f, const char *m);
 void azh__msg_begin_run(azh_msgstate *st);
 int azh__msg_on_message(azh_msgstate *st, const char *text, int is_lazpy);
+/* profile.c: the option-profile format (USING section 14). A line is at most AZH_PROFILE_LINE_MAX bytes, a file at
+ * most AZH_PROFILE_LINES_MAX lines; going over either is an error, never a silent cut. */
+enum { AZH_PROFILE_LINE_MAX = 511, AZH_PROFILE_LINES_MAX = 4096 };
+/* One line (len bytes, no newline). Returns 0 and key/value (value points into line, verbatim), 1 for a blank or
+ * comment line, or AZH_E_ARG with the reason in err. Used for --opt too, where a 1 is the caller's error. */
+int azh__profile_pair(const char *line, size_t len, char *key, size_t keycap, const char **value,
+                      char *err, size_t cap);
+/* Every pair of the file in order through cb (a nonzero return stops the parse and is returned as is).
+ * Lines are read in file order and the first error wins; a 4097th line is the error "more than 4096 lines" at line
+ * 4097. Returns 0; AZH_E_IO (err says so, *err_line 0); AZH_E_ARG with err set (a format error; *err_line is its
+ * 1-based line); or cb's code with err empty and *err_line the line cb refused. */
+int azh__profile_parse(const char *path, int (*cb)(const char *key, const char *value, void *ud), void *ud,
+                       int *err_line, char *err, size_t cap);
+/* input.c: one line of an --inputs script, '#' comment already cut. 7 int32 fields separated by spaces, tabs or
+ * commas, each decimal (optional '-') or 0x hex; a leading 0 is decimal. Returns the count parsed (0 for a blank
+ * line) or -1 for a bad token, a range error or trailing junk. */
+int azh__script_line(const char *line, int32_t rec[AZH_INPUT_INTS]);
 /* rawcopy.c: one screen's rectangle (as azh_crop_rects returns it) from the RGBA readback into the map */
 void azh__raw_copy(const uint8_t *src, int32_t src_stride, int32_t x, int32_t y, int32_t w, int32_t h,
                    uint8_t *dst);                                     /* dst rows are w * 4 bytes; alpha 255 */

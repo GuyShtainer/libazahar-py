@@ -2,12 +2,13 @@
 from __future__ import annotations
 
 import signal as _signal
+from pathlib import Path
 from typing import Optional
 
 from . import _abi
 
 __all__ = ["LibAzaharError", "ArgumentError", "BootError", "GuestError", "HostTimeout", "HostCrashed", "StateError",
-           "NeedsLazpyCore", "GuestMemoryError", "HostError", "HostCallError", "from_code"]
+           "NeedsLazpyCore", "GuestMemoryError", "HostError", "SlotTimeout", "LoadWarning"]
 
 
 class LibAzaharError(Exception):
@@ -29,6 +30,9 @@ class GuestError(LibAzaharError):
         super().__init__(message)
         self.result = result
 
+    def __reduce__(self):  # type: ignore[no-untyped-def]
+        return (GuestError, (self.args[0] if self.args else "", self.result))
+
 
 class HostTimeout(LibAzaharError):
     """A call did not finish in time; the worker was killed and reaped."""
@@ -41,6 +45,9 @@ class HostTimeout(LibAzaharError):
         self.op = op
         self.seconds = seconds
         self.message = message
+
+    def __reduce__(self):  # type: ignore[no-untyped-def]
+        return (HostTimeout, (self.op, self.seconds, self.message))
 
 
 class HostCrashed(LibAzaharError):
@@ -62,6 +69,9 @@ class HostCrashed(LibAzaharError):
         self.message = message
         self.log_tail = log_tail
         self.err_tail = err_tail
+
+    def __reduce__(self):  # type: ignore[no-untyped-def]
+        return (HostCrashed, (self.returncode, self.signal, self.message, self.log_tail, self.err_tail))
 
     @staticmethod
     def signal_name(number: Optional[int]) -> str:
@@ -91,9 +101,33 @@ class GuestMemoryError(LibAzaharError):
         self.addr = addr
         self.length = length
 
+    def __reduce__(self):  # type: ignore[no-untyped-def]
+        return (GuestMemoryError, (self.args[0] if self.args else "", self.addr, self.length))
+
 
 class HostError(LibAzaharError):
     """Wrong call order, I/O, memory, an unsupported call, an ABI mismatch or a missing host."""
+
+
+class SlotTimeout(HostTimeout):
+    """No slot became free in time (a HostTimeout, so ``except HostTimeout`` still catches it). ``op`` is ``"slot"``;
+    ``slots`` is the cap and ``folder`` the lock folder."""
+
+    def __init__(self, seconds: float, slots: int, folder: Path) -> None:
+        super().__init__("slot", seconds)          # HostTimeout needs (op, seconds); there is no guest message here
+        self.slots = slots
+        self.folder = Path(folder)
+        self.args = (str(self),)
+
+    def __reduce__(self):  # type: ignore[no-untyped-def]
+        return (SlotTimeout, (self.seconds, self.slots, self.folder))
+
+    def __str__(self) -> str:
+        return f"no libazahar slot free after {self.seconds:g} s: all {self.slots} are held; see {self.folder}"
+
+
+class LoadWarning(UserWarning):
+    """The machine's 1-minute load average is above twice its core count."""
 
 
 class HostCallError(Exception):

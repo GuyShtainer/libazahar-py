@@ -4,7 +4,7 @@
  // Copyright 2026 Citra Emulator Project / Azahar Emulator Project
  // Licensed under GPLv2 or any later version
  // Refer to the license.txt file included.
-+// Modified by libazahar-py, 2026: adds the lazpy_read_memory and lazpy_write_memory exports, a lazpy_movie_play export, a break after a fatal-error message in retro_run, and the Info log filter with Debug_Emulated at Debug. Licensed GPLv2 or later, as this file.
++// Modified by libazahar-py, 2026: adds the lazpy_read_memory and lazpy_write_memory exports, a lazpy_movie_play export, a lazpy_threads export of every guest thread's registers, a break after a fatal-error message in retro_run, and the Info log filter with Debug_Emulated at Debug. Licensed GPLv2 or later, as this file.
  
  #include <list>
  #include <numeric>
@@ -14,7 +14,7 @@
  // Copyright 2026 Citra Emulator Project / Azahar Emulator Project
  // Licensed under GPLv2 or any later version
  // Refer to the license.txt file included.
-+// Modified by libazahar-py, 2026: adds six core options for repeatable runs (deterministic async operations, async FS operations, instant debug log, init clock, init time, init ticks type). Licensed GPLv2 or later, as this file.
++// Modified by libazahar-py, 2026: adds seven core options for repeatable runs (deterministic async operations, async FS operations, instant debug log, init clock, init time, init ticks type, init ticks override). Licensed GPLv2 or later, as this file.
  
  #include <boost/hana/string.hpp>
  
@@ -24,7 +24,7 @@
  // Copyright 2026 Citra Emulator Project / Azahar Emulator Project
  // Licensed under GPLv2 or any later version
  // Refer to the license.txt file included.
-+// Modified by libazahar-py, 2026: appends -lazpy.1 to the library version string. Licensed GPLv2 or later, as this file.
++// Modified by libazahar-py, 2026: appends -lazpy.2 to the library version string. Licensed GPLv2 or later, as this file.
  
  #include <cstring>
  
@@ -33,7 +33,7 @@
 @@ -1,5 +1,6 @@
  #LIBRARY "libretro"
  #EXPORTS
-+# Modified by libazahar-py, 2026: exports lazpy_read_memory, lazpy_write_memory and lazpy_movie_play. Licensed GPLv2 or later, as this file.
++# Modified by libazahar-py, 2026: exports lazpy_read_memory, lazpy_write_memory, lazpy_movie_play and lazpy_threads. Licensed GPLv2 or later, as this file.
  _retro_set_environment
  _retro_set_video_refresh
  _retro_set_audio_sample

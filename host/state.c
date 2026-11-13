@@ -283,7 +283,7 @@ static int write_meta(const char *path, int32_t k, double *ms_sha)
 
     assert(path != NULL && ms_sha != NULL && noted_app[0] != '\0');
     memset(&m, 0, sizeof m);
-    m.abi = AZH_ABI_VERSION;
+    m.abi = AZH_STATE_META_ABI;
     m.k = k;
     azh__counters_get(&m.frame_total, &m.vblanks_total);
     m.created = (int64_t)time(NULL);
@@ -393,9 +393,9 @@ static int restore_check(const char *app, const char *path, restore_t *r)
         return azh_fail(AZH_E_SAVESTATE, "not a complete state (%s is missing or damaged)", mpath);
     }
     r->meta_ms = now_ms() - t0;
-    if (r->meta.abi < 2 || r->meta.abi > AZH_ABI_VERSION) {
-        return azh_fail(AZH_E_SAVESTATE, "state was made with host abi %d, this host reads abi 2 to %d", (int)r->meta.abi,
-                        AZH_ABI_VERSION);
+    if (r->meta.abi < 2 || r->meta.abi > AZH_STATE_META_ABI) {
+        return azh_fail(AZH_E_SAVESTATE, "state was made with state abi %d, this host reads abi 2 to %d", (int)r->meta.abi,
+                        AZH_STATE_META_ABI);
     }
     if (!is_dir(sdpath)) {
         return azh_fail(AZH_E_SAVESTATE, "not a complete state (%s is missing)", sdpath);

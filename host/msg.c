@@ -2,6 +2,7 @@
  * The break test reads the full text handed in, never the AZH_MSG_MAX copy: the "Exception Type:" line of a status 14
  * can sit past byte 200. */
 #include <assert.h>
+#include <stdio.h>
 #include <string.h>
 
 #include "azh_pure.h"
@@ -86,4 +87,20 @@ int azh__msg_on_message(azh_msgstate *st, const char *text, int is_lazpy)
     }
     st->err_count++;
     return (st->err_count >= 3) ? AZH_ACT_EXIT_ERROR : AZH_ACT_ERROR;
+}
+
+void azh__print_escaped(FILE *f, const char *m)
+{
+    assert(f != NULL && m != NULL);
+    for (; *m != '\0'; m++) {
+        if (*m == '\\') {
+            fputs("\\\\", f);
+        } else if (*m == '"') {
+            fputs("\\\"", f);
+        } else if (*m == '\n') {
+            fputs("\\n", f);
+        } else if (*m != '\r') {
+            fputc(*m, f);
+        }
+    }
 }

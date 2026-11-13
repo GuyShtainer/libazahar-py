@@ -16,9 +16,10 @@ build/libazhost.dylib: $(LIB_OBJ) host/libazhost.exports
 	$(CC) -dynamiclib -install_name @rpath/libazhost.dylib -Wl,-exported_symbols_list,host/libazhost.exports \
 	    -o $@ $(LIB_OBJ) -lz -lpthread
 
-# azhost links sdcopy.o directly: azh__copy_tree is internal, not an exported symbol of the library
-build/azhost: build/obj/azhost_main.o build/obj/sdcopy.o build/libazhost.dylib
-	$(CC) -o $@ build/obj/azhost_main.o build/obj/sdcopy.o -Lbuild -lazhost -Wl,-rpath,@loader_path
+# azhost links sdcopy.o, profile.o, input.o and msg.o directly: azh__copy_tree, azh__profile_*, azh__script_line and
+# azh__print_escaped are internal, not exported symbols of the library
+build/azhost: build/obj/azhost_main.o build/obj/sdcopy.o build/obj/profile.o build/obj/input.o build/obj/msg.o build/libazhost.dylib
+	$(CC) -o $@ build/obj/azhost_main.o build/obj/sdcopy.o build/obj/profile.o build/obj/input.o build/obj/msg.o -lm -Lbuild -lazhost -Wl,-rpath,@loader_path
 
 # static analysis: one pass per host source, no .plist output
 check:
@@ -39,7 +40,7 @@ testapp:
 	$(MAKE) -C testapp
 
 # step C's pure-C unit tests: no core, no Vulkan. -ffp-contract=off keeps the float32 touch model exact.
-TEST_SRC = host/input.c host/match.c host/msg.c host/rawcopy.c host/crop.c host/png.c host/sdcopy.c host/statemeta.c host/watch.c \
+TEST_SRC = host/input.c host/match.c host/msg.c host/rawcopy.c host/crop.c host/png.c host/sdcopy.c host/statemeta.c host/watch.c host/profile.c \
            $(wildcard tests/host/*.c)
 
 test-host: build/test-host

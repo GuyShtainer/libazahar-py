@@ -115,7 +115,9 @@ def test_watch_shape_checks():
         fill(_abi.Batch(), [(0, 1)], -1)
     with pytest.raises(ValueError):
         fill(_abi.Batch(), [(0, 1)], 1.5)
-    assert fill(_abi.Batch(), [(0, 1)] * 32, 0) == [1] * 32          # the host's plan decides word counts and size
+    with pytest.raises(ValueError):
+        fill(_abi.Batch(), [(0, 1)], 0)                               # watch_every is 1..100000
+    assert fill(_abi.Batch(), [(0, 1)] * 32, 1) == [1] * 32          # the host's plan decides word counts and size
 
 
 def test_watch_row_u32():
@@ -178,10 +180,10 @@ def row_of(layout, name):
     raise KeyError(name)
 
 
-def test_layout_is_abi_3(layout):
+def test_layout_is_abi_4(layout):
     _abi.check_layout(layout)
-    assert layout.abi == 3 and layout.size_batch == 3612 and layout.size_result == 312
-    assert layout.n_fields == 137 and layout.map_size == 4890624
+    assert layout.abi == 4 and layout.size_batch == 3612 and layout.size_result == 312
+    assert layout.n_fields == 151 and layout.map_size == 4890624
 
 
 def test_smaller_watch_area_with_matching_map_size_is_accepted(layout):

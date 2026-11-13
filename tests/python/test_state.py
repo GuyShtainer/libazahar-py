@@ -38,7 +38,7 @@ def test_state_boot(host_paths, workdir, seed):
         t_boot = time.monotonic() - start - wait_a
         frames_before, _ = dh.log_of(emu_a)
         info = emu_a.save_state(state)
-        result_a = emu_a.run(600, INPUTS, SHOTS)
+        result_a = emu_a.run(600, inputs=INPUTS, shots=SHOTS)
         lines_a, _ = dh.log_of(emu_a)
     finally:
         emu_a.close()
@@ -55,7 +55,7 @@ def test_state_boot(host_paths, workdir, seed):
     try:
         assert (emu_b.sd / dh.LOG).read_bytes() == (Path(f"{state}.sd") / dh.LOG).read_bytes()
         assert emu_b.frame_total == info.frame_total
-        result_b = emu_b.run(600, INPUTS, SHOTS)
+        result_b = emu_b.run(600, inputs=INPUTS, shots=SHOTS)
         lines_b, _ = dh.log_of(emu_b)
     finally:
         emu_b.close()
@@ -107,13 +107,13 @@ def test_other_app(host_paths, workdir, monkeypatch):
 
 
 def test_abi_outside_range_refused(host_paths, workdir):
-    """A state whose meta names an abi above this host's, or below 2, is refused."""
+    """A state whose meta names a state abi above this host's (AZH_STATE_META_ABI), or below 2, is refused."""
     state = quick_state(host_paths, workdir)
     meta = Path(f"{state}.meta")
     text = meta.read_text()
-    line = f"abi={_abi.AZH_ABI_VERSION}\n"
+    line = f"abi={_abi.AZH_STATE_META_ABI}\n"
     assert line in text
-    for number, bad in enumerate((_abi.AZH_ABI_VERSION + 1, 1)):
+    for number, bad in enumerate((_abi.AZH_STATE_META_ABI + 1, 1)):
         meta.write_text(text.replace(line, f"abi={bad}\n", 1))
         with pytest.raises(StateError, match="abi"):
             Emulator(host_paths.app, workdir / f"n{number}", state=state)

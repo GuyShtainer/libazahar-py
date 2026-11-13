@@ -1,6 +1,6 @@
 --- a/src/citra_libretro/core_settings.cpp
 +++ b/src/citra_libretro/core_settings.cpp
-@@ -47,6 +47,13 @@
+@@ -47,6 +47,14 @@
  static constexpr const char* is_new_3ds = citra_setting(BaseKeys::is_new_3ds);
  static constexpr const char* region_value = citra_setting(BaseKeys::region_value);
  static constexpr const char* language_value = citra_setting(BaseKeys::language_value);
@@ -11,10 +11,11 @@
 +static constexpr const char* init_clock = citra_setting(BaseKeys::init_clock);
 +static constexpr const char* init_time = citra_setting(BaseKeys::init_time);
 +static constexpr const char* init_ticks_type = citra_setting(BaseKeys::init_ticks_type);
++static constexpr const char* init_ticks_override = citra_setting(BaseKeys::init_ticks_override);
  } // namespace system
  
  namespace audio {
-@@ -709,7 +716,93 @@
+@@ -709,7 +717,108 @@
              { nullptr, nullptr }
          },
          "1.0"
@@ -105,10 +106,25 @@
 +        },
 +        "Random"
 +    },
++    {
++        config::system::init_ticks_override,
++        "Initial Ticks Override",
++        "Initial Ticks Override",
++        "Base CPU ticks used when the initial ticks are Fixed (core_timing.cpp). The host may send any decimal "
++        "from 0 to 4294967295.",
++        nullptr,
++        config::category::system,
++        {
++            { "0", "0" },
++            { "1000", "1000" },
++            { nullptr, nullptr }
++        },
++        "0"
++    },
  
      // Terminator
      { nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, { { nullptr, nullptr } }, nullptr }
-@@ -1125,7 +1218,39 @@
+@@ -1125,7 +1234,54 @@
              ",engine:libretro";
      } else {
          Settings::values.current_input_profile.motion_device = "engine:motion_emu";
@@ -133,7 +149,22 @@
 +        LibRetro::FetchVariable(config::system::init_ticks_type, "Random") == "Fixed"
 +            ? Settings::InitTicks::Fixed
 +            : Settings::InitTicks::Random;
-+    // init_ticks_override stays at its default of 0.
++    // A leading digit, the whole text used, and at most 2^32 - 1: a larger base overflows the
++    // microsecond clock (core_timing.cpp), and stoull alone would accept "-1", " 1" and "1x".
++    unsigned long long init_ticks = 0ULL;
++    try {
++        const std::string text = LibRetro::FetchVariable(config::system::init_ticks_override, "0");
++        std::size_t used = 0;
++        if (!text.empty() && text[0] >= '0' && text[0] <= '9') {
++            const unsigned long long value = std::stoull(text, &used);
++            if (used == text.size() && value <= 4294967295ULL) {
++                init_ticks = value;
++            }
++        }
++    } catch (const std::exception&) {
++        init_ticks = 0ULL;
++    }
++    Settings::values.init_ticks_override = static_cast<s64>(init_ticks);
 +    unsigned long long init_time = 946681277ULL;
 +    try {
 +        const std::string text = LibRetro::FetchVariable(config::system::init_time, "946681277");
@@ -148,7 +179,7 @@
  }
  
  void ParseCoreOptions(void) {
-@@ -1146,6 +1271,7 @@
+@@ -1146,6 +1302,7 @@
      ParseLayoutOptions();
      ParseStorageOptions();
      ParseInputOptions();

@@ -94,14 +94,27 @@ def _window_findings(core_bytes: bytes, src_root: Path) -> list[str]:
     return bad
 
 
+PIN_NAMES = ("PIN-nokeys", "PIN")    # build-core.sh's default pin first
+
+
+def built_pin(build_dir: Path, repo: Path) -> Path:
+    """The pin file whose sha256 build.inputs records (the default pin when none matches, so the check names it)."""
+    recorded = read_kv(build_dir / "build.inputs").get("pin", "") if (build_dir / "build.inputs").is_file() else ""
+    for name in PIN_NAMES:
+        if sha256_file(repo / "core" / name) == recorded:
+            return repo / "core" / name
+    return repo / "core" / PIN_NAMES[0]
+
+
 def _inputs_findings(build_dir: Path, repo: Path) -> tuple[dict[str, str], list[str]]:
     bad: list[str] = []
-    pin = read_kv(repo / "core" / "PIN")
+    pin_file = built_pin(build_dir, repo)
+    pin = read_kv(pin_file)
     path = build_dir / "build.inputs"
     if not path.is_file():
         return {}, ["build.inputs: missing (the old build has none)"]
     got = read_kv(path)       # "patch NAME=sha": the first '=' splits, names hold none
-    want = {"tarball": pin.get("SRC_SHA256", "?"), "pin": sha256_file(repo / "core" / "PIN"),
+    want = {"tarball": pin.get("SRC_SHA256", "?"), "pin": sha256_file(pin_file),
             "script": sha256_file(repo / "tools" / "build-core.sh"), "drop": pin.get("LAZ_CORE_DROP", "?"),
             "openssl_version": pin.get("OPENSSL_VERSION", "?"), "clean": "yes"}
     for key, value in want.items():
@@ -147,11 +160,11 @@ def _od_findings(build_dir: Path, drop: list[str]) -> list[str]:
     return bad + [f"o.d: {h}" for h in hits[:5]]
 
 
-def _strings_findings(core: Path, version: str) -> list[str]:
+def _strings_findings(core: Path, version: str, suffix: str) -> list[str]:
     lines = run_text([STRINGS, "-a", str(core)]).splitlines()
     bad: list[str] = []
-    if not any(line.strip() == "-lazpy.1" for line in lines):
-        bad.append("strings: no line equal to -lazpy.1")
+    if not any(line.strip() == suffix for line in lines):
+        bad.append(f"strings: no line equal to {suffix}")
     if any("/Users/" in line for line in lines):
         bad.append("strings: a line holds /Users/ (a build path leaked)")
     if any("ClCertA file missing, using default" in line for line in lines):
@@ -175,8 +188,9 @@ def keyblob_findings(build_dir: Path, core: Path, src_root: Path, tree: Path, re
         bad.append("core: missing, or not newer than build/CMakeCache.txt")
     got, found = _inputs_findings(build_dir, repo)
     bad += found
-    pin = read_kv(repo / "core" / "PIN")
+    pin = read_kv(repo / "core" / "PIN")     # core/PIN's drop list (the key headers, libressl), whatever pin built
     drop = pin.get("LAZ_CORE_DROP", "").split()
+    suffix = "-lazpy." + read_kv(built_pin(build_dir, repo)).get("LAZPY_REV", "?")
     prefix = got.get("openssl_prefix", "")
     bad += _cache_findings(build_dir, prefix)
     if not (tree / "CMakeLists.txt").is_file():
@@ -188,7 +202,7 @@ def keyblob_findings(build_dir: Path, core: Path, src_root: Path, tree: Path, re
     bad += _od_findings(build_dir, drop)
     if core.is_file():
         bad += _window_findings(core.read_bytes(), src_root)
-        bad += _strings_findings(core, pin.get("OPENSSL_VERSION", "?"))
+        bad += _strings_findings(core, pin.get("OPENSSL_VERSION", "?"), suffix)
         libs = run_text([OTOOL, "-L", str(core)])
         bad += [f"otool: links {m}" for m in sorted(set(re.findall(r"lib(?:ssl|crypto)[\w.-]*", libs)))]
     link = build_dir / "build" / "src" / "citra_libretro" / "CMakeFiles" / "citra_libretro.dir" / "link.txt"
@@ -235,7 +249,7 @@ def exported(core: Path) -> set[str]:
     return {x.split()[-1] for x in run_text([NM, "-gU", str(core)]).splitlines() if x.strip()}
 
 
-LAZPY_EXTRA = ["_lazpy_read_memory", "_lazpy_write_memory", "_lazpy_movie_play"]
+LAZPY_EXTRA = ["_lazpy_read_memory", "_lazpy_write_memory", "_lazpy_movie_play", "_lazpy_threads"]
 
 
 def symbol_findings(ours: Path, stock: Path, src_root: Path) -> tuple[list[str], list[str]]:
@@ -299,7 +313,7 @@ def scen_keyblob(a) -> None:
 
 def scen_symbols(a) -> None:
     ours, stock = symbol_findings(a.ours, a.stock, a.src_root)
-    check("symbols.ours", not ours, "the 25 retro_* names plus the 3 lazpy_* names" if not ours else "; ".join(ours))
+    check("symbols.ours", not ours, f"the 25 retro_* names plus the {len(LAZPY_EXTRA)} lazpy_* names" if not ours else "; ".join(ours))
     check("symbols.stock", not stock, "exactly the 25 retro_* names" if not stock else "; ".join(stock))
 
 
@@ -308,7 +322,8 @@ def scen_version(a) -> None:
     log = (res["out"] / "host.log").read_text(errors="replace") if (res["out"] / "host.log").exists() else ""
     found = re.search(r"core (.+?) version (\S+)", log)
     version = found.group(2) if found else None
-    check("version", res["rc"] == 0 and version == "2126.2-lazpy.1", f"rc={res['rc']} core version {version!r}")
+    want_version = "2126.2-lazpy." + read_kv(REPO / "core" / "PIN-nokeys").get("LAZPY_REV", "?")
+    check("version", res["rc"] == 0 and version == want_version, f"rc={res['rc']} core version {version!r}")
     want = [tuple(x.split("=", 1)) for x in (REPO / "core" / "options-lazpy.txt").read_text().splitlines()
             if x.strip() and not x.startswith("#")]
     logged = dict(re.findall(r"\boption (\w+)=(\S.*?)\s*$", log, re.MULTILINE))
@@ -525,7 +540,7 @@ SCENARIOS = {"keyblob": scen_keyblob, "symbols": scen_symbols, "version": scen_v
 
 def main() -> int:
     _use_repo_paths()
-    default_main = Path(os.path.realpath(REPO / "dl" / "azahar-src")).parent.parent       # MAIN, also from a worktree
+    default_main = Path(os.path.realpath(REPO / "dl" / "azahar-src")).parent.parent       # the checkout whose dl/azahar-src is real
     top = read_kv(REPO / "core" / "PIN").get("SRC_TOP", "")
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--ours", type=Path, required=True)

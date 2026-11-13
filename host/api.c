@@ -88,6 +88,17 @@ static const struct { const char *name; int32_t offset; int32_t size; } field_ro
     { "stats.core_version", offsetof(struct azh_stats, core_version), sizeof(((struct azh_stats *)0)->core_version) },
     { "stats.is_lazpy_core", offsetof(struct azh_stats, is_lazpy_core), sizeof(((struct azh_stats *)0)->is_lazpy_core) },
     { "stats.__size__", 0, sizeof(struct azh_stats) },
+    { "thread.tid", offsetof(azh_thread, tid), sizeof(((azh_thread *)0)->tid) },
+    { "thread.pid", offsetof(azh_thread, pid), sizeof(((azh_thread *)0)->pid) },
+    { "thread.status", offsetof(azh_thread, status), sizeof(((azh_thread *)0)->status) },
+    { "thread.core", offsetof(azh_thread, core), sizeof(((azh_thread *)0)->core) },
+    { "thread.priority", offsetof(azh_thread, priority), sizeof(((azh_thread *)0)->priority) },
+    { "thread.flags", offsetof(azh_thread, flags), sizeof(((azh_thread *)0)->flags) },
+    { "thread.pc", offsetof(azh_thread, pc), sizeof(((azh_thread *)0)->pc) },
+    { "thread.lr", offsetof(azh_thread, lr), sizeof(((azh_thread *)0)->lr) },
+    { "thread.sp", offsetof(azh_thread, sp), sizeof(((azh_thread *)0)->sp) },
+    { "thread.cpsr", offsetof(azh_thread, cpsr), sizeof(((azh_thread *)0)->cpsr) },
+    { "thread.__size__", 0, sizeof(azh_thread) },
     { "layout.abi", offsetof(azh_layout, abi), sizeof(((azh_layout *)0)->abi) },
     { "layout.size_batch", offsetof(azh_layout, size_batch), sizeof(((azh_layout *)0)->size_batch) },
     { "layout.size_result", offsetof(azh_layout, size_result), sizeof(((azh_layout *)0)->size_result) },
@@ -145,6 +156,7 @@ static const struct { const char *name; int32_t offset; int32_t size; } field_ro
     { "const.AZH_EXIT_IO", (int32_t)AZH_EXIT_IO, 0 },
     { "const.AZH_EXIT_NEEDS_LAZPY", (int32_t)AZH_EXIT_NEEDS_LAZPY, 0 },
     { "const.AZH_EXIT_UNSUPPORTED", (int32_t)AZH_EXIT_UNSUPPORTED, 0 },
+    { "const.AZH_EXIT_STATE", (int32_t)AZH_EXIT_STATE, 0 },
     { "const.AZH_EXIT_GUEST_EXITED", (int32_t)AZH_EXIT_GUEST_EXITED, 0 },
     { "const.AZH_EXIT_GUEST_ERROR", (int32_t)AZH_EXIT_GUEST_ERROR, 0 },
     { "const.AZH_SCREEN_TOP", (int32_t)AZH_SCREEN_TOP, 0 },
@@ -160,6 +172,8 @@ static const struct { const char *name; int32_t offset; int32_t size; } field_ro
     { "const.AZH_STOP_GUEST_ERROR", (int32_t)AZH_STOP_GUEST_ERROR, 0 },
     { "const.AZH_STOP_WALL_LIMIT", (int32_t)AZH_STOP_WALL_LIMIT, 0 },
     { "const.AZH_ABI_VERSION", (int32_t)AZH_ABI_VERSION, 0 },
+    { "const.AZH_STATE_META_ABI", (int32_t)AZH_STATE_META_ABI, 0 },
+    { "const.AZH_THREAD_CURRENT", (int32_t)AZH_THREAD_CURRENT, 0 },
     { "const.AZH_MAX_SHOTS", (int32_t)AZH_MAX_SHOTS, 0 },
     { "const.AZH_PATH_MAX", (int32_t)AZH_PATH_MAX, 0 },
     { "const.AZH_INPUT_INTS", (int32_t)AZH_INPUT_INTS, 0 },
@@ -579,6 +593,16 @@ int azh_write(uint32_t addr, uint32_t len, const void *buf)
     int rc = memory_gate("azh_write");
 
     return (rc != AZH_OK) ? rc : azh__mem_write(addr, len, buf);
+}
+
+int azh_threads(azh_thread *out, int32_t max, int32_t *count)
+{
+    int rc = memory_gate("azh_threads");
+
+    if (rc != AZH_OK && count != NULL) {
+        *count = 0;
+    }
+    return (rc != AZH_OK) ? rc : azh__mem_threads(out, max, count);
 }
 
 int azh_set_input(const int32_t rec[AZH_INPUT_INTS])

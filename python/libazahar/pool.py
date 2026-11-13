@@ -81,5 +81,6 @@ class Pool:
     def __enter__(self) -> "Pool":
         return self
 
-    def __exit__(self, *exc: object) -> None:
-        self.close(wait=True)
+    def __exit__(self, exc_type: object, exc: object, tb: object) -> None:
+        """Wait for running jobs; when the body raised, jobs still queued are cancelled instead of run."""
+        self._executor.shutdown(wait=True, cancel_futures=exc_type is not None)

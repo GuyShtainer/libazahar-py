@@ -9,7 +9,7 @@
 #     --testapp      the test app from the release, into dl/testapp/ and build/testapp.3dsx
 #     --force        delete and refetch what the chosen parts fetch
 #   No part flag means --moltenvk --headers. A second run downloads nothing.
-#   LAZPY_ROOT=<dir>        use <dir> instead of the repo root (for tests on a temp copy)
+#   LAZ_ROOT=<dir>          use <dir> instead of the repo root (for tests on a temp copy; LAZPY_ROOT is the old name)
 #   LAZ_RELEASE_BASE=<url>  use <url> instead of the release page (for tests, file://)
 #
 # Downloads are untrusted data (docs/map/rules.md rule 2): each lives in its own folder under dl/, is hashed BEFORE
@@ -17,7 +17,7 @@
 # stock curl, shasum, unzip, tar, cp.
 set -eu
 
-ROOT="${LAZPY_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
+ROOT="${LAZ_ROOT:-${LAZPY_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}}"   # LAZPY_ROOT: the old name, kept for 1.x
 DL="$ROOT/dl"
 VENDOR="$ROOT/vendor"
 

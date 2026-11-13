@@ -73,6 +73,9 @@ static int apply_line(const char *line, uint32_t n, laz_control *ctl)
     if (key_is(line, klen, "boot_frames")) {
         return parse_number(val, vlen, 1, 10000u, &ctl->boot_frames);
     }
+    if (key_is(line, klen, "stencil")) {
+        return parse_number(val, vlen, 1, 4u, &ctl->stencil);
+    }
     return 0;
 }
 

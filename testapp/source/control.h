@@ -14,6 +14,7 @@ typedef struct {
     uint32_t exit_at;      // 0 = off
     uint32_t ready_at;     // 0 = off
     uint32_t boot_frames;  // 0 = no busy boot
+    uint32_t stencil;      // 0 = off; 1/2 = stencil self-test variant a+d / b; 3/4 = the same with EQUAL+INCR ops
     uint32_t error_count;  // number of bad lines (recorded in error_line)
     uint32_t error_line[LAZ_CONTROL_MAX_LINES + 1];  // 1-based line numbers
 } laz_control;

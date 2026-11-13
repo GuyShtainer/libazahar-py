@@ -5,6 +5,13 @@ guest memory on our own core. Plain sections. This guide makes no speed claim; t
 with its scene, load and date. "The stock core" means Azahar's own libretro core; "our core" is the patched build
 (`azahar_lazpy_libretro`, section 17).
 
+The promise (semantic versioning from 1.0.0): until 2.0, these change only in compatible ways, and additions come in
+minor releases. They are `libazahar.__all__` (names, arguments, return types, error classes), the C functions in
+`host/azhost.h` at source level (names and meaning; struct layouts may grow, so C callers rebuild for each release),
+the `azhost` command line with its exit codes and summary keys (section 3), the input-script format (section 4a), the
+option-profile format (section 14) and the first table of section 15. The host library and the Python package are one
+unit: use both from one checkout or one release. A savestate loads in later 1.x releases on the same core revision.
+
 ## 1. Install
 
 `python3 -m venv .venv && .venv/bin/pip install -e .` (the worker runs `python -I`, so a venv, not the user site).
@@ -34,6 +41,36 @@ guest exits on counts. `RunResult.wall_s` is the batch's wall time; `azhost run`
 `frames= wall= fps= shots= stop= first= last= vblanks= wall_ms_mean= batch= msg=` (the mean frame time; there is no
 max).
 
+`run` takes the number of frames as its only positional argument; every other option (`inputs`, `shots`, `stop_file`,
+`stop_text`, `stop_every`, `stop_new`, `debug_text`, `wall_limit`, `timeout`, `watch`, `watch_every`) is keyword-only.
+`run_until(file, text, max_frames, ...)` takes the same options under the same names. `frames` and every entry of
+`shots`, and `stop_every`, must be whole numbers (a numpy integer is fine; `1.5`, `True` and strings raise
+`ArgumentError`). `wall_limit`, `timeout` and `boot_timeout` must be numbers (not a bool or NaN), else `ArgumentError`.
+`watch_every` is 1 to 100000. `Shot.top` and `Shot.bottom` are `pathlib.Path` values, and `Shot.frame_total` is always
+set. `RunResult` is a frozen dataclass whose `shots` is a dict: two results compare by equality but are not hashable.
+
+The `azhost` exit codes:
+
+| Code | Meaning |
+|---|---|
+| 0 | Every batch ran. The stop reason is in each summary line (`frames`, `sd_text`, `debug_text`, `guest_break`, `wall_limit`). |
+| 2 | Usage: a bad flag or value, a bad profile or input-script line, an unknown option key or value. |
+| 3 | The app failed to boot. |
+| 4 | The core failed to load or has an unknown version. |
+| 5 | Vulkan or MoltenVK failed. |
+| 6 | I/O or out of memory: an unreadable profile or input script; a seed copy that fails; an unwritable `--out` or `--sys`; a `--save` file that cannot be written. A missing or refused seed folder is a usage error (2). |
+| 7 | The run needs our core, for example `--debug-stop` on the stock core. |
+| 8 | Unsupported request, for example `--raw-shot` at a resolution factor other than 1. |
+| 9 | A savestate could not be loaded (`--state`), or `--save` could not drain or serialize the state (a write failure is 6). |
+| 10 | The guest exited. Our core: the batch's summary line (`stop=guest_exited`) comes first. Stock core: the process exits from inside the run, with no summary for that batch. |
+| 11 | A guest error ended the run. Our core: summary first (`stop=guest_error`). Stock core: none. |
+| 128+n | Killed by signal n (shown by the shell; azhost never returns it itself). Codes 1 and 12-127 are reserved. |
+
+Summary-line keys are frozen: `frames wall fps shots stop first last vblanks wall_ms_mean batch msg`. Units: `wall` is
+in seconds, `wall_ms_mean` in milliseconds, `batch` counts from 1. New keys are inserted before `msg`, which is always
+last and escapes `\` as `\\`, a newline as `\n` and `"` as `\"`; a `\r` is dropped. The stdout lines `saved k= frame=` and `last N:` are
+frozen too. The `Class: text` line on stderr is for people and is outside the promise.
+
 ## 4. Inputs
 
 `inputs` is a movie: `(frame, item)` pairs, held across batches. A `Buttons` value (libctru `KEY_*` names, also
@@ -44,6 +81,21 @@ Measured offsets (step C, test app on our host): a change made at batch frame f 
 frame f + m, or sometimes f + m + 1. Buttons (A and others): m = 0 (counts 0: 1, 1: 29 over 30 changes; the first
 one lands on f, the rest on f + 1); ZL/ZR (irrst path): m = 1 (6 of 6); circle pad: m = 1 (5 of 5); touch: m = 2
 (40 of 40). Plan checks with a tolerance of one frame. Poll-exact movies: not tested.
+
+## 4a. The input script (`azhost --inputs FILE`)
+
+One record per line: `frame buttons touch_x touch_y touch_down circle_x circle_y`. That is 7 int32 fields separated by
+spaces, tabs or commas. Each field is decimal (with an optional `-`) or `0x` / `0X` hex. A leading `0` does not mean
+octal: `010` is 10 and `0x10` is 16; `0x0x10` is an error.
+
+- A `#` anywhere starts a comment that runs to the end of the line. Blank lines are skipped.
+- A line is at most 511 bytes (a comment included; one trailing `\r` is dropped first). A longer line, or a line
+  holding a NUL byte, is an error that names the line number.
+- Each record is the whole held state from its frame on. This differs from the Python `inputs` items, where each item
+  changes only its own part (buttons, touch or circle).
+- The script applies to the first batch only. A script has at most 1,000,000 records and 4,000,000 lines; data past
+  that is an error at line 4000001, never a silent cut.
+- A bad line prints `UsageError: <file> line N: ...` and exits 2; an unreadable file exits 6.
 
 ## 5. Touch
 
@@ -83,16 +135,33 @@ per frame grows `host.log` by about a line per frame.
 `LibAzaharError` is the base. `BootError`: core, Vulkan or the app failed to start. `GuestError`: section 7.
 `HostTimeout`: the heartbeat stopped for `timeout` seconds (Emulator-wide default 30, or per call); the worker is
 killed and reaped. `SlotTimeout` is a `HostTimeout` (`.op == "slot"`, `.seconds`) raised when no machine-wide slot
-frees up (section 13). `HostCrashed`: the worker died (a signal gives a negative code). `StateError`: section 10.
+frees up (section 13). `HostCrashed`: the worker died (a signal gives a negative code). Every error class survives
+pickling, so errors cross a process pool. `StateError`: section 10.
 `NeedsLazpyCore`: the call needs our patched core. `HostError`: wrong call order, I/O, memory, ABI mismatch, missing
 host, an unsupported call, a guest exit outside `run`. `ArgumentError` (also a `ValueError`) for every bad argument. The crash tests leave a macOS
 crash report each run. On the stock core a guest-exit result has `wall_s` 0.0 and no `shots`. `boot_timeout`
 (default 300 s) covers boot and the first frames' shader compiles. A long batch is not a hang while the heartbeat moves.
 
+| Call | Raises |
+|---|---|
+| `Emulator(...)` | `ArgumentError`, `BootError`, `HostError`, `SlotTimeout`, `HostTimeout`, `HostCrashed` |
+| `run`, `run_until`, `run_frame` | `ArgumentError`, `GuestError`, `NeedsLazpyCore`, `HostTimeout`, `HostCrashed`, `HostError` |
+| `save_state`, `load_state` | `StateError`, or `HostError` for an I/O failure |
+| `memory` calls | `GuestMemoryError`, `NeedsLazpyCore`, `ArgumentError`, or `TypeError` for data that is not bytes |
+| any call after `close()` | `HostError` |
+
+A missing `sd_seed` folder is an `ArgumentError`; a `workdir` that cannot be made is a `HostError` naming the path; an
+unreadable option profile is a `HostError`; a profile line that
+breaks the format (section 14) is an `ArgumentError` naming the file and the line. `SlotTimeout` and `LoadWarning`
+are defined in `libazahar.errors`. The promise is `libazahar.__all__`; `libazahar.errors` stays importable.
+
 ## 9. Screens
 
 `screens()` returns numpy views if numpy is installed (`pip install '.[numpy]'`), else `bytes`: top 400x240, bottom
 320x240, read-only, and they change at the next raw shot; `.copy()` (numpy) to keep one. `shots=[frames]` saves PNGs and returns them in `result.shots`.
+
+`shot(prefix)` returns the two PNG paths as a tuple of `pathlib.Path`, and `result.shots[f].top` / `.bottom` are
+`Path` values too. Code that needs a string calls `str(path)`.
 
 ## 10. Savestates
 
@@ -107,6 +176,8 @@ shader cache. Gate on the test app (Guy's ruling): a state boot takes under 2.5 
 measured); a real game's state is larger, so time your own. A `load_state` that fails after the SD folder was replaced
 leaves the instance unusable (later calls raise HostError); close it and boot again. The meta's `app=` is the absolute
 app path, so a shared state carries it. An I/O failure while saving is a HostError, not a StateError.
+
+`SaveInfo.path` is a `pathlib.Path` (resolved, absolute).
 
 ## 11. Stock core and our core
 
@@ -133,6 +204,12 @@ of `WatchRow(frame, status, data)` (`frame` absolute, `data` one `bytes` per ent
 unmapped entry reads as zeros and sets the row status (`AZH_E_UNMAPPED`), the batch goes on. Rows live in a 4 MiB area
 of `host.map`; a batch that needs more rows is refused with an `ArgumentError` naming the largest frame count that fits at
 that `watch_every`. States saved under ABI 2 still load.
+
+**Threads (core lazpy.2).** `emu.threads()` returns a tuple of `ThreadInfo(tid, pid, status, status_name, core,
+priority, is_current, pc, lr, sp, cpsr)` for every guest thread on every core, read between batches. A core's current
+thread (`is_current`) is read from the live CPU, every other thread from its saved registers. System-module threads may
+be listed too, so filter by `pid`; `pid` is `0xFFFFFFFF` for a thread with no owner process. Bit 5 of `cpsr` is the
+Thumb bit. On the stock core and on a lazpy.1 core it raises `NeedsLazpyCore`.
 
 ## 12. The Gen3D mapping
 
@@ -179,15 +256,59 @@ counts only libazahar's own workers, so other emulators on the machine are not c
 (`UserWarning`) and the extra jobs wait; a load above twice the core count warns with `LoadWarning`. Workers run at
 `nice` 10 at least (a parent that is already nicer keeps its value).
 
+- An `Emulator` is used from one thread at a time. Separate `Emulator` objects may run in parallel threads or in
+  parallel processes.
+- A `Pool` that reuses a `root` reuses `root/job-NNNN/sys/`, the SD card included, unless `fresh_sd=True` is passed
+  in its keywords.
+- When the body of a `with Pool(...)` block raises, jobs that are still queued are cancelled; jobs already running
+  finish and close their Emulators. A body that ends normally waits for every queued job.
+- `factory=` is a test hook outside the promise.
+
 ## 14. Our core's profile
 
 On our core `core/options-lazpy.txt` is applied first (the extra option lines our core takes), then the default
 profile and your `options`. `azhost run --lazpy-profile FILE|none` and `LAZ_LAZPY_PROFILE` (a file, or `none`) change
 it. The stock core never sees it.
 
+The tick seed: with `citra_init_ticks_type=Fixed` (the profile's value), `citra_init_ticks_override` sets the base CPU
+ticks (core lazpy.2; default `0`; any decimal from 0 to 4294967295, else `ArgumentError`). It takes effect at boot. It
+also shifts the guest's clock by that many ticks (268 MHz), a played movie replaces it with the movie's own, and a
+loaded state keeps the ticks it was saved with.
+
+The option-profile format:
+
+A profile is a text file of `key=value` lines. `--profile`, `--lazpy-profile` and Python's profile argument all read it
+by the same rules. `options=` pairs and `--opt` pass the same rule for one `key=value` line; a bad Python pair is
+`ArgumentError` naming the key (a newline or trailing `\r` in a value is refused too).
+
+1. Lines are split on `\n` only; one trailing `\r` is removed. A last line without a newline counts. Every line,
+   comments included, is valid UTF-8 with no NUL byte, and no line starts with a BOM.
+2. A line is at most 511 bytes (the newline excluded). A file has at most 4096 lines, comments and blank lines
+   included. Going over either limit is an error, never a silent cut. Lines are checked in file order and the first
+   error is reported; a 4097th line is reported as line 4097.
+3. A line that is empty is skipped. A line whose first byte is `#` is a comment. A `#` anywhere else is part of the
+   text.
+4. Every other line is `key=value`, split at the first `=`. The key is not empty and has no space, tab or `=`. The
+   value is everything after the `=`, as written: inner spaces are kept (`citra_is_new_3ds=New 3DS`), and it may be
+   empty, in which case the host decides.
+5. Nothing is trimmed. A line that starts or ends with a space or tab is an error. This includes an indented `#`.
+6. Pairs are applied in file order, after the earlier sources: the lazpy profile, then the default (or given) profile,
+   then `options=` / `--opt` in order. The later line wins, inside a file and across sources.
+7. An unknown key, or a value outside the core's list, is refused by the host and never ignored. On the stock core a
+   key that only our core has is unknown.
+8. How errors show up:
+   - Python: a bad line raises `ArgumentError("<path>:<line>: <reason>")` (`<path>:4097: more than 4096 lines` for a
+     long file); an unreadable file raises `HostError`; an
+     unknown key raises `ArgumentError` at boot.
+   - azhost: a bad line or an unknown key prints `UsageError: <path> line N: <reason>` and exits 2; an unreadable file
+     prints `IOError` and exits 6.
+
+The tests in `tests/data/profile-cases/` (one `.txt` and one `.expect` per case) run through both parsers.
+
 ## 15. Environment
 
-Library and host (the last column says who reads it):
+Library and host (the last column says who reads it). Only this first table is part of the promise; the test and
+build variables below may change in a minor release:
 
 | Variable | What it does | Default | Read by |
 |---|---|---|---|
@@ -207,15 +328,16 @@ Library and host (the last column says who reads it):
 | `LAZ_STATE_ANY_APP` | `1` loads a state made with another build of the app | unset | host |
 
 Tests only: `LAZ_REQUIRE_EMULATOR=1` (a missing emulator fails instead of skipping) and `LAZ_STOCK_CORE` (a stock core
-you downloaded; unset, the comparison tests skip). `LAZ_CORE` is the only variable the library reads to find a core.
+you downloaded; unset, the comparison tests skip), `LAZ_CORE_OLD` (a lazpy.1 core, for the test that it still
+boots). `LAZ_CORE` is the only variable the library reads to find a core.
 
 Build and fetch time (the scripts' header comments are the reference):
 
 | Variable | What it does | Default | Script |
 |---|---|---|---|
-| `LAZPY_ROOT` | use this folder instead of the repo root | the repo root | `fetch.sh`, `build-core.sh` |
+| `LAZ_ROOT` | use this folder instead of the repo root (the same meaning as for the library; the old name `LAZPY_ROOT` still works in 1.x) | the repo root | `fetch.sh`, `build-core.sh`, `mkrelease.sh` |
 | `LAZ_RELEASE_BASE` | where the release downloads come from; a `file://` folder works for a local release | the release page | `fetch.sh` |
-| `LAZ_CORE_PIN` | the pin file | `core/PIN` | `build-core.sh` |
+| `LAZ_CORE_PIN` | the pin file | `core/PIN-nokeys` | `build-core.sh` |
 | `LAZ_CORE_PATCHES` | the patch folder | `core/patches` | `build-core.sh` |
 | `LAZ_CORE_LTO` | link-time optimisation | `ON` | `build-core.sh` |
 | `LAZ_CORE_JOBS` | build jobs | 4 | `build-core.sh` |
@@ -229,6 +351,7 @@ Build and fetch time (the scripts' header comments are the reference):
 | Input, shots, SD files, savestates | yes | yes |
 | Guest memory, the watch list (`emu.memory`, `watch=`) | yes | `NeedsLazpyCore` |
 | Debug-text stop (`debug_text=`) | yes | `NeedsLazpyCore` |
+| Thread registers (`emu.threads()`) | lazpy.2 only (lazpy.1: `NeedsLazpyCore`) | `NeedsLazpyCore` |
 | Exact repeats | yes (gated) | no: recorded as a difference only |
 | Poll-exact movies | not tested | no |
 | Option profile | `core/options-lazpy.txt` first (section 14) | the default profile only |
@@ -243,9 +366,10 @@ lands in `build-core/build.exit`, the log in `build-core/build.log`), then set
 `LAZ_CORE=build-core/azahar_lazpy_libretro.dylib`. The build needs a static OpenSSL at the version in `core/PIN`
 (3.6.5). Homebrew ships only its current `openssl@3`. If that is 3.6.5, the build finds it. If not, build 3.6.5 from
 `openssl-3.6.5.tar.gz` (a release asset; the recipe in `core/OPENSSL.md` is not tested by this project) and set
-`LAZ_OPENSSL_PREFIX` to its install prefix. To rebuild from our stripped source asset instead of Azahar's original
-tarball, set `LAZ_CORE_PIN=core/PIN-nokeys`. `core/README.md` lists the patches; `core/OPENSSL.md` covers OpenSSL.
-The core needs macOS 15 or later (its OpenSSL is built for 15, although its header says 11.0).
+`LAZ_OPENSSL_PREFIX` to its install prefix. The build starts from our stripped source asset (`core/PIN-nokeys`, the
+default); to start from Azahar's original tarball instead, set `LAZ_CORE_PIN=core/PIN`. `core/README.md` lists the
+patches; `core/OPENSSL.md` covers OpenSSL. The core needs macOS 15 or later (core lazpy.2's header says 15.0; the
+lazpy.1 header said 11.0, although its OpenSSL already needed 15). This host accepts cores lazpy.1 and lazpy.2.
 
 ## 18. Contributors
 
@@ -270,3 +394,32 @@ devkitARM first in `PATH`).
 - A `LoadWarning`: other sessions' emulators share the machine; wait, or run fewer instances.
 - `HostTimeout` in the first frames: shader compiles. Raise `boot_timeout` (default 300 s).
 - The core refuses to load on macOS older than 15.
+
+## 20. API reference
+
+One line per name in `libazahar.__all__`. Units: seconds in Python, frames are guest VBlanks.
+
+- `Emulator(app, workdir, *, sd_seed, state, core, options, timeout, boot_timeout, fresh_sd)`: one headless instance in its own worker process. Context manager; `close()` may be called twice.
+  - `app`, `workdir`: read-only `Path` properties. `timeout` (no-progress limit, default 30 s) and `boot_timeout` (default 300 s) may be set at any time.
+  - `sd`: the emulated SD folder. `pid`: the worker's process id. `closed`: True after `close()`, a dead worker or a guest exit. `frame_total`: frames since boot. `memory`: guest memory (our core only).
+  - `run(frames, *, ...)`, `run_until(file, text, max_frames, *, ...)`, `run_frame()` (one frame): return a `RunResult`.
+  - `set_input(buttons, touch, circle)`, `set_keys(raw)`: change the held input now.
+  - `screens()`: both screens as read-only arrays (or `bytes`). `shot(prefix)`: save both screens as PNG, returns two `Path`.
+  - `save_state(path)` returns a `SaveInfo`; `load_state(path)`; `threads()` returns a tuple of `ThreadInfo` (our core only).
+  - `stats()`: a `Stats` snapshot. `close()`: stop the worker.
+- `Pool(n, app, root, **emulator_kwargs)`: `submit`, `map`, `close`; section 13.
+- `Buttons`: the button bits (libctru names plus `UP`, `DOWN`, `LEFT`, `RIGHT`); a value is the whole held mask. `Touch(x, y)` and `Touch.up`: the touch point; `Circle(x, y)`: the circle pad.
+- `RunResult`: what one batch did (`frames`, `stopped_by`, `first_frame`, `last_frame`, `frame_total`, `vblanks`, `wall_s` in seconds, `message`, `shots`, `watch`). New `stopped_by` values may be added; callers must accept unknown ones.
+- `Shot`: `frame` (batch frame), `top` and `bottom` (`Path`), `frame_total` (frames since boot).
+- `WatchRow`: one row of a watch list: `frame`, `status`, `data` (one `bytes` per entry), and `u32(entry, word)`.
+- `Memory`: the type of `Emulator.memory`, exported for type hints; users never construct it. `read`, `write`, `u8` to `u64`, `s8` to `s64`, `write_u8` to `write_u64`, `raw_read`, `raw_write`.
+- `SaveInfo`: `path` (`Path`), `k` (guest VBlanks the save's drain ran; a state "at frame N" is at N + k), `frame_total`.
+- `Stats`: `frames` (since boot), `wall_s`, `user_s`, `sys_s` (seconds), `peak_rss` (bytes), `core_name`, `core_version`, `is_lazpy_core`.
+- `ThreadInfo`: one guest thread: `tid`, `pid`, `status`, `status_name`, `core`, `priority`, `is_current`, `pc`, `lr`, `sp`, `cpsr`.
+- `LibAzaharError`: the base class of every error raised on purpose.
+- `ArgumentError`: a bad argument (also a `ValueError`). `BootError`: the core, Vulkan or the app failed to start. `GuestError`: the guest stopped with a fatal error; `.result` holds the `RunResult` while the Emulator is open.
+- `HostTimeout`: no progress in time; `.op`, `.seconds`, `.message` (the last guest message). `SlotTimeout`: a `HostTimeout` with `.op == "slot"`, `.slots`, `.folder`.
+- `HostCrashed`: the worker died; `.returncode`, `.signal`, `.message`, `.log_tail`, `.err_tail`; `HostCrashed.signal_name(number)` gives a signal's name (the digits when unknown, `none` for None).
+- `StateError`: a savestate could not be saved, read or restored. `NeedsLazpyCore`: the call needs our core. `GuestMemoryError`: an unmapped guest address; `.addr`, `.length`. `HostError`: wrong call order, I/O, memory, an unsupported call, an ABI mismatch or a missing host.
+- `LoadWarning`: the machine's load average is above twice its core count.
+- `__version__`: the package version string.

@@ -94,6 +94,19 @@ def _op_write(lib: ctypes.CDLL, args: Tuple[Any, ...]) -> None:
     _host.call(lib, "azh_write", addr, len(data), ctypes.cast(buf, ctypes.c_void_p))
 
 
+def _op_threads(lib: ctypes.CDLL, args: Tuple[Any, ...]) -> bytes:
+    """Every guest thread as packed azh_thread records; retries with the host's count when the buffer was short."""
+    cap = 64
+    for _ in range(4):
+        buf = (_abi.Thread * cap)()
+        count = ctypes.c_int32(0)
+        _host.call(lib, "azh_threads", ctypes.cast(buf, ctypes.c_void_p), cap, ctypes.byref(count))
+        if 0 <= count.value <= cap:
+            return bytes(buf)[: count.value * ctypes.sizeof(_abi.Thread)]
+        cap = count.value
+    raise ValueError("the guest's thread count kept growing between calls")
+
+
 def _op_stats(lib: ctypes.CDLL, args: Tuple[Any, ...]) -> Dict[str, Any]:
     return _stats(lib)
 
@@ -103,7 +116,8 @@ def _op_close(lib: ctypes.CDLL, args: Tuple[Any, ...]) -> None:
 
 
 _OPS = {"start": _op_start, "run": _op_run, "set_input": _op_set_input, "shot": _op_shot,
-        "save_state": _op_save_state, "load_state": _op_load_state, "read": _op_read, "write": _op_write, "stats": _op_stats, "close": _op_close}
+        "save_state": _op_save_state, "load_state": _op_load_state, "read": _op_read, "write": _op_write,
+        "threads": _op_threads, "stats": _op_stats, "close": _op_close}
 
 
 def _serve(conn: Connection, lib: ctypes.CDLL) -> int:

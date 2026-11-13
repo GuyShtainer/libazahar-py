@@ -1,8 +1,11 @@
 # The host library and `azhost`
 
 For C users, and for anyone reading the Python layer's worker. The Python layer (`python/libazahar/`) calls this
-library through `ctypes`; `docs/USING.md` is the guide to the Python side. The ABI may change before 1.0; each change
-bumps `AZH_ABI_VERSION` (now 3).
+library through `ctypes`; `docs/USING.md` is the guide to the Python side. The promise: the host and the Python layer
+are one unit and ship together, so the layout and the Python-to-host calls are checked at load time and may change in a
+1.x release (each change bumps `AZH_ABI_VERSION`, now 4); the C promise is at source level: the names, argument orders
+and meanings of the `azh_*` functions and `AZH_*` constants in `host/azhost.h` do not change in 1.x, and struct
+layouts may grow.
 
 ## Build
 
@@ -12,7 +15,7 @@ pass to `azh_open`), MoltenVK, and the headers `tools/fetch.sh` puts in `vendor/
 
 ## The ABI version and the layout
 
-`AZH_ABI_VERSION` is 3 (`host/azhost.h` line 9). `azh_abi_layout()` fills an `azh_layout` with the size of every
+`AZH_ABI_VERSION` is 4 (`host/azhost.h` line 9). `azh_abi_layout()` fills an `azh_layout` with the size of every
 struct, the map's size and offsets, and one `fields[]` row (name, offset, size) per struct member. A caller checks
 these against its own view at load time, as `python/libazahar/_abi.py` does, and refuses a host whose layout differs.
 `build/azhost layout` prints the same rows (the full output is at the end of this page).
@@ -20,7 +23,7 @@ these against its own view at load time, as `python/libazahar/_abi.py` does, and
 ## Call order
 
 `azh_open`, then `azh_set_option` (as many as you need), then `azh_boot`, then any of `azh_run`, `azh_shot`,
-`azh_stats`, `azh_read`, `azh_write`, `azh_set_input`, `azh_save_state`, `azh_load_state`, then `azh_close`.
+`azh_stats`, `azh_read`, `azh_write`, `azh_threads`, `azh_set_input`, `azh_save_state`, `azh_load_state`, then `azh_close`.
 `azh_error` and `azh_abi_layout` work at any time. One `azh_open` per process: the core and MoltenVK stay mapped after
 `azh_close`, so a second open is refused (`AZH_E_ORDER`). The Python layer runs each Emulator in its own worker process
 for this reason. Every function returns 0 or a negative `AZH_E_*` code; `azh_error()` returns the text of the last
@@ -30,29 +33,28 @@ error.
 
 | Function | What it does | Header |
 |---|---|---|
-| `azh_open` | loads the core, starts Vulkan, opens the log and the map file | `host/azhost.h` line 83 |
-| `azh_close` | stops the core and closes the files | line 84 |
-| `azh_set_option` | sets one core option, after open and before boot; a later call for a key wins | line 85 |
-| `azh_boot` | loads the app, and a savestate when one is given | line 86 |
-| `azh_run` | runs a batch of frames with input records, shots, stop rules and a watch list; fills an `azh_result` | line 87 |
-| `azh_shot` | saves the current frame of one or both screens as PNG or raw RGBA | line 89 |
-| `azh_save_state` | writes a savestate; returns the VBlanks the drain ran | line 90 |
-| `azh_load_state` | restores a savestate | line 91 |
-| `azh_read` | reads guest memory (our core; `AZH_E_NEEDS_LAZPY_CORE` on the stock core) | line 92 |
-| `azh_write` | writes guest memory (our core) | line 93 |
-| `azh_set_input` | sets the held input now | line 94 |
-| `azh_stats` | frames, wall and CPU time, peak memory, the core's name and version, whether it is our core | line 95 |
-| `azh_abi_layout` | fills the layout record | line 96 |
-| `azh_error` | the last error text | line 97 |
-
-Some comments in the header (`until D`, `reserved for step D`) are older than the code: both state calls work.
+| `azh_open` | loads the core, starts Vulkan, opens the log and the map file | `host/azhost.h` line 89 |
+| `azh_close` | stops the core and closes the files | `host/azhost.h` line 90 |
+| `azh_set_option` | sets one core option, after open and before boot; a later call for a key wins; an unknown key or value returns `AZH_E_ARG` | `host/azhost.h` line 91 |
+| `azh_boot` | loads the app, and a savestate when one is given | `host/azhost.h` line 93 |
+| `azh_run` | runs a batch of frames with input records, shots, stop rules and a watch list; fills an `azh_result` | `host/azhost.h` line 94 |
+| `azh_shot` | saves the current frame of one or both screens as PNG or raw RGBA | `host/azhost.h` line 96 |
+| `azh_save_state` | writes a savestate; returns the VBlanks the drain ran | `host/azhost.h` line 97 |
+| `azh_load_state` | restores a savestate | `host/azhost.h` line 98 |
+| `azh_read` | reads guest memory (our core; `AZH_E_NEEDS_LAZPY_CORE` on the stock core) | `host/azhost.h` line 99 |
+| `azh_write` | writes guest memory (our core) | `host/azhost.h` line 100 |
+| `azh_threads` | lists the guest's threads (our core, ABI 4); `*count` is the total even when it is above `max` | `host/azhost.h` line 101 |
+| `azh_set_input` | sets the held input now | `host/azhost.h` line 103 |
+| `azh_stats` | frames, wall and CPU time, peak memory, the core's name and version, whether it is our core | `host/azhost.h` line 104 |
+| `azh_abi_layout` | fills the layout record | `host/azhost.h` line 105 |
+| `azh_error` | the last error text | `host/azhost.h` line 106 |
 
 ## Errors
 
 | Code | Name | Python class |
 |---|---|---|
 | 0 | `AZH_OK` | none |
-| -1 | `AZH_E_ARG` | `ValueError` |
+| -1 | `AZH_E_ARG` | `ArgumentError` (a `ValueError`) |
 | -2 | `AZH_E_ORDER` (call order) | `HostError` |
 | -3 | `AZH_E_CORE` | `BootError` during start, else `HostError` |
 | -4 | `AZH_E_BOOT` | `BootError` |
@@ -64,7 +66,7 @@ Some comments in the header (`until D`, `reserved for step D`) are older than th
 | -10 | `AZH_E_SAVESTATE` | `StateError` |
 | -11 | `AZH_E_UNMAPPED` | `GuestMemoryError` |
 
-The stop reasons of a batch (`AZH_STOP_*`) are in the header line 21; the Python names are in `docs/USING.md`
+The stop reasons of a batch (`AZH_STOP_*`) are in the header line 23; the Python names are in `docs/USING.md`
 section 7.
 
 ## The map file
@@ -91,21 +93,24 @@ usage: azhost run <app> --sys <dir> --out <dir> --frames N[,N2,...] [--shot f1,f
        azhost layout
 ```
 
-Exit codes: 0 ok; 2 usage; 3 boot; 4 core; 5 Vulkan; 6 I/O; 7 a debug-text stop asked of the stock core; 8 an entry
-point that is unsupported; 10 the guest exited; 11 a guest error. On our core a guest break stops `azhost`
-(`stop=guest_break`), and a guest exit ends it with exit code 10 and no summary line. A summary line per batch looks
-like `frames= wall= fps= shots= stop= first= last= vblanks= wall_ms_mean= batch= msg=` (see `docs/USING.md` section 3).
+Exit codes: the table in `docs/USING.md` section 3 is the reference (0 ok; 2 usage; 3 boot; 4 core; 5 Vulkan; 6 I/O;
+7 the run needs our core; 8 unsupported; 9 a savestate failed; 10 the guest exited; 11 a guest error). On our core a
+guest break ends that batch (`stop=guest_break`); `azhost` goes on to the next batch and to `--save`, and the exit code stays
+0 if every batch ran. A guest exit or guest error prints that batch's summary line first
+and then exits 10 or 11. On the stock core the process itself exits from inside the run, with no summary line for that
+batch. A summary line per batch looks like `frames= wall= fps= shots= stop= first= last= vblanks= wall_ms_mean= batch=
+msg=` (see `docs/USING.md` section 3); `msg=` is always last, so new keys go before it.
 The default core of `azhost` is the one `LAZ_CORE` names, else the path in section 15 of `docs/USING.md`.
 
 ## `azhost layout`
 
-Taken 2026-11-13 from a build at commit 896c2fe (ABI 3). Each row is `name offset size`.
+Taken 2026-11-13 from a build of the 1.0 freeze (ABI 4). Each row is `name offset size`.
 
 <details>
-<summary>The full output of <code>build/azhost layout</code> (138 lines)</summary>
+<summary>The full output of <code>build/azhost layout</code> (152 lines)</summary>
 
 ```
-abi=3
+abi=4
 shot.frame 0 4
 shot.screens 4 4
 shot.format 8 4
@@ -147,6 +152,17 @@ stats.core_name 40 64
 stats.core_version 104 128
 stats.is_lazpy_core 232 4
 stats.__size__ 0 240
+thread.tid 0 4
+thread.pid 4 4
+thread.status 8 4
+thread.core 12 4
+thread.priority 16 4
+thread.flags 20 4
+thread.pc 24 4
+thread.lr 28 4
+thread.sp 32 4
+thread.cpsr 36 4
+thread.__size__ 0 40
 layout.abi 0 4
 layout.size_batch 4 4
 layout.size_result 8 4
@@ -204,6 +220,7 @@ const.AZH_EXIT_VULKAN 5 0
 const.AZH_EXIT_IO 6 0
 const.AZH_EXIT_NEEDS_LAZPY 7 0
 const.AZH_EXIT_UNSUPPORTED 8 0
+const.AZH_EXIT_STATE 9 0
 const.AZH_EXIT_GUEST_EXITED 10 0
 const.AZH_EXIT_GUEST_ERROR 11 0
 const.AZH_SCREEN_TOP 1 0
@@ -218,7 +235,9 @@ const.AZH_STOP_GUEST_BREAK 3 0
 const.AZH_STOP_GUEST_EXITED 4 0
 const.AZH_STOP_GUEST_ERROR 5 0
 const.AZH_STOP_WALL_LIMIT 6 0
-const.AZH_ABI_VERSION 3 0
+const.AZH_ABI_VERSION 4 0
+const.AZH_STATE_META_ABI 3 0
+const.AZH_THREAD_CURRENT 1 0
 const.AZH_MAX_SHOTS 64 0
 const.AZH_PATH_MAX 1024 0
 const.AZH_INPUT_INTS 7 0

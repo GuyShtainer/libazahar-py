@@ -18,7 +18,7 @@ import warnings
 from pathlib import Path
 from typing import Optional
 
-from .errors import ArgumentError, HostTimeout
+from .errors import ArgumentError, LoadWarning, SlotTimeout
 
 __all__ = ["DEFAULT_CAP", "Slot", "SlotTimeout", "LoadWarning", "slot_dir", "cap", "acquire", "warn_if_loaded", "waited_in"]
 
@@ -26,23 +26,6 @@ DEFAULT_CAP = 2                 # provisional (light scene), from tools/speed_ta
 MAX_CAP = 64
 DEFAULT_TIMEOUT_S = 3600.0
 ROUND_SLEEP_S = 0.1
-
-
-class LoadWarning(UserWarning):
-    """The machine's 1-minute load average is above twice its core count."""
-
-
-class SlotTimeout(HostTimeout):
-    """No slot became free in time (a HostTimeout, so ``except HostTimeout`` still catches it)."""
-
-    def __init__(self, seconds: float, slots: int, folder: Path) -> None:
-        super().__init__("acquire", seconds)       # D's class needs (op, seconds); there is no guest message here
-        self.slots = slots
-        self.folder = Path(folder)
-        self.args = (str(self),)
-
-    def __str__(self) -> str:
-        return f"no libazahar slot free after {self.seconds:g} s: all {self.slots} are held; see {self.folder}"
 
 
 def slot_dir() -> Path:

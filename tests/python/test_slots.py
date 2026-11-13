@@ -35,7 +35,7 @@ def test_s1_cap_three_and_timeout(slots_env):
         _slots.acquire(timeout=0.3)
     took = time.monotonic() - begin
     assert 0.3 <= took <= 1.0
-    assert isinstance(info.value, HostTimeout)
+    assert isinstance(info.value, HostTimeout) and info.value.op == "slot"
     assert str(slots_env) in str(info.value) and "all 3" in str(info.value)
     freed = held[1].index
     held[1].release()

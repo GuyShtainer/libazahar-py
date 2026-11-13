@@ -4,15 +4,15 @@
 #   tools/build-core.sh --build            the above, then compile, copy, strip, codesign (long; use --detach)
 #   tools/build-core.sh --detach           run --build in its own session; pid -> build-core/build.pid,
 #                                          exit code -> build-core/build.exit, log -> build-core/build.log
-# Env: LAZPY_ROOT, LAZ_CORE_PIN (default core/PIN), LAZ_CORE_PATCHES (default core/patches), LAZ_CORE_LTO (ON),
+# Env: LAZ_ROOT (old name LAZPY_ROOT), LAZ_CORE_PIN (default core/PIN-nokeys; core/PIN builds from Azahar's own tarball), LAZ_CORE_PATCHES (default core/patches), LAZ_CORE_LTO (ON),
 #      LAZ_CORE_JOBS (4), LAZ_OPENSSL_PREFIX (default: the pin's OPENSSL_PREFIX; a static OpenSSL of the pinned version, resolved to its real path). The pin file is read with sed, never sourced. Output and rules: core/README.md.
 set -eu
 SELF="$(cd "$(dirname "$0")" && pwd)/$(basename "$0")"
-ROOT="${LAZPY_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
+ROOT="${LAZ_ROOT:-${LAZPY_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}}"   # LAZPY_ROOT: the old name, kept for 1.x
 MODE="${1:-}"
 case "$MODE" in --configure-only | --build | --detach) ;; *) echo "usage: $0 --configure-only | --build | --detach" >&2; exit 2 ;; esac
 cd "$ROOT"
-export MACOSX_DEPLOYMENT_TARGET=11.0
+export MACOSX_DEPLOYMENT_TARGET=15.0
 say() { echo "build-core: $*"; }
 die() { say "$*" >&2; exit 1; }
 [ "$(id -u)" -ne 0 ] || die "refusing to run as root"
@@ -30,16 +30,20 @@ if [ "$MODE" = --detach ]; then
   exit 0
 fi
 
-PIN="${LAZ_CORE_PIN:-core/PIN}"
+PIN="${LAZ_CORE_PIN:-core/PIN-nokeys}"
 PATCHES="${LAZ_CORE_PATCHES:-core/patches}"
 case "$PATCHES" in /*) ;; *) PATCHES="$ROOT/$PATCHES" ;; esac
 pin() { sed -n "s/^$1=//p" "$PIN"; }
 TAG="$(pin AZAHAR_TAG)"; COMMIT="$(pin AZAHAR_COMMIT)"; URL="$(pin SRC_URL)"; WANT_SHA="$(pin SRC_SHA256)"
 WANT_SIZE="$(pin SRC_SIZE)"; FILE="$(pin SRC_FILE)"; TOP="$(pin SRC_TOP)"
 DROP="$(pin LAZ_CORE_DROP)"; SSL_VER="$(pin OPENSSL_VERSION)"; SSL_PIN="${LAZ_OPENSSL_PREFIX:-$(pin OPENSSL_PREFIX)}"
-for V in "$TAG" "$COMMIT" "$URL" "$WANT_SHA" "$WANT_SIZE" "$FILE" "$TOP" "$DROP" "$SSL_VER" "$SSL_PIN"; do
+REV="$(pin LAZPY_REV)"
+for V in "$TAG" "$COMMIT" "$URL" "$WANT_SHA" "$WANT_SIZE" "$FILE" "$TOP" "$DROP" "$SSL_VER" "$SSL_PIN" "$REV"; do
   [ -n "$V" ] || die "pin $PIN is missing a value"
 done
+# the version suffix patch and the pin's LAZPY_REV must agree (the release zip is named from the pin)
+grep -qF "\"-lazpy.$REV\";" "$PATCHES/0005-lazpy-version.patch" \
+  || die "patch 0005's version suffix is not -lazpy.$REV (the pin's LAZPY_REV)"
 case "$FILE" in /*) TARBALL="$FILE" ;; *) TARBALL="$ROOT/$FILE" ;; esac
 BUILD_SRC="${ROOT:?}/dl/azahar-src/build-src"
 TREE="$BUILD_SRC/$TOP"
@@ -113,6 +117,7 @@ fi
 # stale objects of the bundled LibreSSL from earlier builds (their .o.d files name it)
 rm -rf build-core/build/externals/libressl
 set -- cmake -S "$TREE" -B build-core/build -DENABLE_LIBRETRO=ON -DCMAKE_OSX_ARCHITECTURES=arm64 \
+  -DCMAKE_OSX_DEPLOYMENT_TARGET=15.0 \
   -DCMAKE_BUILD_TYPE=Release -DFETCHCONTENT_FULLY_DISCONNECTED=ON -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
   -DCITRA_WARNINGS_AS_ERRORS=OFF -DENABLE_LTO="${LAZ_CORE_LTO:-ON}" \
   -DENABLE_BUILTIN_KEYBLOB=OFF \
@@ -127,6 +132,8 @@ fi
 grep -q '^ENABLE_BUILTIN_KEYBLOB:BOOL=OFF$' build-core/build/CMakeCache.txt \
   || die "the built-in console key blob is not OFF (we never ship console keys)"
 CACHE=build-core/build/CMakeCache.txt
+grep -Eq '^CMAKE_OSX_DEPLOYMENT_TARGET:[A-Z]*=15.0$' "$CACHE" \
+  || die "configure did not take macOS 15.0 as the minimum (an older build tree's cache?)"
 grep -q '^USE_SYSTEM_OPENSSL:BOOL=ON$' "$CACHE" || die "configure did not take USE_SYSTEM_OPENSSL"
 for L in SSL:libssl CRYPTO:libcrypto; do
   grep -Eq "^OPENSSL_${L%%:*}_LIBRARY:[A-Z]*=$SSL_ROOT/lib/${L#*:}\.a\$" "$CACHE" \

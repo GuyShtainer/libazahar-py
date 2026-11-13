@@ -212,9 +212,10 @@ void azh_map_raw_end(int64_t px_frame);                     /* px_frame = the fr
 uint8_t *azh_map_watch(void);                               /* the watch area (at AZH_WATCH_AREA_OFF), NULL when no map */
 
 /* mem.c (step G): guest memory through our core's two exports, and the watch rows */
-int azh__mem_bind(void *core_handle);                       /* dlsym both exports: 1 both, 0 neither, -1 only one */
+int azh__mem_bind(void *core_handle);                       /* dlsym both exports: 1 both, 0 neither, -1 only one (lazpy_threads: optional) */
 int azh__mem_read(uint32_t addr, uint32_t len, void *buf);  /* AZH_E_* of azh__mem_code, with the error text set */
 int azh__mem_write(uint32_t addr, uint32_t len, const void *buf);
+int azh__mem_threads(azh_thread *out, int32_t max, int32_t *count); /* AZH_E_NEEDS_LAZPY_CORE on a lazpy.1 core */
 int azh__watch_check(const azh_batch *b);                   /* stock core / plan check, no side effects */
 void azh__watch_begin(const azh_batch *b);                  /* batch start: map header, counters (no-op without entries) */
 void azh__watch_row(const azh_batch *b, int32_t i);         /* after batch frame i (1-based): a row when i % every == 0 */

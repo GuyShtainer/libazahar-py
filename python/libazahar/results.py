@@ -3,9 +3,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 import struct
+from pathlib import Path
 from typing import Dict, Tuple
 
-__all__ = ["Shot", "WatchRow", "RunResult", "SaveInfo", "Stats"]
+__all__ = ["Shot", "WatchRow", "RunResult", "SaveInfo", "Stats", "ThreadInfo"]
 
 
 @dataclass(frozen=True)
@@ -14,9 +15,9 @@ class Shot:
     ``frame_total`` is the frame counted since boot, the number in the file names."""
 
     frame: int
-    top: str
-    bottom: str
-    frame_total: int = 0
+    top: Path
+    bottom: Path
+    frame_total: int
 
 
 @dataclass(frozen=True)
@@ -55,7 +56,7 @@ class RunResult:
 class SaveInfo:
     """A saved state: ``k`` guest VBlanks the save's drain ran; a state at frame N is at N + k."""
 
-    path: str
+    path: Path
     k: int
     frame_total: int
 
@@ -72,3 +73,23 @@ class Stats:
     core_name: str
     core_version: str
     is_lazpy_core: bool
+
+
+@dataclass(frozen=True)
+class ThreadInfo:
+    """One guest thread from ``Emulator.threads()`` (core lazpy.2). ``status`` is Azahar's ThreadStatus number and
+    ``status_name`` its name; ``is_current`` marks the thread a core was running (its registers come from the live
+    CPU, every other thread's from its saved context); ``pid`` is 0xFFFFFFFF for a thread with no owner process.
+    Bit 5 of ``cpsr`` is the Thumb bit."""
+
+    tid: int
+    pid: int
+    status: int
+    status_name: str
+    core: int
+    priority: int
+    is_current: bool
+    pc: int
+    lr: int
+    sp: int
+    cpsr: int

@@ -97,7 +97,7 @@ def test_b_touch(host_paths, workdir):
 
 def run_sd_stop(host_paths, workdir, seed, every, lo, hi):
     with dh.boot(host_paths, workdir, seed(ready_at=200)) as emu:
-        result = emu.run_until(dh.LOG, "ready f=", 3000, every=every)
+        result = emu.run_until(dh.LOG, "ready f=", 3000, stop_every=every)
         frames, events = dh.log_of(emu)
         ready = [e for e in events if e["kind"] == "ready"]
         delay = frames[-1]["v"] - ready[0]["v"]
@@ -115,11 +115,11 @@ def test_c2_sd_every_1(host_paths, workdir, seed):
 def test_c_stop_new(host_paths, workdir, seed):
     """N6: with new_only the text already in the file does not stop the batch; without it, it does at once."""
     with dh.boot(host_paths, workdir, seed(ready_at=100)) as emu:
-        first = emu.run_until(dh.LOG, "ready f=", 3000, every=1)
+        first = emu.run_until(dh.LOG, "ready f=", 3000, stop_every=1)
         assert first.stopped_by == "sd_text"
-        fresh = emu.run_until(dh.LOG, "ready f=", 90, every=1, new_only=True)
+        fresh = emu.run_until(dh.LOG, "ready f=", 90, stop_every=1, stop_new=True)
         assert fresh.stopped_by == "frames" and fresh.frames == 90
-        old = emu.run_until(dh.LOG, "ready f=", 90, every=1)
+        old = emu.run_until(dh.LOG, "ready f=", 90, stop_every=1)
         assert old.stopped_by == "sd_text" and old.frames == 1
 
 
