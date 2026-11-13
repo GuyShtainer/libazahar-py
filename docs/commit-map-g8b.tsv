@@ -1,0 +1,130 @@
+old	new	subject	pre_g8
+003ce1b	3fc1d51	Handoff: as-built re-check running	
+7d51534	abae55c	plans: Phase 4 revision 1	027553b
+cdd154e	23a69bd	Phase 2 done: step D merged (8a5d74a), 69 passed; runners and tools maps	028eb0a
+02f64fc	2ac7d0c	E2's speed table recorded (cap 2 on our core); G2 running	
+04926c4	2182b3a	Merge step G: guest memory reads and writes and the watch list (ABI 3)	
+0651a8d	86f54d1	Step C1: frozen headers (ABI 2), pure input/touch/match/msg/rawcopy/sdcopy modules, unit tests, D's stubs	
+d83e628	202398e	Handoff: next steps after D, the keys-off rebuild, Phase 3 and 4 loops	0928a6f
+0ddf6ef	8183e4e	Step B reported: gate-b 14/14 PASS on fe2; report saved to item 130	
+0f46142	25fb8f7	Step F1 reported: 7 patches apply with fuzz 0, configure ok, 3 planted reds; report saved to item 110	
+0f5855e	f3d9dd8	Phase 4 plan revision 2 (final): review 2 and the ip-legal consult taken in	
+1315b64	18ae36f	Downloads in fetch.sh's layout; runners map points at dl/azahar/	
+14115bf	b5866ae	Handoff: plan revision 1 running	
+1501195	1a212b8	E2: gate 2 green, speed table running detached; handoff	
+159d0b9	20a2545	Phase 4 review 2; E1 committed on step-e (a74aaec); F2's nice-20 worker crash found, second builder running	
+1844a5d	e040721	Phase 3 review 1, Phase 4 plan revision 0 (key blob found), D3 green; Guy's rulings recorded	15d0323
+1683f6b	126bdfe	Handoff: plan revision 2 running	
+179cd4f	b7c510f	Handoff: Phase 1 review 2 running	
+17fc3de	5ae7e8b	Four phases, each with a plan and two review loops (Guy)	
+e87551e	cfca288	Step D complete on step-d (88cdbe6); keys-off core rebuild running	18b243d
+19fc74b	538fb5a	Progress: page version 4 at the end of the SlowStop	
+1b3dc93	e260a47	Merge branch 'main' into step-g	
+1bff1bf	f67aff5	hours: launch block clock times from date	
+1cf3609	3113849	Merge branch 'main' into step-d	
+1dadd67	f0ee6c4	Step D1+D2 committed on step-d (b24c436): 48 Python tests; state boot needs C's api.c fix	
+c727db0	c33fbf0	plans: Phase 3 revision 2 (final)	1e84749
+21a152c	d67b5fe	Phase 1 plan revision 1: stacked patches, svcBreak runs on, citro3d's frame counter; reconciled with Phase 2	
+23954d9	7b4c509	Handoff: Phase 2 fix check running	
+9c960da	4b05146	Phase 3 review 2 launched	254b76b
+265eacf	b123dfc	Step F1 fix round done: unpack failure caught, 5 planted reds	
+29cb592	8fd0490	Phase 3 done (item 300): the full suite green; gate B's event checks take our core's break and exit stops	
+2a07bad	4da326c	Item 100: Phase 2's four asks for Phase 1 revision 2	
+2ca9667	43da0ad	G fixes in; the emulator checks wait for low load	
+f3dbddd	168a827	item 300: P9b rebuild verified (no keys, no ClCertA, static OpenSSL 3)	3023e0d
+3147409	52ff8fc	Phase 2 plan draft: input, stops, Python layer, state boot (for review 1)	
+32f3b7c	56add99	Step G: guest memory reads and writes and the per-frame watch list (ABI 3)	
+3b52975	b76cbd7	item 330: the fixer's path list	
+3d809ef	470a14f	Step F2 done (item 320, merged 76ad787); step G started (item 330); E2 resumed; runners: F2's gate	
+477f561	2b25aca	E2 done (cap 2); step E's as-built review running	
+8a8e0de	f9aabbc	handoff: P9b rebuild running in MAIN	4d76406
+4e1d4da	e55d947	Start a short check of plan revision 2 (Guy's choice)	
+10fb1ce	fcade98	D as-built review, Phase 3 review 2; Guy: OpenSSL 3, history rewrite before push	4e76fd1
+5000321	6ed31ea	Handoff: Phase 1 revision 1 running	
+50789ce	a4ccc8d	Step E done (item 310, merged 958cc6e)	
+52b99aa	262ed6d	Handoff: Phase 1 review 1 running	
+56791f8	41d1f04	Step F2 as-built review and its fixes recorded (step-f2 6578c3c); core/README: the binary ships with its source, not the unchanged tarball	
+570eebf	b17c87e	Merge Phase 1 steps A, B and F1: host library, test app, our core's patch stack	
+58bf72d	466f298	Step B: the 3DS test app and its checker, gate-b	
+59b2ab3	6ae30fb	Plan revision 2 (final): source-checked stop reasons, state boot first-class, build from Azahar's source tarball	
+5c52337	3b2bf4f	Phase 4 to in progress: its plan is being written	
+a00119c	80254b2	core: P9b, no default ClCertA (0007), no key loading (0008), drop list, static OpenSSL 3, build.inputs	5e95423
+5f77e28	9b6a2bd	Phase 2 revision 2: crash vs break by exception type, app sha256 in states, all should-fix taken; 4.6 h	
+6190a89	fbdd7a3	Phase 2 plan final: every review-2 fix confirmed in the text	
+62fa531	68a0e8b	Phase 1 revision 2: all review-2 findings and Phase 2's asks taken; 2.8 h; ready to build	
+64a51a0	f1e1820	G done (step-g 32f3b7c); step G's as-built review running beside E's	
+6578c3c	d3f6f3c	Step F2: our patched core under the full test batch (lazpy option profile, gate_f2, exact repeats)	
+65ebefd	df34a4f	Phase 2 review 1: 2 blockers, 14 should-fix, 9 nice (raw pixels unowned, checkpoint hand-offs)	
+6898a4b	316d439	G8 done (history rewritten, commit map); step 0 build verified; items 310, 320 in progress	
+68cb527	bd8dba7	Progress page v3; Phase 2's plan started beside Phase 1's; Azahar source checked	
+69aa75d	424b29a	Step D3 interim: state boot works, 10 % ratio fails (Guy's call); fresh builder finishes D3	
+6b6ddf8	f4e31ca	Step C as-built review: mergeable after the state-boot fix and four should-fix items; fixes sent to C's builder	
+6c75c8a	fb56cb2	Step A: host library libazhost.dylib and the azhost CLI, gate-a	
+6d421e2	3118f18	Phase 1 review 2: 2 blockers, 9 should-fix, 12 nice; ready to build after revision 2	
+70d6db1	090f071	Step B fix round done: gate-b 14/14 on fe2 and azhost	
+721209f	b236a46	Step D as-built fixes S1-S6 and nice items: held state after early stops, failed restore is DEAD, USING.md	
+bf73f3c	4665d90	handoff: step 0 rebuild, Phase 4 review 2 and the legal consult running; G8 next	7306148
+75759a6	1453741	Step F1: our patched core's pin, patch stack 0000-0006, options profile, build script	
+7584a8d	6d182b5	Merge step C: input, stops, raw shots, gate_c	
+76019a9	0a0fb6a	handoff: E1 and F2 builders running, Phase 4 review 2 and the consult running	
+76beb4f	bd6ba2a	Merge branch 'main' into step-g	
+e93b391	f6d1ff4	Step D fixes: 69 passed, 2.5 s state-boot bound; guest exit closes the Emulator on both cores	7725e7d
+776e8da	198ab6d	Release IP consult recorded; key-blob and ClCertA byte values, offsets and decode notes reworded out of the docs	
+7c33f38	6852d5b	core: step 0 as revision 2 writes it (libressl dropped, keg prefix, version and link guards)	799e8c3
+79bafff	f3fa981	Plan review 2: 3 blockers, 12 should-fix, 12 nice (stop reasons, determinism, the core's export list)	
+79f6b01	fab230b	Step C done: merged (6d182b5), gate_c 28 passed; runners and tools maps	
+871e9ab	0ce0296	Step E2: the speed table (cap 2 on our core) and the as-built review's fixes S1-S5	
+87bcb51	82577c0	handoff: F2 reviewed and committed on step-f2; merge waits for the quiet rerun	
+88cdbe6	3a09aee	Step D3: live Python tests (69 passed), state boot under 2.5 s, LAZ_CORE fixtures, abi range, guest exit closes; USING.md	
+f3e6f00	162e2a9	Phase 3 plan revision 1 (all review-1 findings, Guy's answers, P9); D as-built review launched	8a16f9e
+8c06e26	d76086a	Merge branch 'main' into step-e	
+8c48b9f	31ff50c	Plan check 3 passes; split the plan into one item per phase	
+150401b	797cf70	Handoff: Waiting on Guy trimmed to G5-G7	8ec6765
+c7ee250	42bb7c5	Phase 4 review 1 (Nintendo HTTPS cert found, LibreSSL licence); private name removed from the plan	8f3ad2e
+91c91ef	29e60b9	Plan review 1: 3 blockers, 11 should-fix, 8 nice (memory export call, crash and hang stops, patched-core release)	
+924b64f	45f3ac7	Plan and rules: we publish our own patched core, no upstream pull request (Guy)	
+99c0966	a62c51c	Phase 1 done: our patched core built in 14 min with the lazpy exports; worktrees removed	
+9ab9aa5	9bca60b	Phase 2 review 2: 1 blocker, 10 should-fix, 15 nice; ready after fixes, no third loop	
+9b456ea	ae6d9db	Plan revision 1: our patched core, crash and hang stops, savestates in the Python phase	
+9ca360d	9eca393	Merge commit '019b63a' into step-g	
+ccb3c8a	8a5d74a	Merge step D: the Python package, worker, savestates and state boot, USING.md	a113cf6
+a6bafc7	b6a7396	Step C1 committed (0651a8d); C2 and D1/D2 running side by side	
+a74aaec	019b63a	step E1: slots, Pool, hold_slot, client spawn under the cap, PNG level, batch timing line, speed_table, unit tests	
+a801ee3	8323255	gate_f2: set the repo paths before every lazy import and in main (S1 follow-up; r2 rerun green)	
+b24c436	442b099	Step D1+D2: the libazahar Python package, worker, errors, pure tests; state.c, statemeta.c	
+b29096b	d00cbd1	Phase 1 re-check: A, B, F1 mergeable; A and B committed on their branches; integration run started	
+b781547	1aeba68	Progress page published (Guy's approval); Now and Next brought up to date	
+b928339	b04d850	Phase 1 as-built review: A and B need fixes (3 blockers), F1 mergeable; fixes sent to builders	
+ba21233	468cbbd	Step C2+C3: run loop, inputs, stops, raw shots, gate_c (28 passed); as-built fixes B1, S1-S4	
+bac7510	039c7e6	Step A fix round done: gate-a 8/8, symlinked-clone proof	
+bb3baec	7e7d4bc	Handoff: SlowStop done; ready briefs for Phase 1 revision 2 and Phase 2 review 2	
+bd62873	6664d7f	handoff: F2 review, quiet timing rerun and Phase 4 revision 2 running	
+be96037	f84caf0	Phase 1 build started: steps F1, A, B in progress, three builders in their worktrees	
+c0f362a	b23d313	Step A reported: gate-a 8/8 PASS; report saved to item 120; as-built review started	
+c1e614e	9513f4a	Step D3 work in progress: GuestError rule, save_state makes its folder, live tests (not yet green)	
+c4580f7	9d7fa88	Step E as-built review: no blocker, fixes S1-S5 running; post-merge timing changes recorded	
+c54a7dd	e8d892b	Phase 2 revision 1: raw shots in C2, end-run checkpoints, both blockers and all should-fix done	
+c7fea62	55d1e9e	spike 2: name the test game generically (consult section 8)	
+c9d4b87	b9c25e1	Review 2 notes: booting from a saved state is a first-class feature (Gen3D's need)	
+cafcc67	a4f5ea6	Handoff: Phase 2 review 1 running	
+cb3406c	f36676b	Phase 3 plan revision 0 (index, E, F2, G); review 1 launched	
+cbe823c	958cc6e	Merge step E: many instances (machine slots, Pool, the speed table)	
+cd2aadd	8b8791e	Core build started in MAIN; Phase 2 step C in progress (C1); map names build-core/	
+d3d3f97	0a5a9d3	Phase 3 planning started: item 300 in progress	
+dadd85c	ef8c80b	progress: Phase 1 done, Phase 2 nearly merged, Phase 3 final revision, Phase 4 revision 1; page version 5	d61ea5a
+da7042d	6724d04	Plan: record Guy's answers (patch the core ourselves plus an upstream PR; the name is approved)	
+dae8f49	b5ad6a7	Phase 1 plan draft: our core build, host library, test app (for review 1)	
+dc2fe80	c806cd0	Add spike 2: memory reads fail in the stock core, real 3D scenes run about 5.6x	
+de72bef	6b26631	Handoff: SlowStop at 18:11, two agents finishing	
+de7849c	33422ed	Step G done (item 330, merged 2182b3a); Phase 3's full-suite batch running; runners: step G's gate	
+43f1fb1	72685cd	build-core: console key blob off, build paths stripped, both checked (P9); core rebuilt	e40e59c
+e4e648a	6ea1ed4	Handoff: Phase 2 revision 1 running	
+e63be2e	c49892f	Step G as-built review: no blocker, fixes running; phase 3's full-suite step wraps only gates A and B	
+e99c825	a1982bf	Rules: the core build may run Azahar's CMake on the pinned commit (Guy)	
+eea12c4	b0eb2cb	Phase 1 review 1: 3 blockers, 13 should-fix, 12 nice (patch stacking, svcBreak, citro3d's VBlank slot)	
+f35fdff	9b7041f	Step G review fixes; slot waits out of the timings; step E's held cleanups	
+f4baea8	3530267	Handoff and hours: correct the clock times	
+f6d5d0a	69f39ea	G1 built and green (item 330); G2 waits for E2's speed table	
+fac16e9	76ad787	Merge step F2: our patched core passes the full test batch	
+fbedc3e	d323633	Step C reported: gate_c 28/28; report saved to item 210; as-built review of C started	
+ff622db	bde1c7e	Handoff: Phase 1 revision 2 and Phase 2 review 2 running	

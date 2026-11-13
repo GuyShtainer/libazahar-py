@@ -1,7 +1,7 @@
 <!-- handoff: slim v1 | current tasks only | rewritten whole from docs/status/templates/handoff.md | budget 80 lines | never append -->
 # libazahar-py handoff
 
-As of: 2026-11-13 02:58 (this project's own session)
+As of: 2026-11-13 03:15 (this project's own session)
 
 This file lives in docs/status/lazpy/1-in-progress/, beside its item files. It holds only what
 the next session needs to act now, and points at the rest. Goals, rules, decisions and history live elsewhere.
@@ -9,18 +9,19 @@ the next session needs to act now, and points at the rest. Goals, rules, decisio
 ## Running now
 | What | Where | Agent id | It stops when |
 |---|---|---|---|
-| laz-400: Phase 4's before-launch steps (phase-4.md section 2): worktrees removed, G8b, downloads | MAIN | main | phase-4.md section 2 items 1-4 done |
+| laz-400: Phase 4's before-launch steps (phase-4.md section 2): downloads, Gen3D's copy check, the launch | MAIN | main | H and I builders launched |
 
-Not running: Phase 3 is done (item 300, Evidence there: the full suite green, gate B updated for our core's stops).
-Worktrees c, d, e, f2 and g are merged; removed next.
+Not running: Phase 3 is done (item 300). G8b is done (item 400's notes; map docs/commit-map-g8b.tsv); only MAIN
+and main remain.
 
 ## Next steps, in order
-1. Remove worktrees c, d, e, f2, g (each one's ignored files looked at first; `git worktree list` shows MAIN only).
-2. G8b: the second history rewrite (phase-i.md 8.1b); docs/commit-map-g8b.tsv; the checks re-run.
-3. Downloads (phase-i.md 6): OSSL if missing, the system-archives snapshot, font licence texts if it lacks them.
-4. Launch H and I builders side by side (phase-4.md section 2; items 410, 420 to 1-in-progress first), Q1 default
+1. Ask Gen3D's session to confirm its rsync copy of the package has no .git (phase-i.md 8.1b step 9); tell the
+   toolkit main loop the G8b map exists.
+2. Downloads (phase-i.md 6 step 4): OSSL if missing, the system-archives snapshot (SNAP), font licence texts if
+   SNAP lacks them; each sha256 goes in the launch message.
+3. Launch H and I builders side by side (phase-4.md section 2; items 410, 420 to 1-in-progress first), Q1 default
    (remove the stock fetch). I owns tests/gate-b.sh:45; the gate's event lines changed at Phase 3's close.
-5. Then the joint as-built review, merges, I2, the release-legal-audit (I3); the push waits for Guy.
+4. Then the joint as-built review, merges, I2, the release-legal-audit (I3); the push waits for Guy.
 
 ## Waiting on Guy (only what blocks a step above)
 - Phase 4's G5-G7 (repo creation, the word "push", publishing the draft), G9 (spike 2's game: default say

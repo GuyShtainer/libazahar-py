@@ -101,3 +101,4 @@ date	bet	phase	agent_id	model	role	kind	start	end	hours	source
 2026-11-13	Fixer watchers stopped, G check script and waiter	phase-3	main	opus	main	process	02:20	02:20	0.02	session clock
 2026-11-13	G checks read, G commit and merge, item 330 done, phase-end batch	phase-3	main	opus	main	process	02:25	02:26	0.05	session clock
 2026-11-13	Phase 3 full suite, gate B fix and reruns, item 300 done	phase-3	main	opus	main	process	02:27	02:56	0.5	session clock; the batch ran 02:27-02:52
+2026-11-13	G8b: worktrees removed, replace lines, scans, trial and real rewrite, map	phase-4	main	opus	main	process	02:57	03:15	0.3	session clock; the slow first scan ran 03:00-03:11

@@ -127,3 +127,15 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   main loop 0.62, phase about 2.5 h. Guy questions are phase-4.md section 7, Q1-Q9 (Q8: the fallback name, lazpy
   recommended). Open: core/PIN's SRC_URL still names Azahar's unchanged tarball (risk 17); I0 may find stock-core
   paths in E's and G's tests once merged.
+- G8b by the main loop 02:57-03:15 (phase-i.md 8.1b): Phase 3's five worktrees removed (each clean; ignored outputs
+  only; E's speed logs kept in MAIN runs/archive-e-speed), the five merged step branches deleted (kept in the
+  bundle). Replace lines made by command from the word-diffs of the two rewording commits (21 literal runs plus a
+  \s+ regex form of each; runs found at HEAD or under 12 characters dropped, except one offset number kept by hand
+  after a look at the short runs' shapes), plus a literal for each of 6 spaced hex runs that the history-bytes
+  window search (every 6-byte window of the three arrays, read at run time from the local source) found in old
+  versions of phase-3.md, phase-4.md, phase-f2.md, phase-i.md and phase-3-review-2.md. Before: those rules hit 110
+  of 133 commits (6 paths), the windows 26 commits (5 paths), the needle 0, messages 0. A dry run on a scratch clone
+  first: --prune-empty never (the default pruned the now-empty spike 2 rewording commit). In MAIN 03:13: bundle
+  verified, rewrite done; HEAD tree 66de44f unchanged; 133 commits; 129 rewritten; one identity; no refs/replace;
+  fsck clean; after-scan 0 for rules, windows, needle, messages. Map: docs/commit-map-g8b.tsv (129 rows; pre_g8 for
+  G8's 20). HEAD 29cb592 became 8fd0490. make check 0. Next: Gen3D's copy check (8.1b step 9), downloads.
