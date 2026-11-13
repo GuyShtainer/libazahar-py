@@ -44,7 +44,8 @@ max).
 `run` takes the number of frames as its only positional argument; every other option (`inputs`, `shots`, `stop_file`,
 `stop_text`, `stop_every`, `stop_new`, `debug_text`, `wall_limit`, `timeout`, `watch`, `watch_every`) is keyword-only.
 `run_until(file, text, max_frames, ...)` takes the same options under the same names. `frames` and every entry of
-`shots` must be whole numbers (a numpy integer is fine; `1.5`, `True` and strings raise `ArgumentError`).
+`shots`, and `stop_every`, must be whole numbers (a numpy integer is fine; `1.5`, `True` and strings raise
+`ArgumentError`). `wall_limit`, `timeout` and `boot_timeout` must be numbers (not a bool or NaN), else `ArgumentError`.
 `watch_every` is 1 to 100000. `Shot.top` and `Shot.bottom` are `pathlib.Path` values, and `Shot.frame_total` is always
 set. `RunResult` is a frozen dataclass whose `shots` is a dict: two results compare by equality but are not hashable.
 
@@ -57,17 +58,17 @@ The `azhost` exit codes:
 | 3 | The app failed to boot. |
 | 4 | The core failed to load or has an unknown version. |
 | 5 | Vulkan or MoltenVK failed. |
-| 6 | I/O or out of memory: an unreadable profile, input script or seed; an unwritable `--out` or `--sys`. |
+| 6 | I/O or out of memory: an unreadable profile or input script; a seed copy that fails; an unwritable `--out` or `--sys`; a `--save` file that cannot be written. A missing or refused seed folder is a usage error (2). |
 | 7 | The run needs our core, for example `--debug-stop` on the stock core. |
 | 8 | Unsupported request, for example `--raw-shot` at a resolution factor other than 1. |
-| 9 | A savestate could not be loaded (`--state`) or saved (`--save`). |
+| 9 | A savestate could not be loaded (`--state`), or `--save` could not drain or serialize the state (a write failure is 6). |
 | 10 | The guest exited. Our core: the batch's summary line (`stop=guest_exited`) comes first. Stock core: the process exits from inside the run, with no summary for that batch. |
 | 11 | A guest error ended the run. Our core: summary first (`stop=guest_error`). Stock core: none. |
 | 128+n | Killed by signal n (shown by the shell; azhost never returns it itself). Codes 1 and 12-127 are reserved. |
 
 Summary-line keys are frozen: `frames wall fps shots stop first last vblanks wall_ms_mean batch msg`. Units: `wall` is
 in seconds, `wall_ms_mean` in milliseconds, `batch` counts from 1. New keys are inserted before `msg`, which is always
-last and escapes `\` as `\\`, a newline as `\n` and `"` as `\"`. The stdout lines `saved k= frame=` and `last N:` are
+last and escapes `\` as `\\`, a newline as `\n` and `"` as `\"`; a `\r` is dropped. The stdout lines `saved k= frame=` and `last N:` are
 frozen too. The `Class: text` line on stderr is for people and is outside the promise.
 
 ## 4. Inputs
@@ -84,14 +85,16 @@ one lands on f, the rest on f + 1); ZL/ZR (irrst path): m = 1 (6 of 6); circle p
 ## 4a. The input script (`azhost --inputs FILE`)
 
 One record per line: `frame buttons touch_x touch_y touch_down circle_x circle_y`. That is 7 int32 fields separated by
-spaces, tabs or commas. Each field is decimal (with an optional `-`) or `0x` hex. A leading `0` does not mean octal:
-`010` is 10 and `0x10` is 16.
+spaces, tabs or commas. Each field is decimal (with an optional `-`) or `0x` / `0X` hex. A leading `0` does not mean
+octal: `010` is 10 and `0x10` is 16; `0x0x10` is an error.
 
 - A `#` anywhere starts a comment that runs to the end of the line. Blank lines are skipped.
-- A line is at most 511 bytes (a comment included). A longer line is an error that names the line number.
+- A line is at most 511 bytes (a comment included; one trailing `\r` is dropped first). A longer line, or a line
+  holding a NUL byte, is an error that names the line number.
 - Each record is the whole held state from its frame on. This differs from the Python `inputs` items, where each item
   changes only its own part (buttons, touch or circle).
-- The script applies to the first batch only. A script has at most 1,000,000 records.
+- The script applies to the first batch only. A script has at most 1,000,000 records and 4,000,000 lines; data past
+  that is an error at line 4000001, never a silent cut.
 - A bad line prints `UsageError: <file> line N: ...` and exits 2; an unreadable file exits 6.
 
 ## 5. Touch
@@ -132,7 +135,8 @@ per frame grows `host.log` by about a line per frame.
 `LibAzaharError` is the base. `BootError`: core, Vulkan or the app failed to start. `GuestError`: section 7.
 `HostTimeout`: the heartbeat stopped for `timeout` seconds (Emulator-wide default 30, or per call); the worker is
 killed and reaped. `SlotTimeout` is a `HostTimeout` (`.op == "slot"`, `.seconds`) raised when no machine-wide slot
-frees up (section 13). `HostCrashed`: the worker died (a signal gives a negative code). `StateError`: section 10.
+frees up (section 13). `HostCrashed`: the worker died (a signal gives a negative code). Every error class survives
+pickling, so errors cross a process pool. `StateError`: section 10.
 `NeedsLazpyCore`: the call needs our patched core. `HostError`: wrong call order, I/O, memory, ABI mismatch, missing
 host, an unsupported call, a guest exit outside `run`. `ArgumentError` (also a `ValueError`) for every bad argument. The crash tests leave a macOS
 crash report each run. On the stock core a guest-exit result has `wall_s` 0.0 and no `shots`. `boot_timeout`
@@ -146,7 +150,8 @@ crash report each run. On the stock core a guest-exit result has `wall_s` 0.0 an
 | `memory` calls | `GuestMemoryError`, `NeedsLazpyCore`, `ArgumentError`, or `TypeError` for data that is not bytes |
 | any call after `close()` | `HostError` |
 
-A missing `sd_seed` folder is an `ArgumentError`; an unreadable option profile is a `HostError`; a profile line that
+A missing `sd_seed` folder is an `ArgumentError`; a `workdir` that cannot be made is a `HostError` naming the path; an
+unreadable option profile is a `HostError`; a profile line that
 breaks the format (section 14) is an `ArgumentError` naming the file and the line. `SlotTimeout` and `LoadWarning`
 are defined in `libazahar.errors`. The promise is `libazahar.__all__`; `libazahar.errors` stays importable.
 
@@ -273,12 +278,14 @@ loaded state keeps the ticks it was saved with.
 The option-profile format:
 
 A profile is a text file of `key=value` lines. `--profile`, `--lazpy-profile` and Python's profile argument all read it
-by the same rules (`options=` pairs and `--opt` use the same `key=value` rule for one pair).
+by the same rules. `options=` pairs and `--opt` pass the same rule for one `key=value` line; a bad Python pair is
+`ArgumentError` naming the key (a newline or trailing `\r` in a value is refused too).
 
-1. The file is UTF-8 without a BOM. Lines are split on `\n` only; one trailing `\r` is removed. A last line without a
-   newline counts.
+1. Lines are split on `\n` only; one trailing `\r` is removed. A last line without a newline counts. Every line,
+   comments included, is valid UTF-8 with no NUL byte, and no line starts with a BOM.
 2. A line is at most 511 bytes (the newline excluded). A file has at most 4096 lines, comments and blank lines
-   included. Going over either limit is an error, never a silent cut.
+   included. Going over either limit is an error, never a silent cut. Lines are checked in file order and the first
+   error is reported; a 4097th line is reported as line 4097.
 3. A line that is empty is skipped. A line whose first byte is `#` is a comment. A `#` anywhere else is part of the
    text.
 4. Every other line is `key=value`, split at the first `=`. The key is not empty and has no space, tab or `=`. The
@@ -290,7 +297,8 @@ by the same rules (`options=` pairs and `--opt` use the same `key=value` rule fo
 7. An unknown key, or a value outside the core's list, is refused by the host and never ignored. On the stock core a
    key that only our core has is unknown.
 8. How errors show up:
-   - Python: a bad line raises `ArgumentError("<path>:<line>: <reason>")`; an unreadable file raises `HostError`; an
+   - Python: a bad line raises `ArgumentError("<path>:<line>: <reason>")` (`<path>:4097: more than 4096 lines` for a
+     long file); an unreadable file raises `HostError`; an
      unknown key raises `ArgumentError` at boot.
    - azhost: a bad line or an unknown key prints `UsageError: <path> line N: <reason>` and exits 2; an unreadable file
      prints `IOError` and exits 6.
@@ -320,7 +328,8 @@ build variables below may change in a minor release:
 | `LAZ_STATE_ANY_APP` | `1` loads a state made with another build of the app | unset | host |
 
 Tests only: `LAZ_REQUIRE_EMULATOR=1` (a missing emulator fails instead of skipping) and `LAZ_STOCK_CORE` (a stock core
-you downloaded; unset, the comparison tests skip). `LAZ_CORE` is the only variable the library reads to find a core.
+you downloaded; unset, the comparison tests skip), `LAZ_CORE_OLD` (a lazpy.1 core, for the test that it still
+boots). `LAZ_CORE` is the only variable the library reads to find a core.
 
 Build and fetch time (the scripts' header comments are the reference):
 
@@ -410,7 +419,7 @@ One line per name in `libazahar.__all__`. Units: seconds in Python, frames are g
 - `LibAzaharError`: the base class of every error raised on purpose.
 - `ArgumentError`: a bad argument (also a `ValueError`). `BootError`: the core, Vulkan or the app failed to start. `GuestError`: the guest stopped with a fatal error; `.result` holds the `RunResult` while the Emulator is open.
 - `HostTimeout`: no progress in time; `.op`, `.seconds`, `.message` (the last guest message). `SlotTimeout`: a `HostTimeout` with `.op == "slot"`, `.slots`, `.folder`.
-- `HostCrashed`: the worker died; `.returncode`, `.signal`, `.message`, `.log_tail`, `.err_tail`.
+- `HostCrashed`: the worker died; `.returncode`, `.signal`, `.message`, `.log_tail`, `.err_tail`; `HostCrashed.signal_name(number)` gives a signal's name (the digits when unknown, `none` for None).
 - `StateError`: a savestate could not be saved, read or restored. `NeedsLazpyCore`: the call needs our core. `GuestMemoryError`: an unmapped guest address; `.addr`, `.length`. `HostError`: wrong call order, I/O, memory, an unsupported call, an ABI mismatch or a missing host.
 - `LoadWarning`: the machine's load average is above twice its core count.
 - `__version__`: the package version string.

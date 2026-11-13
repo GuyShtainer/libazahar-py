@@ -29,7 +29,7 @@ ln -sfn "$REPO/vendor" "$COPY/vendor"
 for d in azahar moltenvk libretro-headers vulkan-headers; do ln -sfn "$REPO/dl/$d" "$COPY/dl/$d"; done
 cd "$COPY"
 FRC=0
-sh tools/fetch.sh >fetch.out 2>&1 || FRC=$?
+env -u LAZ_ROOT -u LAZPY_ROOT sh tools/fetch.sh >fetch.out 2>&1 || FRC=$?
 OTHER=$(sed -n '/^$/q;p' fetch.out | grep -vc '^have   ' || true)
 if [ "$FRC" -eq 0 ] && [ "$OTHER" -eq 0 ] && grep -q '^have   ' fetch.out; then pass "1 fresh copy, fetch.sh exits 0 and prints only have lines"
 else fail "1 fetch.sh exit $FRC or non-have lines (see $COPY/fetch.out)"; fi

@@ -13,6 +13,52 @@ static void set_err(char *err, size_t cap, const char *msg)
     (void)snprintf(err, cap, "%s", msg);
 }
 
+/* strict UTF-8 (what Python's decoder accepts): no overlong form, no surrogate, nothing above U+10FFFF */
+static int utf8_ok(const unsigned char *s, size_t len)
+{
+    size_t i = 0;
+
+    assert(s != NULL);
+    while (i < len) {
+        unsigned char c = s[i];
+        size_t need;
+        size_t k;
+        unsigned lo = 0x80u;
+        unsigned hi = 0xBFu;
+
+        if (c < 0x80u) {
+            i++;
+            continue;
+        }
+        if (c >= 0xC2u && c <= 0xDFu) {
+            need = 1;
+        } else if (c >= 0xE0u && c <= 0xEFu) {
+            need = 2;
+            lo = (c == 0xE0u) ? 0xA0u : 0x80u;
+            hi = (c == 0xEDu) ? 0x9Fu : 0xBFu;
+        } else if (c >= 0xF0u && c <= 0xF4u) {
+            need = 3;
+            lo = (c == 0xF0u) ? 0x90u : 0x80u;
+            hi = (c == 0xF4u) ? 0x8Fu : 0xBFu;
+        } else {
+            return 0;
+        }
+        if (len - i <= need) {          /* the sequence runs past the end */
+            return 0;
+        }
+        if (s[i + 1] < lo || s[i + 1] > hi) {
+            return 0;
+        }
+        for (k = 2; k <= need; k++) {
+            if (s[i + k] < 0x80u || s[i + k] > 0xBFu) {
+                return 0;
+            }
+        }
+        i += need + 1u;
+    }
+    return 1;
+}
+
 int azh__profile_pair(const char *line, size_t len, char *key, size_t keycap, const char **value,
                       char *err, size_t cap)
 {
@@ -29,9 +75,6 @@ int azh__profile_pair(const char *line, size_t len, char *key, size_t keycap, co
     if (len == 0) {
         return 1;
     }
-    if (line[0] == '#') {
-        return 1;                       /* a comment is free text up to the end of its line */
-    }
     if (memchr(line, '\0', len) != NULL) {
         set_err(err, cap, "NUL byte in line");
         return AZH_E_ARG;
@@ -40,6 +83,13 @@ int azh__profile_pair(const char *line, size_t len, char *key, size_t keycap, co
         (unsigned char)line[2] == 0xBF) {
         set_err(err, cap, "byte order mark (the file must be UTF-8 without a BOM)");
         return AZH_E_ARG;
+    }
+    if (!utf8_ok((const unsigned char *)line, len)) {
+        set_err(err, cap, "not valid UTF-8");
+        return AZH_E_ARG;
+    }
+    if (line[0] == '#') {
+        return 1;                       /* a comment is free text up to the end of its line (still UTF-8) */
     }
     if (line[0] == ' ' || line[0] == '\t' || line[len - 1] == ' ' || line[len - 1] == '\t') {
         set_err(err, cap, "line starts or ends with a space or tab");
@@ -132,14 +182,13 @@ int azh__profile_parse(const char *path, int (*cb)(const char *key, const char *
         if (got == 0) {
             break;
         }
-        if (line_no >= AZH_PROFILE_LINES_MAX) {
-            set_err(err, cap, "more than 4096 lines");      /* a whole-file error: line 0 */
-            *err_line = 0;
+        line_no++;
+        *err_line = line_no;
+        if (line_no > AZH_PROFILE_LINES_MAX) {
+            set_err(err, cap, "more than 4096 lines");      /* reported at the first line over the bound */
             rc = AZH_E_ARG;
             break;
         }
-        line_no++;
-        *err_line = line_no;
         last = (got == 2);
         if (got == -2) {
             (void)snprintf(err, cap, "cannot read profile %s", path);

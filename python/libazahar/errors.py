@@ -30,6 +30,9 @@ class GuestError(LibAzaharError):
         super().__init__(message)
         self.result = result
 
+    def __reduce__(self):  # type: ignore[no-untyped-def]
+        return (GuestError, (self.args[0] if self.args else "", self.result))
+
 
 class HostTimeout(LibAzaharError):
     """A call did not finish in time; the worker was killed and reaped."""
@@ -42,6 +45,9 @@ class HostTimeout(LibAzaharError):
         self.op = op
         self.seconds = seconds
         self.message = message
+
+    def __reduce__(self):  # type: ignore[no-untyped-def]
+        return (HostTimeout, (self.op, self.seconds, self.message))
 
 
 class HostCrashed(LibAzaharError):
@@ -63,6 +69,9 @@ class HostCrashed(LibAzaharError):
         self.message = message
         self.log_tail = log_tail
         self.err_tail = err_tail
+
+    def __reduce__(self):  # type: ignore[no-untyped-def]
+        return (HostCrashed, (self.returncode, self.signal, self.message, self.log_tail, self.err_tail))
 
     @staticmethod
     def signal_name(number: Optional[int]) -> str:
@@ -92,6 +101,9 @@ class GuestMemoryError(LibAzaharError):
         self.addr = addr
         self.length = length
 
+    def __reduce__(self):  # type: ignore[no-untyped-def]
+        return (GuestMemoryError, (self.args[0] if self.args else "", self.addr, self.length))
+
 
 class HostError(LibAzaharError):
     """Wrong call order, I/O, memory, an unsupported call, an ABI mismatch or a missing host."""
@@ -106,6 +118,9 @@ class SlotTimeout(HostTimeout):
         self.slots = slots
         self.folder = Path(folder)
         self.args = (str(self),)
+
+    def __reduce__(self):  # type: ignore[no-untyped-def]
+        return (SlotTimeout, (self.seconds, self.slots, self.folder))
 
     def __str__(self) -> str:
         return f"no libazahar slot free after {self.seconds:g} s: all {self.slots} are held; see {self.folder}"

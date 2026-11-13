@@ -135,8 +135,37 @@ static void test_long(void)
     check(strstr(st.first, "later error") != NULL, "the first message of a kind is kept");
 }
 
+/* the msg= text of a summary line: \\ , " and a newline escaped, CR dropped, the rest verbatim */
+static void test_escape(void)
+{
+    static const struct { const char *in, *want; } cases[] = {
+        { "plain text", "plain text" }, { "say \"hi\"", "say \\\"hi\\\"" }, { "a\\b", "a\\\\b" },
+        { "one\ntwo", "one\\ntwo" }, { "crlf\r\nend", "crlf\\nend" }, { "\r", "" }, { "", "" },
+        { "\\\"\n\r\\", "\\\\\\\"\\n\\\\" }, { "caf\xc3\xa9 \xe2\x82\xac", "caf\xc3\xa9 \xe2\x82\xac" },
+    };
+    size_t i;
+
+    for (i = 0; i < sizeof cases / sizeof cases[0]; i++) {
+        char got[128] = { 0 };
+        FILE *f = tmpfile();
+        size_t n;
+
+        check(f != NULL, "tmpfile for the escape test");
+        if (f == NULL) {
+            return;
+        }
+        azh__print_escaped(f, cases[i].in);
+        rewind(f);
+        n = fread(got, 1, sizeof got - 1, f);
+        got[n] = '\0';
+        (void)fclose(f);
+        check(strcmp(got, cases[i].want) == 0, "escape case %zu: got '%s', want '%s'", i, got, cases[i].want);
+    }
+}
+
 void test_msg(void)
 {
+    test_escape();
     test_file();
     test_counting();
     test_long();

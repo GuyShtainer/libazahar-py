@@ -350,13 +350,50 @@ static int build_batch(const args_t *a, int j, azh_batch *b)
     return 0;
 }
 
-/* --inputs: one record per line, '#' comments; the array is malloc'd */
+/* One input-script line into buf (NUL-terminated; the newline and one trailing CR dropped, as the profile does).
+ * 1: a line; 2: a last line with no newline; 0: end of file; -1: longer than LINE_MAX_LEN - 1 (511) bytes; -2: a NUL byte in the line. */
+static int read_script_line(FILE *f, char *buf, size_t cap)
+{
+    size_t n = 0;
+    int nul = 0;
+    int c;
+
+    assert(f != NULL && buf != NULL && cap >= (size_t)LINE_MAX_LEN + 2u);
+    for (c = fgetc(f); c != EOF && c != '\n'; c = fgetc(f)) {
+        if (n >= (size_t)LINE_MAX_LEN) {        /* 511 bytes and one CR is the most a good line holds */
+            while (c != EOF && c != '\n') {      /* swallow the rest so the caller can go on or stop */
+                c = fgetc(f);
+            }
+            return -1;
+        }
+        nul |= (c == '\0');
+        buf[n++] = (char)c;
+    }
+    if (c == EOF && n == 0) {
+        return 0;
+    }
+    if (n > 0 && buf[n - 1] == '\r') {
+        n--;
+    }
+    buf[n] = '\0';
+    if (n > (size_t)LINE_MAX_LEN - 1u) {
+        return -1;
+    }
+    if (nul != 0) {
+        return -2;
+    }
+    return (c == EOF) ? 2 : 1;
+}
+
+/* --inputs: one record per line, '#' comments; the array is malloc'd. At most 4 * AZH_MAX_INPUTS lines: more is an error. */
 static int load_inputs(const char *path, int32_t **recs, int32_t *n)
 {
-    char line[LINE_MAX_LEN + 1];       /* room for 511 bytes plus the newline, and one more to see a longer line */
+    char line[LINE_MAX_LEN + 2];       /* 511 bytes, one CR, the NUL */
     FILE *f = fopen(path, "r");
     int32_t cap = 0;
     long lines;
+    int got;
+    int last = 0;                       /* the file ended inside the line just read */
 
     assert(path != NULL && recs != NULL && n != NULL);
     *recs = NULL;
@@ -366,13 +403,24 @@ static int load_inputs(const char *path, int32_t **recs, int32_t *n)
         printed = 1;
         return AZH_E_IO;
     }
-    for (lines = 0; lines < 4 * (long)AZH_MAX_INPUTS && fgets(line, sizeof line, f) != NULL; lines++) {
+    for (lines = 0; last == 0; lines++) {
         char *hash;
         int32_t rec[AZH_INPUT_INTS];
         int k;
 
-        if (strchr(line, '\n') == NULL && strlen(line) >= LINE_MAX_LEN) {   /* 512 bytes and no newline */
-            fprintf(stderr, "UsageError: %s line %ld: line longer than %d bytes\n", path, lines + 1, LINE_MAX_LEN - 1);
+        got = read_script_line(f, line, sizeof line);
+        last = (got == 2);
+        if (got == 0) {
+            break;
+        }
+        if (lines >= 4 * (long)AZH_MAX_INPUTS || got < 0) {
+            if (lines >= 4 * (long)AZH_MAX_INPUTS) {
+                fprintf(stderr, "UsageError: %s line %ld: more than %ld lines\n", path, lines + 1,
+                        4 * (long)AZH_MAX_INPUTS);
+            } else {
+                fprintf(stderr, "UsageError: %s line %ld: %s\n", path, lines + 1,
+                        (got == -1) ? "line longer than 511 bytes" : "NUL byte in line");
+            }
             printed = 1;
             (void)fclose(f);
             free(*recs);
@@ -435,7 +483,10 @@ static int seed_sd(const args_t *a)
         return AZH_E_ARG;
     }
     rc = azh__copy_tree(a->sd_seed, sdmc);
-    if (rc != AZH_OK) {
+    if (rc == AZH_E_IO) {                   /* the copy itself failed: an I/O error (exit 6) */
+        fprintf(stderr, "IOError: --sd-seed %s could not be copied to %s\n", a->sd_seed, sdmc);
+        printed = 1;
+    } else if (rc != AZH_OK) {              /* no such folder, a symlink, too big, the destination exists: usage */
         fprintf(stderr, "UsageError: --sd-seed %s could not be copied to %s (the destination must not exist)\n",
                 a->sd_seed, sdmc);
         printed = 1;
@@ -471,8 +522,11 @@ static int open_and_configure(const args_t *a)
         printed = 1;
         return AZH_E_IO;
     }
-    if (a->sd_seed != NULL && seed_sd(a) != AZH_OK) {
-        return AZH_E_ARG;
+    if (a->sd_seed != NULL) {
+        rc = seed_sd(a);
+        if (rc != AZH_OK) {
+            return rc;
+        }
     }
     if (snprintf(log, sizeof log, "%s/host.log", a->out) >= (int)sizeof log ||
         snprintf(map, sizeof map, "%s/host.map", a->out) >= (int)sizeof map) {
@@ -505,22 +559,6 @@ static const char *stop_name(int32_t reason)
                                           "guest_error", "wall_limit" };
 
     return (reason >= 0 && reason < 7) ? names[reason] : "unknown";
-}
-
-/* the message with \ as \\, " as \" and newlines as \n; carriage returns are dropped */
-static void print_escaped(const char *m)
-{
-    for (; *m != '\0'; m++) {
-        if (*m == '\\') {
-            fputs("\\\\", stdout);
-        } else if (*m == '"') {
-            fputs("\\\"", stdout);
-        } else if (*m == '\n') {
-            fputs("\\n", stdout);
-        } else if (*m != '\r') {
-            fputc(*m, stdout);
-        }
-    }
 }
 
 /* "last <j>: <last complete line of <sys>/Azahar/sdmc/REL>" */
@@ -568,7 +606,7 @@ static void print_summary(const args_t *a, const azh_result *r, int j)
            "batch=%d msg=\"", (long long)r->frames_run, r->wall_s,
            r->wall_s > 0.0 ? (double)r->frames_run / r->wall_s : 0.0, r->shots_done, stop_name(r->stop_reason),
            (long long)r->first_frame, (long long)r->last_frame, (long long)r->vblanks, frame_ms, j + 1);
-    print_escaped(r->message);
+    azh__print_escaped(stdout, r->message);
     printf("\"\n");
     if (a->print_last != NULL) {
         print_last_line(a, j);

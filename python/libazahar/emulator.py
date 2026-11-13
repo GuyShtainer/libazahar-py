@@ -35,12 +35,18 @@ def _profile_line(path: Path, number: int, raw: bytes) -> Optional[Tuple[str, st
         raw = raw[:-1]
     if len(raw) > MAX_PROFILE_LINE:
         raise ArgumentError(f"{path}:{number}: line is {len(raw)} bytes, over the {MAX_PROFILE_LINE} byte limit")
-    if not raw or raw.startswith(b"#"):
+    if not raw:
         return None
+    if b"\0" in raw:
+        raise ArgumentError(f"{path}:{number}: NUL byte in the line")
+    if raw.startswith(b"\xef\xbb\xbf"):
+        raise ArgumentError(f"{path}:{number}: the line starts with a UTF-8 byte order mark")
     try:
         line = raw.decode("utf-8")
     except UnicodeDecodeError:
         raise ArgumentError(f"{path}:{number}: not valid UTF-8") from None
+    if line.startswith("#"):
+        return None
     if line[0] in " \t" or line[-1] in " \t":
         raise ArgumentError(f"{path}:{number}: line starts or ends with a space or tab")
     key, sep, value = line.partition("=")
@@ -55,30 +61,43 @@ def _read_profile(path: Path) -> List[Tuple[str, str]]:
     """The ``key=value`` pairs of an option profile, in file order (the format is in docs/USING.md section 14).
 
     Lines split on ``\\n`` only (one trailing ``\\r`` is dropped); a line is at most 511 bytes and a file at most 4096
-    lines; a line whose first byte is ``#`` is a comment; nothing is trimmed, so padding is an error; a UTF-8 byte order mark is an error. Raises
-    ArgumentError ``<path>:<line>: <reason>`` for a bad line (``<path>:0:`` for a file with too many lines) and
-    HostError when the file cannot be read.
+    lines; a line whose first byte is ``#`` is a comment; nothing is trimmed, so padding is an error. Every line
+    (comments too) must be valid UTF-8 with no NUL byte, and no line may start with a byte order mark. The lines are
+    read in file order and the first error wins; a 4097th line is the error ``<path>:4097: more than 4096 lines``.
+    Raises ArgumentError ``<path>:<line>: <reason>`` for a bad line and HostError when the file cannot be read.
     """
+    pairs: List[Tuple[str, str]] = []
     try:
-        data = Path(path).read_bytes()
+        with open(path, "rb") as handle:
+            for number, raw in enumerate(handle, 1):
+                if number > MAX_PROFILE_LINES:
+                    raise ArgumentError(f"{path}:{number}: more than {MAX_PROFILE_LINES} lines")
+                pair = _profile_line(path, number, raw[:-1] if raw.endswith(b"\n") else raw)
+                if pair is not None:
+                    pairs.append(pair)
     except OSError as exc:
         raise HostError(f"cannot read the option profile {path}: {exc.strerror or exc}") from exc
-    if data.startswith(b"\xef\xbb\xbf"):
-        raise ArgumentError(f"{path}:1: the file starts with a UTF-8 byte order mark")
-    lines = data.split(b"\n")
-    if lines and lines[-1] == b"":
-        lines.pop()
-    if len(lines) > MAX_PROFILE_LINES:
-        raise ArgumentError(f"{path}:0: {len(lines)} lines, over the {MAX_PROFILE_LINES} line limit")
-    pairs = (_profile_line(path, number, raw) for number, raw in enumerate(lines, 1))
-    return [pair for pair in pairs if pair is not None]
+    return pairs
 
 
 def _pairs(options: Options) -> List[Tuple[str, str]]:
+    """The ``options=`` pairs as strings; each must pass the one-line profile rule when written as ``key=value``."""
     if options is None:
         return []
     items = options.items() if isinstance(options, Mapping) else options
-    return [(str(key), str(value)) for key, value in items]
+    out: List[Tuple[str, str]] = []
+    for key, value in items:
+        key, value = str(key), str(value)
+        try:
+            if "\n" in key or "\n" in value or value.endswith("\r"):
+                raise ArgumentError("a newline or a trailing CR cannot be written on one line")
+            pair = _profile_line(Path("options"), 1, f"{key}={value}".encode("utf-8", "surrogateescape"))
+            if pair != (key, value):
+                raise ArgumentError("not a valid key=value pair")
+        except (ArgumentError, UnicodeEncodeError) as exc:
+            raise ArgumentError(f"options: bad pair for key {key!r}: {str(exc).split(': ', 2)[-1]}") from None
+        out.append((key, value))
+    return out
 
 
 def _index(value: object, message: str) -> int:
@@ -89,6 +108,19 @@ def _index(value: object, message: str) -> int:
         return operator.index(value)       # type: ignore[arg-type]
     except TypeError:
         raise ArgumentError(message) from None
+
+
+def _seconds(value: object, name: str) -> float:
+    """``value`` as a finite number of seconds (a bool, a string or NaN is an ArgumentError)."""
+    if isinstance(value, bool) or not isinstance(value, (int, float)) and not hasattr(value, "__float__"):
+        raise ArgumentError(f"{name} must be a number of seconds")
+    try:
+        number = float(value)       # type: ignore[arg-type]
+    except (TypeError, ValueError):
+        raise ArgumentError(f"{name} must be a number of seconds") from None
+    if number != number:
+        raise ArgumentError(f"{name} must be a number of seconds")
+    return number
 
 
 def _check_sd_file(name: str) -> str:
@@ -131,8 +163,8 @@ class Emulator:
     def __init__(self, app: Union[str, Path], workdir: Union[str, Path], *, sd_seed: Union[str, Path, None] = None,
                  state: Union[str, Path, None] = None, core: Union[str, Path, None] = None, options: Options = None,
                  timeout: float = 30.0, boot_timeout: float = 300.0, fresh_sd: bool = False) -> None:
-        self.timeout = float(timeout)
-        self.boot_timeout = float(boot_timeout)
+        self.timeout = _seconds(timeout, "timeout")
+        self.boot_timeout = _seconds(boot_timeout, "boot_timeout")
         self._app = Path(app).resolve()
         self._workdir = Path(workdir).resolve()
         if not self._app.is_file():
@@ -143,10 +175,14 @@ class Emulator:
         self._memory: Optional[Memory] = None
         self._shots_dir = self._workdir / "shots"
         self._sd = self._workdir / "sys" / "Azahar" / "sdmc"
-        if fresh_sd:
-            _clear_sd(self._sd)
-        for folder in (self._sd, self._shots_dir):
-            folder.mkdir(parents=True, exist_ok=True)
+        folder = self._workdir
+        try:
+            if fresh_sd:
+                _clear_sd(self._sd)
+            for folder in (self._sd, self._shots_dir):
+                folder.mkdir(parents=True, exist_ok=True)
+        except OSError as exc:
+            raise HostError(f"cannot make the working folder {folder}: {exc.strerror or exc}") from exc
         host = _paths.host_path()
         env = dict(os.environ)
         env["LAZ_HOST"] = str(host)
@@ -262,7 +298,7 @@ class Emulator:
         prev = self._held
         records, _ = fold(inputs, frames, prev)
         before = self.frame_total
-        wait = Wait(heartbeat=self.timeout if timeout is None else float(timeout), first_heartbeat=self.boot_timeout)
+        wait = Wait(heartbeat=self.timeout if timeout is None else _seconds(timeout, "timeout"), first_heartbeat=self.boot_timeout)
         kind, payload = self._client.request("run", (records.tobytes(), bytes(batch)), wait, frame_before=before)
         if kind == "exited":
             self._held = held_after(records, payload["frames"], prev)
@@ -308,8 +344,9 @@ class Emulator:
             data = stop_text.encode()
             if not data or len(data) > 255:
                 raise ArgumentError("stop_text must be 1..255 bytes")
+            stop_every = _index(stop_every, f"stop_every must be an integer 1..{MAX_EVERY}")
             if not 1 <= stop_every <= MAX_EVERY:
-                raise ArgumentError(f"stop_every must be 1..{MAX_EVERY}")
+                raise ArgumentError(f"stop_every must be an integer 1..{MAX_EVERY}")
             batch.sd_file = _check_sd_file(stop_file).encode()
             batch.sd_text = data
             batch.sd_every = stop_every
@@ -320,6 +357,7 @@ class Emulator:
                 raise ArgumentError("debug_text must be under 256 bytes")
             batch.debug_text = data
         if wall_limit is not None:
+            wall_limit = _seconds(wall_limit, "wall_limit")
             if wall_limit <= 0:
                 raise ArgumentError("wall_limit must be positive seconds")
             batch.wall_limit_ms = max(1, int(wall_limit * 1000))

@@ -39,10 +39,18 @@ def test_line_limits(tmp_path):
     with pytest.raises(ArgumentError, match=r":1: "):
         parse(tmp_path, b"k=" + b"x" * 510 + b"\n")                                 # 512 bytes
     assert len(parse(tmp_path, b"a=1\n" * 4096)) == 4096
-    with pytest.raises(ArgumentError, match=r":0: "):
+    with pytest.raises(ArgumentError, match=r":4097: more than 4096 lines"):
         parse(tmp_path, b"a=1\n" * 4097)
-    with pytest.raises(ArgumentError, match=r":0: "):
+    with pytest.raises(ArgumentError, match=r":4097: more than 4096 lines"):
         parse(tmp_path, b"#\n" * 4097)
+
+
+@pytest.mark.parametrize("data,line", [
+    (b"a=\xff\n", 1), (b"ok=1\n# \xff\n", 2), (b"a=b\x00c\n", 1), (b"# c\x00\n", 1), (b"a=1\n\xef\xbb\xbfb=2\n", 2),
+    (b"bad\n" + b"a=1\n" * 4096, 1)])
+def test_decisions_a_to_d(tmp_path, data, line):
+    with pytest.raises(ArgumentError, match=rf"profile\.txt:{line}: "):
+        parse(tmp_path, data)
 
 
 def test_unreadable_file_is_host_error(tmp_path):

@@ -95,7 +95,8 @@ usage: azhost run <app> --sys <dir> --out <dir> --frames N[,N2,...] [--shot f1,f
 
 Exit codes: the table in `docs/USING.md` section 3 is the reference (0 ok; 2 usage; 3 boot; 4 core; 5 Vulkan; 6 I/O;
 7 the run needs our core; 8 unsupported; 9 a savestate failed; 10 the guest exited; 11 a guest error). On our core a
-guest break stops `azhost` (`stop=guest_break`), and a guest exit or guest error prints that batch's summary line first
+guest break ends that batch (`stop=guest_break`); `azhost` goes on to the next batch and to `--save`, and the exit code stays
+0 if every batch ran. A guest exit or guest error prints that batch's summary line first
 and then exits 10 or 11. On the stock core the process itself exits from inside the run, with no summary line for that
 batch. A summary line per batch looks like `frames= wall= fps= shots= stop= first= last= vblanks= wall_ms_mean= batch=
 msg=` (see `docs/USING.md` section 3); `msg=` is always last, so new keys go before it.

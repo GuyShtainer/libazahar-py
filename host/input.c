@@ -201,7 +201,7 @@ int16_t azh__model_guest_circle(int32_t c)
     return (int16_t)roundf(((float)c / 32767.0f) * 154.0f);
 }
 
-/* a script token: [-]digits (decimal, a leading 0 is still decimal) or 0x hex digits, ending at p's first separator */
+/* a script token: [-]digits (decimal, a leading 0 is still decimal) or 0x or 0X hex digits, ending at p's first separator */
 static int script_token(const char **pp, int32_t *out)
 {
     const char *p = *pp;
@@ -220,6 +220,9 @@ static int script_token(const char **pp, int32_t *out)
     }
     if (!((*p >= '0' && *p <= '9') || (base == 16 && ((*p >= 'a' && *p <= 'f') || (*p >= 'A' && *p <= 'F'))))) {
         return -1;
+    }
+    if (base == 16 && p[0] == '0' && (p[1] == 'x' || p[1] == 'X')) {
+        return -1;                      /* 0x0x10: strtol would skip a second prefix */
     }
     errno = 0;
     v = strtol(p, &end, base);

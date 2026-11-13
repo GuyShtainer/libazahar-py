@@ -5,6 +5,7 @@
 #define AZH_PURE_H
 
 #include <stddef.h>
+#include <stdio.h>
 #include <stdint.h>
 
 #include "azhost.h"
@@ -54,6 +55,8 @@ enum { AZH_ACT_NONE = 0, AZH_ACT_BREAK, AZH_ACT_ERROR, AZH_ACT_EXITED, AZH_ACT_E
 typedef struct { int32_t brk, err, exited, err_count; char first[AZH_MSG_MAX]; } azh_msgstate;
 int azh__msg_status(const char *text);
 int azh__msg_is_break(const char *text);
+/* msg.c: a summary line's msg= text: backslash as two, a quote as backslash-quote, a newline as backslash-n, CR dropped */
+void azh__print_escaped(FILE *f, const char *m);
 void azh__msg_begin_run(azh_msgstate *st);
 int azh__msg_on_message(azh_msgstate *st, const char *text, int is_lazpy);
 /* profile.c: the option-profile format (USING section 14). A line is at most AZH_PROFILE_LINE_MAX bytes, a file at
@@ -64,8 +67,9 @@ enum { AZH_PROFILE_LINE_MAX = 511, AZH_PROFILE_LINES_MAX = 4096 };
 int azh__profile_pair(const char *line, size_t len, char *key, size_t keycap, const char **value,
                       char *err, size_t cap);
 /* Every pair of the file in order through cb (a nonzero return stops the parse and is returned as is).
- * Returns 0; AZH_E_IO (err says so); AZH_E_ARG with err set (a format error; *err_line is its 1-based line, 0 for a
- * whole-file error); or cb's code with err empty and *err_line the line cb refused. */
+ * Lines are read in file order and the first error wins; a 4097th line is the error "more than 4096 lines" at line
+ * 4097. Returns 0; AZH_E_IO (err says so, *err_line 0); AZH_E_ARG with err set (a format error; *err_line is its
+ * 1-based line); or cb's code with err empty and *err_line the line cb refused. */
 int azh__profile_parse(const char *path, int (*cb)(const char *key, const char *value, void *ud), void *ud,
                        int *err_line, char *err, size_t cap);
 /* input.c: one line of an --inputs script, '#' comment already cut. 7 int32 fields separated by spaces, tabs or

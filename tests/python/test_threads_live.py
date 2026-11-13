@@ -125,7 +125,7 @@ def test_k_threads_stock_core(host_paths, stock_core, workdir):
 
 
 def test_k_threads_lazpy1_core(host_paths, workdir):
-    """The v0.1.0 core (LAZ_CORE_OLD, lazpy.1) still boots under this host; only threads() needs lazpy.2."""
+    """The lazpy.1 core (LAZ_CORE_OLD) still boots under this host; only threads() needs lazpy.2."""
     import os
     old = os.environ.get("LAZ_CORE_OLD")
     if not old:

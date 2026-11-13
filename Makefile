@@ -16,10 +16,10 @@ build/libazhost.dylib: $(LIB_OBJ) host/libazhost.exports
 	$(CC) -dynamiclib -install_name @rpath/libazhost.dylib -Wl,-exported_symbols_list,host/libazhost.exports \
 	    -o $@ $(LIB_OBJ) -lz -lpthread
 
-# azhost links sdcopy.o, profile.o and input.o directly: azh__copy_tree, azh__profile_* and azh__script_line are internal,
-# not exported symbols of the library
-build/azhost: build/obj/azhost_main.o build/obj/sdcopy.o build/obj/profile.o build/obj/input.o build/libazhost.dylib
-	$(CC) -o $@ build/obj/azhost_main.o build/obj/sdcopy.o build/obj/profile.o build/obj/input.o -lm -Lbuild -lazhost -Wl,-rpath,@loader_path
+# azhost links sdcopy.o, profile.o, input.o and msg.o directly: azh__copy_tree, azh__profile_*, azh__script_line and
+# azh__print_escaped are internal, not exported symbols of the library
+build/azhost: build/obj/azhost_main.o build/obj/sdcopy.o build/obj/profile.o build/obj/input.o build/obj/msg.o build/libazhost.dylib
+	$(CC) -o $@ build/obj/azhost_main.o build/obj/sdcopy.o build/obj/profile.o build/obj/input.o build/obj/msg.o -lm -Lbuild -lazhost -Wl,-rpath,@loader_path
 
 # static analysis: one pass per host source, no .plist output
 check:
