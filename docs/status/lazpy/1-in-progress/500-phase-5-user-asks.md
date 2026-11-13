@@ -72,3 +72,10 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   earlier probe azhost.exe's, are recorded as "unreviewed private build, Guy's PC only". Our host/ and python/
   changes come in phase B, only if Gen3D's speed test passes. At handover, review the PE twin against
   keyblob_findings.
+- 2026-11-14 00:15, the PC worker, port-win B1 (LAZ_VK_DEVICE) done. Its question: the device is reported in host.log
+  (always) and on stderr (when the variable decided), not as a summary key, since the summary keys and azh_stats are
+  frozen. Our answer: accepted, with no device= key for now (USING:70 would allow one before msg=; a minor release
+  can add it). Also print the stderr line when the variable is unset and more than one device exists. The USING row
+  gets "a value of digits only is always an index". azhost_main.c's strtol needs no change: every range is at most
+  2000000000, inside a 32-bit long. The input.c strtoll fix needs a -2147483648 test. tools/check-obinary.sh (9
+  O_BINARY sites, hostmap.c the ninth) needs map lines and a call from make check at handover.
