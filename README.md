@@ -25,8 +25,8 @@ work: macOS before 15 and Intel Macs, audio output, anything with a window, and 
 | Azahar's own core, real scene, 1 instance, busy machine | 129 fps, 2.2x real time | Gen3D (homebrew) drawing a 3D scene from a GBA game run locally, not distributed | 68-96 (16:09-16:11) | 2026-11-12 | docs/research/spike-2-real-scene.md:34,1 |
 | Azahar's own core, real scene, 3 instances, each | 136-138 fps, 2.3x real time | Gen3D (homebrew) drawing a 3D scene from a GBA game run locally, not distributed | 58 rising to 90 | 2026-11-12 | docs/research/spike-2-real-scene.md:35,1 |
 
-Speed depends on the scene and the machine's load; the light rows are the test app, the real-scene rows are one
-commercial game's scene run locally on a busy machine. Load is the 1-minute load average (at the start and the end of
+Speed depends on the scene and the machine's load; the light rows are the test app, the real-scene rows are
+Gen3D's (homebrew) 3D scene, measured on a busy machine. Load is the 1-minute load average (at the start and the end of
 a light row). The real-scene rows are not a clean measure: a re-measure on a quiet machine is still owed. Azahar's
 own core ran while the machine was busier.
 

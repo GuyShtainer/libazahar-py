@@ -132,7 +132,7 @@ def keyblob_check(rel: Path, repo: Path, inputs: Path) -> Items:
     findings = gate_f2.keyblob_findings(repo / "build-core", core, repo / SRC_REL, repo / TREE_REL, repo)
     out += [("FAIL", f"keyblob: {item}") for item in findings]
     head = read_kv(inputs).get("head", "?")
-    out.append(("NOTE", f"build.inputs head={head} (translate with docs/commit-map-g8.tsv then docs/commit-map-g8b.tsv)"))
+    out.append(("NOTE", f"build.inputs head={head} (translate with docs/commit-map-g8c.tsv, then g8b, then g8)"))
     return out
 
 

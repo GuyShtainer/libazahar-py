@@ -89,3 +89,11 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   release_check's notes rule now accepts "no console keys" (1132bc1, plants 18 of 18 caught); staged at 1132bc1;
   --pre-push with the private file 16 of 16 PASS; docs_check all PASS; clone_check "clone ok: 99 s wall", full
   pytest 136 passed, 3 skipped (runs/clone-i4, ignored). Re-audit a88334b832afbc276 launched (B1, S1-S3, the zip).
+- 2026-11-13 05:04, re-audit (a88334b832afbc276): `docs/reviews/release-legal-audit-v0.1.0-reaudit.md`. Verdict
+  shippable: B1 resolved (0 hits in every object, message and the reflog; a positive control on the pre-G8c bundle
+  hits); S2, S3 and the spike-1 name resolved; S1 resolved in the rows, S1r (README prose under the table) fixed at
+  HEAD the same hour; S4: the tag goes on the commit the build-files asset was archived from (re-run mkrelease and
+  --pre-push at the tagged commit). R1 still waits for Guy. Its proposed KB entry (prove the scanner on the
+  pre-rewrite bundle; a table fix must include the prose beside it) is for the next /learn pass.
+- Final staging: done at the commit that adds this line (mkrelease, then --pre-push with the private file); see
+  the handoff. This item moves to 5-done after I5 (Guy publishes, the release is downloaded and checked).
