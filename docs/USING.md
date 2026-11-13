@@ -19,14 +19,15 @@ Every variable is in the table in section 15. An instance folder `workdir/` hold
 `sys/Azahar/sdmc/` (the SD card; `emu.sd` is that path). `sd_seed` is a folder (never named `sdmc`) whose contents are
 copied onto the SD card: before boot, or with `state=` after the restore, so seed files land on top of the snapshot.
 Reusing `workdir` keeps everything under `sys/`, the SD included; `sd_seed` is copied on top and nothing is cleared. For
-a warm shader cache and a clean SD, delete `workdir/sys/Azahar/sdmc/` before creating the Emulator.
+a warm shader cache and a clean SD, pass `fresh_sd=True`: it empties `workdir/sys/Azahar/sdmc/` before the seed is
+copied and keeps the rest of `sys/` (it refuses an SD folder that is a symlink).
 
 ## 3. Frames
 
 One `run` frame is one guest VBlank. Frames are 1-based inside a batch (`run(10, inputs=[(1, ...)])` acts on the
-first frame). `inputs` and `shots` take batch frames 1..`frames`; anything else raises `ValueError` (a bad argument,
-not a `LibAzaharError`: catch both). Shot names carry absolute frame numbers: `result.shots` is keyed by the batch frame
-you asked for; the file name holds `first_frame + f - 1`. `timeout` is a no-progress limit: seconds with no new frame
+first frame). `inputs` and `shots` take batch frames 1..`frames`; anything else raises `ArgumentError` (a `LibAzaharError`
+that is also a `ValueError`). Shot names carry absolute frame numbers: `result.shots` is keyed by the batch frame
+you asked for (`Shot.frame`); the file name holds the frame since boot, `first_frame + f - 1` (`Shot.frame_total`). `timeout` is a no-progress limit: seconds with no new frame
 (default 30), not a bound on the batch, so a long batch needs no big value. Use `wall_limit` for a wall bound. Raise
 `timeout` only when one frame can stall long (first shader compiles mid-run). `frame_total` counts every frame since boot. The frame the
 guest exits on counts. `RunResult.wall_s` is the batch's wall time; `azhost run` prints one summary per batch,
@@ -84,7 +85,7 @@ per frame grows `host.log` by about a line per frame.
 killed and reaped. `SlotTimeout` is a `HostTimeout` (`.op == "slot"`, `.seconds`) raised when no machine-wide slot
 frees up (section 13). `HostCrashed`: the worker died (a signal gives a negative code). `StateError`: section 10.
 `NeedsLazpyCore`: the call needs our patched core. `HostError`: wrong call order, I/O, memory, ABI mismatch, missing
-host, an unsupported call, a guest exit outside `run`. `ValueError` for bad arguments. The crash tests leave a macOS
+host, an unsupported call, a guest exit outside `run`. `ArgumentError` (also a `ValueError`) for every bad argument. The crash tests leave a macOS
 crash report each run. On the stock core a guest-exit result has `wall_s` 0.0 and no `shots`. `boot_timeout`
 (default 300 s) covers boot and the first frames' shader compiles. A long batch is not a hang while the heartbeat moves.
 
@@ -123,14 +124,14 @@ both cores is in section 16.
 little-endian. Calls happen between batches. The guest may be part-way into a frame, so a record of several fields can
 be torn (some fields from the frame before); the watch list has the same property. A range with an unmapped page
 (address 0 included) raises `GuestMemoryError` (`.addr`, `.length`); a failed write changes nothing. A bad range
-(negative, past 4 GiB, length 0 or over 64 MiB) is a `ValueError`. On the stock core every memory call and every
+(negative, past 4 GiB, length 0 or over 64 MiB) is an `ArgumentError`. On the stock core every memory call and every
 `watch=` raises `NeedsLazpyCore`.
 
 **Watch list.** `run(frames, watch=[(addr, words), ...], watch_every=1)`: at most 32 entries of 1..256 u32 words. After
 every `watch_every`-th batch frame, and after the last frame run, the host reads each entry; `result.watch` is a tuple
 of `WatchRow(frame, status, data)` (`frame` absolute, `data` one `bytes` per entry, `row.u32(entry, word)`). An
 unmapped entry reads as zeros and sets the row status (`AZH_E_UNMAPPED`), the batch goes on. Rows live in a 4 MiB area
-of `host.map`; a batch that needs more rows is refused with a `ValueError` naming the largest frame count that fits at
+of `host.map`; a batch that needs more rows is refused with an `ArgumentError` naming the largest frame count that fits at
 that `watch_every`. States saved under ABI 2 still load.
 
 ## 12. The Gen3D mapping

@@ -10,7 +10,7 @@ import struct
 from typing import Callable, Dict, Union
 
 from . import _abi
-from .errors import GuestMemoryError
+from .errors import ArgumentError, GuestMemoryError
 
 __all__ = ["Memory"]
 
@@ -36,7 +36,7 @@ class _Width:
     def raw_write(self, addr: int, value: int) -> None:
         """Write ``value`` (range-checked for the width) at ``addr``."""
         if isinstance(value, bool) or not isinstance(value, int) or not self.low <= value <= self.high:
-            raise ValueError(f"{self.name}: value {value!r} is outside {self.low}..{self.high}")
+            raise ArgumentError(f"{self.name}: value {value!r} is outside {self.low}..{self.high}")
         self._memory.write(addr, struct.pack(self.fmt, value))
 
     __call__ = raw_read
@@ -57,11 +57,11 @@ class Memory:
     @staticmethod
     def _check_range(addr: int, length: int) -> None:
         if isinstance(addr, bool) or not isinstance(addr, int) or not 0 <= addr < _TOP:
-            raise ValueError(f"addr {addr!r} must be an integer 0..0xFFFFFFFF")
+            raise ArgumentError(f"addr {addr!r} must be an integer 0..0xFFFFFFFF")
         if isinstance(length, bool) or not isinstance(length, int) or not 1 <= length <= _abi.AZH_MEM_MAX_LEN:
-            raise ValueError(f"length {length!r} must be an integer 1..{_abi.AZH_MEM_MAX_LEN}")
+            raise ArgumentError(f"length {length!r} must be an integer 1..{_abi.AZH_MEM_MAX_LEN}")
         if addr + length > _TOP:
-            raise ValueError(f"0x{addr:08x}+{length} passes the end of the 4 GiB address space")
+            raise ArgumentError(f"0x{addr:08x}+{length} passes the end of the 4 GiB address space")
 
     def _call(self, op: str, args: tuple, addr: int, length: int) -> object:
         try:
@@ -72,7 +72,7 @@ class Memory:
 
     def read(self, addr: int, length: int) -> bytes:
         """``length`` bytes at ``addr``. Raises GuestMemoryError when a page of the range is unmapped (nothing is
-        returned then), NeedsLazpyCore on the stock core, ValueError for a bad range."""
+        returned then), NeedsLazpyCore on the stock core, ArgumentError for a bad range."""
         self._check_range(addr, length)
         data = self._call("read", (addr, length), addr, length)
         assert isinstance(data, bytes) and len(data) == length

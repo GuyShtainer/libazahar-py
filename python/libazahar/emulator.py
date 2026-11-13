@@ -9,7 +9,7 @@ from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
 
 from . import _abi, _paths
 from ._client import Wait, WorkerClient, reap_process
-from .errors import GuestError, HostError
+from .errors import ArgumentError, GuestError, HostError
 from .inputs import Buttons, Circle, Held, Item, Touch, _TouchUp, apply_item, check_buttons, fold, held_after
 from .memory import Memory
 from .results import RunResult, SaveInfo, Shot, Stats, WatchRow
@@ -46,8 +46,16 @@ def _pairs(options: Options) -> List[Tuple[str, str]]:
 
 def _check_sd_file(name: str) -> str:
     if not name or os.path.isabs(name) or ".." in Path(name).parts:
-        raise ValueError(f"stop_file {name!r} must be a relative path inside the SD folder, without '..'")
+        raise ArgumentError(f"stop_file {name!r} must be a relative path inside the SD folder, without '..'")
     return name
+
+
+def _clear_sd(sd: Path) -> None:
+    """Delete the SD folder of a reused workdir (never through a symlink), so seed files land on an empty card."""
+    if sd.is_symlink():
+        raise ArgumentError(f"fresh_sd: {sd} is a symlink; refusing to clear it")
+    if sd.is_dir():
+        shutil.rmtree(sd)
 
 
 class Emulator:
@@ -55,27 +63,31 @@ class Emulator:
 
     ``workdir`` holds ``sys/`` (the SD folder is ``sys/Azahar/sdmc/``), ``shots/``, ``host.log``, ``host.map`` and
     ``worker.err``. ``sd_seed`` (a folder, never named ``sdmc``) is copied into the SD folder before a normal boot,
-    and after a state boot (so seed files land on top of the state's snapshot). ``timeout`` is how long the heartbeat
-    may stand still during a ``run``; ``boot_timeout`` covers ``start`` and the first frames (shader compiles).
-    Raises BootError, HostError, StateError, HostCrashed, HostTimeout (see ``errors``), ValueError for bad arguments.
+    and after a state boot (so seed files land on top of the state's snapshot). ``fresh_sd=True`` empties
+    the SD folder first and keeps the rest of ``sys/`` (the warm shader cache). ``timeout`` is how long the heartbeat
+    may stand still during a ``run`` (no new frame), not a bound on the batch; ``boot_timeout`` covers ``start`` and
+    the first frames (shader compiles). Raises BootError, HostError, StateError, HostCrashed, HostTimeout (see
+    ``errors``), ArgumentError (also a ValueError) for bad arguments.
     """
 
     def __init__(self, app: Union[str, Path], workdir: Union[str, Path], *, sd_seed: Union[str, Path, None] = None,
                  state: Union[str, Path, None] = None, core: Union[str, Path, None] = None, options: Options = None,
-                 timeout: float = 30.0, boot_timeout: float = 300.0) -> None:
+                 timeout: float = 30.0, boot_timeout: float = 300.0, fresh_sd: bool = False) -> None:
         self.timeout = float(timeout)
         self.boot_timeout = float(boot_timeout)
         self.app = Path(app).resolve()
         self.workdir = Path(workdir).resolve()
         if not self.app.is_file():
-            raise ValueError(f"app {self.app} is not a file")
+            raise ArgumentError(f"app {self.app} is not a file")
         if sd_seed is not None and Path(sd_seed).name == "sdmc":
-            raise ValueError("sd_seed must not be named 'sdmc' (pass the folder whose contents become the SD card)")
+            raise ArgumentError("sd_seed must not be named 'sdmc' (pass the folder whose contents become the SD card)")
         self._held = Held()
         self._is_lazpy = False
         self._memory: Optional[Memory] = None
         self._shots_dir = self.workdir / "shots"
         self._sd = self.workdir / "sys" / "Azahar" / "sdmc"
+        if fresh_sd:
+            _clear_sd(self._sd)
         for folder in (self._sd, self._shots_dir):
             folder.mkdir(parents=True, exist_ok=True)
         host = _paths.host_path()
@@ -163,12 +175,13 @@ class Emulator:
         ``watch_every``-th frame (and after the last frame run) the host reads each entry (``words`` u32 words at guest
         address ``addr``) into ``result.watch``, a tuple of ``WatchRow``; the host refuses a batch whose rows do not
         fit and says the largest frame count that does. The guest may be part-way into a frame at each read.
-        ``timeout`` replaces the heartbeat timeout for this call. Returns a RunResult;
+        ``timeout`` replaces the heartbeat timeout for this call: seconds with no new frame, not the batch's wall
+        time, so a long batch needs no big value (``wall_limit`` bounds the wall time). Returns a RunResult;
         a guest exit gives ``stopped_by == "guest_exited"`` and a closed Emulator on both cores (on our core the
         worker is shut down cleanly after the result is built). On the stock core the exit result has ``wall_s`` 0.0 and
         no ``shots`` even if PNGs were written before the exit. A guest crash raises GuestError (with
         ``.result`` when the batch ended with ``guest_error``; the Emulator stays open then; the third error in one
-        frame ends the worker and the Emulator is closed). Raises ValueError for bad arguments, GuestError,
+        frame ends the worker and the Emulator is closed). Raises ArgumentError for bad arguments, GuestError,
         HostTimeout, HostCrashed.
         """
         self._live()
@@ -199,12 +212,12 @@ class Emulator:
                      stop_every: int, stop_new: bool, debug_text: Optional[str],
                      wall_limit: Optional[float]) -> Tuple[_abi.Batch, List[int]]:
         if isinstance(frames, bool) or not isinstance(frames, int) or not 1 <= frames <= MAX_FRAMES:
-            raise ValueError(f"frames must be an integer 1..{MAX_FRAMES}")
+            raise ArgumentError(f"frames must be an integer 1..{MAX_FRAMES}")
         shot_frames = sorted(set(int(f) for f in shots))
         if len(shot_frames) > _abi.AZH_MAX_SHOTS or any(not 1 <= f <= frames for f in shot_frames):
-            raise ValueError(f"shots: at most {_abi.AZH_MAX_SHOTS} frames, each within 1..{frames}")
+            raise ArgumentError(f"shots: at most {_abi.AZH_MAX_SHOTS} frames, each within 1..{frames}")
         if (stop_file is None) != (stop_text is None):
-            raise ValueError("stop_file and stop_text go together")
+            raise ArgumentError("stop_file and stop_text go together")
         batch = _abi.Batch()
         batch.frames = frames
         batch.n_shots = len(shot_frames)
@@ -222,9 +235,9 @@ class Emulator:
         if stop_file is not None and stop_text is not None:
             data = stop_text.encode()
             if not data or len(data) > 255:
-                raise ValueError("stop_text must be 1..255 bytes")
+                raise ArgumentError("stop_text must be 1..255 bytes")
             if not 1 <= stop_every <= MAX_EVERY:
-                raise ValueError(f"stop_every must be 1..{MAX_EVERY}")
+                raise ArgumentError(f"stop_every must be 1..{MAX_EVERY}")
             batch.sd_file = _check_sd_file(stop_file).encode()
             batch.sd_text = data
             batch.sd_every = stop_every
@@ -232,11 +245,11 @@ class Emulator:
         if debug_text:
             data = debug_text.encode()
             if len(data) > 255:
-                raise ValueError("debug_text must be under 256 bytes")
+                raise ArgumentError("debug_text must be under 256 bytes")
             batch.debug_text = data
         if wall_limit is not None:
             if wall_limit <= 0:
-                raise ValueError("wall_limit must be positive seconds")
+                raise ArgumentError("wall_limit must be positive seconds")
             batch.wall_limit_ms = max(1, int(wall_limit * 1000))
 
     @staticmethod
@@ -244,17 +257,17 @@ class Emulator:
         """Shape checks only (the host's plan checks the rest); returns the words of each entry."""
         entries = [] if watch is None else list(watch)
         if len(entries) > _abi.AZH_MAX_WATCH:
-            raise ValueError(f"watch: at most {_abi.AZH_MAX_WATCH} entries")
+            raise ArgumentError(f"watch: at most {_abi.AZH_MAX_WATCH} entries")
         if isinstance(every, bool) or not isinstance(every, int) or every < 0:
-            raise ValueError("watch_every must be an integer >= 0")
+            raise ArgumentError("watch_every must be an integer >= 0")
         words: List[int] = []
         for entry in entries:
             if (not isinstance(entry, (tuple, list)) or len(entry) != 2
                     or any(isinstance(v, bool) or not isinstance(v, int) for v in entry)):
-                raise ValueError(f"watch entry {entry!r} must be an (addr, words) pair of integers")
+                raise ArgumentError(f"watch entry {entry!r} must be an (addr, words) pair of integers")
             addr, count = entry
             if not 0 <= addr < (1 << 32) or not 0 <= count < (1 << 32):
-                raise ValueError(f"watch entry {entry!r}: addr and words must fit an unsigned 32-bit integer")
+                raise ArgumentError(f"watch entry {entry!r}: addr and words must fit an unsigned 32-bit integer")
             words.append(count)
         batch.n_watch = len(entries)
         batch.watch_every = min(every, 0x7FFFFFFF)
@@ -284,7 +297,7 @@ class Emulator:
         done: Dict[int, Shot] = {}
         for frame in shot_frames[:raw.shots_done]:
             stem = self._shots_dir / f"shot_{before + frame:06d}"
-            done[frame] = Shot(frame, f"{stem}_top.png", f"{stem}_bottom.png")
+            done[frame] = Shot(frame, f"{stem}_top.png", f"{stem}_bottom.png", before + frame)
         return RunResult(frames=raw.frames_run, stopped_by=_abi.STOP_NAMES.get(raw.stop_reason, str(raw.stop_reason)),
                          first_frame=raw.first_frame, last_frame=raw.last_frame, frame_total=self.frame_total,
                          vblanks=raw.vblanks, wall_s=raw.wall_s, message=raw.message.decode("utf-8", "replace"),

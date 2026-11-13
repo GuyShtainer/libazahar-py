@@ -17,6 +17,7 @@ from typing import Any, Callable, Iterable, List, Optional, Union
 
 from . import _slots
 from .emulator import Emulator
+from .errors import ArgumentError
 
 __all__ = ["Pool"]
 
@@ -28,14 +29,14 @@ class Pool:
 
     ``emulator_kwargs`` go to every Emulator; ``submit``/``map`` ``overrides`` win over them (for example a per-job
     ``sd_seed``, ``state`` or ``options``). ``factory`` replaces ``Emulator`` (for tests with a fake). Raises
-    ValueError when ``n`` is outside 1..64. Warns UserWarning when ``n`` exceeds the slot cap and LoadWarning when
+    ArgumentError when ``n`` is outside 1..64. Warns UserWarning when ``n`` exceeds the slot cap and LoadWarning when
     the machine is loaded.
     """
 
     def __init__(self, n: int, app: Union[str, Path], root: Union[str, Path], *,
                  factory: Optional[Callable[..., Any]] = None, **emulator_kwargs: Any) -> None:
         if not 1 <= int(n) <= MAX_N:
-            raise ValueError(f"Pool size {n} is outside 1 to {MAX_N}")
+            raise ArgumentError(f"Pool size {n} is outside 1 to {MAX_N}")
         self.n = int(n)
         self.app = app
         self.root = Path(root).resolve()

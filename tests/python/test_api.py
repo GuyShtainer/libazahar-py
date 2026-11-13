@@ -63,3 +63,36 @@ def test_save_and_load_on_one_instance(host_paths, workdir, seed):
     one = {row["v"]: tuple(row[k] for k in FIELDS[1:]) for row in first if row["v"] > v_save}
     two = {row["v"]: tuple(row[k] for k in FIELDS[1:]) for row in second if row["v"] > v_save}
     assert len(one) >= 290 and one == two
+
+
+def test_fresh_sd_clears_the_card_and_keeps_sys(host_paths, workdir, seed):
+    folder = seed(boot_frames=300)
+    with dh.boot(host_paths, workdir, folder) as emu:
+        emu.run(60)
+        (emu.sd / "old_run.txt").write_text("from the run before")
+    marker = workdir / "sys" / "keep_me.txt"
+    marker.write_text("stands in for the shader cache")
+    with dh.boot(host_paths, workdir, folder, fresh_sd=True) as emu:
+        assert not (emu.sd / "old_run.txt").exists()
+        assert marker.is_file()
+        assert any(emu.sd.rglob("*")), "the seed is copied after the clear"
+        emu.run(60)
+
+
+def test_shot_names_and_frame_total(host_paths, workdir):
+    with dh.boot(host_paths, workdir) as emu:
+        emu.run(300)
+        result = emu.run(20, shots=[5])
+        shot = result.shots[5]
+        assert shot.frame == 5 and shot.frame_total == 305 == result.first_frame + 4
+        assert "shot_000305_top" in shot.top
+
+
+def test_long_batch_outlives_a_short_timeout(host_paths, workdir):
+    """``timeout`` is a no-progress limit: a batch far longer than it ends normally while frames keep coming."""
+    with dh.boot(host_paths, workdir) as emu:
+        emu.run(300)
+        result = emu.run(8000, timeout=1.0)
+        assert result.stopped_by == "frames" and result.frames == 8000
+        if result.wall_s <= 1.0:
+            pytest.skip(f"the batch took {result.wall_s:.2f} s, not longer than the timeout")

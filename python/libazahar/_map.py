@@ -6,7 +6,7 @@ import struct
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
-from .errors import HostError
+from .errors import ArgumentError, HostError
 
 __all__ = ["HostMap", "rows"]
 
@@ -92,7 +92,7 @@ class HostMap:
         """
         assert self._mm is not None, "map is closed"
         if rows < 0:
-            raise ValueError("rows must be >= 0")
+            raise ArgumentError("rows must be >= 0")
         if rows == 0:
             return []
         written = self._u("<I", WATCH_ROWS)
@@ -154,7 +154,7 @@ class HostMap:
             return self._view[PIXELS:PIXELS + TOP_BYTES]
         if screen == 2:
             return self._view[PIXELS + TOP_BYTES:PIXELS + TOP_BYTES + BOTTOM_BYTES]
-        raise ValueError("screen must be 1 (top) or 2 (bottom)")
+        raise ArgumentError("screen must be 1 (top) or 2 (bottom)")
 
     def close(self) -> None:
         """Release the map; with live views (numpy arrays) the mapping stays until they die."""

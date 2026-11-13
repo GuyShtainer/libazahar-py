@@ -6,12 +6,16 @@ from typing import Optional
 
 from . import _abi
 
-__all__ = ["LibAzaharError", "BootError", "GuestError", "HostTimeout", "HostCrashed", "StateError",
+__all__ = ["LibAzaharError", "ArgumentError", "BootError", "GuestError", "HostTimeout", "HostCrashed", "StateError",
            "NeedsLazpyCore", "GuestMemoryError", "HostError", "HostCallError", "from_code"]
 
 
 class LibAzaharError(Exception):
     """Base class of every error this package raises on purpose."""
+
+
+class ArgumentError(LibAzaharError, ValueError):
+    """A bad argument (a frame outside 1..N, a bad address, a bad option). It is also a ValueError."""
 
 
 class BootError(LibAzaharError):
@@ -102,9 +106,9 @@ class HostCallError(Exception):
 
 
 def from_code(code: int, text: str, during_start: bool = False) -> Exception:
-    """Map an AZH_E_* code and the host's text to the exception to raise (ValueError for AZH_E_ARG)."""
+    """Map an AZH_E_* code and the host's text to the exception to raise (ArgumentError for AZH_E_ARG)."""
     if code == _abi.AZH_E_ARG:
-        return ValueError(text)
+        return ArgumentError(text)
     if code == _abi.AZH_E_BOOT or (during_start and code in (_abi.AZH_E_CORE, _abi.AZH_E_VULKAN)):
         return BootError(text)
     if code == _abi.AZH_E_SAVESTATE:

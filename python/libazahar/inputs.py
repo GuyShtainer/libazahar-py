@@ -7,6 +7,7 @@ from dataclasses import dataclass, replace
 from typing import ClassVar, Iterable, Tuple, Union
 
 from . import _abi
+from .errors import ArgumentError
 
 __all__ = ["Buttons", "Touch", "Circle", "Held", "fold", "held_after"]
 
@@ -85,7 +86,7 @@ Item = Union[Buttons, int, Touch, Circle, _TouchUp]
 
 def _check_int(value: object, name: str) -> int:
     if isinstance(value, bool) or not isinstance(value, int):
-        raise ValueError(f"{name} must be an integer, got {value!r}")
+        raise ArgumentError(f"{name} must be an integer, got {value!r}")
     return int(value)
 
 
@@ -93,7 +94,7 @@ def check_buttons(value: int) -> int:
     """Validate a button mask; returns it as a plain int."""
     mask = _check_int(value, "buttons")
     if mask < 0 or mask & ~_abi.AZH_BUTTONS_MASK:
-        raise ValueError(f"buttons {mask:#x} has a bit outside the mask {_abi.AZH_BUTTONS_MASK:#x}")
+        raise ArgumentError(f"buttons {mask:#x} has a bit outside the mask {_abi.AZH_BUTTONS_MASK:#x}")
     return mask
 
 
@@ -101,9 +102,9 @@ def check_touch(x: int, y: int) -> Tuple[int, int]:
     """Validate a touch point."""
     xi, yi = _check_int(x, "touch x"), _check_int(y, "touch y")
     if not 0 <= xi < TOUCH_W:
-        raise ValueError(f"touch x {xi} must be 0..{TOUCH_W - 1}")
+        raise ArgumentError(f"touch x {xi} must be 0..{TOUCH_W - 1}")
     if not 0 <= yi < TOUCH_H:
-        raise ValueError(f"touch y {yi} must be 0..{TOUCH_H - 1}")
+        raise ArgumentError(f"touch y {yi} must be 0..{TOUCH_H - 1}")
     return xi, yi
 
 
@@ -112,7 +113,7 @@ def check_circle(x: int, y: int) -> Tuple[int, int]:
     lim = _abi.AZH_CIRCLE_MAX
     xi, yi = _check_int(x, "circle x"), _check_int(y, "circle y")
     if not -lim <= xi <= lim or not -lim <= yi <= lim:
-        raise ValueError(f"circle ({xi}, {yi}) must be within -{lim}..{lim}")
+        raise ArgumentError(f"circle ({xi}, {yi}) must be within -{lim}..{lim}")
     return xi, yi
 
 
@@ -128,14 +129,14 @@ def apply_item(held: Held, item: Item) -> Held:
         return replace(held, circle_x=x, circle_y=y)
     if isinstance(item, (int, Buttons)):
         return replace(held, buttons=check_buttons(int(item)))
-    raise ValueError(f"unknown input item {item!r}")
+    raise ArgumentError(f"unknown input item {item!r}")
 
 
 def fold(inputs: Iterable[Tuple[int, Item]], frames: int, held: Held) -> Tuple["array[int]", Held]:
     """Fold (frame, item) pairs into one full record per frame that has an item.
 
     Frames are 1-based within the batch and sorted stably; several items on one frame fold into one record.
-    Returns the flat ``array('i')`` of 7-int records and the held state after the last one. Raises ValueError for a
+    Returns the flat ``array('i')`` of 7-int records and the held state after the last one. Raises ArgumentError for a
     frame outside 1..frames or an invalid item.
     """
     pairs = []
@@ -143,11 +144,11 @@ def fold(inputs: Iterable[Tuple[int, Item]], frames: int, held: Held) -> Tuple["
         frame, item = pair
         frame = _check_int(frame, "input frame")
         if not 1 <= frame <= frames:
-            raise ValueError(f"input frame {frame} is outside 1..{frames}")
+            raise ArgumentError(f"input frame {frame} is outside 1..{frames}")
         pairs.append((frame, item))
     pairs.sort(key=lambda p: p[0])
     if len(pairs) > _abi.AZH_MAX_INPUTS:
-        raise ValueError(f"more than {_abi.AZH_MAX_INPUTS} input records")
+        raise ArgumentError(f"more than {_abi.AZH_MAX_INPUTS} input records")
     out = array("i")
     index = 0
     while index < len(pairs):

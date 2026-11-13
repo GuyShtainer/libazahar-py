@@ -11,7 +11,7 @@ from libazahar import _abi, errors
     (_abi.AZH_E_VULKAN, errors.HostError), (_abi.AZH_E_ORDER, errors.HostError), (_abi.AZH_E_IO, errors.HostError),
     (_abi.AZH_E_NOMEM, errors.HostError), (_abi.AZH_E_UNSUPPORTED, errors.HostError),
     (_abi.AZH_E_NEEDS_LAZPY_CORE, errors.NeedsLazpyCore), (_abi.AZH_E_SAVESTATE, errors.StateError),
-    (_abi.AZH_E_ARG, ValueError), (-99, errors.HostError)])
+    (_abi.AZH_E_ARG, errors.ArgumentError), (-99, errors.HostError)])
 def test_code_maps_to_class(code, cls):
     exc = errors.from_code(code, "host text")
     assert type(exc) is cls and "host text" in str(exc)
@@ -24,7 +24,7 @@ def test_start_makes_core_and_vulkan_boot_errors():
 
 
 def test_all_derive_from_base():
-    for cls in (errors.BootError, errors.GuestError, errors.HostTimeout, errors.HostCrashed, errors.StateError,
+    for cls in (errors.ArgumentError, errors.BootError, errors.GuestError, errors.HostTimeout, errors.HostCrashed, errors.StateError,
                 errors.NeedsLazpyCore, errors.HostError):
         assert issubclass(cls, errors.LibAzaharError)
 

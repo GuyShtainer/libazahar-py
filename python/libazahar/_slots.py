@@ -18,7 +18,7 @@ import warnings
 from pathlib import Path
 from typing import Optional
 
-from .errors import HostTimeout
+from .errors import ArgumentError, HostTimeout
 
 __all__ = ["DEFAULT_CAP", "Slot", "SlotTimeout", "LoadWarning", "slot_dir", "cap", "acquire", "warn_if_loaded", "waited_in"]
 
@@ -54,16 +54,16 @@ def slot_dir() -> Path:
 
 
 def cap() -> int:
-    """The number of slots: ``LAZ_MAX_INSTANCES`` (an int 1..64), else DEFAULT_CAP. ValueError names the variable."""
+    """The number of slots: ``LAZ_MAX_INSTANCES`` (an int 1..64), else DEFAULT_CAP. ArgumentError names the variable."""
     text = os.environ.get("LAZ_MAX_INSTANCES")
     if text is None:
         return DEFAULT_CAP
     try:
         value = int(text)
     except ValueError:
-        raise ValueError(f"LAZ_MAX_INSTANCES={text!r} is not an integer from 1 to {MAX_CAP}") from None
+        raise ArgumentError(f"LAZ_MAX_INSTANCES={text!r} is not an integer from 1 to {MAX_CAP}") from None
     if not 1 <= value <= MAX_CAP:
-        raise ValueError(f"LAZ_MAX_INSTANCES={value} is outside 1 to {MAX_CAP}")
+        raise ArgumentError(f"LAZ_MAX_INSTANCES={value} is outside 1 to {MAX_CAP}")
     return value
 
 
@@ -74,7 +74,7 @@ def _timeout_default() -> float:
     try:
         return float(text)
     except ValueError:
-        raise ValueError(f"LAZ_SLOT_TIMEOUT={text!r} is not a number of seconds") from None
+        raise ArgumentError(f"LAZ_SLOT_TIMEOUT={text!r} is not a number of seconds") from None
 
 
 class Slot:
@@ -139,7 +139,7 @@ def _try_round(folder: Path, slots: int) -> Optional[tuple]:
 def acquire(timeout: Optional[float] = None) -> Slot:
     """Take a free slot, waiting up to ``timeout`` seconds (None: ``LAZ_SLOT_TIMEOUT``, default 3600).
 
-    Raises SlotTimeout (a HostTimeout) when all are held, ValueError for a bad ``LAZ_MAX_INSTANCES``. Warns
+    Raises SlotTimeout (a HostTimeout) when all are held, ArgumentError for a bad ``LAZ_MAX_INSTANCES``. Warns
     LoadWarning once when the machine is loaded.
     """
     limit = _timeout_default() if timeout is None else float(timeout)

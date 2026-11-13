@@ -80,7 +80,5 @@ Evidence, in `docs/status/lazpy/5-done/`, proves it. Nothing is listed as workin
 - A real-scene speed row on our core (quiet machine), and a real-scene row for the cap.
 - A hint in the missing-core `BootError` ("run tools/fetch.sh --lazpy-core or set LAZ_CORE"), and the stale "until D"
   comments in `host/azhost.h`.
-- `ArgumentError`: a `LibAzaharError` that is also a `ValueError`, raised for every bad argument.
-- A `fresh_sd=True` option that clears the SD folder before seeding.
 - A core rebuild with a macOS 15 header and patch 0008's comment fixed.
 - Gen3D's adapter (Gen3D's own work).

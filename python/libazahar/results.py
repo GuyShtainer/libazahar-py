@@ -10,11 +10,13 @@ __all__ = ["Shot", "WatchRow", "RunResult", "SaveInfo", "Stats"]
 
 @dataclass(frozen=True)
 class Shot:
-    """Paths of the two PNGs of one shot frame."""
+    """Paths of the two PNGs of one shot frame. ``frame`` is the batch frame (the key in ``RunResult.shots``);
+    ``frame_total`` is the frame counted since boot, the number in the file names."""
 
     frame: int
     top: str
     bottom: str
+    frame_total: int = 0
 
 
 @dataclass(frozen=True)
