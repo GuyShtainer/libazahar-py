@@ -230,7 +230,10 @@ def load_needles(path: str | None) -> list[tuple[int, re.Pattern[str]]]:
     for number, raw in enumerate(Path(path).read_text(errors="replace").splitlines(), 1):
         left = raw.partition("==>")[0].strip()
         if left and not left.startswith("#"):
-            pattern = left[len("regex:"):] if left.startswith("regex:") else re.escape(left)
+            if left.startswith("regex:"):
+                pattern = left[len("regex:"):]
+            else:
+                pattern = re.escape(left[len("literal:"):] if left.startswith("literal:") else left)
             out.append((number, re.compile(pattern, re.I)))
     return out
 
