@@ -16,12 +16,18 @@ Gate our built core: its exported symbols and version, the Phase C and D tests o
 The gate in `docs/PLAN.md` line 311 ("Phase F2"), run headless on this Mac with a pass/fail answer.
 
 ## Evidence
-none yet
+- 2026-11-13 01:53, merged into main as fac16e9 (step-f2 6578c3c + a801ee3). The batch (01:17-01:21, our core
+  azahar_lazpy_libretro.dylib, 21,828,992 bytes): gate_c 0, pytest 0, the stock smoke parts 0, no exit-path line;
+  gate_f2: keyblob (the f1 checks), symbols ours and stock, version 2126.2-lazpy.1, options, the debug-text stops
+  d1-d4, r1 identical, r2 restored instances equal, cross-core states both ways. After the review's fixes
+  (docs/reviews/step-f2-as-built.md): keyblob and symbols PASS; at load 9 (01:52) r2 PASS with t_state 1.92 s and
+  1.67 s (bound 2.5), test_state_boot passed, gate_c --only f on our core PASS (exit_code 0). Outputs in the F2
+  worktree's runs/f2/ (ignored).
 
 ## Pointers
 - Plan section: `docs/PLAN.md:311`
 - Phase plan: `docs/plans/phase-f2.md` (the builder brief), `docs/plans/phase-3.md`
-- Review: none yet
+- Review: `docs/reviews/step-f2-as-built.md`
 
 ## Lessons and notes
 Read this part only when you work on this item. Blockers, numbers and Guy's words go here verbatim.
@@ -73,3 +79,8 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
 - After merging step E: E's machine slot is taken inside Emulator(), so slot waits count inside t_state (subtract
   or record slot.txt's waited_s) and gate_f2 under an outer hold_slot needs a second slot; wrap only the azhost
   runs in tools/hold_slot.py.
+- Lessons: os.nice(0) raises EPERM at nice 20 on macOS, so read and raise with getpriority/setpriority; nice -n
+  compounds when nested, so a batch takes one nice layer and logs its value; Apple's linker writes 'macOS' in
+  quotes in its "built for newer" lines, so count the quoted text; a timed bound under another session's load
+  says nothing, so wait for the 1-min load to fall under 10 instead of holding one neighbour; a module the release
+  check imports must not touch sys.path at import time, and every lazy import needs the path set first.

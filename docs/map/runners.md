@@ -23,6 +23,14 @@ rm -f runs/c-gate.rc; PATH=/opt/devkitpro/devkitARM/bin:/opt/devkitpro/tools/bin
 ```
 Expect "gate_c: 28 passed, 0 failed". azhost's per-batch summary field is `wall_ms_mean`. A guest exit or guest
 error ends azhost with exit code 10 or 11; a break stop continues the run.
+`--core <dylib>` runs it on another core (our core: `build-core/azahar_lazpy_libretro.dylib`).
+
+Step F2's gate, our patched core against the stock one, a few minutes; wait until the 1-min load is under 10 for its
+r2 timing (`--only keyblob,symbols` needs no emulator; `keyblob_findings()` is the release check's import):
+```
+nice -n 10 python3 -I tests/gate_f2.py --ours build-core/azahar_lazpy_libretro.dylib --stock dl/azahar/azahar_libretro.dylib > runs/f2-gate.log 2>&1
+```
+Expect no FAIL lines; RECORD lines carry sizes, hashes and timings.
 
 The Python package and step D's tests (the slow ones run one Emulator at a time):
 ```

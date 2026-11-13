@@ -119,3 +119,11 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   byte windows keyblob_findings() reads from the local source.
 - For Guy: Q7 (remove the stock-core fetch, recommended, or accept the YELLOW); a courtesy note to Azahar's
   maintainers is his call (section 6).
+- Revision 2, final (aa4336428ee833bdf, 01:26-01:56): all of review 2 (B1-B4, S1-S9, N1-N7) and the consult's
+  sections 1-10 are in; phase-4.md 13.2 and 13.3 map each one. P17: the stock-core URL and sha256 leave fetch.sh,
+  the default core is dl/lazpy-core/, stock comparisons need LAZ_STOCK_CORE (phase-i 3.5). P19: NOTICES.md and the
+  GPLv3 text inside the zip. G8b is phase-i 8.1b: its replace file is built from the word-diff of 776e8da and
+  c7fea62 (spike 2 reworded there) into the private folder, plus a history-bytes check. Hours: H 0.50, I 0.75,
+  main loop 0.62, phase about 2.5 h. Guy questions are phase-4.md section 7, Q1-Q9 (Q8: the fallback name, lazpy
+  recommended). Open: core/PIN's SRC_URL still names Azahar's unchanged tarball (risk 17); I0 may find stock-core
+  paths in E's and G's tests once merged.

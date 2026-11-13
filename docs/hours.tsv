@@ -83,3 +83,10 @@ date	bet	phase	agent_id	model	role	kind	start	end	hours	source
 2026-11-13	Step F2 as-built review	phase-3	a5b06264cc6ce5406	opus	reviewer	agent	01:27	01:38	0.19	agent duration 692 s
 2026-11-13	Handoff rewrite, learn skill row	phase-4	main	opus	main	process	01:27	01:29	0.03	session clock
 2026-11-13	F2 review fixes, checks, step-f2 commit	phase-3	main	opus	main	process	01:38	01:41	0.05	session clock
+2026-11-13	Quiet rerun read, r2 fix and rerun, F2 merge, item 320 done, E2 and G launch	phase-3	main	opus	main	process	01:52	01:56	0.07	session clock
+2026-11-13	Phase 4 plan revision 2 (final)	phase-4	aa4336428ee833bdf	opus	author	agent	01:26	01:56	0.50	agent duration 1786 s
+2026-11-13	Revision 2 read and scanned, spike 2 reworded, commits	phase-4	main	opus	main	process	01:56	01:58	0.03	session clock
+2026-11-13	Step E2 builder, run 1 (forced hand-back, table running)	phase-3	a444b28ace71428a3	sonnet	builder	agent	01:56	01:58	0.04	agent duration 128 s
+2026-11-13	Step G builder, G1 (waits for E2)	phase-3	a974a8613e6508e64	sonnet	builder	agent	01:56	02:03	0.12	agent duration 435 s
+2026-11-13	Step E2 builder, run 2 (DEFAULT_CAP, research doc)	phase-3	a444b28ace71428a3	sonnet	builder	agent	01:58	02:05	0.12	agent duration 448 s (575761 ms total minus run 1)
+2026-11-13	Speed table read, E and G resumed, E review launched	phase-3	main	opus	main	process	02:03	02:06	0.05	session clock
