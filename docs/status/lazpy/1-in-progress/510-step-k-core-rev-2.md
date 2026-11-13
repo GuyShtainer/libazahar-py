@@ -36,3 +36,9 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   patch, fixup commits squashed with `GIT_SEQUENCE_EDITOR=: git rebase -i --autosquash`, then a fresh apply of the
   whole stack at fuzz 0 compared byte for byte with the scratch tree. Git's diff aligns hunks differently from the
   original patches, so unchanged patches are kept as they are and changed ones are edited in place where small.
+- 2026-11-13 10:48: the branch's host and Python with MAIN's lazpy.1 core: full pytest 150 passed, 9 skipped (the
+  lazpy.2-only tests), at load about 30 (another session's gates). The stock core's `threads()` raised NeedsLazpyCore.
+- 2026-11-13 10:51: configure-only first stopped on the cache check: cmake stores the minimum as
+  `CMAKE_OSX_DEPLOYMENT_TARGET:UNINITIALIZED=15.0` (review 2's S4 said to take any type; fixed). The two patched files
+  compiled alone (`make core_settings.cpp.o citra_libretro.cpp.o` in the build's src/citra_libretro) before the
+  full build: a cheap check that saves an hour-long build from a C++ typo.
