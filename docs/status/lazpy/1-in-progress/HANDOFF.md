@@ -9,14 +9,14 @@ the next session needs to act now, and points at the rest. Goals, rules, decisio
 ## Running now
 | What | Where | Agent id | It stops when |
 |---|---|---|---|
-| laz-330: step G fixes are in (uncommitted); waiter runs the four emulator checks when the load is under 10 (4 h at most) | ../libazahar-py-g runs/g/fixcheck.sh, rc files runs/g/fc-3a..3d.rc | main (waiter bt52zbipn) | the four rc files written |
+| laz-300: Phase 3's full suite once (phase-3.md section 4 step 7): build, gates A, B, C on both cores, F2, the full pytest on each core, the live pool test; each part waits for load under 10 | MAIN runs/p3/batch.sh, rc files runs/p3/*.rc | main (background) | runs/p3/summary.txt written |
 
-Not running: steps F2 (fac16e9) and E (cbe823c) are merged; items 320 and 310 are done. Worktrees c, d, e and f2 are
-merged and kept (ignored outputs).
+Not running: steps F2 (fac16e9), E (cbe823c) and G (04926c4) are merged; items 320, 310 and 330 are done.
+Worktrees c, d, e, f2 and g are merged and kept (ignored outputs).
 
 ## Next steps, in order
-1. When the four rc files are 0: commit the fixer's 14 paths (item 330's notes) on step-g, merge step-g into main, item 330 to 5-done with Evidence; runners line
-   for test_memory_live.py (item 330's notes).
+1. When runs/p3/summary.txt is all 0: item 300 to 5-done with Evidence (Phase 3 done); tell Gen3D Phase 3's timed
+   runs ended; then remove worktrees c, d, e, f2, g (git status --porcelain --ignored checked first).
 2. Phase 4's plan is final (revision 2); items 410/420 stay in 4-not-started until Phase 3 ends.
 3. After the phase merges: section 4 step 7 (the full suite once, one background batch); then Phase 4.
 4. Before the push: G8b (second history rewrite, item 400's last notes), then release-legal-audit.

@@ -32,6 +32,12 @@ nice -n 10 python3 -I tests/gate_f2.py --ours build-core/azahar_lazpy_libretro.d
 ```
 Expect no FAIL lines; RECORD lines carry sizes, hashes and timings.
 
+Step G's guest-memory gate (both cores; one Emulator at a time, never under `tools/hold_slot.py`):
+```
+LAZ_REQUIRE_EMULATOR=1 nice -n 10 python3 -m pytest -q -rs tests/python/test_memory_live.py
+```
+Expect "6 passed", 0 skipped.
+
 The Python package and step D's tests (the slow ones run one Emulator at a time):
 ```
 python3 -m venv .venv && .venv/bin/pip install -e .          # the Python package (editable install only)

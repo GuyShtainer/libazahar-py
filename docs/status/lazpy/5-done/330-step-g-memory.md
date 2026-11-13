@@ -16,12 +16,17 @@ Memory reads and writes through our core's exported calls, the per-frame watch l
 The gate in `docs/PLAN.md` line 310 ("Phase G"), run headless on this Mac with a pass/fail answer.
 
 ## Evidence
-none yet
+- 2026-11-13 02:26, merged into main as 04926c4 (step-g: G 32f3b7c, fixes f35fdff). Gate 1: make check, make,
+  test-host 307782/0, build/azhost layout abi=3 with 137 fields[] rows, pytest not slow 103 passed. Gate 2 at load
+  6-7 (02:24): test_memory_live.py alone 6 passed, 0 skipped (m1-m7 on both cores; the stock core raises
+  NeedsLazpyCore). Gate 3 on our core: gate_c 28 passed, 0 failed; the full pytest 129 passed (before the fixes);
+  after them test_state 3 passed (t_state 1.58 s, slot waits 0) and gate_f2 r2 PASS (1.82 s, 1.50 s).
+  Review: docs/reviews/step-g-as-built.md (no blocker).
 
 ## Pointers
 - Plan section: `docs/PLAN.md:317`
 - Phase plan: `docs/plans/phase-g.md` (the builder brief), `docs/plans/phase-3.md`
-- Review: none yet
+- Review: `docs/reviews/step-g-as-built.md`
 
 ## Lessons and notes
 Read this part only when you work on this item. Blockers, numbers and Guy's words go here verbatim.
