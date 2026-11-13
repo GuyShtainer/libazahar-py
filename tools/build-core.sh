@@ -202,6 +202,11 @@ for D in $DROP; do
   fi
 done
 LINK=build-core/build/src/citra_libretro/CMakeFiles/citra_libretro.dir/link.txt
+if [ "$TARGET" = win64 ]; then   # mingw puts the libraries into linkLibs.rsp, not link.txt
+  cat "$LINK" "${LINK%link.txt}linkLibs.rsp" >build-core/link.all
+  LINK=build-core/link.all
+  grep -qF -e -lole32 "$LINK" || die "the link line lacks -lole32"
+fi
 for A in libssl.a libcrypto.a; do grep -qF "$SSL_ROOT/lib/$A" "$LINK" || die "the link line lacks $SSL_ROOT/lib/$A"; done
 if grep -qi libressl "$LINK"; then die "the link line still names libressl"; fi
 OUTLIB=build-core/build/bin/Release/azahar_libretro.$CORE_EXT
