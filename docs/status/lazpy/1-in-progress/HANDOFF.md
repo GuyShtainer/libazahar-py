@@ -1,7 +1,7 @@
 <!-- handoff: slim v1 | current tasks only | rewritten whole from docs/status/templates/handoff.md | budget 80 lines | never append -->
 # libazahar-py handoff
 
-As of: 2026-11-13 10:53 (this project's own session)
+As of: 2026-11-13 11:00 (this project's own session)
 
 This file lives in docs/status/lazpy/1-in-progress/, beside its item files. It holds only what
 the next session needs to act now, and points at the rest. Goals, rules, decisions and history live elsewhere.
@@ -10,11 +10,13 @@ the next session needs to act now, and points at the rest. Goals, rules, decisio
 | What | Where | Agent id | It stops when |
 |---|---|---|---|
 | Core lazpy.2 full build (laz-510), detached, pid 46921, started 10:53 | ../libazahar-py-k at d64aabb, branch core-rev2 | main | build-core/build.exit appears there (30-60 min) |
+| v1.0.0 plan review 1 (laz-600), read-only opus | `docs/plans/phase-v1.md` revision 0 | ad7b8a7b2342fa4b1 | it reports; save it as docs/reviews/phase-v1-review-1.md |
 
-Step K (core lazpy.2 for 3DPlatinum's asks) is in planning: `docs/plans/phase-k.md` revision 2 (reviews 1 and 2 answered). The v0.1.0 release
-stays staged from main with core lazpy.1; step K works on branch core-rev2 and merges after v0.1.0 is tagged.
+Guy asked for v1.0.0 (item laz-600, `docs/plans/phase-v1.md`): it replaces the never-published v0.1.0 and step K is
+its step V0, so step K merges before the release, not after a v0.1.0 tag.
 
 ## Next steps, in order
+0. v1.0.0 plan: save review 1, revise, review 2 (opus), revise, then run its steps V0-V8.
 1. Step K, when the build exits 0: gates 1-6 of `docs/plans/phase-k.md` in the worktree (gate 2 with `env -u LAZ_ROOT
    -u LAZ_HOST -u LAZ_PROFILE -u LAZ_LAZPY_PROFILE`, `LAZ_CORE_OLD` = MAIN's build-core dylib; the live tests are
    tests/python/test_threads_live.py on the branch), then NOTICES.md regenerated and STATUS.md on the branch, then tell

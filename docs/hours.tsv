@@ -133,3 +133,4 @@ date	bet	phase	agent_id	model	role	kind	start	end	hours	source
 2026-11-13	step K: worktree seeded, patches 0000/0002/0005/0008 edited and 0009 added (scratch-tree verified), host and Python threads(), fast tests	phase-5	main	opus	main	build	10:33	10:42	0.15	session clock
 2026-11-13	step K plan revision 2 (answers review 2)	phase-5	main	opus	main	plan	10:42	10:43	0.07	session clock
 2026-11-13	step K: gate code, docs, live tests, full pytest on lazpy.1 (150 passed), branch commits f55be25 and the cache-check fix, configure and a two-file compile check, build started	phase-5	main	opus	main	build	10:43	10:54	0.18	session clock
+2026-11-13	v1.0.0 plan revision 0 and item laz-600	phase-6	main	opus	main	plan	10:54	10:59	0.10	session clock
