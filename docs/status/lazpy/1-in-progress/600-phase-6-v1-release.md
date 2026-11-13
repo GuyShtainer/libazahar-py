@@ -72,3 +72,7 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
 - 2026-11-13 13:13: V8's NOTICES step done early on main's 64026f4a build: tools/mknotices.py with the runners.md
   inputs; the notice sentence is now derived from the patches (0007, 0008, 0010 and 0011 add their own notices;
   the hand text named only 0010 and 0011). Every file any patch changes carries a notice (9 of 9).
+- 2026-11-13 13:16, for V8's legal re-audit: three commits add a game name, removed from the tree by e54e38f:
+  1748f65 (`docs/research/spike-2-real-scene.md` line 58, 2026-11-12; touches Guy's G9 "say nothing" default),
+  9c5f959 and a41f196 (status notes quoting Gen3D). Nothing is pushed; the audit rules whether history needs a
+  rewrite (as G8c did) before the first push.
