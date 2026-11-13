@@ -41,3 +41,7 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
 - 2026-11-13 12:03: V1 is on the branch (64f5d18, item 610), under opus review. Step L's core patch (item 520) lands
   in `core/patches` before V0b's build, so V0b waits on the review's fixes and on step L's red-then-green repro.
 
+- 2026-11-13 by 12:26, Gen3D, verbatim: "Gen3D is OK with the hold: nothing of ours runs on main's libazahar-py, and
+  nothing new will start until you send \"hold released\" with the sha256. Our only jobs right now are host tests (no
+  emulator). My smoke script already uses keyword arguments and wraps shot paths in Path, so the v1.0.0 changes
+  shouldn't break it. I'll check section 20 before I run it."

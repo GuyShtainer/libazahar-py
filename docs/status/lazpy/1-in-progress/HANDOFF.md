@@ -1,29 +1,23 @@
 <!-- handoff: slim v1 | current tasks only | rewritten whole from docs/status/templates/handoff.md | budget 80 lines | never append -->
 # libazahar-py handoff
 
-As of: 2026-11-13 12:15 (this project's own session)
+As of: 2026-11-13 12:25 (this project's own session)
 
 This file lives in docs/status/lazpy/1-in-progress/, beside its item files. It holds only what
 the next session needs to act now, and points at the rest. Goals, rules, decisions and history live elsewhere.
 
 ## Running now
-| What | Where | Agent id | It stops when |
-|---|---|---|---|
-| V1 review fixes, host side (laz-610), sonnet | ../libazahar-py-k; progress in runs/v1/fix-host-progress.md there | a444f6a4e5d19a299 | it reports; brief `docs/plans/v1-fix-briefs.md` HF |
-| V1 review fixes, Python side (laz-610), sonnet | ../libazahar-py-k; progress in runs/v1/fix-py-progress.md there | aa0abb629238080e0 | it reports; brief `docs/plans/v1-fix-briefs.md` PF |
+Nothing. Branch core-rev2 (worktree ../libazahar-py-k) tip e28e4c2 holds step K, V1 (item 610, done) and step L's
+patch 0010 with its repro (item 520); not merged yet.
 
 Guy asked for v1.0.0 (item laz-600, `docs/plans/phase-v1.md`): it replaces the never-published v0.1.0 and step K is
 its step V0, so step K merges before the release, not after a v0.1.0 tag.
 
 ## Next steps, in order
-0. v1.0.0: `docs/plans/phase-v1.md` revision 2 is the plan; follow section 4's order. Now: V1's review fixes run
-   (`docs/reviews/api-freeze-1.0-diff-review.md`). When both report: edit USING.md from their progress notes (the exit
-   table's seed and `--save` rows, `options=`, CRLF, `0X`, the `\r` drop in `msg=`, 4097 lines, `LAZ_CORE_OLD` in
-   the test-only list, `HostCrashed.signal_name`), rerun make check, test-host, the fast pytest and test_profile_format
-   (with `LAZ_STOCK_CORE`), commit on the branch. Step L (item 520): patch 0010 and the repro are on the branch
-   (39aff14) and pass on the worktree core (0 bad of 180); 3DPlatinum was offered a preview run on it.
-1. Then V0b (merge and main build; plan section 3): ask both projects for the hold first (3DPlatinum's OK; Gen3D needs
-   none). Step K (laz-510) closes inside it. Never run tools/fetch.sh in the worktree (its dl/ parts link to MAIN).
+0. v1.0.0: `docs/plans/phase-v1.md` revision 2 is the plan; follow section 4's order. V0b steps 2 and 3 are done
+   (runs/core-lazpy1/ holds the lazpy.1 dylib; dl/azahar-src/src-nokeys.tar.xz is a copy, sha256 f7a70044…). The
+   hold was asked of 3DPlatinum and announced to Gen3D at 12:25; start step 4 when 3DPlatinum says its lane is clear.
+1. Then V0b steps 4-8 (merge, pin edit, main build, gates; plan section 3); send "hold released" with the core's sha256. Step K (laz-510) closes inside it. Never run tools/fetch.sh in the worktree (its dl/ parts link to MAIN).
 2. V3, V4, V6 (Gen3D and 3DPlatinum run their real suites on main's final core sha256; both answers needed), V7, V8.
 3. Release v1.0.0: V8 and V9 (staging, the legal re-audit, 16 of 16 on the final HEAD), then Guy's word for the tag
    and push (below).
@@ -42,7 +36,7 @@ its step V0, so step K merges before the release, not after a v0.1.0 tag.
 The full list is generated into `docs/status/README.md`.
 
 ## Pointers
-- Items: `docs/status/lazpy/1-in-progress/610-step-v1-api-freeze.md` (V1), `docs/status/lazpy/1-in-progress/520-step-l-stencil-readback.md`
+- Items: `docs/status/lazpy/5-done/610-step-v1-api-freeze.md` (V1), `docs/status/lazpy/1-in-progress/520-step-l-stencil-readback.md`
   (step L, report `docs/research/stencil-readback.md`), `docs/status/lazpy/1-in-progress/510-step-k-core-rev-2.md` (step K), `docs/status/lazpy/1-in-progress/500-phase-5-user-asks.md`
   (the asks verbatim), `docs/status/lazpy/5-done/430-step-j-user-fixes.md` (step J, done),
   `docs/status/lazpy/1-in-progress/420-step-i-release.md` (I2-I4 and G8c evidence),

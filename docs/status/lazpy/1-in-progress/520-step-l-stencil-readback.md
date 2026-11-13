@@ -90,3 +90,9 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   b 0/30, d 4/30 bad; patched 0/30 each. Totals: unpatched 22 bad of 210 readbacks, patched 0 of 180. Our half of
   the exit gate is met on the worktree core; it is rerun on main's final core in V7, and 3DPlatinum's self-test on
   that core (V6) is the other half. 3DPlatinum was offered a preview run on the worktree core.
+- 2026-11-13 by 12:16, 3DPlatinum, verbatim: "I'll pass on the preview run, though. This session's standing rule is no
+  more runs on the libazahar-py-k tree, and its core counts. I'll run the same self-test the first time main's v1.0.0
+  core lands: 10 fresh headless launches on the bundled MoltenVK, no overrides. I'll report the stencil line,
+  \"selftest ds\" and pica_replay's edge band, plus the suite and A4. Send the sha256 when it's built. Note: a Platinum
+  chain lane now runs headless on instance p (started 12:14). Before any 30-minute hold, tell me first and I'll say
+  when it's clear."

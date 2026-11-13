@@ -16,7 +16,10 @@ Freeze the public API for 1.0: review every public name, default and file format
 `docs/plans/phase-v1.md` section 3, V1: make, make test-host, the fast pytest and the changed tests pass on the branch.
 
 ## Evidence
-none yet
+2026-11-13 12:23: branch core-rev2 commits 64f5d18 (the 13 changes and the USING.md text) and e28e4c2 (the diff
+review's fixes, decisions D-a..D-g). Gates on the branch: make check; test-host 307973 checks, 0 failed; fast pytest
+244 passed; test_profile_format.py 74 passed with `LAZ_STOCK_CORE` (exit 7 ran); docs_check and map_check OK; the
+first slow tier 32 passed, 2 skipped. Review: `docs/reviews/api-freeze-1.0-diff-review.md`. It reaches main in V0b.
 
 ## Pointers
 - Plan: `docs/plans/phase-v1.md` section 3

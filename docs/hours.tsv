@@ -154,3 +154,6 @@ date	bet	phase	agent_id	model	role	kind	start	end	hours	source
 2026-11-13	step L: branch commit 39aff14 (repro and patch), unpatched core kept, patched core build started	phase-5	main	opus	main	build	12:05	12:09	0.07	session clock
 2026-11-13	V1: API-freeze commit review (2 must-fix, 9 should-fix, nits)	phase-6	a04d832ad11619ae6	opus	reviewer	review	12:00	12:12	0.19	agent duration 683 s
 2026-11-13	step L: patched-core gate (90 readbacks, then the A/B), V1 review saved, fix briefs and two fix agents, plan line 19	phase-6	main	opus	main	build	12:09	12:15	0.10	session clock
+2026-11-13	V1 review fixes, Python side (parser Decisions, options= rule, HostError for workdir, pickling, number checks)	phase-6	aa0abb629238080e0	sonnet	builder	build	12:14	12:16	0.03	agent duration 124 s
+2026-11-13	V1 review fixes, host side (parser Decisions, exit codes, input-script bounds, msg.c test, CLI exit tests)	phase-6	a444f6a4e5d19a299	sonnet	builder	build	12:14	12:20	0.09	agent duration 327 s
+2026-11-13	V1: USING.md from the fix notes, gates, branch commit e28e4c2, item 610 done	phase-6	main	opus	main	build	12:16	12:23	0.12	session clock
