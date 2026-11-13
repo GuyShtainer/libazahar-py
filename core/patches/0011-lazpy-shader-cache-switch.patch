@@ -1,0 +1,36 @@
+--- a/src/video_core/renderer_vulkan/vk_pipeline_cache.cpp
++++ b/src/video_core/renderer_vulkan/vk_pipeline_cache.cpp
+@@ -1,6 +1,7 @@
+ // Copyright 2023-2026 Citra Emulator Project / Azahar Emulator Project
+ // Licensed under GPLv2 or any later version
+ // Refer to the license.txt file included.
++// Modified by libazahar-py, 2026: the cache switch also runs when no disk cache is selected yet (a state load, or a boot with the disk shader cache off, of a program with id 0), and it saves the driver cache only from a selected one. Licensed GPLv2 or later, as this file.
+ 
+ #include <boost/container/static_vector.hpp>
+ 
+@@ -158,7 +159,11 @@
+ 
+ void PipelineCache::SwitchCache(u64 title_id, const std::atomic_bool& stop_loading,
+                                 const VideoCore::DiskResourceLoadCallback& callback) {
+-    if (GetProgramID() == title_id) {
++    // lazpy: a state load re-inits the core, so the new renderer has no disk cache selected
++    // yet, and the libretro boot skips LoadDefaultDiskResources when the disk cache is off.
++    // A program with id 0 (a 3dsx) equals the default id, and returning here left
++    // curr_disk_cache null for the first draw.
++    if (GetProgramID() == title_id && curr_disk_cache) {
+         LOG_DEBUG(Render_Vulkan,
+                   "Skipping pipeline cache switch - already using cache for title_id={:016X}",
+                   title_id);
+@@ -179,7 +184,11 @@
+     LOG_INFO(Render_Vulkan, "Switching pipeline cache to title_id={:016X}", title_id);
+ 
+     // Save current driver cache, update program ID and load the new driver cache
+-    SaveDriverPipelineDiskCache();
++    // lazpy: only a selected cache has a driver cache worth saving; a new renderer's empty one
++    // would overwrite the file the old renderer saved when it shut down.
++    if (curr_disk_cache) {
++        SaveDriverPipelineDiskCache();
++    }
+     SetProgramID(title_id);
+     LoadDriverPipelineDiskCache(stop_loading, nullptr);
+ 

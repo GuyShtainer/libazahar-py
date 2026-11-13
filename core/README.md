@@ -25,6 +25,8 @@ The tarball is verified (size and sha256) before anything is unpacked; a present
 | `0007-lazpy-no-default-clcert.patch` | the HTTP service no longer falls back to a built-in ClCertA certificate and key; a missing console file is an error |
 | `0008-lazpy-no-key-loading.patch` | `GetKeysStream()` returns an empty stream: no AES, RSA or ECC keys are ever loaded (Azahar's `sysdata/keys.txt` is never read, and there is no built-in blob). |
 | `0009-lazpy-thread-regs.patch` | `lazpy_threads(out, max, count)`: every guest thread's tid, pid, status, core, priority, pc, lr, sp and cpsr (the current thread of a core from the live CPU) |
+| `0010-lazpy-ds-barriers.patch` | Depth and stencil surfaces always carry attachment stages and access in their barriers, and the depth-stencil readback waits for transfer writes (exact stencil readback on MoltenVK) |
+| `0011-lazpy-shader-cache-switch.patch` | The Vulkan shader-cache switch also runs when no cache is selected yet, so a state load (or a boot with the disk shader cache off) of a program with id 0 no longer crashes on its first draw; the driver cache is saved only from a selected cache |
 
 ## Dropped from the tree
 
