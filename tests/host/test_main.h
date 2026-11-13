@@ -14,5 +14,6 @@ void test_png(void);
 void test_sdcopy(void);
 void test_statemeta(void);
 void test_watch(void);
+void test_profile(void);
 
 #endif

@@ -233,6 +233,7 @@ static int report(int rc)
     case AZH_E_CORE: cls = "CoreError"; code = AZH_EXIT_CORE; break;
     case AZH_E_VULKAN: cls = "VulkanError"; code = AZH_EXIT_VULKAN; break;
     case AZH_E_IO: case AZH_E_NOMEM: cls = "IOError"; code = AZH_EXIT_IO; break;
+    case AZH_E_SAVESTATE: cls = "StateError"; code = AZH_EXIT_STATE; break;
     default: break;
     }
     if (printed == 0) {
@@ -241,57 +242,53 @@ static int report(int rc)
     return code;
 }
 
-/* one "key=value" into azh_set_option */
+/* one "key=value" into azh_set_option: the profile format's pair rule (docs/USING.md section 14) */
 static int apply_pair(const char *pair)
 {
     char key[LINE_MAX_LEN];
-    const char *eq = strchr(pair, '=');
-    size_t n;
+    char err[160];
+    const char *value = NULL;
+    int kind;
 
     assert(pair != NULL);
-    assert(sizeof key == LINE_MAX_LEN);
-    if (eq == NULL || eq == pair) {
-        fprintf(stderr, "UsageError: expected key=value, got '%s'\n", pair);
+    kind = azh__profile_pair(pair, strlen(pair), key, sizeof key, &value, err, sizeof err);
+    if (kind != 0) {
+        fprintf(stderr, "UsageError: --opt '%s': %s\n", pair, kind < 0 ? err : "expected key=value");
         printed = 1;
         return AZH_E_ARG;
     }
-    n = (size_t)(eq - pair);
-    if (n >= sizeof key) {
-        fprintf(stderr, "UsageError: option key too long\n");
-        printed = 1;
-        return AZH_E_ARG;
-    }
-    memcpy(key, pair, n);
-    key[n] = '\0';
-    return azh_set_option(key, eq + 1);
+    return azh_set_option(key, value);
 }
 
+static int profile_pair_cb(const char *key, const char *value, void *ud)
+{
+    assert(key != NULL && value != NULL);
+    (void)ud;
+    return azh_set_option(key, value);
+}
+
+/* a profile file: a format error or an option the host refuses names the file and the line */
 static int apply_profile(const char *path)
 {
-    char line[LINE_MAX_LEN];
-    FILE *f = fopen(path, "r");
-    int rc = AZH_OK;
-    int i;
+    char err[160];
+    int line = 0;
+    int rc;
 
     assert(path != NULL);
-    assert(sizeof line == LINE_MAX_LEN);
-    if (f == NULL) {
-        fprintf(stderr, "IOError: cannot read profile %s\n", path);
+    rc = azh__profile_parse(path, profile_pair_cb, NULL, &line, err, sizeof err);
+    if (rc == AZH_OK) {
+        return rc;
+    }
+    if (rc == AZH_E_IO) {
+        fprintf(stderr, "IOError: %s\n", err);
         printed = 1;
-        return AZH_E_IO;
+    } else if (rc == AZH_E_ARG && line > 0) {
+        fprintf(stderr, "UsageError: %s line %d: %s\n", path, line, err[0] != '\0' ? err : azh_error());
+        printed = 1;
+    } else if (rc == AZH_E_ARG) {
+        fprintf(stderr, "UsageError: %s: %s\n", path, err[0] != '\0' ? err : azh_error());
+        printed = 1;
     }
-    for (i = 0; i < 4096 && rc == AZH_OK && fgets(line, sizeof line, f) != NULL; i++) {
-        size_t n = strlen(line);
-
-        while (n > 0 && (line[n - 1] == '\n' || line[n - 1] == '\r')) {
-            line[--n] = '\0';
-        }
-        if (n == 0 || line[0] == '#') {
-            continue;
-        }
-        rc = apply_pair(line);
-    }
-    (void)fclose(f);     /* read-only */
     return rc;
 }
 
@@ -353,42 +350,10 @@ static int build_batch(const args_t *a, int j, azh_batch *b)
     return 0;
 }
 
-/* one --inputs line: 7 integers (int32) separated by spaces, tabs or commas, '#' comment already cut.
-   Returns the count parsed (0 for a blank line), or -1 for a bad token, a range error, or trailing junk. */
-static int parse_input_line(char *line, int32_t rec[AZH_INPUT_INTS])
-{
-    char *p = line;
-    int k;
-
-    assert(line != NULL && rec != NULL);
-    for (k = 0; k < AZH_INPUT_INTS; k++) {
-        char *end = NULL;
-        long v;
-
-        while (*p == ' ' || *p == ',' || *p == '\t') {
-            p++;
-        }
-        if (*p == '\0' || *p == '\n' || *p == '\r') {
-            break;
-        }
-        errno = 0;
-        v = strtol(p, &end, 0);
-        if (end == p || errno == ERANGE || v < INT32_MIN || v > INT32_MAX) {
-            return -1;
-        }
-        rec[k] = (int32_t)v;
-        p = end;
-    }
-    while (*p == ' ' || *p == ',' || *p == '\t' || *p == '\r' || *p == '\n') {
-        p++;
-    }
-    return (*p == '\0') ? k : -1;
-}
-
 /* --inputs: one record per line, '#' comments; the array is malloc'd */
 static int load_inputs(const char *path, int32_t **recs, int32_t *n)
 {
-    char line[LINE_MAX_LEN];
+    char line[LINE_MAX_LEN + 1];       /* room for 511 bytes plus the newline, and one more to see a longer line */
     FILE *f = fopen(path, "r");
     int32_t cap = 0;
     long lines;
@@ -402,19 +367,33 @@ static int load_inputs(const char *path, int32_t **recs, int32_t *n)
         return AZH_E_IO;
     }
     for (lines = 0; lines < 4 * (long)AZH_MAX_INPUTS && fgets(line, sizeof line, f) != NULL; lines++) {
-        char *hash = strchr(line, '#');
+        char *hash;
         int32_t rec[AZH_INPUT_INTS];
         int k;
 
+        if (strchr(line, '\n') == NULL && strlen(line) >= LINE_MAX_LEN) {   /* 512 bytes and no newline */
+            fprintf(stderr, "UsageError: %s line %ld: line longer than %d bytes\n", path, lines + 1, LINE_MAX_LEN - 1);
+            printed = 1;
+            (void)fclose(f);
+            free(*recs);
+            *recs = NULL;
+            return AZH_E_ARG;
+        }
+        hash = strchr(line, '#');
         if (hash != NULL) {
             *hash = '\0';
         }
-        k = parse_input_line(line, rec);
+        k = azh__script_line(line, rec);
         if (k == 0) {
             continue;       /* blank or comment */
         }
         if (k != AZH_INPUT_INTS || *n >= AZH_MAX_INPUTS) {
-            fprintf(stderr, "UsageError: %s line %ld: want %d integers\n", path, lines + 1, AZH_INPUT_INTS);
+            if (k == AZH_INPUT_INTS) {
+                fprintf(stderr, "UsageError: %s line %ld: more than %d records\n", path, lines + 1, AZH_MAX_INPUTS);
+            } else {
+                fprintf(stderr, "UsageError: %s line %ld: want %d integers (decimal or 0x hex)\n", path, lines + 1,
+                        AZH_INPUT_INTS);
+            }
             printed = 1;
             (void)fclose(f);
             free(*recs);
@@ -528,12 +507,14 @@ static const char *stop_name(int32_t reason)
     return (reason >= 0 && reason < 7) ? names[reason] : "unknown";
 }
 
-/* the message with \ as \\ and newlines as \n, quotes left alone */
+/* the message with \ as \\, " as \" and newlines as \n; carriage returns are dropped */
 static void print_escaped(const char *m)
 {
     for (; *m != '\0'; m++) {
         if (*m == '\\') {
             fputs("\\\\", stdout);
+        } else if (*m == '"') {
+            fputs("\\\"", stdout);
         } else if (*m == '\n') {
             fputs("\\n", stdout);
         } else if (*m != '\r') {

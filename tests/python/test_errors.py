@@ -34,3 +34,40 @@ def test_guest_error_carries_result_and_crash_details():
     crash = errors.HostCrashed(-11, 11, "msg", "log", "err")
     assert crash.signal == signal.SIGSEGV and "log" in str(crash) and "err" in str(crash)
     assert errors.HostTimeout("run", 3.0, "last").seconds == 3.0
+
+
+def test_slot_and_load_classes_live_in_errors():
+    assert errors.SlotTimeout.__module__ == "libazahar.errors" and errors.LoadWarning.__module__ == "libazahar.errors"
+    assert issubclass(errors.SlotTimeout, errors.HostTimeout)
+    assert errors.SlotTimeout(1.0, 2, "/x").op == "slot"
+
+
+def test_constructor_refuses_a_missing_sd_seed_with_argument_error(tmp_path):
+    from libazahar import Emulator
+    app = tmp_path / "app.3dsx"
+    app.write_bytes(b"3DSX")
+    with pytest.raises(errors.ArgumentError, match="sd_seed"):
+        Emulator(app, tmp_path / "w", sd_seed=tmp_path / "no-such-folder")
+
+
+def test_constructor_turns_a_missing_profile_into_host_error(tmp_path, monkeypatch):
+    from libazahar import Emulator
+    app, core = tmp_path / "app.3dsx", tmp_path / "core.dylib"
+    app.write_bytes(b"3DSX")
+    core.write_bytes(b"x")
+    monkeypatch.setenv("LAZ_PROFILE", str(tmp_path / "no-such-profile.txt"))
+    with pytest.raises(errors.HostError, match="no-such-profile"):
+        Emulator(app, tmp_path / "w", core=core)
+
+
+def test_app_and_workdir_are_read_only(tmp_path):
+    from libazahar import Emulator
+    app = tmp_path / "app.3dsx"
+    app.write_bytes(b"3DSX")
+    emu = Emulator.__new__(Emulator)
+    emu._app, emu._workdir = app, tmp_path
+    assert emu.app == app and emu.workdir == tmp_path
+    with pytest.raises(AttributeError):
+        emu.app = tmp_path                            # type: ignore[misc]
+    with pytest.raises(AttributeError):
+        emu.workdir = tmp_path                        # type: ignore[misc]

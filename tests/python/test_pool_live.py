@@ -138,7 +138,7 @@ def test_g3_pool_of_three(host_paths, workdir, seed, gate_slots):
         results = [future.result() for future in futures]
     for index, (ready_at, (text, top, bottom)) in enumerate(zip(seeds, results)):
         folder = workdir / "pool" / f"job-{index:04d}"
-        assert top.startswith(str(folder)) and bottom.startswith(str(folder))
+        assert folder in top.parents and folder in bottom.parents
         assert re.search(rf"^start .*\bready_at={ready_at}\b", text, re.M), text[:200]
         _, events = tl.parse_log(folder / "sys" / "Azahar" / "sdmc" / "testapp" / "log.txt")
         assert [e["f"] for e in events if e["kind"] == "ready"] == [ready_at]

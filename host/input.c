@@ -2,7 +2,9 @@
  * of what the guest sees (docs/plans/phase-c.md sections 2 and 4). Includes no libretro header: the device and id
  * numbers below are libretro.h's, and tests/host/test_input.c checks them against it. */
 #include <assert.h>
+#include <errno.h>
 #include <math.h>
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -197,4 +199,63 @@ int16_t azh__model_guest_circle(int32_t c)
 {
     assert(c >= -AZH_CIRCLE_MAX && c <= AZH_CIRCLE_MAX);
     return (int16_t)roundf(((float)c / 32767.0f) * 154.0f);
+}
+
+/* a script token: [-]digits (decimal, a leading 0 is still decimal) or 0x hex digits, ending at p's first separator */
+static int script_token(const char **pp, int32_t *out)
+{
+    const char *p = *pp;
+    char *end = NULL;
+    int neg = 0;
+    int base = 10;
+    long v;
+
+    assert(pp != NULL && out != NULL);
+    if (*p == '-') {
+        neg = 1;
+        p++;
+    } else if (p[0] == '0' && (p[1] == 'x' || p[1] == 'X')) {
+        base = 16;
+        p += 2;
+    }
+    if (!((*p >= '0' && *p <= '9') || (base == 16 && ((*p >= 'a' && *p <= 'f') || (*p >= 'A' && *p <= 'F'))))) {
+        return -1;
+    }
+    errno = 0;
+    v = strtol(p, &end, base);
+    if (end == p || errno == ERANGE || (*end != '\0' && strchr(" ,\t\r\n", *end) == NULL)) {
+        return -1;
+    }
+    if (neg != 0) {
+        v = -v;
+    }
+    if (v < INT32_MIN || v > INT32_MAX) {
+        return -1;
+    }
+    *out = (int32_t)v;
+    *pp = end;
+    return 0;
+}
+
+int azh__script_line(const char *line, int32_t rec[AZH_INPUT_INTS])
+{
+    const char *p = line;
+    int k;
+
+    assert(line != NULL && rec != NULL);
+    for (k = 0; k < AZH_INPUT_INTS; k++) {
+        while (*p == ' ' || *p == ',' || *p == '\t') {
+            p++;
+        }
+        if (*p == '\0' || *p == '\n' || *p == '\r') {
+            break;
+        }
+        if (script_token(&p, &rec[k]) != 0) {
+            return -1;
+        }
+    }
+    while (*p == ' ' || *p == ',' || *p == '\t' || *p == '\r' || *p == '\n') {
+        p++;
+    }
+    return (*p == '\0') ? k : -1;
 }

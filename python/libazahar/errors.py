@@ -2,12 +2,13 @@
 from __future__ import annotations
 
 import signal as _signal
+from pathlib import Path
 from typing import Optional
 
 from . import _abi
 
 __all__ = ["LibAzaharError", "ArgumentError", "BootError", "GuestError", "HostTimeout", "HostCrashed", "StateError",
-           "NeedsLazpyCore", "GuestMemoryError", "HostError", "HostCallError", "from_code"]
+           "NeedsLazpyCore", "GuestMemoryError", "HostError", "SlotTimeout", "LoadWarning"]
 
 
 class LibAzaharError(Exception):
@@ -94,6 +95,24 @@ class GuestMemoryError(LibAzaharError):
 
 class HostError(LibAzaharError):
     """Wrong call order, I/O, memory, an unsupported call, an ABI mismatch or a missing host."""
+
+
+class SlotTimeout(HostTimeout):
+    """No slot became free in time (a HostTimeout, so ``except HostTimeout`` still catches it). ``op`` is ``"slot"``;
+    ``slots`` is the cap and ``folder`` the lock folder."""
+
+    def __init__(self, seconds: float, slots: int, folder: Path) -> None:
+        super().__init__("slot", seconds)          # HostTimeout needs (op, seconds); there is no guest message here
+        self.slots = slots
+        self.folder = Path(folder)
+        self.args = (str(self),)
+
+    def __str__(self) -> str:
+        return f"no libazahar slot free after {self.seconds:g} s: all {self.slots} are held; see {self.folder}"
+
+
+class LoadWarning(UserWarning):
+    """The machine's 1-minute load average is above twice its core count."""
 
 
 class HostCallError(Exception):

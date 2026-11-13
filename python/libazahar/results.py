@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 import struct
+from pathlib import Path
 from typing import Dict, Tuple
 
 __all__ = ["Shot", "WatchRow", "RunResult", "SaveInfo", "Stats", "ThreadInfo"]
@@ -14,9 +15,9 @@ class Shot:
     ``frame_total`` is the frame counted since boot, the number in the file names."""
 
     frame: int
-    top: str
-    bottom: str
-    frame_total: int = 0
+    top: Path
+    bottom: Path
+    frame_total: int
 
 
 @dataclass(frozen=True)
@@ -55,7 +56,7 @@ class RunResult:
 class SaveInfo:
     """A saved state: ``k`` guest VBlanks the save's drain ran; a state at frame N is at N + k."""
 
-    path: str
+    path: Path
     k: int
     frame_total: int
 

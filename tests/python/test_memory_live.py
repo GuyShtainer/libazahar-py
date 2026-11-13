@@ -112,7 +112,7 @@ def test_m1_reads_match_the_log(host_paths, lazpy_core, workdir, seed):
         recs: Dict[str, List[Dict[str, int]]] = {"global": [], "heap": []}
         for index in range(600):
             item = inputs.get(index + 1)
-            emu.run(1, [(1, item)] if item is not None else ())
+            emu.run(1, inputs=[(1, item)] if item is not None else ())
             recs["global"].append(decode(emu.memory.read(glob, 32)))
             recs["heap"].append(decode(emu.memory.read(heap, 32)))
         by_f = lines_by_frame(emu)
@@ -128,7 +128,7 @@ def test_m1_reads_match_the_log(host_paths, lazpy_core, workdir, seed):
 def test_m2_m6_watch_rows_and_footprint(host_paths, lazpy_core, workdir, seed):
     emu, glob, heap = boot(host_paths, lazpy_core, workdir, seed)
     with emu:
-        res = emu.run(600, varied_inputs(600), watch=[(glob, 8), (heap, 8)])
+        res = emu.run(600, inputs=varied_inputs(600), watch=[(glob, 8), (heap, 8)])
         assert len(res.watch) == 600
         first = res.first_frame - 1
         assert [r.frame for r in res.watch] == [first + i + 1 for i in range(600)]

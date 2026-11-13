@@ -156,6 +156,7 @@ static const struct { const char *name; int32_t offset; int32_t size; } field_ro
     { "const.AZH_EXIT_IO", (int32_t)AZH_EXIT_IO, 0 },
     { "const.AZH_EXIT_NEEDS_LAZPY", (int32_t)AZH_EXIT_NEEDS_LAZPY, 0 },
     { "const.AZH_EXIT_UNSUPPORTED", (int32_t)AZH_EXIT_UNSUPPORTED, 0 },
+    { "const.AZH_EXIT_STATE", (int32_t)AZH_EXIT_STATE, 0 },
     { "const.AZH_EXIT_GUEST_EXITED", (int32_t)AZH_EXIT_GUEST_EXITED, 0 },
     { "const.AZH_EXIT_GUEST_ERROR", (int32_t)AZH_EXIT_GUEST_ERROR, 0 },
     { "const.AZH_SCREEN_TOP", (int32_t)AZH_SCREEN_TOP, 0 },

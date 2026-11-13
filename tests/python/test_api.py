@@ -1,17 +1,19 @@
 """Emulator API details on a live instance: screens, keys, single frames, save and load on one instance."""
 from __future__ import annotations
 
+from pathlib import Path
+
 import numpy as np
 import pytest
 
 import d_helpers as dh
+import libazahar
 from libazahar import Buttons, HostError, Touch
-
-pytestmark = pytest.mark.slow
 
 FIELDS = ("v", "k", "tx", "ty", "td", "cx", "cy")
 
 
+@pytest.mark.slow
 def test_screens_shapes_and_red_marker(host_paths, workdir):
     with dh.boot(host_paths, workdir) as emu:
         emu.run(300)
@@ -24,6 +26,7 @@ def test_screens_shapes_and_red_marker(host_paths, workdir):
             top[0, 0, 0] = 1
 
 
+@pytest.mark.slow
 def test_set_keys_and_run_frame(host_paths, workdir):
     with dh.boot(host_paths, workdir) as emu:
         emu.run(300)
@@ -37,6 +40,7 @@ def test_set_keys_and_run_frame(host_paths, workdir):
         assert emu.run_frame().frames == 1 and emu.frame_total == before + 1
 
 
+@pytest.mark.slow
 def test_closed_emulator_raises(host_paths, workdir):
     emu = dh.boot(host_paths, workdir)
     emu.close()
@@ -45,18 +49,22 @@ def test_closed_emulator_raises(host_paths, workdir):
         emu.run(1)
 
 
+@pytest.mark.slow
 def test_save_and_load_on_one_instance(host_paths, workdir, seed):
     inputs = [(1, Buttons(0)), (1, Touch.up), (30, Buttons.A), (60, Touch(100, 100)), (90, Touch.up),
               (120, Buttons(0)), (150, Buttons.X | Buttons.L)]
     with dh.boot(host_paths, workdir, seed(boot_frames=300)) as emu:
         emu.run(600)
         info = emu.save_state(workdir / "st" / "state")
-        assert info.k >= 0
-        emu.run(300, inputs)
+        assert info.k >= 0 and isinstance(info.path, Path)
+        top, bottom = emu.shot(workdir / "snap")
+        assert (top, bottom) == (workdir.resolve() / "snap_top.png", workdir.resolve() / "snap_bottom.png")
+        assert top.is_file() and bottom.is_file()
+        emu.run(300, inputs=inputs)
         first, _ = dh.log_of(emu)                      # read now: the load replaces the SD folder
         emu.load_state(info.path)
         assert emu.frame_total == info.frame_total
-        emu.run(300, inputs)
+        emu.run(300, inputs=inputs)
         second, _ = dh.log_of(emu)
     snap_frames, _ = dh.tl.parse_log(workdir / "st" / "state.sd" / dh.LOG)
     v_save = snap_frames[-1]["v"]
@@ -65,6 +73,7 @@ def test_save_and_load_on_one_instance(host_paths, workdir, seed):
     assert len(one) >= 290 and one == two
 
 
+@pytest.mark.slow
 def test_fresh_sd_clears_the_card_and_keeps_sys(host_paths, workdir, seed):
     folder = seed(boot_frames=300)
     with dh.boot(host_paths, workdir, folder) as emu:
@@ -79,15 +88,17 @@ def test_fresh_sd_clears_the_card_and_keeps_sys(host_paths, workdir, seed):
         emu.run(60)
 
 
+@pytest.mark.slow
 def test_shot_names_and_frame_total(host_paths, workdir):
     with dh.boot(host_paths, workdir) as emu:
         emu.run(300)
         result = emu.run(20, shots=[5])
         shot = result.shots[5]
         assert shot.frame == 5 and shot.frame_total == 305 == result.first_frame + 4
-        assert "shot_000305_top" in shot.top
+        assert "shot_000305_top" in shot.top.name and isinstance(shot.top, Path)
 
 
+@pytest.mark.slow
 def test_long_batch_outlives_a_short_timeout(host_paths, workdir):
     """``timeout`` is a no-progress limit: a batch far longer than it ends normally while frames keep coming."""
     with dh.boot(host_paths, workdir) as emu:
@@ -96,3 +107,24 @@ def test_long_batch_outlives_a_short_timeout(host_paths, workdir):
         assert result.stopped_by == "frames" and result.frames == 8000
         if result.wall_s <= 1.0:
             pytest.skip(f"the batch took {result.wall_s:.2f} s, not longer than the timeout")
+
+
+PUBLIC_NAMES = [
+    "Emulator", "Buttons", "Touch", "Circle", "RunResult", "Shot", "WatchRow", "Memory", "GuestMemoryError",
+    "SaveInfo", "Stats", "ThreadInfo", "LibAzaharError", "ArgumentError", "BootError", "GuestError", "HostTimeout",
+    "HostCrashed", "StateError", "NeedsLazpyCore", "HostError", "Pool", "LoadWarning", "SlotTimeout", "__version__"]
+
+
+def test_all_snapshot():
+    """The 1.0 promise is ``libazahar.__all__``; dropping or adding a name must be a decision, not an accident."""
+    assert sorted(libazahar.__all__) == sorted(PUBLIC_NAMES)
+    for name in libazahar.__all__:
+        assert hasattr(libazahar, name), name
+
+
+def test_submodule_exports_are_trimmed():
+    from libazahar import errors, inputs
+    assert sorted(inputs.__all__) == ["Buttons", "Circle", "Touch"]
+    assert "HostCallError" not in errors.__all__ and "from_code" not in errors.__all__
+    assert errors.SlotTimeout is libazahar.SlotTimeout and errors.LoadWarning is libazahar.LoadWarning
+    assert libazahar.SlotTimeout.__module__ == "libazahar.errors" == libazahar.LoadWarning.__module__

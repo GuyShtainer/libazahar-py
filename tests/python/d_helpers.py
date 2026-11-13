@@ -4,7 +4,7 @@ from __future__ import annotations
 import subprocess
 import sys
 from pathlib import Path
-from typing import Iterable, List, Optional, Tuple
+from typing import Iterable, List, Optional, Tuple, Union
 
 import checks_c as cc
 import testapp_log as tl
@@ -33,7 +33,7 @@ def run_batches(emu: Emulator, sizes: Iterable[int], first_inputs=(), first_shot
     summaries, last_lines = [], {}
     for index, size in enumerate(sizes, start=1):
         if index == 1:
-            result = emu.run(size, first_inputs, first_shots, **first_kwargs)
+            result = emu.run(size, inputs=first_inputs, shots=first_shots, **first_kwargs)
         else:
             result = emu.run(size)
         results.append(result)
@@ -45,8 +45,8 @@ def run_batches(emu: Emulator, sizes: Iterable[int], first_inputs=(), first_shot
     return results, offsets, (min(offsets) if offsets else 0)
 
 
-def markers_ok(top: str, bottom: str) -> str:
+def markers_ok(top: Union[str, Path], bottom: Union[str, Path]) -> str:
     """Run check_testapp's marker check on two PNGs; returns its output line."""
-    done = subprocess.run([sys.executable, "-I", str(REPO / "tests" / "check_testapp.py"), "markers", "--top", top,
-                           "--bottom", bottom, "--mode", "2d"], capture_output=True, text=True, check=False)
+    done = subprocess.run([sys.executable, "-I", str(REPO / "tests" / "check_testapp.py"), "markers", "--top", str(top),
+                           "--bottom", str(bottom), "--mode", "2d"], capture_output=True, text=True, check=False)
     return done.stdout.strip() + done.stderr.strip()

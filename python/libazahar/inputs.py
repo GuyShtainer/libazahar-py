@@ -9,7 +9,7 @@ from typing import ClassVar, Iterable, Tuple, Union
 from . import _abi
 from .errors import ArgumentError
 
-__all__ = ["Buttons", "Touch", "Circle", "Held", "fold", "held_after"]
+__all__ = ["Buttons", "Touch", "Circle"]
 
 TOUCH_W = 320
 TOUCH_H = 240

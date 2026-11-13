@@ -74,3 +74,31 @@ def test_p4_size_checks(tmp_path, monkeypatch):
         warnings.simplefilter("error", UserWarning)
         monkeypatch.setattr(_slots.os, "getloadavg", lambda: (0.0, 0.0, 0.0))
         Pool(3, "app", tmp_path, factory=FakeEmu).close()
+
+
+def test_p5_an_exception_in_the_body_cancels_queued_jobs(tmp_path):
+    release = threading.Event()
+    started = threading.Event()
+
+    def job(emu, item):
+        started.set()
+        release.wait(10)
+        return item
+
+    with pytest.raises(KeyError):
+        with Pool(1, "app", tmp_path, factory=FakeEmu) as pool:
+            futures = [pool.submit(job, item) for item in range(4)]
+            assert started.wait(10)
+            timer = threading.Timer(0.2, release.set)       # lets the running job end while __exit__ waits for it
+            timer.start()
+            raise KeyError("body failed")
+    timer.join()
+    assert futures[0].result() == 0
+    assert all(future.cancelled() for future in futures[1:])
+    assert len(FakeEmu.made) == 1
+
+
+def test_p6_a_clean_body_waits_for_every_queued_job(tmp_path):
+    with Pool(1, "app", tmp_path, factory=FakeEmu) as pool:
+        futures = [pool.submit(lambda emu, item: item, item) for item in range(4)]
+    assert [future.result() for future in futures] == [0, 1, 2, 3]

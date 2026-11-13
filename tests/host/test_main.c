@@ -39,6 +39,7 @@ int main(void)
     test_sdcopy();
     test_statemeta();
     test_watch();
+    test_profile();
     printf("test-host: %ld checks, %ld failed\n", checks, failed);
     return failed == 0 ? 0 : 1;
 }

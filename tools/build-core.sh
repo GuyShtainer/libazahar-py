@@ -4,11 +4,11 @@
 #   tools/build-core.sh --build            the above, then compile, copy, strip, codesign (long; use --detach)
 #   tools/build-core.sh --detach           run --build in its own session; pid -> build-core/build.pid,
 #                                          exit code -> build-core/build.exit, log -> build-core/build.log
-# Env: LAZPY_ROOT, LAZ_CORE_PIN (default core/PIN-nokeys; core/PIN builds from Azahar's own tarball), LAZ_CORE_PATCHES (default core/patches), LAZ_CORE_LTO (ON),
+# Env: LAZ_ROOT (old name LAZPY_ROOT), LAZ_CORE_PIN (default core/PIN-nokeys; core/PIN builds from Azahar's own tarball), LAZ_CORE_PATCHES (default core/patches), LAZ_CORE_LTO (ON),
 #      LAZ_CORE_JOBS (4), LAZ_OPENSSL_PREFIX (default: the pin's OPENSSL_PREFIX; a static OpenSSL of the pinned version, resolved to its real path). The pin file is read with sed, never sourced. Output and rules: core/README.md.
 set -eu
 SELF="$(cd "$(dirname "$0")" && pwd)/$(basename "$0")"
-ROOT="${LAZPY_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
+ROOT="${LAZ_ROOT:-${LAZPY_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}}"   # LAZPY_ROOT: the old name, kept for 1.x
 MODE="${1:-}"
 case "$MODE" in --configure-only | --build | --detach) ;; *) echo "usage: $0 --configure-only | --build | --detach" >&2; exit 2 ;; esac
 cd "$ROOT"

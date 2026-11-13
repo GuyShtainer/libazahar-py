@@ -1,6 +1,7 @@
 """The Emulator: one headless Azahar instance in its own worker process (docs/plans/phase-d.md 4.6)."""
 from __future__ import annotations
 
+import operator
 import os
 import shutil
 import struct
@@ -24,18 +25,53 @@ RECORD_FRAME_IGNORED = 1
 Options = Union[Mapping[str, str], Sequence[Tuple[str, str]], None]
 
 
+MAX_PROFILE_LINE = 511
+MAX_PROFILE_LINES = 4096
+
+
+def _profile_line(path: Path, number: int, raw: bytes) -> Optional[Tuple[str, str]]:
+    """One profile line (without its ``\\n``) as ``(key, value)``, or None for a blank or comment line."""
+    if raw.endswith(b"\r"):
+        raw = raw[:-1]
+    if len(raw) > MAX_PROFILE_LINE:
+        raise ArgumentError(f"{path}:{number}: line is {len(raw)} bytes, over the {MAX_PROFILE_LINE} byte limit")
+    if not raw or raw.startswith(b"#"):
+        return None
+    try:
+        line = raw.decode("utf-8")
+    except UnicodeDecodeError:
+        raise ArgumentError(f"{path}:{number}: not valid UTF-8") from None
+    if line[0] in " \t" or line[-1] in " \t":
+        raise ArgumentError(f"{path}:{number}: line starts or ends with a space or tab")
+    key, sep, value = line.partition("=")
+    if not sep:
+        raise ArgumentError(f"{path}:{number}: no '=' in the line")
+    if not key or " " in key or "\t" in key:
+        raise ArgumentError(f"{path}:{number}: the key is empty or holds a space or tab")
+    return key, value
+
+
 def _read_profile(path: Path) -> List[Tuple[str, str]]:
-    """The ``key=value`` lines of an option profile, in order (comments and blank lines skipped)."""
-    pairs: List[Tuple[str, str]] = []
-    for raw in path.read_text(encoding="utf-8").splitlines():
-        line = raw.strip()
-        if not line or line.startswith("#"):
-            continue
-        key, sep, value = line.partition("=")
-        if not sep:
-            raise HostError(f"{path}: line without '=': {raw!r}")
-        pairs.append((key.strip(), value.strip()))
-    return pairs
+    """The ``key=value`` pairs of an option profile, in file order (the format is in docs/USING.md section 14).
+
+    Lines split on ``\\n`` only (one trailing ``\\r`` is dropped); a line is at most 511 bytes and a file at most 4096
+    lines; a line whose first byte is ``#`` is a comment; nothing is trimmed, so padding is an error; a UTF-8 byte order mark is an error. Raises
+    ArgumentError ``<path>:<line>: <reason>`` for a bad line (``<path>:0:`` for a file with too many lines) and
+    HostError when the file cannot be read.
+    """
+    try:
+        data = Path(path).read_bytes()
+    except OSError as exc:
+        raise HostError(f"cannot read the option profile {path}: {exc.strerror or exc}") from exc
+    if data.startswith(b"\xef\xbb\xbf"):
+        raise ArgumentError(f"{path}:1: the file starts with a UTF-8 byte order mark")
+    lines = data.split(b"\n")
+    if lines and lines[-1] == b"":
+        lines.pop()
+    if len(lines) > MAX_PROFILE_LINES:
+        raise ArgumentError(f"{path}:0: {len(lines)} lines, over the {MAX_PROFILE_LINES} line limit")
+    pairs = (_profile_line(path, number, raw) for number, raw in enumerate(lines, 1))
+    return [pair for pair in pairs if pair is not None]
 
 
 def _pairs(options: Options) -> List[Tuple[str, str]]:
@@ -45,10 +81,30 @@ def _pairs(options: Options) -> List[Tuple[str, str]]:
     return [(str(key), str(value)) for key, value in items]
 
 
+def _index(value: object, message: str) -> int:
+    """``value`` as an int through ``operator.index`` (numpy integers pass; floats and bools do not)."""
+    if isinstance(value, bool):
+        raise ArgumentError(message)
+    try:
+        return operator.index(value)       # type: ignore[arg-type]
+    except TypeError:
+        raise ArgumentError(message) from None
+
+
 def _check_sd_file(name: str) -> str:
     if not name or os.path.isabs(name) or ".." in Path(name).parts:
         raise ArgumentError(f"stop_file {name!r} must be a relative path inside the SD folder, without '..'")
     return name
+
+
+def _check_sd_seed(sd_seed: Union[str, Path, None]) -> None:
+    if sd_seed is None:
+        return
+    folder = Path(sd_seed)
+    if folder.name == "sdmc":
+        raise ArgumentError("sd_seed must not be named 'sdmc' (pass the folder whose contents become the SD card)")
+    if not folder.is_dir():
+        raise ArgumentError(f"sd_seed {folder} is not a folder")
 
 
 def _clear_sd(sd: Path) -> None:
@@ -67,8 +123,9 @@ class Emulator:
     and after a state boot (so seed files land on top of the state's snapshot). ``fresh_sd=True`` empties
     the SD folder first and keeps the rest of ``sys/`` (the warm shader cache). ``timeout`` is how long the heartbeat
     may stand still during a ``run`` (no new frame), not a bound on the batch; ``boot_timeout`` covers ``start`` and
-    the first frames (shader compiles). Raises BootError, HostError, StateError, HostCrashed, HostTimeout (see
-    ``errors``), ArgumentError (also a ValueError) for bad arguments.
+    the first frames (shader compiles). ``app`` and ``workdir`` are read-only; ``timeout`` and
+    ``boot_timeout`` (seconds) may be set at any time. Raises ArgumentError (also a ValueError; includes a missing
+    ``sd_seed`` folder), BootError, HostError (includes an unreadable profile), SlotTimeout, HostTimeout, HostCrashed.
     """
 
     def __init__(self, app: Union[str, Path], workdir: Union[str, Path], *, sd_seed: Union[str, Path, None] = None,
@@ -76,17 +133,16 @@ class Emulator:
                  timeout: float = 30.0, boot_timeout: float = 300.0, fresh_sd: bool = False) -> None:
         self.timeout = float(timeout)
         self.boot_timeout = float(boot_timeout)
-        self.app = Path(app).resolve()
-        self.workdir = Path(workdir).resolve()
-        if not self.app.is_file():
-            raise ArgumentError(f"app {self.app} is not a file")
-        if sd_seed is not None and Path(sd_seed).name == "sdmc":
-            raise ArgumentError("sd_seed must not be named 'sdmc' (pass the folder whose contents become the SD card)")
+        self._app = Path(app).resolve()
+        self._workdir = Path(workdir).resolve()
+        if not self._app.is_file():
+            raise ArgumentError(f"app {self._app} is not a file")
+        _check_sd_seed(sd_seed)
         self._held = Held()
         self._is_lazpy = False
         self._memory: Optional[Memory] = None
-        self._shots_dir = self.workdir / "shots"
-        self._sd = self.workdir / "sys" / "Azahar" / "sdmc"
+        self._shots_dir = self._workdir / "shots"
+        self._sd = self._workdir / "sys" / "Azahar" / "sdmc"
         if fresh_sd:
             _clear_sd(self._sd)
         for folder in (self._sd, self._shots_dir):
@@ -95,7 +151,7 @@ class Emulator:
         env = dict(os.environ)
         env["LAZ_HOST"] = str(host)
         env["LAZ_MVK"] = str(_paths.mvk_path())
-        self._client = WorkerClient(self.workdir, self.workdir / "host.map", self.workdir / "host.log", env)
+        self._client = WorkerClient(self._workdir, self._workdir / "host.map", self._workdir / "host.log", env)
         self._finalizer: Optional[weakref.finalize] = None
         try:
             self._boot(core, options, sd_seed, state)
@@ -116,8 +172,8 @@ class Emulator:
         lazpy_pairs = _read_profile(lazpy_file) if lazpy_file is not None else []
         self._client.spawn(self.boot_timeout)
         self._finalizer = weakref.finalize(self, reap_process, self._client.proc)
-        args = (str(core_file), str(self.workdir / "sys"),
-                str(self.workdir / "host.log"), str(self.workdir / "host.map"), pairs, str(self.app),
+        args = (str(core_file), str(self._workdir / "sys"),
+                str(self._workdir / "host.log"), str(self._workdir / "host.map"), pairs, str(self.app),
                 str(Path(state).resolve()) if state is not None else None, lazpy_pairs)
         _, stats = self._client.request("start", args, Wait(total=self.boot_timeout))
         self._is_lazpy = bool(stats["is_lazpy_core"])
@@ -125,6 +181,16 @@ class Emulator:
             shutil.copytree(sd_seed, self._sd, symlinks=False, dirs_exist_ok=True)
 
     # ---- properties ----
+    @property
+    def app(self) -> Path:
+        """The app file, resolved. Read-only."""
+        return self._app
+
+    @property
+    def workdir(self) -> Path:
+        """The working folder, resolved. Read-only."""
+        return self._workdir
+
     @property
     def sd(self) -> Path:
         """The emulated SD card's folder."""
@@ -163,7 +229,7 @@ class Emulator:
             raise HostError("the emulator is closed")
 
     # ---- running ----
-    def run(self, frames: int, inputs: Iterable[Tuple[int, Item]] = (), shots: Iterable[int] = (), *,
+    def run(self, frames: int, *, inputs: Iterable[Tuple[int, Item]] = (), shots: Iterable[int] = (),
             stop_file: Optional[str] = None, stop_text: Optional[str] = None, stop_every: int = 30,
             stop_new: bool = False, debug_text: Optional[str] = None, wall_limit: Optional[float] = None,
             timeout: Optional[float] = None, watch: Optional[Sequence[Tuple[int, int]]] = None,
@@ -175,7 +241,7 @@ class Emulator:
         frame run stays after the batch.
         ``shots`` are batch frames to save as PNG (``result.shots[f]``). ``stop_file`` (relative to the SD folder) with
         ``stop_text`` stops the batch when the file holds the text, checked every ``stop_every`` frames and after the
-        last; ``stop_new`` looks only at text written after the batch starts. ``debug_text`` needs our core.
+        last; ``stop_new`` looks only at text written after the batch starts. ``inputs``, ``shots`` and the rest are keyword-only. ``debug_text`` needs our core.
         ``wall_limit`` is in seconds. ``watch`` (our core only) is a list of ``(addr, words)`` pairs: after every
         ``watch_every``-th frame (and after the last frame run) the host reads each entry (``words`` u32 words at guest
         address ``addr``) into ``result.watch``, a tuple of ``WatchRow``; the host refuses a batch whose rows do not
@@ -216,9 +282,10 @@ class Emulator:
     def _build_batch(self, frames: int, shots: Iterable[int], stop_file: Optional[str], stop_text: Optional[str],
                      stop_every: int, stop_new: bool, debug_text: Optional[str],
                      wall_limit: Optional[float]) -> Tuple[_abi.Batch, List[int]]:
-        if isinstance(frames, bool) or not isinstance(frames, int) or not 1 <= frames <= MAX_FRAMES:
+        frames = _index(frames, f"frames must be an integer 1..{MAX_FRAMES}")
+        if not 1 <= frames <= MAX_FRAMES:
             raise ArgumentError(f"frames must be an integer 1..{MAX_FRAMES}")
-        shot_frames = sorted(set(int(f) for f in shots))
+        shot_frames = sorted({_index(f, "shots must be integers") for f in shots})
         if len(shot_frames) > _abi.AZH_MAX_SHOTS or any(not 1 <= f <= frames for f in shot_frames):
             raise ArgumentError(f"shots: at most {_abi.AZH_MAX_SHOTS} frames, each within 1..{frames}")
         if (stop_file is None) != (stop_text is None):
@@ -263,8 +330,9 @@ class Emulator:
         entries = [] if watch is None else list(watch)
         if len(entries) > _abi.AZH_MAX_WATCH:
             raise ArgumentError(f"watch: at most {_abi.AZH_MAX_WATCH} entries")
-        if isinstance(every, bool) or not isinstance(every, int) or every < 0:
-            raise ArgumentError("watch_every must be an integer >= 0")
+        every = _index(every, f"watch_every must be an integer 1..{MAX_EVERY}")
+        if not 1 <= every <= MAX_EVERY:
+            raise ArgumentError(f"watch_every must be an integer 1..{MAX_EVERY}")
         words: List[int] = []
         for entry in entries:
             if (not isinstance(entry, (tuple, list)) or len(entry) != 2
@@ -302,22 +370,24 @@ class Emulator:
         done: Dict[int, Shot] = {}
         for frame in shot_frames[:raw.shots_done]:
             stem = self._shots_dir / f"shot_{before + frame:06d}"
-            done[frame] = Shot(frame, f"{stem}_top.png", f"{stem}_bottom.png", before + frame)
+            done[frame] = Shot(frame, Path(f"{stem}_top.png"), Path(f"{stem}_bottom.png"), before + frame)
         return RunResult(frames=raw.frames_run, stopped_by=_abi.STOP_NAMES.get(raw.stop_reason, str(raw.stop_reason)),
                          first_frame=raw.first_frame, last_frame=raw.last_frame, frame_total=self.frame_total,
                          vblanks=raw.vblanks, wall_s=raw.wall_s, message=raw.message.decode("utf-8", "replace"),
                          shots=done, watch=self._watch_rows(raw.watch_rows, watch_sizes or []))
 
-    def run_until(self, file: str, text: str, max_frames: int, *, every: int = 30, new_only: bool = False,
+    def run_until(self, file: str, text: str, max_frames: int, *, stop_every: int = 30, stop_new: bool = False,
                   inputs: Iterable[Tuple[int, Item]] = (), shots: Iterable[int] = (),
+                  wall_limit: Optional[float] = None, debug_text: Optional[str] = None,
                   timeout: Optional[float] = None, watch: Optional[Sequence[Tuple[int, int]]] = None,
                   watch_every: int = 1) -> RunResult:
-        """Run until ``text`` appears in the SD file ``file`` (checked every ``every`` frames) or ``max_frames``.
+        """Run until ``text`` appears in the SD file ``file`` (checked every ``stop_every`` frames) or ``max_frames``.
 
-        The caller checks ``result.stopped_by == "sd_text"``.
+        Takes the same options as :meth:`run` under the same names. The caller checks ``result.stopped_by == "sd_text"``.
         """
-        return self.run(max_frames, inputs, shots, stop_file=file, stop_text=text, stop_every=every,
-                        stop_new=new_only, timeout=timeout, watch=watch, watch_every=watch_every)
+        return self.run(max_frames, inputs=inputs, shots=shots, stop_file=file, stop_text=text, stop_every=stop_every,
+                        stop_new=stop_new, debug_text=debug_text, wall_limit=wall_limit, timeout=timeout,
+                        watch=watch, watch_every=watch_every)
 
     def run_frame(self) -> RunResult:
         """Run exactly one frame."""
@@ -362,12 +432,12 @@ class Emulator:
         return (numpy.frombuffer(top, dtype=numpy.uint8).reshape(240, 400, 4),
                 numpy.frombuffer(bottom, dtype=numpy.uint8).reshape(240, 320, 4))
 
-    def shot(self, path_prefix: Union[str, Path]) -> Tuple[str, str]:
+    def shot(self, path_prefix: Union[str, Path]) -> Tuple[Path, Path]:
         """Save the current frame as ``<prefix>_top.png`` and ``<prefix>_bottom.png``; returns the two paths."""
         self._live()
         prefix = str(Path(path_prefix).resolve())
         self._client.request("shot", (_abi.AZH_SCREEN_BOTH, _abi.AZH_FMT_PNG, prefix), Wait(total=self.timeout))
-        return f"{prefix}_top.png", f"{prefix}_bottom.png"
+        return Path(f"{prefix}_top.png"), Path(f"{prefix}_bottom.png")
 
     # ---- states ----
     def save_state(self, path: Union[str, Path]) -> SaveInfo:
@@ -377,7 +447,7 @@ class Emulator:
         target = str(Path(path).resolve())
         Path(target).parent.mkdir(parents=True, exist_ok=True)
         _, k = self._client.request("save_state", (target,), Wait(total=self.timeout + STATE_EXTRA_S))
-        return SaveInfo(path=target, k=int(k), frame_total=self.frame_total)
+        return SaveInfo(path=Path(target), k=int(k), frame_total=self.frame_total)
 
     def load_state(self, path: Union[str, Path]) -> None:
         """Restore a state made by the same app; the SD folder becomes the snapshot's. Raises StateError."""

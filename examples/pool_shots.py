@@ -31,7 +31,7 @@ def main():
     if len({str(d[2]) for d in done}) != 3 or len({d[1].top for d in done}) != 3:
         sys.exit("pool_shots failed: the jobs share a folder or a shot")
     for name, shot, workdir, mode in done:
-        if mode != name[:2] or not (Path(shot.top).is_file() and Path(shot.bottom).is_file()):
+        if mode != name[:2] or not (shot.top.is_file() and shot.bottom.is_file()):
             sys.exit(f"pool_shots failed: job {name} logged mode {mode} or has no shot in {workdir}")
     print("pool_shots ok")
 

@@ -1,8 +1,7 @@
 """libazahar: a headless, scriptable Azahar (libretro core) for testing 3DS homebrew. See docs/USING.md."""
 from .emulator import Emulator
 from .errors import (ArgumentError, BootError, GuestError, GuestMemoryError, HostCrashed, HostError, HostTimeout, LibAzaharError,
-                     NeedsLazpyCore, StateError)
-from ._slots import LoadWarning, SlotTimeout
+                     NeedsLazpyCore, StateError, LoadWarning, SlotTimeout)
 from .inputs import Buttons, Circle, Touch
 from .pool import Pool
 from .memory import Memory

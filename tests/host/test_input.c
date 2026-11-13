@@ -148,8 +148,38 @@ static void test_circle_model(void)
     check(azh__model_guest_circle(-16384) == -77, "circle -16384");
 }
 
+/* the --inputs script line: decimal or 0x hex, a leading 0 is decimal, nothing else */
+static void test_script_line(void)
+{
+    int32_t r[AZH_INPUT_INTS];
+    static const struct { const char *text; int want; int32_t buttons; } cases[] = {
+        { "1 10 0 0 0 0 0", 7, 10 }, { "1 010 0 0 0 0 0", 7, 10 }, { "1 0x10 0 0 0 0 0", 7, 16 },
+        { "1 0X1f 0 0 0 0 0", 7, 31 }, { "1,2,0,0,0,0,0", 7, 2 }, { "1\t-5\t0 0 0 0 0\r\n", 7, -5 },
+        { "1 0x7fffffff 0 0 0 0 0", 7, INT32_MAX }, { "1 -2147483648 0 0 0 0 0", 7, INT32_MIN },
+        { "   \n", 0, 0 }, { "", 0, 0 }, { "1 2 3", 3, 2 },
+        { "1 2147483648 0 0 0 0 0", -1, 0 }, { "1 0x80000000 0 0 0 0 0", -1, 0 }, { "1 +5 0 0 0 0 0", -1, 0 },
+        { "1 0x 0 0 0 0 0", -1, 0 }, { "1 -0x10 0 0 0 0 0", -1, 0 }, { "1 08 0 0 0 0 0", 7, 8 },
+        { "1 1x 0 0 0 0 0", -1, 0 }, { "1 2 3 4 5 6 7 8", -1, 0 }, { "1 abc 0 0 0 0 0", -1, 0 },
+        { "1 0xg 0 0 0 0 0", -1, 0 }, { "1 - 0 0 0 0 0", -1, 0 },
+    };
+    size_t i;
+
+    for (i = 0; i < sizeof cases / sizeof cases[0]; i++) {
+        int k;
+
+        memset(r, 0, sizeof r);
+        k = azh__script_line(cases[i].text, r);
+        check(k == cases[i].want, "script line '%s': got %d, want %d", cases[i].text, k, cases[i].want);
+        if (cases[i].want >= 2 && k == cases[i].want) {
+            check(r[AZH_IN_BUTTONS] == cases[i].buttons, "script line '%s': buttons %d, want %d", cases[i].text,
+                  (int)r[AZH_IN_BUTTONS], (int)cases[i].buttons);
+        }
+    }
+}
+
 void test_input(void)
 {
+    test_script_line();
     test_validation();
     test_buttons();
     test_analog_pointer();

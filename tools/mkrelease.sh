@@ -16,7 +16,7 @@ NEWLIB_SHA=f3afe48e4bc6ed8466a42e9dacb6be1d8f9cbf5aac15cb8e474a5ccde8b40ef6
 
 [ $# -eq 1 ] || { echo "usage: $0 <tag>   (for example v0.1.0)" >&2; exit 2; }
 TAG=$1
-ROOT="${LAZPY_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
+ROOT="${LAZ_ROOT:-${LAZPY_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}}"   # LAZPY_ROOT: the old name, kept for 1.x
 cd "$ROOT"
 export TZ=UTC LC_ALL=C
 die() { echo "mkrelease: $*" >&2; exit 1; }

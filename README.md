@@ -78,7 +78,7 @@ with Emulator(app, work) as emu:
     result = emu.run(300, inputs=[(150, Buttons.A)], shots=[300])      # A is held from batch frame 150 on
     log = (emu.sd / "testapp/log.txt").read_text().splitlines()
 shot = result.shots[300]
-sizes = [struct.unpack(">II", Path(p).read_bytes()[16:24]) for p in (shot.top, shot.bottom)]
+sizes = [struct.unpack(">II", p.read_bytes()[16:24]) for p in (shot.top, shot.bottom)]
 keys = [int(w[2:], 16) for line in log if line.startswith("f=") for w in line.split() if w.startswith("k=")]
 if result.frames != 300 or result.stopped_by != "frames":
     sys.exit(f"quickstart failed: ran {result.frames} frames, stopped by {result.stopped_by}")
