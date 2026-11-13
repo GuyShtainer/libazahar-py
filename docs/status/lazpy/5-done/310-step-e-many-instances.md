@@ -16,12 +16,16 @@ The instance pool, per-instance folders, the slot cap and nice; a 1-2-3 instance
 The gate in `docs/PLAN.md` line 296 ("Phase E"), run headless on this Mac with a pass/fail answer.
 
 ## Evidence
-none yet
+- 2026-11-13 02:18, merged into main as cbe823c (step-e: E1 a74aaec, E2 and the review fixes 871e9ab). Gate 1:
+  make check, make, test-host 307743/0; pytest not slow 71 passed. Gate 2: test_pool_live.py 2 passed, 0 skipped
+  (after the fixes too, runs/e-fix-pool.log): a 4th Emulator waits, kill-to-acquire 0.063 s, worker nice 10.
+  Gate 3: the speed table (docs/research/speed-table-e.md), every row ok, our core 2177 fps at n=1 and 3167 total
+  at n=2, the stock core 1652 at n=1; DEFAULT_CAP = 2. Review: docs/reviews/step-e-as-built.md (no blocker).
 
 ## Pointers
 - Plan section: `docs/PLAN.md:296`
 - Phase plan: `docs/plans/phase-e.md` (the builder brief), `docs/plans/phase-3.md`
-- Review: none yet
+- Review: `docs/reviews/step-e-as-built.md`
 
 ## Lessons and notes
 Read this part only when you work on this item. Blockers, numbers and Guy's words go here verbatim.
