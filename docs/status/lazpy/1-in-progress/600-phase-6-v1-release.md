@@ -152,3 +152,7 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   check on a clone of the pre-G8d bundle gives FAIL. After this record's commit, mkrelease and the pre-push check
   run once more (log runs/g8d/prepush-final.log) and nothing is committed until the tag. V8 is then done; V9 waits
   on Guy's word.
+- 2026-11-13 19:44, V8 done: the last stage at f75ed0b passed the pre-push check (rc 0, 16 PASS, 0 FAIL;
+  runs/g8d/prepush-final.log; zip ced9a362…, test app ba106998…). Guy, verbatim: "Lets hold the push." and later
+  "We will push in the future". V9 waits for his word. Commits after f75ed0b (this record, the handoff) make the
+  build-files asset stale, so before the tag: `sh tools/mkrelease.sh v1.0.0` and the pre-push check again.

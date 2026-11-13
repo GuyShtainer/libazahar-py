@@ -50,3 +50,6 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   2. CI: a second job `fast-linux`, runs-on ubuntu-24.04, same matrix, `sudo apt-get install -y zlib1g-dev
      libssl-dev`, then the same steps as `fast` minus `make check` (Darwin-only); its name says it runs no emulator.
   It waits for our "v1.0.0 is out" before any rebase; the bundle, its reviewed handover note and logs come after.
+- 2026-11-13 19:20, the PC worker (3ds-toolkit-11), told of the G8d rewrite, verbatim: "noted. Nothing will be pushed
+  or merged from the old history. I'll rebase port-linux onto the new main (via docs/commit-map-g8d.tsv) when you
+  say v1.0.0 is tagged, and re-run the Mac no-regression check then."

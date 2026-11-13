@@ -1,5 +1,5 @@
 ---
-asof: 2026-11-13 12:49
+asof: 2026-11-13 19:53
 ---
 # libazahar-py status: read this first
 
@@ -7,17 +7,15 @@ A headless, scriptable host for the Azahar 3DS emulator's libretro core, plus a 
 publish-ready. What to do this hour: `docs/status/lazpy/1-in-progress/HANDOFF.md`.
 
 ## Now
-- Phases 1-3 are done, and phase 4's v0.1.0 staging was audited shippable. Guy then asked for v1.0.0 instead
-  (phase 6): the API is frozen with a written promise, the depth-stencil readback is fixed, CI is ready, and the
-  final core is built on main with its gates green. Version 1.0.0 docs are written. Nothing is pushed.
-- The user check found a blocker: in Gen3D, restoring a saved state crashes on the first 3D draw. The cause is
-  upstream Azahar's (the stock core crashes too): after a restore the renderer never selects its shader cache for
-  a `.3dsx`. A one-line core fix is next.
+- v1.0.0 is staged and checked, ready to publish. Gen3D and 3DPlatinum both passed their own tests on the final
+  core; the state-restore crash they found is fixed. A real 3D scene runs at about 9x real time, four copies at
+  once. The full test pass had 0 failures. The legal re-audit's changes are done, including a fourth history
+  rewrite, and the pre-push check passes 16 of 16.
+- Guy held the push (2026-11-13: "We will push in the future"). Nothing is pushed.
 
 ## Next
-- The core fix, a new core build, the gates, then Gen3D and 3DPlatinum test the new core again.
-- Then the speed rows on a quiet machine, the full test pass, staging with the legal re-audit, and Guy's word to
-  push and publish v1.0.0.
+- On Guy's word: stage once more (later commits make the build-files asset stale), the pre-push check, then the
+  repo, the push, the tag and the draft release, and the check of the published release.
 
 ## Where each item is
 <!-- generated:begin (python3 -I tools/mkprogress.py; do not edit by hand) -->
