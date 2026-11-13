@@ -122,3 +122,5 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   process is already nicer than 5": the run was under nice 10; rerun without nice: 10 passed); gate_f2 rc 0, "0
   FAIL, gate_c.failed 0"; memory_watch ok; pool_shots ok (Pool(5) over the cap of 4); test_release_fixture.py 1
   passed; map_check, status_check, docs_check OK. No unexpected skip, 0 failed.
+- 2026-11-13 18:45, V8 step 2-3: `sh tools/mkrelease.sh v1.0.0` (18:41-18:45, rc 0) into runs/release/v1.0.0; the
+  core zip sha256 d706fd1a… and the test app ba106998… written into tools/fetch.sh's pins.
