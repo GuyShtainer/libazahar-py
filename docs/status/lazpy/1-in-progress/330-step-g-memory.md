@@ -44,3 +44,11 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
 - Lessons (builder): ABI 3 is append-only; azh_read(addr, len, buf) maps to lazpy_read_memory(addr, buf, len);
   _abi.check_layout checks the watch area by shape, so resizing it is host-only; a half-exported core is AZH_E_CORE
   at azh_open; the map's memset must stop before the watch area; on macOS read resident size, not du, for sparse use.
+- As-built review (a73a231eabc07771f, docs/reviews/step-g-as-built.md): no blocker, checklist 1-9 PASS; merge after
+  S1 (memory.write takes bytes-like only: write(addr, 5) was a silent 5-byte zero write), S2 (a watch-area resize
+  must stay host-only: _abi checks the const by equality), S3 (m2 cannot catch stale watch rows). host.map's 4776
+  KiB: APFS allocates a whole file under about 20 MiB on any write (16 MiB whole, 20 MiB and up sparse); RAM is
+  unaffected; acceptable at cap 2, change nothing (a smaller area costs batch length). Argument order correct at
+  every call site. The torn rule would catch a tear, but reads land while the app waits for VBlank, so 0 torn proves
+  correct reads, not the torn handling. Main (with E) merged into step-g at 76beb4f. Fixer a16674883dc9a5396 takes
+  S1-S3, E's post-merge timing changes (slot waits out of t_state; gate_c takes its own slot) and E's held NICEs.

@@ -305,7 +305,8 @@ report.
    commit, the same sha as step-e's); step-e's later merge is still clean because E's fixes to G's shared files are
    held (step 5) and E2 edits only `DEFAULT_CAP` and E's own files (review 2 S7).
 7. After the phase merges, the full suite runs once as one background batch (the main loop is woken on exit),
-   every azhost command under `tools/hold_slot.py`: gates A and B; `gate_c.py` on both cores; `gate_f2.py`; the
+   only gate-a.sh's and gate-b.sh's direct azhost lines under `tools/hold_slot.py` (after E, `gate_c.py` and every
+   Emulator take their own slot, so nothing else is wrapped; step E review): gates A and B; `gate_c.py` on both cores; `gate_f2.py`; the
    full pytest with `LAZ_CORE` set to each core in turn, each with `--ignore=tests/python/test_pool_live.py` (the
    explicit-core tests run both ways regardless); E's live pool test once (review 2 N9).
 

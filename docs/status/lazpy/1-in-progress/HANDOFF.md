@@ -9,14 +9,14 @@ the next session needs to act now, and points at the rest. Goals, rules, decisio
 ## Running now
 | What | Where | Agent id | It stops when |
 |---|---|---|---|
-| laz-330: opus as-built review of step G (phase-g.md section 12; judges host.map's 4.8 MB disk size) | ../libazahar-py-g (step-g 1b3dc93: G at 32f3b7c + main), read-only | a73a231eabc07771f | docs/reviews/step-g-as-built.md written |
+| laz-330: step G fixes S1-S3, E's post-merge timing changes and held NICEs, then the timed reruns at load under 10 | ../libazahar-py-g (step-g 76beb4f: G + main with E) | a16674883dc9a5396 | reports "G fixes done"; progress in runs/g/fix-progress.md |
 
 Not running: steps F2 (fac16e9) and E (cbe823c) are merged; items 320 and 310 are done. Worktrees c, d, e and f2 are
 merged and kept (ignored outputs).
 
 ## Next steps, in order
-1. At the G review: fixes on step-g (merge main into it first: E is on main), then merge step-g; then the held E
-   NICEs (N4-N6, N10) on main and the post-merge timing changes (item 310's last notes; slot waits out of t_state).
+1. At "G fixes done": commit on step-g, merge step-g into main, item 330 to 5-done with Evidence; runners line
+   for test_memory_live.py (item 330's notes).
 2. Phase 4's plan is final (revision 2); items 410/420 stay in 4-not-started until Phase 3 ends.
 3. After the phase merges: section 4 step 7 (the full suite once, one background batch); then Phase 4.
 4. Before the push: G8b (second history rewrite, item 400's last notes), then release-legal-audit.
