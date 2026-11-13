@@ -114,3 +114,5 @@ date	bet	phase	agent_id	model	role	kind	start	end	hours	source
 2026-11-13	S7: spike 1's stock-core asset URL and hash reworded, runners pointer	phase-4	main	opus	main	process	04:06	04:06	0.05	session clock
 2026-11-13	step I fix round: review S4-S6 (newlib), N4-N9, NOTICES regenerated, re-staged	phase-4	a8e760acbd1172ce5	sonnet	builder	build	04:02	04:09	0.12	agent duration 424 s
 2026-11-13	commit I fixes on step-i (scans), merge step-i into main (two map conflicts), checks	phase-4	main	opus	main	process	04:09	04:11	0.07	session clock
+2026-11-13	I2: test app clean build, mkrelease x3, pins (5d91d40), needle-loader fix (a9d144e), local identity, pre-push check, clone launched	phase-4	main	opus	main	process	04:11	04:19	0.17	session clock
+2026-11-13	I2 step 5 read (clone ok), evidence, re-stage, I3 launch	phase-4	main	opus	main	process	04:20	04:23	0.03	session clock

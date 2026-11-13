@@ -23,6 +23,18 @@ The gate in `docs/PLAN.md` line 323 ("Phase I"), run headless on this Mac with a
   docs_check PASS on all eight checks with NOTICES.md present. The worktree's staging copy is kept in runs/step-i/
   (ignored). I2 (pins commit, mkrelease in MAIN, --pre-push, clone_check), I3 (release-legal-audit) and I4 remain here;
   the item stays in 1-in-progress until I3 passes.
+- 2026-11-13 04:19: I2 steps 2-4 done in MAIN. The test app from the README's build block under env -i: rc 0,
+  0 warnings, 0 /Users/ strings, sha256 53b699e8... equal to the staged one (an incremental build first showed 6
+  /Users/ strings from stale objects: make clean before a release build). mkrelease, the pins committed alone
+  (5d91d40), mkrelease again: only the build-files asset changed. release_check's needle loader did not strip the
+  private file's literal: prefix, so those lines could never match; fixed in a9d144e (a planted literal line now
+  matches) and re-staged. Check 15 wanted the repo's own git identity: set in .git/config (local) to Guy's no-reply
+  identity. Then release_check --pre-push with the private needle file: rc 0, PASS 1-16; --plant-red 18 of 18 caught;
+  docs_check all PASS. Logs: runs/i2/ (ignored).
+- 2026-11-13 04:21: I2 step 5 done: clone_check from a fresh clone of main with the staged release as file:// base
+  ended "clone ok: 114 s wall" (rc 0): the README steps, quickstart on our core at the default path, the build block,
+  quickstart on the built host, the full pytest with LAZ_REQUIRE_EMULATOR=1: 136 passed, 3 skipped (two need
+  LAZ_STOCK_CORE, one needs a process not already nice). Log: runs/clone-i2/ (ignored). I2 done; I3 next.
 
 ## Pointers
 - Plan section: `docs/PLAN.md:323`
