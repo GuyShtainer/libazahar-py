@@ -19,7 +19,13 @@ MAIN's build tree), on branch core-rev2; merged after v0.1.0 is tagged unless Gu
 `docs/plans/phase-k.md` section 6 (written 2026-11-13, two opus reviews before work).
 
 ## Evidence
-none yet
+2026-11-13 12:34: merged into main (72f8d61, V0b step 4) and built on main from a fresh build folder (12:26-12:32,
+pin core/PIN-nokeys with SRC_URL at v1.0.0, 003eaec). Gate 1 on main: build.inputs clean=yes, head 003eaec, 11
+patches (0000-0010); otool minos 15.0; version suffix `-lazpy.2`; 4 lazpy_* exports; 0 "built for newer macOS
+version" lines; `tests/gate_f2.py --ours ... --stock ... --only keyblob,symbols,version`: "gate_f2: 0 FAIL,
+gate_c.failed 0". test_threads_live.py with `LAZ_CORE_OLD` (runs/core-lazpy1/): 8 passed, plus the stock-core test
+with `LAZ_STOCK_CORE`: 1 passed. Fast pytest 244 passed; test-host 307973 checks, 0 failed. Core sha256
+88cc6188cb499bf6e5f87c781526d9dcc4c2437d2c5ed31c4772afb3bec7fd0c, sent to Gen3D and 3DPlatinum for V6.
 
 ## Pointers
 - Plan: `docs/plans/phase-k.md`

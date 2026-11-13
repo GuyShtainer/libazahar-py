@@ -96,3 +96,5 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   \"selftest ds\" and pica_replay's edge band, plus the suite and A4. Send the sha256 when it's built. Note: a Platinum
   chain lane now runs headless on instance p (started 12:14). Before any 30-minute hold, tell me first and I'll say
   when it's clear."
+- 2026-11-13 12:33: on main's v1.0.0 candidate core (sha256 88cc6188…, patches 0000-0010), test_stencil_live.py with
+  `LAZ_STENCIL_RUNS=30`: 1 passed (0 bad of 90). 3DPlatinum's A3 self-test on that core started 12:35 (V6).

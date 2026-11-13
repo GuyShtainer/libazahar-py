@@ -1,30 +1,32 @@
 <!-- handoff: slim v1 | current tasks only | rewritten whole from docs/status/templates/handoff.md | budget 80 lines | never append -->
 # libazahar-py handoff
 
-As of: 2026-11-13 12:25 (this project's own session)
+As of: 2026-11-13 12:38 (this project's own session)
 
 This file lives in docs/status/lazpy/1-in-progress/, beside its item files. It holds only what
 the next session needs to act now, and points at the rest. Goals, rules, decisions and history live elsewhere.
 
 ## Running now
-Nothing. Branch core-rev2 (worktree ../libazahar-py-k) tip e28e4c2 holds step K, V1 (item 610, done) and step L's
-patch 0010 with its repro (item 520); not merged yet.
+| What | Where | Agent id | It stops when |
+|---|---|---|---|
+| V4: version 1.0.0 and the docs (laz-600), sonnet, on MAIN (no build, no emulator) | MAIN; progress in runs/v4/progress.md | a314e8caceb3949b7 | it reports; brief `docs/plans/v4-brief.md` |
 
-Guy asked for v1.0.0 (item laz-600, `docs/plans/phase-v1.md`): it replaces the never-published v0.1.0 and step K is
-its step V0, so step K merges before the release, not after a v0.1.0 tag.
+Guy asked for v1.0.0 (item laz-600, `docs/plans/phase-v1.md`). V0b is done (main 003eaec, core sha256 88cc6188…).
+Worktree ../libazahar-py-k is removed; branch core-rev2 stays at e28e4c2 (merged). Its logs: runs/wt-k/.
 
 ## Next steps, in order
-0. v1.0.0: `docs/plans/phase-v1.md` revision 2 is the plan; follow section 4's order. V0b steps 2 and 3 are done
-   (runs/core-lazpy1/ holds the lazpy.1 dylib; dl/azahar-src/src-nokeys.tar.xz is a copy, sha256 f7a70044…). The
-   hold was asked of 3DPlatinum and announced to Gen3D at 12:25; start step 4 when 3DPlatinum says its lane is clear.
-1. Then V0b steps 4-8 (merge, pin edit, main build, gates; plan section 3); send "hold released" with the core's sha256. Step K (laz-510) closes inside it. Never run tools/fetch.sh in the worktree (its dl/ parts link to MAIN).
-2. V3, V4, V6 (Gen3D and 3DPlatinum run their real suites on main's final core sha256; both answers needed), V7, V8.
-3. Release v1.0.0: V8 and V9 (staging, the legal re-audit, 16 of 16 on the final HEAD), then Guy's word for the tag
-   and push (below).
-4. After Guy publishes: I5 (`docs/plans/phase-i.md` section 6) against v1.0.0, items 420, 400, 510, 520 and 600
-   closed, then delete the three private history bundles.
-5. Answer asks from Gen3D (3ds-toolkit-1c) and 3DPlatinum (3ds-toolkit-f4): both use only libazahar-py. 3DPlatinum's
-   sound lane will ask for an audio route (not built; D3: no audio in 1.0).
+0. V6 runs in the two projects on main's core 88cc6188…: 3DPlatinum since 12:35 (the A3 stencil self-test, then the
+   chain with the suite and A4), Gen3D asked for its smoke and Pool 1-4 run. Record each answer verbatim in item 600
+   (and 3DPlatinum's A3 line in item 520, whose exit gate it closes). A fail blocks V8.
+1. When the V4 agent reports: review its diff, run docs_check, map_check and the fast pytest, scan, commit.
+2. V3 (real-scene multi-instance row, `docs/plans/phase-v1.md` V3): only on a quiet machine, after both projects'
+   V6 runs end (rule T); Gen3D's .3dsx and seed as in `docs/research/real-scene-j.md`. Then README's numbers and the
+   cap (a CHECK FAIL keeps 2).
+3. V7 full test pass (quiet), then V8 staging and the legal re-audit (16 of 16 on the final HEAD). The test app's
+   sha256 is now ba106998… (item 600 notes).
+4. V9: Guy's word for the tag and push (below). After he publishes: I5 (`docs/plans/phase-i.md` section 6) against
+   v1.0.0, items 420, 400, 520 and 600 closed, then delete the three private history bundles.
+5. Answer asks from Gen3D (3ds-toolkit-1c) and 3DPlatinum (3ds-toolkit-f4); both use only libazahar-py.
 
 ## Waiting on Guy (only what blocks a step above)
 - The audit's R1 (core/PIN's default build route) is settled by v1.0.0 if Guy keeps the default: PIN-nokeys is the
@@ -37,7 +39,7 @@ The full list is generated into `docs/status/README.md`.
 
 ## Pointers
 - Items: `docs/status/lazpy/5-done/610-step-v1-api-freeze.md` (V1), `docs/status/lazpy/1-in-progress/520-step-l-stencil-readback.md`
-  (step L, report `docs/research/stencil-readback.md`), `docs/status/lazpy/1-in-progress/510-step-k-core-rev-2.md` (step K), `docs/status/lazpy/1-in-progress/500-phase-5-user-asks.md`
+  (step L, report `docs/research/stencil-readback.md`), `docs/status/lazpy/5-done/510-step-k-core-rev-2.md` (step K), `docs/status/lazpy/1-in-progress/500-phase-5-user-asks.md`
   (the asks verbatim), `docs/status/lazpy/5-done/430-step-j-user-fixes.md` (step J, done),
   `docs/status/lazpy/1-in-progress/420-step-i-release.md` (I2-I4 and G8c evidence),
   `docs/status/lazpy/1-in-progress/400-phase-4-release.md` (Guy's asks).

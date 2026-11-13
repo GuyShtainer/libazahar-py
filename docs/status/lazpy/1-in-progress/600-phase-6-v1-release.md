@@ -22,7 +22,7 @@ none yet
 
 ## Pointers
 - Plan: `docs/plans/phase-v1.md`
-- Step K (V0): `docs/status/lazpy/1-in-progress/510-step-k-core-rev-2.md`
+- Step K (V0): `docs/status/lazpy/5-done/510-step-k-core-rev-2.md`
 
 ## Lessons and notes
 Read this part only when you work on this item. Blockers, numbers and Guy's words go here verbatim.
@@ -45,3 +45,11 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   nothing new will start until you send \"hold released\" with the sha256. Our only jobs right now are host tests (no
   emulator). My smoke script already uses keyword arguments and wraps shot paths in Path, so the v1.0.0 changes
   shouldn't break it. I'll check section 20 before I run it."
+- 2026-11-13 12:34: V0b done. Hold 12:24-12:34 (both projects confirmed clear). Steps: 2 lazpy.1 core kept in
+  runs/core-lazpy1/; 3 the source tarball copied (sha256 f7a70044…); 4 merge 72f8d61, make, fast pytest 244 passed;
+  5 PIN-nokeys SRC_URL at v1.0.0 (003eaec), so no core/ or build-core.sh edit or run on main from here; 6 old build
+  folder moved to runs/core-lazpy1/build-old, full build 12:26-12:32; 7 gates (item 510's Evidence) and the stencil
+  test 0 bad of 90; 8 hold released with the sha256 88cc6188… to both. The worktree ../libazahar-py-k is removed (its
+  runs/ and build logs kept in runs/wt-k/); branch core-rev2 stays at e28e4c2. The test app's sha256 is now
+  ba106998… (the stencil self-test was added), not 53b699e8…; V8's env -i rebuild compares against ba106998….
+  V6 started: 3DPlatinum at 12:35 (A3 self-test, then the chain with A4); Gen3D asked for the smoke and Pool 1-4 run.

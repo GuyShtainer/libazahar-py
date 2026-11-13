@@ -157,3 +157,4 @@ date	bet	phase	agent_id	model	role	kind	start	end	hours	source
 2026-11-13	V1 review fixes, Python side (parser Decisions, options= rule, HostError for workdir, pickling, number checks)	phase-6	aa0abb629238080e0	sonnet	builder	build	12:14	12:16	0.03	agent duration 124 s
 2026-11-13	V1 review fixes, host side (parser Decisions, exit codes, input-script bounds, msg.c test, CLI exit tests)	phase-6	a444f6a4e5d19a299	sonnet	builder	build	12:14	12:20	0.09	agent duration 327 s
 2026-11-13	V1: USING.md from the fix notes, gates, branch commit e28e4c2, item 610 done	phase-6	main	opus	main	build	12:16	12:23	0.12	session clock
+2026-11-13	V0b: hold, merge, pin edit, main core build, gates, hold released, worktree removed	phase-6	main	opus	main	build	12:23	12:35	0.20	session clock
