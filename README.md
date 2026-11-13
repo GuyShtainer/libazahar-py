@@ -7,9 +7,10 @@ Unofficial: not affiliated with or endorsed by the Azahar project. Report libaza
 
 ## Status
 
-v0.1.0, an early prerelease. It runs 3DS homebrew headless, with inputs, shots, SD files, savestates, many instances
-at once and guest memory reads on our core; `STATUS.md` lists each item with the work that proved it. What does not
-work: macOS before 15 and Intel Macs, audio output, anything with a window, and anything that is not homebrew.
+v1.0.0, the first release, with semantic versioning from 1.0.0 (`docs/USING.md` says what is covered). It runs 3DS
+homebrew headless, with inputs, shots, SD files, savestates, many instances at once and guest memory reads on our
+core; `STATUS.md` lists each item with the work that proved it. What does not work: macOS before 15 and Intel Macs,
+audio output, anything with a window, and anything that is not homebrew.
 
 ## Measured numbers
 

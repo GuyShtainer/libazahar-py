@@ -72,14 +72,14 @@ Step H's docs gate and the examples (each example with `nice -n 10`; `LAZ_CORE` 
 ```
 python3 -I tools/docs_check.py                    # README numbers, the example and steps blocks, links, claims (step H's gate)
 .venv/bin/python examples/quickstart.py           # prints "quickstart ok"
-sh tools/clone_check.sh --repo "$PWD" --branch main --out runs/clone --release-base "file://$PWD/runs/release/v0.1.0"   # the fresh clone (I2)
+sh tools/clone_check.sh --repo "$PWD" --branch main --out runs/clone --release-base "file://$PWD/runs/release/v1.0.0"   # the fresh clone (I2)
 ```
 
 Step I's release tools (the README route fetches our core and the test app; `LAZ_STOCK_CORE` adds the core-comparison tests):
 ```
 tools/fetch.sh --moltenvk --headers --lazpy-core --testapp   # our core (default path dl/lazpy-core/) and the test app
-tools/mkrelease.sh v0.1.0                                    # stage the release in runs/release/v0.1.0/ (about 100 s)
-python3 -I tools/release_check.py runs/release/v0.1.0        # the release checks (--skip-pins before I2, --pre-push before a push, --plant-red)
+tools/mkrelease.sh v1.0.0                                    # stage the release in runs/release/v1.0.0/ (about 100 s)
+python3 -I tools/release_check.py runs/release/v1.0.0        # the release checks (--skip-pins before I2, --pre-push before a push, --plant-red)
 python3 -I tools/mknotices.py --link <link.txt> --deps build-core/build --tree <build-src tree> --src <unpacked tree> --inputs build-core/build.inputs --openssl dl/openssl-src/openssl-3.6.5.tar.gz --sysarch dl/sysarch-src/citra_system_archives-f470e0c.tar.gz --ofl dl/font-licences/Montserrat-v4.001-OFL.txt --unifont dl/font-licences/unifont-10.0.05-notice.txt --newlib dl/newlib-licence/COPYING.NEWLIB-4.6.0 > NOTICES.md
 LAZ_STOCK_CORE=<Azahar's own core> .venv/bin/python -m pytest -q tests/python   # adds the core-comparison tests; unset, they skip
 ```

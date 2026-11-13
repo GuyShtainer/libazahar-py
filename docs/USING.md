@@ -80,7 +80,7 @@ one frame fold into one. `set_input` and `set_keys(raw=...)` set held state for 
 Measured offsets (step C, test app on our host): a change made at batch frame f shows in the guest's log line of host
 frame f + m, or sometimes f + m + 1. Buttons (A and others): m = 0 (counts 0: 1, 1: 29 over 30 changes; the first
 one lands on f, the rest on f + 1); ZL/ZR (irrst path): m = 1 (6 of 6); circle pad: m = 1 (5 of 5); touch: m = 2
-(40 of 40). Plan checks with a tolerance of one frame. Poll-exact movies: not tested.
+(40 of 40). Plan checks with a tolerance of one frame. Poll-exact movies: our core exports it; the host and Python do not call it.
 
 ## 4a. The input script (`azhost --inputs FILE`)
 
@@ -184,7 +184,7 @@ app path, so a shared state carries it. An I/O failure while saving is a HostErr
 Stock: SD text stops, guest errors, savestates (the same log fields after a state restore, gated on the test app).
 Repeats are exact only on our core, where the repeat gates run (PLAN 2.4); on the stock core they record the
 difference only. Our patched core adds debug text, memory reads and the watch list (section 12a). It also exports a
-poll-exact movie call, which no gate has run: not tested. Calls that need our core raise `NeedsLazpyCore`. The table of
+poll-exact movie call; the host and Python do not call it. Calls that need our core raise `NeedsLazpyCore`. The table of
 both cores is in section 16.
 
 ## 12a. Guest memory (our core only)
@@ -221,7 +221,7 @@ Rows 1-17 of docs/research/gen3d-harness-needs.md:
 | 2 SD staging | `sd_seed` |
 | 3 locks, focus, bundle clones | dropped (plain processes, own folders) |
 | 4 curtain window | dropped (no pacing) |
-| 5 CTM movies | `inputs` (poll-exact needs our core) |
+| 5 CTM movies | `inputs` (poll-exact: our core exports it; the host and Python do not call it) |
 | 6, 7 SD control channel, netlogs | `emu.sd` files and `run_until` |
 | 8 `voxel.log` flip lines | `emu.sd` file and `run_until` |
 | 9 window screenshots | `shots` / `screens()` (400x240 top, 320x240 bottom) |
@@ -353,7 +353,7 @@ Build and fetch time (the scripts' header comments are the reference):
 | Debug-text stop (`debug_text=`) | yes | `NeedsLazpyCore` |
 | Thread registers (`emu.threads()`) | lazpy.2 only (lazpy.1: `NeedsLazpyCore`) | `NeedsLazpyCore` |
 | Exact repeats | yes (gated) | no: recorded as a difference only |
-| Poll-exact movies | not tested | no |
+| Poll-exact movies | our core exports it; the host and Python do not call it | no |
 | Option profile | `core/options-lazpy.txt` first (section 14) | the default profile only |
 
 States move between the two cores both ways in the gate, but a state may not load across core versions.

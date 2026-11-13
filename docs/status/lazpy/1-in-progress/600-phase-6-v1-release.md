@@ -53,3 +53,10 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   runs/ and build logs kept in runs/wt-k/); branch core-rev2 stays at e28e4c2. The test app's sha256 is now
   ba106998… (the stencil self-test was added), not 53b699e8…; V8's env -i rebuild compares against ba106998….
   V6 started: 3DPlatinum at 12:35 (A3 self-test, then the chain with A4); Gen3D asked for the smoke and Pool 1-4 run.
+- 2026-11-13 12:38: V4 done except README's measured numbers (V3) and NOTICES.md: version 1.0.0 (pyproject,
+  `__version__`), fetch.sh REL_TAG v1.0.0 and the lazpy.2 zip with LAZPY_CORE_SHA and TESTAPP_SHA `TBD` (pin_set
+  refuses TBD), STATUS.md for 1.0 (three new What-works lines, the promise, poll-exact not in 1.0), README's version
+  line, USING's four poll-exact places, runners.md, `docs/release-notes/v1.0.0.md` (notes_wording_findings: []),
+  v0.1.0 notes deleted (that deletion landed in 232f003 by accident: the agent's `git rm` was staged when the main
+  loop amended; lesson: an agent's `git rm` on shared main stages, so check `--cached --stat` before every amend).
+  NOTICES.md is regenerated in V8 with the full mknotices inputs (`docs/map/runners.md`), from main's build.

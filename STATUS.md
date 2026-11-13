@@ -1,6 +1,6 @@
 # libazahar-py status
 
-As of 2026-11-13, commit 6d5ca11. v0.1.0 is an early prerelease. Each item below names the work item (`laz-NNN`) whose
+As of 2026-11-13. v1.0.0. Each item below names the work item (`laz-NNN`) whose
 Evidence, in `docs/status/lazpy/5-done/`, proves it. Nothing is listed as working that no gate ran.
 
 ## What works
@@ -13,7 +13,8 @@ Evidence, in `docs/status/lazpy/5-done/`, proves it. Nothing is listed as workin
   exit, a guest error and a wall-clock limit (laz-210)
 - The Python layer (`Emulator`, `run`, `run_until`, `screens`, `shot`, the error classes) and savestates, with an SD
   snapshot, gated on Azahar's own core; our core's gate below repeats the state checks (laz-220)
-- Our patched core builds from Azahar's pinned source with our patch files and a build script; the build itself is gated in laz-320 (laz-110)
+- Our patched core builds from Azahar's pinned source (the gated route is `core/PIN-nokeys`) with our patch files
+  and a build script; the build itself is gated in laz-320 (laz-110)
 - Our core's gate: built without Azahar's built-in key data and default HTTP client certificate, loading no keys; the
   debug-text stop; exact repeats; states restored into equal instances; states moving between the two cores
   (laz-320)
@@ -23,11 +24,17 @@ Evidence, in `docs/status/lazpy/5-done/`, proves it. Nothing is listed as workin
 - A real app on our core: Gen3D's 3D scene (36000 frames, one batch) runs as fast as on Azahar's own core on a quiet
   machine, and its code reads back through `emu.memory`; bad arguments raise `ArgumentError`, `fresh_sd` and
   `Shot.frame_total` exist (laz-430)
+- Core lazpy.2: `threads()` lists the guest threads, and `citra_init_ticks_override` seeds the guest's clock; states
+  move between lazpy.1 and lazpy.2 both ways (laz-510)
+- The 1.0 API freeze: keyword-only run options, `Path` returns, one strict option-profile format read the same way
+  by the host and Python, the input-script bounds and the `azhost` exit codes, each with tests (laz-610)
+- Depth-stencil readback on MoltenVK: exact on our test app's check (0 bad of 90 on the release core) and on a
+  user's own self-test (laz-520)
 
 ## What does not work yet
 
 - macOS before 15, Intel Macs, Windows and Linux. The core needs macOS 15 (see Known limits).
-- Poll-exact movies (`lazpy_movie_play` is in our core, but no gate ran it): not tested.
+- Poll-exact movies: our core exports `lazpy_movie_play`; the host and Python do not call it; not in 1.0.
 - The default instance cap (2) rests on a light scene (the test app). It stays provisional until a real-scene row
   with several instances exists (the real-scene rows on our core are one instance).
 - Guest memory and the watch list on Azahar's own core: they raise `NeedsLazpyCore`.
@@ -43,12 +50,13 @@ Evidence, in `docs/status/lazpy/5-done/`, proves it. Nothing is listed as workin
 - A multi-field record read from guest memory can be torn (some fields from the frame before); the watch list too.
 - One `azh_open` per process: the Python layer runs each Emulator in its own worker process.
 - The slot cap counts only libazahar's own workers, not other emulators on the machine.
-- The v0.1.0 core's header says macOS 11.0, but it needs macOS 15: its OpenSSL is built for 15. `libazhost.dylib` and
-  `azhost` are built for macOS 15.0.
+- The core, `libazhost.dylib` and `azhost` need macOS 15 or later (the core's OpenSSL is built for 15).
 - The guest's HTTPS finds a CA file only where Homebrew's `openssl@3` is installed (OpenSSL's compiled-in paths).
   Homebrew tests do not need it.
 - `azhost` has no `--help`; an unknown first argument prints the usage and exits with 2.
-- The ABI may change before 1.0; each change bumps `AZH_ABI_VERSION` (now 3).
+- The promise (semantic versioning from 1.0.0): until 2.0, the Python API, the C functions in `host/azhost.h`, the
+  `azhost` command line and exit codes, and the input-script and option-profile formats change only in compatible ways.
+  `docs/USING.md` lists them.
 
 ## Considered and dropped
 
@@ -59,7 +67,7 @@ Evidence, in `docs/status/lazpy/5-done/`, proves it. Nothing is listed as workin
   upstream patch would first have to follow Azahar's `AI-POLICY.md`.
 - Building OpenSSL ourselves so the core runs on macOS 11-14: it needs a core rebuild and a new gate; the release says
   macOS 15 or later instead.
-- A scripted download of Azahar's own core: removed before v0.1.0. Our core is the default, and comparisons take
+- A scripted download of Azahar's own core: removed before the first release. Our core is the default, and comparisons take
   `LAZ_STOCK_CORE`, a file you download yourself.
 - Out of scope (PLAN section 5), one line each:
   - Windows and Linux: macOS arm64 first.
@@ -80,5 +88,5 @@ Evidence, in `docs/status/lazpy/5-done/`, proves it. Nothing is listed as workin
 
 - CI on GitHub runners (about 0.5 h).
 - A real-scene row with several instances, for the cap.
-- A core rebuild with a macOS 15 header and patch 0008's comment fixed.
+- A core rebuild with patch 0008's comment fixed.
 - Gen3D's adapter (Gen3D's own work).

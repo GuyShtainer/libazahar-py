@@ -37,11 +37,11 @@ VKH_VER=1.4.368
 VKH_URL="https://github.com/KhronosGroup/Vulkan-Headers/archive/refs/tags/v$VKH_VER.tar.gz"
 VKH_SHA=5c5c6f64fcce28a24cc934143a048707af036a858e4ed11d7f71fe016006ecda
 # our release: the tag, the base URL and the two assets' sha256 (filled at release time; TBD makes the flag die)
-REL_TAG=v0.1.0
+REL_TAG=v1.0.0
 REL_BASE="${LAZ_RELEASE_BASE:-https://github.com/GuyShtainer/libazahar-py/releases/download/$REL_TAG}"
-LAZPY_CORE_ZIP=azahar_lazpy_libretro-2126.2-lazpy.1-macos-arm64.zip
-LAZPY_CORE_SHA=c50e43a1293265df0a2bde2910bdce6903b42c3fee47921d05808925841a8981
-TESTAPP_SHA=53b699e87974bd5c74cc6d14123eba95f0b0c02cdcd174e28249f768512ccabc
+LAZPY_CORE_ZIP=azahar_lazpy_libretro-2126.2-lazpy.2-macos-arm64.zip
+LAZPY_CORE_SHA=TBD
+TESTAPP_SHA=TBD
 # ------------------------------------------------------------------------------------------------------------------
 
 FORCE=0; DO_MVK=0; DO_HEADERS=0; DO_CORE=0; DO_APP=0

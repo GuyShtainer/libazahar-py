@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Machine checks for a staged release (step I).
 
-Usage: python3 -I tools/release_check.py runs/release/v0.1.0 [--skip-pins] [--pre-push] [--plant-red]
+Usage: python3 -I tools/release_check.py runs/release/<tag> (for example runs/release/v1.0.0) [--skip-pins] [--pre-push] [--plant-red]
            [--nm-output F] [--otool-output F] [--strings-output F] [--link F] [--inputs F] [--fetch F]
            [--pyproject F] [--repo DIR]
 
