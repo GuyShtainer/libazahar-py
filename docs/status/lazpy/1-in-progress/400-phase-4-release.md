@@ -152,3 +152,4 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   unifont-10.0.05.tar.gz, dl/unifont-src/, sha256 8b85367401729bf22217c44d914dee08770665ff01b5faccb7760a2a06934a1f,
   verbatim). The fonts' name records match the consult: Montserrat 4.000 (OFL 1.1), Unifont 10.0.05 (GPLv2+ with
   the font embedding exception).
+- Joint as-built review launched 03:45 (a0dd0f1365ef00ed2, opus): both diffs, rulings asked on D1 (verbatim third-party notices with upstream addresses, check 7 narrowed), D2 (H's code fixes deferred), D3 (release_check's size).
