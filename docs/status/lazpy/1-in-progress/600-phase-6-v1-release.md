@@ -84,3 +84,6 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   window's start and end, the batch stopped by its wall limit; v3start/v3end shots are kept for a look. A ps sampler
   (every 10 s) records other processes over 50 % CPU or named like builds and emulators. Rows: ours 1, stock 1, ours
   2, 3, 4; 60 s windows. It waits for both V6 runs to end and a load under 6.
+- 2026-11-13 15:01, V6: 3DPlatinum PASS on 64026f4a… (its whole chain headless, 72 steps PASS, its only failures its
+  own link step; A4's 5 pairs differ only in the game ELF's sha, a rebuilt ELF in its fresh tree; verbatim in
+  laz-660's notes). Gen3D's smoke passed at 13:10; its Pool 1-4 run started on our go at 15:01 (load 1.96).

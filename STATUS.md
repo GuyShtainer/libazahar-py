@@ -30,6 +30,8 @@ Evidence, in `docs/status/lazpy/5-done/`, proves it. Nothing is listed as workin
   by the host and Python, the input-script bounds and the `azhost` exit codes, each with tests (laz-610)
 - Depth-stencil readback on MoltenVK: exact on our test app's check (0 bad of 90 on the release core) and on a
   user's own self-test (laz-520)
+- Restoring a saved state, then drawing 3D: an Azahar bug crashed the first 3D draw after a state load; our core
+  fixes it (patch 0011), with a test-app test, and both user projects pass on it (laz-660)
 
 ## What does not work yet
 

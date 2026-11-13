@@ -24,7 +24,8 @@ that draws with a programmable shader after a state restore does the same. Then 
 V0b gates again, and Gen3D's smoke plus 3DPlatinum's chain on the new sha256 (V6).
 
 ## Evidence
-Our side done 2026-11-13 13:10 (V6 by both projects still open): main 4e830e5 (patch 0011 sha256 64dc6cbf…, branch
+Done 2026-11-13 15:01: both projects pass on core 64026f4a… (V6 notes below: Gen3D's smoke restores and draws;
+3DPlatinum's whole chain PASS, its only failures its own link step). Our side done 2026-11-13 13:10: main 4e830e5 (patch 0011 sha256 64dc6cbf…, branch
 commit aa29901), built 13:02-13:08 from a fresh build folder; core sha256
 64026f4afa2036a552345ac4b73c95ebbf27190ad8590a1cfd70f6b5ab1893cf. Gates (session scratchpad v0c-gates.sh):
 build.inputs clean=yes, head 4e830e5, 12 patches; minos 15.0; `lazpy.2` in the strings; 4 lazpy_* exports; 0
@@ -35,7 +36,7 @@ The test app is unchanged (ba106998…). Review: `docs/reviews/patch-0011-review
 
 ## Pointers
 - Plan section: `docs/plans/phase-v1.md:116` (V6); the core-build steps are V0b's.
-- Review: none yet
+- Review: `docs/reviews/patch-0011-review.md`
 
 ## Lessons and notes
 - 2026-11-13 12:41, Gen3D (3ds-toolkit-1c), verbatim except a game name replaced and scratchpad paths cut: "Gen3D V6
@@ -88,3 +89,15 @@ The test app is unchanged (ba106998…). Review: `docs/reviews/patch-0011-review
   number; the old core's quiet run was 400-509); stats: peak_rss=732 MB, core Azahar 2126.2-lazpy.2; save_state
   1.14 s, k=0, frame_total=8400; state boot 1.80 s; restored run ok (300 frames); its top shot 300 frames on is
   byte-identical to the original run's. The Pool 1-4 instance run waits for a quiet machine (rule T)."
+- 2026-11-13 15:01, 3DPlatinum (3ds-toolkit-f4), verbatim: "V6 on the final core (sha256
+  64026f4afa2036a552345ac4b73c95ebbf27190ad8590a1cfd70f6b5ab1893cf): PASS from our side, with one A4 caveat. The
+  whole [3DPlatinum] chain ran headless with records (instance p, about 35 min for the first full pass, then resumed
+  pieces). It reached CHAIN-DONE. 72 steps PASS, including every graphics-readback gate (pica-replay-port,
+  pica-replay, hwcheck, hw-kit-dryrun), the two hwcheck mutants failing as planted, and the sound mix and its
+  mutant. Our only two failures are our own link error (a missing hook in our port, our step pt-181), not the
+  library. F2: 54 headless run lines, all stopped_by=guest_exited; 100 records, 93 rc 0, 7 rc 1, all planted. A4
+  route_equal against the windowed trio: 5 pairs. Each differs only in the game ELF's sha, because our fresh tree
+  rebuilt the ELF while the windowed records used the main checkout's. rc, framebuffer and file hashes and count
+  lines are equal (the two timing lines are masked by design). So it is not a library difference. Our review
+  decides whether we rerun the trio on the same ELF; I'll send that line if we do. Host tests on the client: 42/0."
+  (Verbatim except "[3DPlatinum]" for the project's short name.)
