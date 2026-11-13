@@ -144,3 +144,5 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   franchise word is left only in phase-h.md's policy line. 207 commits rewritten (e54e38f is now d059ca8, d452b2a
   is 49c9520): `docs/commit-map-g8d.tsv`, built by pairing dates (filter-repo's own map is cumulative since G8).
   status_check, map_check, docs_check and make check pass.
+- 2026-11-13 19:22, V8 re-stage after G8d: mkrelease at 19:20 (rc 0). The core zip is now ced9a362… (NOTICES and
+  SOURCE.md changed), the test app still ba106998…; the new zip sha is written into tools/fetch.sh's pin.

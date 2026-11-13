@@ -174,3 +174,4 @@ date	bet	phase	agent_id	model	role	kind	start	end	hours	source
 2026-11-13	V8 release-legal-audit of tree, history and staged v1.0.0 (SHIPPABLE WITH CHANGES)	phase-6	a1a4df6eeb2bdc776	opus	reviewer	review	18:48	19:06	0.30	agent jsonl mtime 19:06:15
 2026-11-13	V8: clone_check read; audit saved (redacted) and its HEAD wording fixes, NOTICES regenerated	phase-6	main	opus	main	process	18:48	19:10	0.40	session clock
 2026-11-13	V8 G8d history rewrite: literals by command, before/after scans, bundle, filter-repo, map, checks	phase-6	main	opus	main	process	19:13	19:19	0.25	session clock
+2026-11-13	V8: PC worker told of G8d; re-stage, new fetch.sh core pin	phase-6	main	opus	main	build	19:19	19:22	0.07	session clock
