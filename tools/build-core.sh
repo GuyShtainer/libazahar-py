@@ -132,7 +132,7 @@ fi
 grep -q '^ENABLE_BUILTIN_KEYBLOB:BOOL=OFF$' build-core/build/CMakeCache.txt \
   || die "the built-in console key blob is not OFF (we never ship console keys)"
 CACHE=build-core/build/CMakeCache.txt
-grep -q '^CMAKE_OSX_DEPLOYMENT_TARGET:STRING=15.0$' "$CACHE" \
+grep -Eq '^CMAKE_OSX_DEPLOYMENT_TARGET:[A-Z]*=15.0$' "$CACHE" \
   || die "configure did not take macOS 15.0 as the minimum (an older build tree's cache?)"
 grep -q '^USE_SYSTEM_OPENSSL:BOOL=ON$' "$CACHE" || die "configure did not take USE_SYSTEM_OPENSSL"
 for L in SSL:libssl CRYPTO:libcrypto; do
