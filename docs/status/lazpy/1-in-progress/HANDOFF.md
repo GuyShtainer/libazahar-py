@@ -1,33 +1,31 @@
 <!-- handoff: slim v1 | current tasks only | rewritten whole from docs/status/templates/handoff.md | budget 80 lines | never append -->
 # libazahar-py handoff
 
-As of: 2026-11-13 12:49 (this project's own session)
+As of: 2026-11-13 13:11 (this project's own session)
 
 This file lives in docs/status/lazpy/1-in-progress/, beside its item files. It holds only what
 the next session needs to act now, and points at the rest. Goals, rules, decisions and history live elsewhere.
 
 ## Running now
-Nothing of this session. (3DPlatinum's V6 chain on core 88cc6188… is peer work: step 2 below.)
+Nothing of this session. Gen3D's smoke plus Pool 1-4 and 3DPlatinum's A3 + chain with A4 run on main's core
+64026f4a… as peer work (step 1). Worktree ../libazahar-py-m is removed; branch core-rev3 stays at aa29901 (merged).
 
-Guy asked for v1.0.0 (item laz-600, `docs/plans/phase-v1.md`). V0b is done (main 003eaec, core sha256 88cc6188…).
-Gen3D's V6 smoke FAILED on it: a state restore crashes the first 3D draw (item laz-660 has the cause and the A/B).
+Guy asked for v1.0.0 (item laz-600, `docs/plans/phase-v1.md`). Main 4e830e5 holds core patch 0011 (item laz-660):
+the state-restore crash Gen3D's first V6 smoke found is fixed and gated; core sha256 64026f4a… replaces 88cc6188.
 
 ## Next steps, in order
-1. Step M (item laz-660): core patch 0011 in `PipelineCache::SwitchCache` (the early return only when a cache is
-   selected). Build it in a fresh worktree off main (its own dl/ unpack and build-core/, the source tarball copied in;
-   MAIN's build-core/ stays untouched while 3DPlatinum runs). Red then green on the scratchpad repro and on a new
-   test-app check (a programmable-shader draw after a restore). Ask 3DPlatinum before the 6-minute build (load).
-   Then merge, a V0b-style hold and main build, the gates, and the new sha256 to both projects.
-2. V6 again on the new core: Gen3D's smoke and Pool 1-4, 3DPlatinum's chain with A4. Record each answer verbatim in
-   item 600. A fail blocks V8.
+1. V6 on 64026f4a…: 3DPlatinum (3ds-toolkit-f4) started its A3 self-test at 13:10, then the chain with A4; Gen3D
+   (3ds-toolkit-1c) reruns lazgame.py and Pool 1-4. Record each answer verbatim in item 660 (the restore) and 600.
+   Both pass: item 660 to 5-done with a STATUS.md works line. A fail blocks V8.
+2. No core/ edit or build-core.sh run on main from here (the gated build is 64026f4a…, build.inputs head 4e830e5).
 3. V3 (real-scene multi-instance row, `docs/plans/phase-v1.md` V3): only on a quiet machine, after both projects'
    V6 runs end (rule T). Then README's numbers and the cap (a CHECK FAIL keeps 2).
-4. V7 full test pass (quiet), then V8 staging, NOTICES.md from mknotices, fetch.sh's TBD pins, and the legal
-   re-audit (16 of 16 on the final HEAD). The audit also checks history for game names (three were removed from
-   docs on 2026-11-13; older commits may hold more).
+4. V7 full test pass (quiet), then V8 staging, NOTICES.md from mknotices, fetch.sh's TBD pins (the core zip of
+   64026f4a…, the test app ba106998…), and the legal re-audit (16 of 16 on the final HEAD). The audit also checks
+   history for game names (three were removed from docs on 2026-11-13; older commits may hold more).
 5. V9: Guy's word for the tag and push (below). After he publishes: I5 (`docs/plans/phase-i.md` section 6) against
    v1.0.0, items 420, 400 and 600 closed, then delete the three private history bundles.
-6. Answer asks from Gen3D (3ds-toolkit-1c) and 3DPlatinum (3ds-toolkit-f4); both use only libazahar-py.
+6. Answer asks from Gen3D and 3DPlatinum; both use only libazahar-py.
 
 ## Waiting on Guy (only what blocks a step above)
 - The audit's R1 (core/PIN's default build route) is settled by v1.0.0 if Guy keeps the default: PIN-nokeys is the

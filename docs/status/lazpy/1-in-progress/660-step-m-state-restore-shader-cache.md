@@ -24,7 +24,14 @@ that draws with a programmable shader after a state restore does the same. Then 
 V0b gates again, and Gen3D's smoke plus 3DPlatinum's chain on the new sha256 (V6).
 
 ## Evidence
-none yet
+Our side done 2026-11-13 13:10 (V6 by both projects still open): main 4e830e5 (patch 0011 sha256 64dc6cbf…, branch
+commit aa29901), built 13:02-13:08 from a fresh build folder; core sha256
+64026f4afa2036a552345ac4b73c95ebbf27190ad8590a1cfd70f6b5ab1893cf. Gates (session scratchpad v0c-gates.sh):
+build.inputs clean=yes, head 4e830e5, 12 patches; minos 15.0; `lazpy.2` in the strings; 4 lazpy_* exports; 0
+"built for newer macOS version" lines; gate_f2 "0 FAIL, gate_c.failed 0"; fast pytest 244 passed;
+test_threads_live.py with LAZ_CORE_OLD and LAZ_STOCK_CORE 9 passed; `test_state_3d.py` 2 passed (red on 88cc6188);
+test_state.py -m slow 3 passed; test_stencil_live.py with 10 launches 1 passed; Gen3D's restore repro 3 of 3 ok.
+The test app is unchanged (ba106998…). Review: `docs/reviews/patch-0011-review.md`.
 
 ## Pointers
 - Plan section: `docs/plans/phase-v1.md:116` (V6); the core-build steps are V0b's.
@@ -54,3 +61,23 @@ none yet
   state run still crashes, in the same disk-cache code. The restored run's log has no "Switching pipeline cache" line
   and the title id is 0 (the app is a `.3dsx`). Our own state tests miss it: the test app draws no programmable-
   shader frame after a restore.
+- 2026-11-13 12:51-12:59: test build of patch 0011 in the worktree ../libazahar-py-m (branch core-rev3; its own
+  unpack and build-core/, the nokeys tarball copied in, dl/moltenvk and vendor/ from MAIN), 3DPlatinum's "build
+  ok, go ahead now" first. 12 patches, 0 rejects; core sha256 a548c03c…, built from the first text of 0011
+  (sha256 17798328…). The final 0011 (9ea5c7df…) only adds the "Modified by libazahar-py" notice line; main's
+  gated build uses it. New test `tests/python/test_state_3d.py` (the test app's `draw=3d`, run 300, save, state
+  boot, run 300; two trials): red on 88cc6188, 2 of 2 HostCrashed signal 11, same 0x674 page offset as Gen3D's.
+- 2026-11-13 13:00: green on the test build a548c03c…: `test_state_3d.py` 2 passed, Gen3D's minimal repro 3 of 3
+  ok (frames 300 each). Opus review (af7ecbcfd68c8532d, `docs/reviews/patch-0011-review.md`): ship with changes;
+  done: the driver-cache save only from a selected cache (a state load wiped the saved driver cache), both paths
+  in the comments, wrapped under 100 columns, core/README rows for 0010 and 0011. Final 0011 sha256 64dc6cbf…,
+  applies to pristine source with no fuzz. Branch commit aa29901, merged into main 4e830e5.
+- 2026-11-13 13:01-13:02: hold. 3DPlatinum: "(a). Our chain was stopped at 13:01, during host tests, before any
+  emulator run, and nothing of ours now uses main's build-core core. Hold and build." Gen3D idle since 12:50
+  ("Main's core stays idle on our side"). The 88cc6188 core, its build.inputs and its unstripped build folder are
+  kept in runs/core-88cc/. Main's fresh build started 13:02:29.
+- 2026-11-13 13:10: hold released with the sha256 64026f4a… to both. 3DPlatinum, verbatim: "received. I checked the
+  sha256 on disk and it is 64026f4afa2036a552345ac4b73c95ebbf27190ad8590a1cfd70f6b5ab1893cf. The A3 self-test (10
+  launches) started at 13:10, and the whole chain with records follows it in the same tree." The worktree
+  ../libazahar-py-m is removed (its build logs in runs/wt-m/); branch core-rev3 stays at aa29901 (merged).
+  The release notes say the fix in one line; STATUS.md gets its works line when this item closes.

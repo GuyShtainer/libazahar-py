@@ -60,3 +60,6 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   v0.1.0 notes deleted (that deletion landed in 232f003 by accident: the agent's `git rm` was staged when the main
   loop amended; lesson: an agent's `git rm` on shared main stages, so check `--cached --stat` before every amend).
   NOTICES.md is regenerated in V8 with the full mknotices inputs (`docs/map/runners.md`), from main's build.
+- 2026-11-13 13:11: V6's first Gen3D smoke failed (state restore, item laz-660); patch 0011 fixed it, and main's
+  core is now 64026f4a… (4e830e5), replacing 88cc6188 as the v1.0.0 candidate. V6 restarts on it in both projects;
+  V8's fetch.sh pin and release zip use the new sha256. The 88cc6188 core is kept in runs/core-88cc/.
