@@ -30,3 +30,11 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
 - 2026-11-13 11:28: briefs `docs/plans/v1-briefs.md`; two sonnet agents in the worktree on separate files (host:
   items 1 C side, 2, 3, 12; python: items 1 Python side, 4-10, 13). Item 11 (the `LAZPY_ROOT` alias) is the main
   loop's. 3DPlatinum left the worktree first (its word came by 11:28).
+- 2026-11-13 by 12:00: both agents done; branch commit 64f5d18 holds all 13 changes and the USING.md text (the promise
+  paragraph before section 1, exit codes and summary keys in section 3, new 4a, the errors table in 8, the profile
+  format in 14, section 20 API reference). Gates on the branch: make check; test-host 307918 checks, 0 failed; fast
+  pytest 195 passed, 47 deselected; the python agent's slow tier (api, c_checks, memory_live, state, pool_live,
+  live_errors) 32 passed, 2 skipped; host agent's slow test_profile_format 5 passed, 1 skipped (exit 7 needs
+  LAZ_STOCK_CORE). The layout test now expects 151 fields (the AZH_EXIT_STATE row). Next: the opus review of
+  64f5d18 (agent a04d832ad11619ae6), its fixes, then V0b.
+

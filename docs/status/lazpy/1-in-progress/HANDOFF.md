@@ -1,7 +1,7 @@
 <!-- handoff: slim v1 | current tasks only | rewritten whole from docs/status/templates/handoff.md | budget 80 lines | never append -->
 # libazahar-py handoff
 
-As of: 2026-11-13 11:51 (this project's own session)
+As of: 2026-11-13 12:03 (this project's own session)
 
 This file lives in docs/status/lazpy/1-in-progress/, beside its item files. It holds only what
 the next session needs to act now, and points at the rest. Goals, rules, decisions and history live elsewhere.
@@ -9,29 +9,28 @@ the next session needs to act now, and points at the rest. Goals, rules, decisio
 ## Running now
 | What | Where | Agent id | It stops when |
 |---|---|---|---|
-| Stencil readback investigation (laz-520), read-only opus | core source and host/vk.c; notes in this session's scratchpad a3-notes.md | a68ab49f94481d0d2 | it reports; save it as docs/research/stencil-readback.md |
-| V1 API changes, host side (laz-610), sonnet | ../libazahar-py-k, branch core-rev2; progress in runs/v1/host-progress.md there | abd4e33ec5366d791 | it reports; brief `docs/plans/v1-briefs.md` |
-| V1 API changes, Python side (laz-610), sonnet | ../libazahar-py-k, branch core-rev2; progress in runs/v1/python-progress.md there | a2e356106fda1f73d | it reports; brief `docs/plans/v1-briefs.md` |
+| Review of the V1 API-freeze commit 64f5d18 (laz-610), read-only opus | ../libazahar-py-k, branch core-rev2; notes in this session's scratchpad v1review/ | a04d832ad11619ae6 | it reports; save it as docs/reviews/api-freeze-1.0-diff-review.md |
+| Stencil repro in the test app (laz-520), sonnet | ../libazahar-py-k; progress in runs/stencil/repro-progress.md there | a3f2709cf168b11c4 | it reports red counts on the unpatched core; brief `docs/plans/stencil-briefs.md` R |
+| Core patch 0010 for the stencil barriers (laz-520), sonnet | ../libazahar-py-k; progress in runs/stencil/patch-progress.md there | a7a04c6135194c45c | it reports the patch applies; brief `docs/plans/stencil-briefs.md` P |
 
 Guy asked for v1.0.0 (item laz-600, `docs/plans/phase-v1.md`): it replaces the never-published v0.1.0 and step K is
 its step V0, so step K merges before the release, not after a v0.1.0 tag.
 
 ## Next steps, in order
-0. v1.0.0: `docs/plans/phase-v1.md` revision 2 (both reviews answered) is the plan; follow section 4's order. Now:
-   V5 (CI) is done (item laz-650); V1's two agents run; the main loop does item 11 (`LAZPY_ROOT` alias), pastes their
-   runs/v1/using-*.md texts into USING.md, commits, has the diff reviewed (opus); then V0b (merge and
-   main build, after 11:55 when Gen3D's timed soak ends; Gen3D needs no hold, 3DPlatinum's OK is asked first).
-1. Step K (laz-510) closes inside V0b: its gates 1, 3, 4 and 6 passed in the worktree; gate 2 there was dropped
-   (item notes). Never run tools/fetch.sh in the worktree (its dl/ parts link to MAIN).
-2. Release v1.0.0 (not v0.1.0): V8 and V9 of `docs/plans/phase-v1.md` (staging, the legal re-audit, 16 of 16 on the
-   final HEAD), then Guy's word for the tag and push (below).
-3. After Guy publishes: I5 (`docs/plans/phase-i.md` section 6) against v1.0.0, items 420, 400, 510 and 600 closed,
-   then delete the three private history bundles.
-4. V6: Gen3D and 3DPlatinum run their real suites on main's final core (sha256 sent to them); both answers are needed
-   before staging.
-5. Answer asks from Gen3D (3ds-toolkit-1c) and 3DPlatinum (3ds-toolkit-f4; the session named "3DP" is a progress
-   test helper): both were told on 2026-11-13 to use only libazahar-py. 3DPlatinum switched (smoke: 600 frames in
-   0.3 s); its sound lane will ask for an audio route (audio output is not built), with a repro, when that lane nears.
+0. v1.0.0: `docs/plans/phase-v1.md` revision 2 is the plan; follow section 4's order. Now: V1 is on the branch
+   (64f5d18, item 610); fix the review's must-fix items on the branch. Step L (item 520): when the repro is red and
+   the patch applies, commit both on the branch, rebuild the worktree core (`env -u LAZ_ROOT ... tools/build-core.sh`
+   there, about 10 min), rerun the repro (10 launches green), the fast pytest and test-host. 3DPlatinum was asked
+   for experiment 2 (`MVK_CONFIG_USE_MTLHEAP=0`) on its self-test; record its answer in item 520.
+1. Then V0b (merge and main build; plan section 3): ask both projects for the hold first (3DPlatinum's OK; Gen3D needs
+   none). Step K (laz-510) closes inside it. Never run tools/fetch.sh in the worktree (its dl/ parts link to MAIN).
+2. V3, V4, V6 (Gen3D and 3DPlatinum run their real suites on main's final core sha256; both answers needed), V7, V8.
+3. Release v1.0.0: V8 and V9 (staging, the legal re-audit, 16 of 16 on the final HEAD), then Guy's word for the tag
+   and push (below).
+4. After Guy publishes: I5 (`docs/plans/phase-i.md` section 6) against v1.0.0, items 420, 400, 510, 520 and 600
+   closed, then delete the three private history bundles.
+5. Answer asks from Gen3D (3ds-toolkit-1c) and 3DPlatinum (3ds-toolkit-f4): both use only libazahar-py. 3DPlatinum's
+   sound lane will ask for an audio route (not built; D3: no audio in 1.0).
 
 ## Waiting on Guy (only what blocks a step above)
 - The audit's R1 (core/PIN's default build route) is settled by v1.0.0 if Guy keeps the default: PIN-nokeys is the
@@ -43,7 +42,8 @@ its step V0, so step K merges before the release, not after a v0.1.0 tag.
 The full list is generated into `docs/status/README.md`.
 
 ## Pointers
-- Items: `docs/status/lazpy/1-in-progress/510-step-k-core-rev-2.md` (step K), `docs/status/lazpy/1-in-progress/500-phase-5-user-asks.md`
+- Items: `docs/status/lazpy/1-in-progress/610-step-v1-api-freeze.md` (V1), `docs/status/lazpy/1-in-progress/520-step-l-stencil-readback.md`
+  (step L, report `docs/research/stencil-readback.md`), `docs/status/lazpy/1-in-progress/510-step-k-core-rev-2.md` (step K), `docs/status/lazpy/1-in-progress/500-phase-5-user-asks.md`
   (the asks verbatim), `docs/status/lazpy/5-done/430-step-j-user-fixes.md` (step J, done),
   `docs/status/lazpy/1-in-progress/420-step-i-release.md` (I2-I4 and G8c evidence),
   `docs/status/lazpy/1-in-progress/400-phase-4-release.md` (Guy's asks).

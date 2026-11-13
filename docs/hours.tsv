@@ -144,3 +144,8 @@ date	bet	phase	agent_id	model	role	kind	start	end	hours	source
 2026-11-13	V1: API freeze review (13 changes, profile spec, exit-code table)	phase-6	a5a4eeb6772bd50c9	opus	reviewer	review	11:20	11:25	0.10	agent duration 346 s
 2026-11-13	V1 briefs, V5 commit, step K A4 notes, V0b step 3 check (the source asset rebuilds to f7a70044)	phase-6	main	opus	main	plan	11:25	11:28	0.05	session clock
 2026-11-13	step L: 3DPlatinum's stencil ask recorded, Software diagnostic answered, investigation launched; V1 item 11 (LAZ_ROOT in the scripts) and the lazpy.1 backup	phase-5	main	opus	main	plan	11:30	11:51	0.15	session clock
+2026-11-13	V1 host side: one profile parser and its case table, exit code 9, input-script numbers, HOST-API at ABI 4	phase-6	abd4e33ec5366d791	sonnet	builder	build	11:28	11:56	0.47	session clock
+2026-11-13	V1 Python side: keyword-only run options, Path returns, errors moved, __all__ trimmed, Pool cancel, profile parser	phase-6	a2e356106fda1f73d	sonnet	builder	build	11:28	11:56	0.47	agent duration 1700 s
+2026-11-13	V1: USING.md merge (promise, exit codes, 4a, profile format, errors table, API reference), gates, branch commit 64f5d18, review launched	phase-6	main	opus	main	build	11:56	12:00	0.07	session clock
+2026-11-13	step L: D24S8 stencil readback investigation (cause, patch, repro recipe)	phase-5	a68ab49f94481d0d2	opus	researcher	research	11:51	12:01	0.17	agent duration 600 s
+2026-11-13	step L: report saved, briefs written, repro and patch agents launched, 3DPlatinum asked for experiments	phase-5	main	opus	main	plan	12:00	12:03	0.05	session clock

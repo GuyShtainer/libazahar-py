@@ -38,3 +38,6 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   lane runs on the old Azahar app ... so you can merge and rebuild main whenever you like. The only cost is CPU load
   during our timed soak, which runs until about 11:55. A heavy build before then could add a frame gap. After that,
   build freely." So V0b's core build starts after 11:55.
+- 2026-11-13 12:03: V1 is on the branch (64f5d18, item 610), under opus review. Step L's core patch (item 520) lands
+  in `core/patches` before V0b's build, so V0b waits on the review's fixes and on step L's red-then-green repro.
+
