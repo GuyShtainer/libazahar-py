@@ -1,15 +1,13 @@
 <!-- handoff: slim v1 | current tasks only | rewritten whole from docs/status/templates/handoff.md | budget 80 lines | never append -->
 # libazahar-py handoff
 
-As of: 2026-11-13 12:38 (this project's own session)
+As of: 2026-11-13 12:39 (this project's own session)
 
 This file lives in docs/status/lazpy/1-in-progress/, beside its item files. It holds only what
 the next session needs to act now, and points at the rest. Goals, rules, decisions and history live elsewhere.
 
 ## Running now
-| What | Where | Agent id | It stops when |
-|---|---|---|---|
-| V4: version 1.0.0 and the docs (laz-600), sonnet, on MAIN (no build, no emulator) | MAIN; progress in runs/v4/progress.md | a314e8caceb3949b7 | it reports; brief `docs/plans/v4-brief.md` |
+Nothing of this session. (Gen3D's and 3DPlatinum's V6 runs are peer work: step 0 below.)
 
 Guy asked for v1.0.0 (item laz-600, `docs/plans/phase-v1.md`). V0b is done (main 003eaec, core sha256 88cc6188…).
 Worktree ../libazahar-py-k is removed; branch core-rev2 stays at e28e4c2 (merged). Its logs: runs/wt-k/.
@@ -18,7 +16,7 @@ Worktree ../libazahar-py-k is removed; branch core-rev2 stays at e28e4c2 (merged
 0. V6 runs in the two projects on main's core 88cc6188…: 3DPlatinum's A3 self-test passed (item 520); its
    chain with the suite and A4), Gen3D asked for its smoke and Pool 1-4 run. Record each answer verbatim in item 600
   . A fail blocks V8.
-1. When the V4 agent reports: review its diff, run docs_check, map_check and the fast pytest, scan, commit.
+1. V4 is done (2168165) except README's numbers (V3) and NOTICES.md (V8, the full mknotices inputs).
 2. V3 (real-scene multi-instance row, `docs/plans/phase-v1.md` V3): only on a quiet machine, after both projects'
    V6 runs end (rule T); Gen3D's .3dsx and seed as in `docs/research/real-scene-j.md`. Then README's numbers and the
    cap (a CHECK FAIL keeps 2).
