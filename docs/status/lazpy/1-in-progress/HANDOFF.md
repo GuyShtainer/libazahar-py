@@ -1,7 +1,7 @@
 <!-- handoff: slim v1 | current tasks only | rewritten whole from docs/status/templates/handoff.md | budget 80 lines | never append -->
 # libazahar-py handoff
 
-As of: 2026-11-13 11:28 (this project's own session)
+As of: 2026-11-13 11:51 (this project's own session)
 
 This file lives in docs/status/lazpy/1-in-progress/, beside its item files. It holds only what
 the next session needs to act now, and points at the rest. Goals, rules, decisions and history live elsewhere.
@@ -9,6 +9,7 @@ the next session needs to act now, and points at the rest. Goals, rules, decisio
 ## Running now
 | What | Where | Agent id | It stops when |
 |---|---|---|---|
+| Stencil readback investigation (laz-520), read-only opus | core source and host/vk.c; notes in this session's scratchpad a3-notes.md | a68ab49f94481d0d2 | it reports; save it as docs/research/stencil-readback.md |
 | V1 API changes, host side (laz-610), sonnet | ../libazahar-py-k, branch core-rev2; progress in runs/v1/host-progress.md there | abd4e33ec5366d791 | it reports; brief `docs/plans/v1-briefs.md` |
 | V1 API changes, Python side (laz-610), sonnet | ../libazahar-py-k, branch core-rev2; progress in runs/v1/python-progress.md there | a2e356106fda1f73d | it reports; brief `docs/plans/v1-briefs.md` |
 

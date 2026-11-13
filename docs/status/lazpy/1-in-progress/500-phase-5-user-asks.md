@@ -20,7 +20,7 @@ Open-ended: each step has its own gate; the phase closes when Guy closes it.
 none yet
 
 ## Pointers
-- Steps: `docs/status/lazpy/1-in-progress/510-step-k-core-rev-2.md`
+- Steps: `docs/status/lazpy/1-in-progress/510-step-k-core-rev-2.md`, `docs/status/lazpy/1-in-progress/520-step-l-stencil-readback.md`
 
 ## Lessons and notes
 Read this part only when you work on this item. Blockers, numbers and Guy's words go here verbatim.
