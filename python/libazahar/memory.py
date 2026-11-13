@@ -81,6 +81,8 @@ class Memory:
     def write(self, addr: int, data: _Bytes) -> None:
         """Write ``data`` at ``addr``. All or nothing: a range with an unmapped page raises GuestMemoryError and changes
         nothing."""
+        if not isinstance(data, (bytes, bytearray, memoryview)):
+            raise TypeError("data must be bytes, bytearray or memoryview")
         payload = bytes(data)
         self._check_range(addr, len(payload) if payload else 0)
         self._call("write", (addr, payload), addr, len(payload))

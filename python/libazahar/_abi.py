@@ -175,11 +175,15 @@ def _check_map_row(name: str, offset: int, size: int, rows: Dict[str, Tuple[int,
         raise _fail(f"{name}: host offset {offset} size {size}, _map.py {rows[name]}")
 
 
-def _check_const_row(name: str, value: int) -> None:
+def _check_const_row(name: str, value: int, host_data: Tuple[int, int]) -> None:
     python_name = name.split(".", 1)[1]
     mine = globals().get(python_name)
     if not isinstance(mine, int):
         raise _fail(f"{name}: unknown to _abi.py")
+    if name == "const.AZH_WATCH_AREA_BYTES":  # the area's size is host-only: it must fit the host's map size
+        if value != host_data[0] + host_data[1] - AZH_WATCH_AREA_OFF:
+            raise _fail(f"{name}: host {value} is not the map size minus the area offset {AZH_WATCH_AREA_OFF}")
+        return
     if mine != value:
         raise _fail(f"{name}: host {value}, _abi.py {mine}")
 
@@ -222,7 +226,7 @@ def check_layout(layout: Layout, structs: Optional[Dict[str, type]] = None,
         elif prefix == "map":
             _check_map_row(name, row.offset, row.size, mapping, host_data)
         elif prefix == "const":
-            _check_const_row(name, row.offset)
+            _check_const_row(name, row.offset, host_data)
         else:
             raise _fail(f"{name}: unknown row")
 

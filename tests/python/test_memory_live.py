@@ -139,6 +139,10 @@ def test_m2_m6_watch_rows_and_footprint(host_paths, lazpy_core, workdir, seed):
         assert [r.frame for r in res10.watch] == [first10 + 10 * (i + 1) for i in range(60)]
         by_f = lines_by_frame(emu)
         for name, entry in (("global", 0), ("heap", 1)):
+            g1 = [decode(r.data[entry])["frame"] for r in res.watch]
+            assert all(b >= a for a, b in zip(g1, g1[1:])) and len(set(g1)) >= 590, f"m2 every1 {name}: stale rows"
+            g10 = [decode(r.data[entry])["frame"] for r in res10.watch]
+            assert all(b > a for a, b in zip(g10, g10[1:])) and len(set(g10)) >= 59, f"m2 every10 {name}: stale rows"
             verify([decode(r.data[entry]) for r in res.watch], by_f, f"m2 every1 {name}")
             verify([decode(r.data[entry]) for r in res10.watch], by_f, f"m2 every10 {name}")
         # m6: the footprint after m2

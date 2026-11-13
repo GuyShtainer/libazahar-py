@@ -7,6 +7,7 @@ from __future__ import annotations
 import ctypes
 import faulthandler
 import os
+import sys
 from multiprocessing.connection import Connection
 from pathlib import Path
 from typing import Any, Dict, List, Sequence, Tuple
@@ -140,6 +141,8 @@ def raise_nice_floor(floor: int = 10) -> int:
 def main(fd: int) -> int:
     """Worker entry: nice at least 10, faulthandler, hello (or fatal), then the request loop. Returns the exit code."""
     faulthandler.enable()
+    if len(sys.argv) > 3:               # the slot's lock fd (argv[3]): keep it here, never hand it to a child
+        os.set_inheritable(int(sys.argv[3]), False)
     conn = Connection(fd)
     try:
         raise_nice_floor()

@@ -10,7 +10,7 @@ from pathlib import Path
 import pytest
 
 import d_helpers as dh
-from libazahar import _abi, Buttons, Circle, Emulator, StateError, Touch, _map
+from libazahar import _slots, _abi, Buttons, Circle, Emulator, StateError, Touch, _map
 
 pytestmark = pytest.mark.slow
 
@@ -31,10 +31,11 @@ def test_state_boot(host_paths, workdir, seed):
     state = workdir / "st" / "state"
     start = time.monotonic()
     emu_a = Emulator(host_paths.app, wd_a, sd_seed=seed(boot_frames=6000))
-    t_core_start = time.monotonic() - start
+    wait_a = _slots.waited_in(wd_a)
+    t_core_start = time.monotonic() - start - wait_a
     try:
         emu_a.run_until(dh.LOG, "booted f=", 12_000)
-        t_boot = time.monotonic() - start
+        t_boot = time.monotonic() - start - wait_a
         frames_before, _ = dh.log_of(emu_a)
         info = emu_a.save_state(state)
         result_a = emu_a.run(600, INPUTS, SHOTS)
@@ -49,7 +50,8 @@ def test_state_boot(host_paths, workdir, seed):
         str(p.relative_to(sys_b)) for p in (sys_b / "Azahar").glob("*"))
     start = time.monotonic()
     emu_b = Emulator(host_paths.app, wd_b, state=state)
-    t_state = time.monotonic() - start
+    wait_b = _slots.waited_in(wd_b)
+    t_state = time.monotonic() - start - wait_b
     try:
         assert (emu_b.sd / dh.LOG).read_bytes() == (Path(f"{state}.sd") / dh.LOG).read_bytes()
         assert emu_b.frame_total == info.frame_total
@@ -60,7 +62,7 @@ def test_state_boot(host_paths, workdir, seed):
     load_line = next((x for x in (wd_b / "host.log").read_text().splitlines() if "state load" in x), "")
     ratio = t_state / t_boot
     fixed = (t_state - t_core_start) / (t_boot - t_core_start)
-    report = (f"t_core_start={t_core_start:.2f} t_boot={t_boot:.2f} t_state={t_state:.2f} ratio={ratio:.3f} "
+    report = (f"t_core_start={t_core_start:.2f} t_boot={t_boot:.2f} t_state={t_state:.2f} wait_a={wait_a:.2f} wait_b={wait_b:.2f} ratio={ratio:.3f} "
               f"fixed_ratio={fixed:.3f} k={info.k} frame_total={info.frame_total} v_save={v_save}\n{load_line}\n"
               f"copied into b/sys: {copied}\n")
     print(report, file=sys.stderr)

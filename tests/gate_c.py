@@ -8,6 +8,8 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "python"))
+from libazahar import _slots  # noqa: E402
 import checks_c as cc  # noqa: E402
 import testapp_log as tl  # noqa: E402
 
@@ -45,14 +47,19 @@ def run_azhost(ident: str, flags: list[str], control: dict, timeout: int = 600) 
     tl.write_control(base / "seed", **control)
     cmd = ["nice", "-n", "10", "build/azhost", "run", APP, "--sys", str(base / "sys"), "--out", str(base / "out"),
            "--sd-seed", str(base / "seed")] + CORE_FLAGS + flags
-    child = subprocess.Popen(cmd, cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    slot = _slots.acquire()         # the wait is outside communicate(timeout=...); the child keeps the lock
+    try:
+        child = subprocess.Popen(cmd, cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
+                                 pass_fds=(slot.fd,))
+    finally:
+        slot.release()
     try:
         out, err = child.communicate(timeout=timeout)
     except subprocess.TimeoutExpired:
         child.kill()
         out, err = child.communicate()
         report(ident, False, "timeout")
-        return {"rc": -9, "summaries": [], "last": {}, "stderr": err, "out": base / "out", "log": base / "sys/Azahar/sdmc" / LOG}
+        return {"rc": -9, "summaries": [], "last": {}, "waited_s": slot.waited_s, "stderr": err, "out": base / "out", "log": base / "sys/Azahar/sdmc" / LOG}
     except BaseException:
         child.kill()
         child.wait()
@@ -63,7 +70,7 @@ def run_azhost(ident: str, flags: list[str], control: dict, timeout: int = 600) 
         if x.startswith("last "):
             head, _, text = x.partition(": ")
             last[int(head.split()[1])] = tl.parse_line(text)
-    return {"rc": child.returncode, "summaries": sums, "last": last, "stderr": err, "out": base / "out",
+    return {"rc": child.returncode, "summaries": sums, "last": last, "waited_s": slot.waited_s, "stderr": err, "out": base / "out",
             "log": base / "sys/Azahar/sdmc" / LOG}
 
 

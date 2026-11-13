@@ -75,6 +75,10 @@ def test_write_argument_checks(mem):
         mem.write(0xFFFFFFFC, bytes(8))
     with pytest.raises(ValueError):
         mem.write(-1, b"x")
+    calls = len(mem.fake.calls)
+    with pytest.raises(TypeError):
+        mem.write(0x100, 5)
+    assert len(mem.fake.calls) == calls
     mem.write(0xFFFFFFFC, bytes(4))
     mem.write(0x10, memoryview(b"ab"))
     assert mem.fake.calls[-1] == ("write", (0x10, b"ab"))
@@ -185,6 +189,7 @@ def test_smaller_watch_area_with_matching_map_size_is_accepted(layout):
     data = row_of(bad, "map.watch_data")
     data.size = 2 * 1024 * 1024 - 64
     row_of(bad, "map.__size__").size = data.offset + data.size
+    row_of(bad, "const.AZH_WATCH_AREA_BYTES").offset = data.offset + data.size - 696320
     _abi.check_layout(bad)
 
 

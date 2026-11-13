@@ -268,9 +268,11 @@ void azh__log_set_debug_stop(const char *text_or_null); /* arms or disarms; clea
 int azh__log_debug_hit(void);                           /* atomic */
 int azh__log_fd(void);
 /* run.c additions, for step D */
-int azh__run_one_frame(void);   /* one retro_run with the message, heartbeat and counter handling of a batch frame,
-                                   including A's first-frame boot check, which it marks done so the next batch does
-                                   not repeat it; AZH_E_BOOT on a NULL or 0x0 frame; no shots, no stops */
+int azh__run_one_frame(int64_t *run_ns);
+                                /* one retro_run (its wall ns into *run_ns when not NULL) with the message, heartbeat
+                                   and counter handling of a batch frame, including A's first-frame boot check, which
+                                   it marks done so the next batch does not repeat it; AZH_E_BOOT on a NULL or 0x0
+                                   frame; no shots, no stops */
 void azh__counters_set(int64_t frame_total, int64_t vblanks_total);
 void azh__counters_get(int64_t *frame_total, int64_t *vblanks_total);
 int azh__sd_root(char *buf, size_t cap);                /* <sysdir>/Azahar/sdmc */

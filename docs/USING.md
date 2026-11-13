@@ -67,6 +67,9 @@ our core the worker is shut down cleanly once the result is built).
 and `host.log` hold more. Messages that arrive while the host drains for a savestate are not reported as stops;
 each is in `host.log` as a `core message:` line.
 
+Every successful batch writes one timing line (`batch frames=...`) to `host.log`, so a script that calls `run(1)` once
+per frame grows `host.log` by about a line per frame.
+
 ## 8. Errors and timeouts
 
 `LibAzaharError` is the base. `BootError`: core, Vulkan or the app failed to start. `GuestError`: section 7.
