@@ -2,7 +2,7 @@
 """Write NOTICES.md for the libazahar-py core and test app, from what the core really links and includes.
 
 Usage: python3 -I tools/mknotices.py --link LINK.txt --deps BUILD --tree TREE --src SRC --inputs build.inputs
-           --openssl openssl-3.6.5.tar.gz --sysarch citra_system_archives.tar.gz [--ofl FILE] [--unifont FILE] > NOTICES.md
+           --openssl openssl-3.6.5.tar.gz --sysarch citra_system_archives.tar.gz --newlib COPYING.NEWLIB [--ofl FILE] [--unifont FILE] > NOTICES.md
 
 Reads the link line's static libraries and every compile dependency file (*.o.d) under BUILD, sorts each path into a
 component (table COMPONENTS), a src/ notice (table SRC_NOTICES), OpenSSL (the Cellar path in build.inputs), generated
@@ -74,6 +74,8 @@ SRC_NOTICES = [
     (r"BreadFish64", "BreadFish64", "MIT", True),
     (r"Pixellizer", "The Pixellizer Group", "MIT", True),
 ]
+# COPYING.NEWLIB of newlib 4.6.0 (sourceware newlib-cygwin.git, tag newlib-4.6.0; equal to devkitPro/newlib at b14e2e7)
+NEWLIB_SHA256 = "f3afe48e4bc6ed8466a42e9dacb6be1d8f9cbf5aac15cb8e474a5ccde8b40ef6"
 OWN_RE = re.compile(r"(Citra|Azahar) Emulator Project")
 FLAG_RE = re.compile(r"Copyright|SPDX-License-Identifier|Permission is hereby granted")
 SYSTEM = ("/Applications/", "/Library/", "/usr/", "/System/")
@@ -157,7 +159,7 @@ def comment_block(lines: list[str], idx: int) -> str:
         lo -= 1
     while hi + 1 < len(lines) and is_comment(lines[hi + 1]):
         hi += 1
-    return re.sub(r"[\w.+-]+@gmail\.com", "[address omitted]", "\n".join(lines[lo:hi + 1]))
+    return "\n".join(lines[lo:hi + 1])
 
 
 def scan_src(tree: Path, files: set[str]) -> dict[str, tuple[str, str, bool, set[str], set[str]]]:
@@ -224,12 +226,13 @@ def read_member(tar_path: Path, suffix: str) -> str | None:
 def openssl_section(ossl: Path, version: str) -> str:
     licence = read_member(ossl, "LICENSE.txt") or die("OpenSSL tarball has no LICENSE.txt") or ""
     readme = read_member(ossl, "README.md") or ""
-    line = next((ln.strip() for ln in readme.split("\n") if "The OpenSSL Project Authors" in ln), None)
-    if line is None:
+    lines = [ln.strip() for ln in readme.split("\n") if ln.startswith("Copyright (c)")]
+    if not any("The OpenSSL Project Authors" in ln for ln in lines):
         die("no OpenSSL Project Authors copyright line in the tarball's README.md")
+    line = "\n".join(lines)
     notice = read_member(ossl, "NOTICE")
     out = [f"### openssl\n", f"OpenSSL {version} (Homebrew `openssl@3`, statically linked), Apache-2.0.\n",
-           line + "\n", fence(licence)]
+           fence(line), fence(licence)]
     out.append(fence(notice) if notice else "OpenSSL's source tarball has no NOTICE file (checked).\n")
     return "\n".join(out)
 
@@ -272,12 +275,11 @@ def font_texts(snap: Path, ofl: Path | None, uni: Path | None) -> str:
     uni_text = read_member_deep(snap, "unifont-notice") or (uni.read_text() if uni else None)
     if ofl_text is None or uni_text is None:
         die("no OFL text or no Unifont notice (snapshot has none; pass --ofl and --unifont)")
-    # The OFL file's first line carries a contact address; the font's own name record line replaces it.
-    ofl_body = ofl_text.split("\n", 2)[2] if ofl_text.startswith("Copyright") else ofl_text
     uni_lines = uni_text.split("\n")
     return "\n".join([
-        "Montserrat Regular 4.000: Copyright 2011 - 2016 The Montserrat Project Authors. SIL Open Font License 1.1:\n",
-        fence(ofl_body),
+        "Montserrat Regular 4.000: Copyright 2011 - 2016 The Montserrat Project Authors (the font's own name record). "
+        "The SIL Open Font License 1.1 file of Montserrat v4.001, verbatim:\n",
+        fence(ofl_text),
         f"GNU Unifont 10.0.05: {uni_lines[0]} GPLv2 or later with the GNU font embedding exception.\n",
         fence("\n".join(uni_lines[2:]))])
 
@@ -309,16 +311,16 @@ def header_section(inputs: dict[str, str], commit: str) -> str:
         "`LICENSE` and `COPYING-azahar.txt` in the core zip.\n"])
 
 
-def testapp_section() -> str:
+def testapp_section(newlib: Path) -> str:
     text = ["## The test app\n",
             "`testapp.3dsx` is ours, GPLv3-or-later; its source is in this repository at the release tag. It is built "
             "with devkitPro's devkitARM, libctru, citro2d and citro3d (zlib licence; libctru's default icon is in its "
             "SMDH) and newlib's libc and libm (BSD-style notices).\n"]
-    found = sorted(Path("/opt/devkitpro").glob("**/COPYING.NEWLIB")) if Path("/opt/devkitpro").is_dir() else []
-    if found:
-        text.append(fence(found[0].read_text(errors="replace")))
-    else:
-        text.append("newlib: BSD-style, see COPYING.NEWLIB in newlib's source.\n")
+    data = newlib.read_bytes()
+    if hashlib.sha256(data).hexdigest() != NEWLIB_SHA256:
+        die(f"{newlib} does not match the pinned sha256 of COPYING.NEWLIB 4.6.0")
+    text.append("newlib 4.6.0 (the version devkitARM ships), COPYING.NEWLIB verbatim:\n")
+    text.append(fence(data.decode("utf-8", errors="replace")))
     return "\n".join(text)
 
 
@@ -340,6 +342,10 @@ def build(args: argparse.Namespace) -> str:
     if not ssl or not OPENSSL_LIBS <= libs:
         die("OpenSSL is not both linked and included")
     pin = read_kv(Path(__file__).resolve().parents[1] / "core" / "PIN")
+    for lib in sorted(libs):
+        owner = next((n for n, c in COMPONENTS.items() if lib in c[3]), None)
+        if owner is not None and owner not in comps:
+            die(f"linked library {lib} has no dependency path for its component {owner}")
     parts = [header_section(inputs, pin.get("AZAHAR_COMMIT", "?")), src_section(scan_src(tree, src_files)),
              "## Components\n"]
     for name in sorted(comps - {"open_source_archives"}):
@@ -348,7 +354,7 @@ def build(args: argparse.Namespace) -> str:
     if "open_source_archives" in comps:
         parts.append(archives_section(tree, Path(args.sysarch), Path(args.ofl) if args.ofl else None,
                                       Path(args.unifont) if args.unifont else None))
-    parts += [testapp_section(), tail_section()]
+    parts += [testapp_section(Path(args.newlib)), tail_section()]
     return "\n".join(parts)
 
 
@@ -356,6 +362,7 @@ def main(argv: list[str]) -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     for flag in ("link", "deps", "tree", "src", "inputs", "openssl", "sysarch"):
         ap.add_argument("--" + flag, required=True)
+    ap.add_argument("--newlib", required=True)
     ap.add_argument("--ofl")
     ap.add_argument("--unifont")
     sys.stdout.write(build(ap.parse_args(argv)))

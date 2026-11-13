@@ -17,6 +17,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import io
+import itertools
 import json
 import os
 import re
@@ -234,16 +235,35 @@ def load_needles(path: str | None) -> list[tuple[int, re.Pattern[str]]]:
     return out
 
 
-def private_findings(texts: dict[str, str], needles: list[tuple[int, re.Pattern[str]]], need_file: bool) -> Items:
+NOTICE_FILES = ("NOTICES.md", "zip:NOTICES.md")
+
+
+def allowed_addresses(repo: Path, notices: str) -> frozenset[str]:
+    """Addresses that NOTICES.md quotes and that appear in a pinned upstream input (the font files, the newlib file,
+    the Azahar source files it names). Only these may stay in NOTICES.md."""
+    upstream = [repo / "dl/font-licences/Montserrat-v4.001-OFL.txt", repo / "dl/font-licences/unifont-10.0.05-notice.txt",
+                repo / "dl/newlib-licence/COPYING.NEWLIB-4.6.0"]
+    upstream += [repo / TREE_REL / rel for rel in re.findall(r"^- `(src/[^`]+)`", notices, re.M)]
+    upstream += [repo / SRC_REL / "externals" / path for path in re.findall(r"^Folder: `externals/([^`]+)`", notices, re.M)]
+    text = "\n".join(p.read_text(errors="replace") for p in upstream if p.is_file())
+    return frozenset(a for a in EMAIL_RE.findall(notices) if a.lower().endswith("@gmail.com") and a in text)
+
+
+def private_findings(texts: dict[str, str], needles: list[tuple[int, re.Pattern[str]]], need_file: bool,
+                     allowed: frozenset[str] = frozenset()) -> Items:
     out: Items = []
     for name, text in sorted(texts.items()):
+        shown = text
+        if name in NOTICE_FILES:
+            for address in allowed:
+                shown = shown.replace(address, "")
         for label, regex in PRIVATE_RES:
-            if regex.search(text):
+            if regex.search(shown):
                 out.append(("FAIL", f"{name} holds a {label}"))
         for number, regex in needles:
             if regex.search(text):
                 out.append(("FAIL", f"{name} hits needle line {number}"))
-        out += private_notes(name, text)
+        out += private_notes(name, shown)
     if not needles and need_file:
         out.append(("SKIP", "LAZ_PRIVATE_NEEDLES is not set: the needle search did not run"))
     return out
@@ -309,6 +329,7 @@ def notices_check(rel: Path, repo: Path, pre_push: bool, link: Path, inputs: Pat
            "--tree", str(repo / TREE_REL), "--src", str(repo / SRC_REL), "--inputs", str(inputs),
            "--openssl", str(repo / "dl/openssl-src/openssl-3.6.5.tar.gz"),
            "--sysarch", str(repo / "dl/sysarch-src/citra_system_archives-f470e0c.tar.gz"),
+           "--newlib", str(repo / "dl/newlib-licence/COPYING.NEWLIB-4.6.0"),
            "--ofl", str(repo / "dl/font-licences/Montserrat-v4.001-OFL.txt"),
            "--unifont", str(repo / "dl/font-licences/unifont-10.0.05-notice.txt")]
     made = run(cmd, cwd=repo)
@@ -367,13 +388,14 @@ def compare_members(asset: Path, tarball: Path, drop: list[str], top: str) -> It
     if first is None or not first[0].endswith("/LIBAZAHAR-PY-REMOVED.txt"):
         out.append(("FAIL", "the note member is not first in the source asset"))
     count = 0
-    for want, got in zip(kept, mine):
+    for want, got in itertools.zip_longest(kept, mine):
         count += 1
+        if want is None or got is None:
+            out.append(("FAIL", "the source asset and the tarball minus the drop list have different member counts"))
+            break
         if want != got:
             out.append(("FAIL", f"member differs from the tarball's: {want[0]}"))
             break
-    if not count:
-        out.append(("FAIL", "no members compared"))
     return out
 
 
@@ -669,8 +691,9 @@ def macos_check(core: Path, repo: Path, texts: dict[str, str], pre_push: bool) -
 
 
 # ------------------------------------------------------------------------------------------- 17 plants
-def planted(name: str, items: Items) -> tuple[str, bool]:
-    return name, any(kind == "FAIL" for kind, _msg in items)
+def planted(name: str, items: Items, expect: str) -> tuple[str, bool]:
+    """True when the check failed with the finding the plant should provoke (not just any FAIL)."""
+    return name, any(kind == "FAIL" and expect in msg for kind, msg in items)
 
 
 def temp_git_repo(tmp: Path, name: str, files: dict[str, str]) -> Path:
@@ -686,49 +709,84 @@ def temp_git_repo(tmp: Path, name: str, files: dict[str, str]) -> Path:
     return repo
 
 
-def plant_cases(ctx: "Ctx", tmp: Path) -> list[tuple[str, bool]]:
-    repo, rel = ctx.repo, ctx.rel
-    sys.path.insert(0, str(repo / "tests"))
-    import gate_f2
-    results: list[tuple[str, bool]] = []
+def small_tar(path: Path, names: list[str]) -> None:
+    """A tiny xz tar of empty-ish files, for the member-count plant."""
+    with tarfile.open(path, "w:xz") as archive:
+        for name in names:
+            info = tarfile.TarInfo(name)
+            info.size = 3
+            archive.addfile(info, io.BytesIO(b"abc"))
+
+
+def plants_assets(ctx: "Ctx", tmp: Path, results: list[tuple[str, bool]]) -> None:
     shadow = tmp / "shadow"
     shadow.mkdir()
-    for path in rel.iterdir():
+    for path in ctx.rel.iterdir():
         (shadow / path.name).symlink_to(path)
     (shadow / "STRAY.bin").write_bytes(b"x")
-    results.append(planted("1 assets", assets_findings(shadow, expected_assets(ctx.pin, rel.name))))
-    array = gate_f2._header_bytes(repo / SRC_REL, *gate_f2.KEY_ARRAYS[1])
-    window = array[:16]  # the first of the 8 windows keyblob_findings searches for
+    results.append(planted("1 assets", assets_findings(shadow, expected_assets(ctx.pin, ctx.rel.name)), "asset set differs"))
+    tarball, short = tmp / "full.tar.xz", tmp / "short.tar.xz"
+    small_tar(tarball, ["t/a", "t/b", "t/c", "t/externals/libressl/x"])
+    small_tar(short, ["t/LIBAZAHAR-PY-REMOVED.txt", "t/a", "t/b"])
+    results.append(planted("9 source (last member dropped)", compare_members(short, tarball, ["externals/libressl"], "t"),
+                           "different member counts"))
+    results.append(planted("9 source (dropped member kept)", dropped_in_asset(
+        ["t/LIBAZAHAR-PY-REMOVED.txt", "t/externals/libressl/LICENSE"], ctx.pin["LAZ_CORE_DROP"].split(), "t"), "dropped member"))
+
+
+def plants_binary(ctx: "Ctx", tmp: Path, results: list[tuple[str, bool]], array: bytes) -> None:
+    import gate_f2
+    repo = ctx.repo
     core_copy = tmp / "core.dylib"
-    core_copy.write_bytes((repo / "build-core" / "azahar_lazpy_libretro.dylib").read_bytes() + window)
-    results.append(planted("2 keyblob", [("FAIL", "x") for _ in gate_f2.keyblob_findings(
-        repo / "build-core", core_copy, repo / SRC_REL, repo / TREE_REL, repo)]))
-    results.append(planted("3 exports", exports_findings(ctx.nm_text + "0000000000000000 T _extra_symbol\n")))
-    results.append(planted("4 version", version_findings("no version here\n")))
-    results.append(planted("5 linkage", linkage_findings(ctx.otool_text + "\t/x/libMoltenVK.dylib (compatibility version 1.0.0)\n", "")))
+    core_copy.write_bytes((repo / "build-core" / "azahar_lazpy_libretro.dylib").read_bytes() + array[:16])  # window 0
+    found = gate_f2.keyblob_findings(repo / "build-core", core_copy, repo / SRC_REL, repo / TREE_REL, repo)
+    results.append(planted("2 keyblob", [("FAIL", f"keyblob: {item}") for item in found], "the core holds window"))
+    results.append(planted("3 exports", exports_findings(ctx.nm_text + "0000000000000000 T _extra_symbol\n"), "other exports"))
+    results.append(planted("4 version", version_findings("no version here\n"), "no 2126.2"))
+    results.append(planted("5 linkage", linkage_findings(ctx.otool_text + "\t/x/libMoltenVK.dylib (compatibility version 1.0.0)\n", ""),
+                           "libMoltenVK"))
     ossl_copy = tmp / "openssl-3.6.5.tar.gz"
     data = bytearray((repo / "dl/openssl-src/openssl-3.6.5.tar.gz").read_bytes())
     data[1000] ^= 1
     ossl_copy.write_bytes(bytes(data))
-    results.append(planted("6 openssl", openssl_findings(ossl_copy, rel / "openssl-3.6.5.tar.gz", ctx.openssl_md, "", "3.6.5", "3.6.5", False)))
-    results.append(planted("7 private", private_findings({"SOURCE.md": "see /Users/x/y"}, [], False)))
+    results.append(planted("6 openssl", openssl_findings(ossl_copy, ctx.rel / "openssl-3.6.5.tar.gz", ctx.openssl_md, "", "3.6.5",
+                                                         "3.6.5", False), "differs from core/OPENSSL.md"))
+
+
+def plants_text(ctx: "Ctx", tmp: Path, results: list[tuple[str, bool]], array: bytes) -> None:
+    repo, rel, fetch = ctx.repo, ctx.rel, ctx.fetch_text
     notices = (repo / "NOTICES.md").read_text(errors="replace")
-    results.append(planted("8 notices", notices_phrase_findings(notices.replace("SIL OPEN FONT LICENSE Version 1.1", "REMOVED"))))
-    results.append(planted("9 source", dropped_in_asset(["t/LIBAZAHAR-PY-REMOVED.txt", "t/externals/libressl/LICENSE"],
-                                                       ctx.pin["LAZ_CORE_DROP"].split(), "t")))
-    fetch = ctx.fetch_text
-    results.append(planted("11 pins (sha)", pins_findings(re.sub(r"^TESTAPP_SHA=\S+", "TESTAPP_SHA=" + "0" * 64, fetch, flags=re.M),
-                                                         ctx.zip_name, ctx.zip_sha, ctx.app_sha, rel.name, False)))
-    results.append(planted("11 pins (azahar-emu)", pins_findings(fetch + "\n# https://github.com/azahar-emu/x\n",
-                                                                ctx.zip_name, ctx.zip_sha, ctx.app_sha, rel.name, True)))
+    allowed = allowed_addresses(repo, notices)
+    results.append(planted("7 private (/Users/)", private_findings({"SOURCE.md": "see /Users/x/y"}, [], False), "/Users/"))
+    results.append(planted("7 private (foreign gmail address)", private_findings(
+        {"NOTICES.md": notices + "\ncontact: nobody.x@gmail.com\n"}, [], False, allowed), "@gmail.com"))
+    results.append(planted("8 notices", notices_phrase_findings(notices.replace("SIL OPEN FONT LICENSE Version 1.1", "REMOVED")),
+                           "SIL OPEN FONT"))
+    sha_plant = re.sub(r"^TESTAPP_SHA=\S+", "TESTAPP_SHA=" + "0" * 64, fetch, flags=re.M)
+    results.append(planted("11 pins (sha)", pins_findings(sha_plant, ctx.zip_name, ctx.zip_sha, ctx.app_sha, rel.name, False), "pins differ"))
+    results.append(planted("11 pins (azahar-emu)", pins_findings(fetch + "\n# https://github.com/azahar-emu/x\n", ctx.zip_name,
+                                                                ctx.zip_sha, ctx.app_sha, rel.name, True), "azahar-emu"))
     plant12 = temp_git_repo(tmp, "p12", {".github/FUNDING.yml": "x\n", "a.md": "0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00\n"})
-    results.append(planted("12 repo", repo_paths_findings(plant12) + repo_content_findings(plant12)))
+    found12 = repo_paths_findings(plant12) + repo_content_findings(plant12)
+    results.append(planted("12 repo (FUNDING.yml)", found12, "FUNDING.yml"))
+    results.append(planted("12 repo (long 0xNN run)", found12, "0xNN"))
     windows, _bad = make_windows(repo)
     text = " ".join(f"{b:02x}" for b in array[16:32])
     plant13 = temp_git_repo(tmp, "p13", {"note.md": f"bytes: {text}\n"})
-    results.append(planted("13 history-bytes", history_bytes_findings(plant13, windows)))
-    results.append(planted("14 versions", versions_findings('version = "0.1.0.dev0"', '__version__ = "0.1.0.dev0"', rel.name)))
-    results.append(planted("16 macos", wording_findings({"release notes": "ok", "SOURCE.md": "no wording here"})))
+    results.append(planted("13 history-bytes", history_bytes_findings(plant13, windows), "history-bytes: hit"))
+    results.append(planted("14 versions", versions_findings('version = "0.1.0.dev0"', '__version__ = "0.1.0.dev0"', rel.name),
+                           "pyproject version"))
+    results.append(planted("16 macos", wording_findings({"release notes": "ok", "SOURCE.md": "no wording here"}), "lacks 'macOS 15 or later'"))
+
+
+def plant_cases(ctx: "Ctx", tmp: Path) -> list[tuple[str, bool]]:
+    sys.path.insert(0, str(ctx.repo / "tests"))
+    import gate_f2
+    array = gate_f2._header_bytes(ctx.repo / SRC_REL, *gate_f2.KEY_ARRAYS[1])
+    results: list[tuple[str, bool]] = []
+    plants_assets(ctx, tmp, results)
+    plants_binary(ctx, tmp, results, array)
+    plants_text(ctx, tmp, results, array)
     return results
 
 
@@ -780,7 +838,7 @@ def run_checks(ctx: Ctx, tmp: Path) -> list[tuple[str, Items]]:
                                        sbom_sha(Path(ctx.inputs.get("openssl_prefix", "/nonexistent"))),
                                        ctx.inputs.get("openssl_version", "?"), ctx.pin["OPENSSL_VERSION"], args.pre_push)
                       + keg_findings(ctx.inputs, args.pre_push)),
-        ("7 private", private_findings(texts, needles, True)),
+        ("7 private", private_findings(texts, needles, True, allowed_addresses(repo, texts["NOTICES.md"]))),
         ("8 notices", notices_check(rel, repo, args.pre_push, link, ctx.inputs_path)),
         ("9 source", source_check(rel, repo, ctx.pin, tmp)),
         ("10 build-files", build_files_check(rel, repo)),
@@ -837,7 +895,7 @@ def main(argv: list[str]) -> int:
             for check, ok in caught:
                 print(f"{'PASS' if ok else 'FAIL'} plant {check}: {'failed on its plant' if ok else 'did NOT fail on its plant'}")
             print("not planted: 10 build-files and 15 pre-push (they read this repo's git state)")
-            return 0 if all(ok for _c, ok in caught) else 1
+            return 1 if all(ok for _c, ok in caught) else 2  # as docs_check.py: 1 = every plant failed its check
         return report(run_checks(ctx, tmp), args.pre_push)
 
 

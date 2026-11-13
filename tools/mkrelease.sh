@@ -5,12 +5,14 @@
 #   OpenSSL and citra_system_archives tarballs (byte for byte), the build-files asset, the test app, NOTICES.md,
 #   SOURCE.md and SHA256SUMS.
 # Inputs (repo-relative, each overridable): LAZ_REL_CORE LAZ_REL_INPUTS LAZ_REL_APP LAZ_REL_TARBALL LAZ_REL_OSSL
-# LAZ_REL_SNAP LAZ_REL_BUILD (the cmake build folder). Run twice, the assets are byte-identical (compare SHA256SUMS
+# LAZ_REL_SNAP LAZ_REL_NEWLIB LAZ_REL_BUILD (the cmake build folder). Run twice, the assets are byte-identical (compare SHA256SUMS
 # minus the build-files line, which embeds HEAD's commit id). Needs bsdtar, zip, shasum, git.
 set -eu
 
 # citra_system_archives snapshot, commit f470e0c9d341db73b8a24880295d2eab4cd81660 (our own downloaded bytes)
 SNAP_SHA=faada632bdad4f5d437998aa1ce20a72715e55999387538b7f3ee6aca135d7a3
+# COPYING.NEWLIB of newlib 4.6.0 (the version devkitARM ships), quoted in NOTICES.md for the test app
+NEWLIB_SHA=f3afe48e4bc6ed8466a42e9dacb6be1d8f9cbf5aac15cb8e474a5ccde8b40ef6
 
 [ $# -eq 1 ] || { echo "usage: $0 <tag>   (for example v0.1.0)" >&2; exit 2; }
 TAG=$1
@@ -29,7 +31,8 @@ TARBALL="${LAZ_REL_TARBALL:-$(pin SRC_FILE)}"
 OSSL="${LAZ_REL_OSSL:-dl/openssl-src/openssl-$(pin OPENSSL_VERSION).tar.gz}"
 SNAP="${LAZ_REL_SNAP:-dl/sysarch-src/citra_system_archives-f470e0c.tar.gz}"
 BUILD="${LAZ_REL_BUILD:-build-core/build}"
-for f in "$CORE" "$INPUTS" "$APP" "$TARBALL" "$OSSL" "$SNAP" NOTICES.md LICENSE; do
+NEWLIB="${LAZ_REL_NEWLIB:-dl/newlib-licence/COPYING.NEWLIB-4.6.0}"
+for f in "$CORE" "$INPUTS" "$APP" "$TARBALL" "$OSSL" "$SNAP" "$NEWLIB" NOTICES.md LICENSE; do
   [ -f "$f" ] || die "missing input $f"
 done
 
@@ -39,6 +42,7 @@ SRC_SHA=$(pin SRC_SHA256)
 OSSL_SHA=$(grep -A1 '^- Source:' core/OPENSSL.md | grep -o '[0-9a-f]\{64\}' | head -1)
 [ -n "$OSSL_SHA" ] && [ "$(sha_of "$OSSL")" = "$OSSL_SHA" ] || die "$OSSL does not match core/OPENSSL.md's sha256"
 [ "$(sha_of "$SNAP")" = "$SNAP_SHA" ] || die "$SNAP does not match this script's SNAP_SHA"
+[ "$(sha_of "$NEWLIB")" = "$NEWLIB_SHA" ] || die "$NEWLIB does not match this script's NEWLIB_SHA"
 [ "$DROP" = "src/core/hw/default_keys.h src/core/hle/service/http/ctr-common-1-cert.h src/core/hle/service/http/ctr-common-1-key.h externals/libressl" ] \
   || die "core/PIN's LAZ_CORE_DROP differs from the one the note text describes"
 
@@ -131,6 +135,7 @@ git archive --format=tar.gz --prefix=libazahar-py-core-build/ -o "$OUT/$BUILD_AS
 cp "$APP" "$OUT/testapp.3dsx"
 cp NOTICES.md "$OUT/NOTICES.md"
 _names=$(cd "$OUT" && ls | LC_ALL=C sort)
+# shellcheck disable=SC2086  # intentional split of the sorted asset names
 (cd "$OUT" && shasum -a 256 $_names > "$ROOT/$STG.sums")
 mv "$STG.sums" "$OUT/SHA256SUMS"
 rm -rf "$STG"

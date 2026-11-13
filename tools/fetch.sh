@@ -153,10 +153,11 @@ if [ "$DO_CORE" -eq 1 ]; then
   pin_set "$LAZPY_CORE_SHA" --lazpy-core
   [ "$FORCE" -eq 0 ] || rm -f "$LAZPY_DIR/azahar_lazpy_libretro.dylib" "$LAZPY_DIR/NOTICES.md" "$LAZPY_DIR/SOURCE.md"
   get "$REL_BASE/$LAZPY_CORE_ZIP" "$LAZPY_CORE_SHA" "$LAZPY_DIR/$LAZPY_CORE_ZIP"
-  if [ ! -f "$LAZPY_DIR/azahar_lazpy_libretro.dylib" ]; then
+  if [ ! -f "$LAZPY_DIR/azahar_lazpy_libretro.dylib" ] || [ "$(cat "$LAZPY_DIR/.unpacked-sha256" 2>/dev/null)" != "$LAZPY_CORE_SHA" ]; then
     verify "$LAZPY_DIR/$LAZPY_CORE_ZIP" "$LAZPY_CORE_SHA"
     unzip -q -o "$LAZPY_DIR/$LAZPY_CORE_ZIP" azahar_lazpy_libretro.dylib NOTICES.md SOURCE.md -d "$LAZPY_DIR"
     [ -f "$LAZPY_DIR/azahar_lazpy_libretro.dylib" ] || die "zip did not contain azahar_lazpy_libretro.dylib"
+    echo "$LAZPY_CORE_SHA" > "$LAZPY_DIR/.unpacked-sha256"
     echo "unpack $LAZPY_DIR/{azahar_lazpy_libretro.dylib,NOTICES.md,SOURCE.md}"
   fi
 fi
