@@ -132,8 +132,9 @@ else
   export PATH="$ROOT/build-core/toolbin:$PATH"
   { echo EXPORTS; grep -v '^#' "$TREE/src/citra_libretro/libretro.osx.def" | sed 's/^_//'; } >build-core/libretro.win.def
   [ "$(grep -c lazpy_ build-core/libretro.win.def)" -eq 4 ] || die "libretro.win.def does not hold the 4 lazpy_ exports"
-  # mingw-w64: with 64-bit file offsets `struct stat` is `_stat64`, which common/file_util.cpp:551-552 (libretro branch) assumes
-  WIN_CXXDEFS=" -D_FILE_OFFSET_BITS=64"
+  # mingw-w64 13: fstat() takes `struct stat*`, but common/file_util.cpp:551-552 (libretro branch) passes a `_stat64`; MSVC
+  # builds get `#define fstat _fstat64` there. C++ only (the C flags are untouched), no source patch.
+  WIN_CXXDEFS=" -Dfstat=_fstat64"
   set -- "$@" -G "Unix Makefiles" -DCMAKE_TOOLCHAIN_FILE="$ROOT/tools/toolchain-win64.cmake" -DLIBTYPE=STATIC \
     -DCLANG_FORMAT=/bin/true "-DCMAKE_SHARED_LINKER_FLAGS=$ROOT/build-core/libretro.win.def" \
     "-DCMAKE_CXX_STANDARD_LIBRARIES=-lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32 -lws2_32 -lcrypt32 -lbcrypt"
