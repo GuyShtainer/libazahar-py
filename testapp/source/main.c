@@ -11,6 +11,7 @@
 #include "record.h"
 #include "scene3d.h"
 #include "sdlog.h"
+#include "stencil.h"
 
 enum {
     LAZ_FRAME_CAP = 100000000,
@@ -223,7 +224,15 @@ int main(void)
         rc = 1;
     } else {
         busy_boot();
-        if (g_ctl.mode3d && scene3d_init() != 0) {
+        if (g_ctl.stencil != 0) {
+            if (stencil_run(g_ctl.stencil) != 0) {
+                rc = 1;
+            }
+            for (uint32_t f = 0; f < LAZ_FRAME_CAP && aptMainLoop(); f++) {
+                stencil_idle_frame();
+            }
+            stencil_exit();
+        } else if (g_ctl.mode3d && scene3d_init() != 0) {
             put_event("scene3d init failed", 0, 0);
             rc = 1;
         } else {

@@ -1,0 +1,85 @@
+--- a/src/video_core/renderer_vulkan/vk_blit_helper.cpp
++++ b/src/video_core/renderer_vulkan/vk_blit_helper.cpp
+@@ -1,6 +1,7 @@
+ // Copyright 2022-2026 Citra Emulator Project / Azahar Emulator Project
+ // Licensed under GPLv2 or any later version
+ // Refer to the license.txt file included.
++// Modified by libazahar-py, 2026: the pre-barriers of the depth-stencil compute reads also wait for transfer writes. Licensed GPLv2 or later, as this file.
+ 
+ #include "common/hash.h"
+ #include "common/settings.h"
+@@ -413,7 +414,8 @@
+                       dst_image = dest.Image()](vk::CommandBuffer cmdbuf) {
+         const std::array pre_barriers = {
+             vk::ImageMemoryBarrier{
+-                .srcAccessMask = vk::AccessFlagBits::eDepthStencilAttachmentWrite,
++                .srcAccessMask = vk::AccessFlagBits::eDepthStencilAttachmentWrite |
++                                 vk::AccessFlagBits::eTransferWrite,
+                 .dstAccessMask = vk::AccessFlagBits::eShaderRead,
+                 .oldLayout = vk::ImageLayout::eGeneral,
+                 .newLayout = vk::ImageLayout::eDepthStencilReadOnlyOptimal,
+@@ -482,7 +484,8 @@
+                 },
+             }};
+         cmdbuf.pipelineBarrier(vk::PipelineStageFlagBits::eEarlyFragmentTests |
+-                                   vk::PipelineStageFlagBits::eLateFragmentTests,
++                                   vk::PipelineStageFlagBits::eLateFragmentTests |
++                                   vk::PipelineStageFlagBits::eTransfer,
+                                vk::PipelineStageFlagBits::eComputeShader,
+                                vk::DependencyFlagBits::eByRegion, {}, {}, pre_barriers);
+ 
+@@ -524,7 +527,8 @@
+     scheduler.Record([this, descriptor_set, copy, src_image = source.Image(),
+                       extent = source.RealExtent(false)](vk::CommandBuffer cmdbuf) {
+         const vk::ImageMemoryBarrier pre_barrier = {
+-            .srcAccessMask = vk::AccessFlagBits::eDepthStencilAttachmentWrite,
++            .srcAccessMask = vk::AccessFlagBits::eDepthStencilAttachmentWrite |
++                             vk::AccessFlagBits::eTransferWrite,
+             .dstAccessMask = vk::AccessFlagBits::eShaderRead,
+             .oldLayout = vk::ImageLayout::eGeneral,
+             .newLayout = vk::ImageLayout::eDepthStencilReadOnlyOptimal,
+@@ -557,7 +561,8 @@
+             },
+         };
+         cmdbuf.pipelineBarrier(vk::PipelineStageFlagBits::eEarlyFragmentTests |
+-                                   vk::PipelineStageFlagBits::eLateFragmentTests,
++                                   vk::PipelineStageFlagBits::eLateFragmentTests |
++                                   vk::PipelineStageFlagBits::eTransfer,
+                                vk::PipelineStageFlagBits::eComputeShader,
+                                vk::DependencyFlagBits::eByRegion, {}, {}, pre_barrier);
+ 
+--- a/src/video_core/renderer_vulkan/vk_texture_runtime.cpp
++++ b/src/video_core/renderer_vulkan/vk_texture_runtime.cpp
+@@ -1,6 +1,7 @@
+ // Copyright 2023-2026 Citra Emulator Project / Azahar Emulator Project
+ // Licensed under GPLv2 or any later version
+ // Refer to the license.txt file included.
++// Modified by libazahar-py, 2026: depth and stencil surfaces always carry attachment stages and access, and depth-stencil surfaces the compute stage, in their barriers. Licensed GPLv2 or later, as this file.
+ 
+ #include "video_core/renderer_vulkan/vk_texture_runtime.h"
+ 
+@@ -1177,7 +1178,8 @@
+ 
+     return vk::AccessFlagBits::eShaderRead | vk::AccessFlagBits::eTransferRead |
+            vk::AccessFlagBits::eTransferWrite |
+-           (is_framebuffer ? attachment_flags : vk::AccessFlagBits::eNone) |
++           ((is_framebuffer || type != SurfaceType::Texture) ? attachment_flags
++                                                              : vk::AccessFlagBits::eNone) |
+            (is_storage ? vk::AccessFlagBits::eShaderWrite : vk::AccessFlagBits::eNone);
+ }
+ 
+@@ -1189,9 +1191,11 @@
+                        vk::PipelineStageFlagBits::eLateFragmentTests;
+ 
+     return vk::PipelineStageFlagBits::eTransfer | vk::PipelineStageFlagBits::eFragmentShader |
+-           (is_framebuffer ? attachment_flags : vk::PipelineStageFlagBits::eNone) |
+-           (is_storage ? vk::PipelineStageFlagBits::eComputeShader
+-                       : vk::PipelineStageFlagBits::eNone);
++           ((is_framebuffer || type != SurfaceType::Texture) ? attachment_flags
++                                                              : vk::PipelineStageFlagBits::eNone) |
++           ((is_storage || type == SurfaceType::DepthStencil)
++                ? vk::PipelineStageFlagBits::eComputeShader
++                : vk::PipelineStageFlagBits::eNone);
+ }
+ 
+ vk::ImageView Surface::CopyImageView() noexcept {
