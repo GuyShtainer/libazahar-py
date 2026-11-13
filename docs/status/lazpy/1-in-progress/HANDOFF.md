@@ -1,7 +1,7 @@
 <!-- handoff: slim v1 | current tasks only | rewritten whole from docs/status/templates/handoff.md | budget 80 lines | never append -->
 # libazahar-py handoff
 
-As of: 2026-11-13 11:00 (this project's own session)
+As of: 2026-11-13 11:07 (this project's own session)
 
 This file lives in docs/status/lazpy/1-in-progress/, beside its item files. It holds only what
 the next session needs to act now, and points at the rest. Goals, rules, decisions and history live elsewhere.
@@ -9,7 +9,7 @@ the next session needs to act now, and points at the rest. Goals, rules, decisio
 ## Running now
 | What | Where | Agent id | It stops when |
 |---|---|---|---|
-| Core lazpy.2 full build (laz-510), detached, pid 46921, started 10:53 | ../libazahar-py-k at d64aabb, branch core-rev2 | main | build-core/build.exit appears there (30-60 min) |
+| Step K gate 2 runner (laz-510): waits for the flag k-gate2.go in this session's scratchpad (set on Gen3D's "lane done"), then the quiet-load gate, then make test-host and the full pytest on lazpy.2 | ../libazahar-py-k, branch core-rev2; log runs/k/gate2.log there | main | it prints pytest rc |
 | v1.0.0 plan review 1 (laz-600), read-only opus | `docs/plans/phase-v1.md` revision 0 | ad7b8a7b2342fa4b1 | it reports; save it as docs/reviews/phase-v1-review-1.md |
 
 Guy asked for v1.0.0 (item laz-600, `docs/plans/phase-v1.md`): it replaces the never-published v0.1.0 and step K is
@@ -17,11 +17,10 @@ its step V0, so step K merges before the release, not after a v0.1.0 tag.
 
 ## Next steps, in order
 0. v1.0.0 plan: save review 1, revise, review 2 (opus), revise, then run its steps V0-V8.
-1. Step K, when the build exits 0: gates 1-6 of `docs/plans/phase-k.md` in the worktree (gate 2 with `env -u LAZ_ROOT
-   -u LAZ_HOST -u LAZ_PROFILE -u LAZ_LAZPY_PROFILE`, `LAZ_CORE_OLD` = MAIN's build-core dylib; the live tests are
-   tests/python/test_threads_live.py on the branch), then NOTICES.md regenerated and STATUS.md on the branch, then tell
-   3DPlatinum (3ds-toolkit-f4) the worktree's core, host and Python paths with `LAZ_ROOT=<wt>`. Item laz-510's notes
-   hold the full pytest on lazpy.1 (150 passed). Never run tools/fetch.sh in the worktree (its dl/ parts link to MAIN).
+1. Step K: gates 1, 3 and 4 passed (item laz-510's notes). Left: gate 2 (the runner above; on Gen3D's "lane done",
+   `touch` the flag), gate 6 (docs and map checks on the branch), NOTICES.md (tools/mknotices.py) and STATUS.md on the
+   branch, 3DPlatinum's A4 numbers, Gen3D's smoke numbers. Then merge (plan V0). Never run tools/fetch.sh in the
+   worktree (its dl/ parts link to MAIN).
 2. Release: wait for Guy (below): R1, then G5-G7. (Re-staged at cd30086, 16 of 16, clone ok: item 420's
    Evidence; the later step K plan commits make the build-files asset stale again: re-stage at the tagged commit.)
 3. On his word (phase-i.md 8.2): at the commit to be tagged, re-run `sh tools/mkrelease.sh v0.1.0` and

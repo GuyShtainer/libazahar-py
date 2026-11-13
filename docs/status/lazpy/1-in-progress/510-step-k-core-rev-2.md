@@ -42,3 +42,23 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   `CMAKE_OSX_DEPLOYMENT_TARGET:UNINITIALIZED=15.0` (review 2's S4 said to take any type; fixed). The two patched files
   compiled alone (`make core_settings.cpp.o citra_libretro.cpp.o` in the build's src/citra_libretro) before the
   full build: a cheap check that saves an hour-long build from a C++ typo.
+- 2026-11-13 11:03: the full build exited 0 (10:53-11:03). Gate 1 holds: build.inputs clean=yes, pin PIN-nokeys
+  (drop LIBAZAHAR-PY-REMOVED.txt), patches 0000-0009, head d64aabb; otool minos 15.0; version '2126.2-lazpy.2'; nm
+  shows the 4 lazpy_* exports; `tests/gate_f2.py --only keyblob,symbols,version`: "gate_f2: 0 FAIL, gate_c.failed 0",
+  and 0 "built for newer macOS version" lines in build.log. MAIN's core is unchanged (Nov 13 01:06).
+- 2026-11-13 11:04: gates 3 and 4 (tests/python/test_threads_live.py, 9 passed, load about 40): "k3: update_tick
+  after 300 frames: {'0': 0, '1000000': 1000000, 'random': 388092194}; counters 1, 1"; "k4: 3 threads; app pid 0xb,
+  main tid 1, stack 0x8000000..0x8008000" (main sp 0x08007ec8); states crossed lazpy.1 and lazpy.2 both ways.
+  First try failed: the worktree's libazhost.dylib was built in the same minute as the options.c edit, so make kept
+  it and the old allowed-list check refused '1000000'. A `make` fixed it. Lesson: rebuild the host right before a
+  live gate (the 10:48 run of 150 passed was on that stale host; gate 2 reruns everything on a fresh one).
+- 2026-11-13 by 11:06, 3DPlatinum (3ds-toolkit-f4), verbatim: "A1: PASS. 3DP.3dsx, 600 frames on an empty SD
+  (stopped_by=frames, frames 600; LoadWarning load 54 on the machine). emu.threads() gave 3 threads, all pid 11. Each
+  pc and lr maps to a real 3DP.elf symbol ... sps 0803f0a0, 080411a0, 08043448 (distinct stacks). No where.py
+  comparison: our rule now forbids windowed runs beyond five planned comparison runs ... A4: not run yet. The repro
+  needs the windowed route's count lines, which our comparison lane ... is producing right now."
+- 2026-11-13 by 11:06, Gen3D (3ds-toolkit-1c): no live suite on libazahar-py yet; its timed GBA-game soak lane runs now
+  (about 40 min, fails on any frame gap over 2 s), then a smoke on the candidate, then the Pool 1-4 run when quiet
+  ("count Gen3D as 'not tested'" until then). Gate 2 is held for that lane (rule T): its runner waits for a flag the
+  main loop sets on Gen3D's "lane done", then for the quiet-load gate. My gate 3/4 run (11:03-11:05) overlapped
+  Gen3D's probe before its message came; Gen3D was told.
