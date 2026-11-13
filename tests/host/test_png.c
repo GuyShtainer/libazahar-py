@@ -8,6 +8,7 @@
 #include <zlib.h>
 
 #include "azh_pure.h"
+#include "plat_test.h"
 #include "test_main.h"
 
 static uint32_t rd32(const uint8_t *p)
@@ -60,8 +61,12 @@ void test_png(void)
     int i;
     int y;
 
-    (void)snprintf(path, sizeof path, "%s/azh-png-XXXXXX", tmp != NULL ? tmp : "/tmp");
+    (void)snprintf(path, sizeof path, "%s/azh-png-XXXXXX", AZH_TEST_TMPDIR(tmp));
+#ifdef _WIN32
+    fd = azh_test_mkstemp(path, sizeof path);
+#else
     fd = mkstemp(path);
+#endif
     check(fd >= 0, "mkstemp");
     if (fd < 0) {
         return;

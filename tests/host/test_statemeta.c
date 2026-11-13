@@ -5,6 +5,7 @@
 #include <unistd.h>
 
 #include "azh_pure.h"
+#include "plat_test.h"
 #include "test_main.h"
 
 #define SHA_A "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
@@ -83,7 +84,13 @@ static void test_missing_and_double(void)
             strcat(text, line);
         }
         check(parse_str(text, &out) == AZH_E_SAVESTATE, "missing key %s is refused", keys[i]);
-        (void)snprintf(text, sizeof text, "%s%s=1\n", buf, keys[i]);
+        {
+            size_t bl = strlen(buf);
+
+            check(bl + klen + 4 < sizeof text, "doubled-key text fits");
+            memcpy(text, buf, bl);
+            (void)snprintf(text + bl, sizeof text - bl, "%s=1\n", keys[i]);
+        }
         check(parse_str(text, &out) == AZH_E_SAVESTATE, "doubled key %s is refused", keys[i]);
     }
 }
@@ -156,12 +163,16 @@ static void test_abi_mismatch(void)
 
 static void test_files(void)
 {
-    char dir[] = "/tmp/azh-meta-XXXXXX";
-    char path[256], tmp[300];
+    char dir[512] = "/tmp/azh-meta-XXXXXX";
+    char path[600], tmp[620];
     azh_state_meta m, back;
     FILE *f;
 
+#ifdef _WIN32
+    check(azh_test_mkdtemp(dir, sizeof dir) != NULL, "mkdtemp");
+#else
     check(mkdtemp(dir) != NULL, "mkdtemp");
+#endif
     (void)snprintf(path, sizeof path, "%s/x.meta", dir);
     (void)snprintf(tmp, sizeof tmp, "%s.tmp", path);
     sample(&m);

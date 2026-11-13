@@ -3,7 +3,12 @@
 #define TEST_MAIN_H
 
 /* one check: prints the failing case when ok is 0 */
-void check(int ok, const char *fmt, ...) __attribute__((format(printf, 2, 3)));
+#ifdef _WIN32
+#define CHECK_FMT gnu_printf     /* __USE_MINGW_ANSI_STDIO makes printf the C99 one */
+#else
+#define CHECK_FMT printf
+#endif
+void check(int ok, const char *fmt, ...) __attribute__((format(CHECK_FMT, 2, 3)));
 
 void test_input(void);
 void test_touch(void);

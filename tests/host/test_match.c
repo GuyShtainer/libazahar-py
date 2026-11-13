@@ -5,6 +5,7 @@
 #include <unistd.h>
 
 #include "azh_pure.h"
+#include "plat_test.h"
 #include "test_main.h"
 
 static char dir[512];
@@ -93,8 +94,12 @@ void test_match(void)
 {
     const char *tmp = getenv("TMPDIR");
 
-    (void)snprintf(dir, sizeof dir, "%s/azh-match-XXXXXX", tmp != NULL ? tmp : "/tmp");
+    (void)snprintf(dir, sizeof dir, "%s/azh-match-XXXXXX", AZH_TEST_TMPDIR(tmp));
+#ifdef _WIN32
+    check(azh_test_mkdtemp(dir, sizeof dir) != NULL, "mkdtemp");
+#else
     check(mkdtemp(dir) != NULL, "mkdtemp");
+#endif
     (void)snprintf(file, sizeof file, "%s/log.txt", dir);
     test_feed_splits();
     test_files();
