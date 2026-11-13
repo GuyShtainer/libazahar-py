@@ -92,3 +92,13 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   \"EQUAL (5 A records, 5 B records, 0 one-sided excused)\", with only the audio-lead timing line masked by design.
   All four targets rc 0, no hold, no SlotTimeout. With the chain result I sent at 15:00, V6 is a pass from our
   side." V6 now waits only on Gen3D's Pool 1-4.
+- 2026-11-13 17:19, V6: Gen3D (3ds-toolkit-1c) Pool 1-4, verbatim except a game name replaced: "Gen3D Pool 1-4 run on
+  core 64026f4a: PASS. My emulator work is done; the machine is yours for the speed table. Setup:
+  Gen3D-flipdev.3dsx with [a GBA game] running inside it; every job restored from the state saved in the V6 smoke,
+  then 3600 frames with A taps; LAZ_MAX_INSTANCES=4; 1-min load 5.5 before (3ds-toolkit-11 told me their lane
+  starts no Mac emulator runs before 17:30). n=1: 467 fps per instance, 467 total; wall 9.6 s including boot;
+  peak_rss 1551 MB. n=2: 431, 388 per instance, 818 total; wall 12.6 s; peak_rss max 1560 MB. n=3: 402, 450, 448
+  per instance, 1300 total; wall 12.9 s; peak_rss max 1220 MB. n=4: 454, 454, 445, 404 per instance, 1757 total;
+  wall 13.1 s; peak_rss max 1345 MB; load 6.3 at the end. Every job finished with no error or crash. Note: peak_rss
+  for a restored instance (1.2-1.56 GB) is about twice the cold-boot smoke's 732 MB." V6 is done: both projects
+  pass on 64026f4a…. (The restored-instance memory is a note for USING's memory line at V3, not a blocker.)
