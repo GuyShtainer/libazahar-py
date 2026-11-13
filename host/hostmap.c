@@ -49,7 +49,7 @@ int azh_map_create(const char *path)
     void *p;
 
     assert(path != NULL && map == NULL);
-    fd = open(path, O_RDWR | O_CREAT | O_TRUNC, 0644);
+    fd = open(path, O_RDWR | O_CREAT | O_TRUNC | O_BINARY, 0644);
     if (fd < 0) {
         return -1;
     }

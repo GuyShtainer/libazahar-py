@@ -75,7 +75,7 @@ static int app_sha256(const char *path, char *hex)
     int i;
 
     assert(path != NULL && hex != NULL);
-    fd = open(path, O_RDONLY);
+    fd = open(path, O_RDONLY | O_BINARY);
     if (fd < 0) {
         return AZH_E_IO;
     }
@@ -132,7 +132,7 @@ static int write_file_atomic(const char *path, const void *buf, size_t n)
     if (join_path(tmp, sizeof tmp, path, ".tmp") != AZH_OK) {
         return AZH_E_ARG;
     }
-    fd = open(tmp, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    fd = open(tmp, O_WRONLY | O_CREAT | O_TRUNC | O_BINARY, 0644);
     if (fd < 0) {
         return AZH_E_IO;
     }
@@ -163,7 +163,7 @@ static int read_file(const char *path, void **buf_out, size_t *n_out)
 
     assert(path != NULL && buf_out != NULL && n_out != NULL);
     *buf_out = NULL;
-    fd = open(path, O_RDONLY);
+    fd = open(path, O_RDONLY | O_BINARY);
     if (fd < 0 || fstat(fd, &st) != 0 || st.st_size <= 0 || (int64_t)st.st_size > STATE_SIZE_CAP) {
         if (fd >= 0) {
             (void)close(fd);

@@ -20,7 +20,6 @@
 #include "plat/win_compat.h"
 #define AZH_FMT gnu_printf
 #else
-#define AZH_O_BINARY 0
 #define AZH_FMT printf
 #endif
 

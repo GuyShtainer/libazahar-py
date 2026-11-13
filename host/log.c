@@ -41,7 +41,7 @@ int azh_log_open(const char *path)
     int fd;
 
     assert(path != NULL);
-    fd = open(path, O_WRONLY | O_CREAT | O_TRUNC | AZH_O_BINARY, 0644);
+    fd = open(path, O_WRONLY | O_CREAT | O_TRUNC | O_BINARY, 0644);
     if (fd < 0) {
         return -1;
     }

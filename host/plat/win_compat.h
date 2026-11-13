@@ -11,10 +11,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifndef O_BINARY
-#define O_BINARY 0
-#endif
-#define AZH_O_BINARY O_BINARY
+#include "azh_plat.h"
 
 #define RTLD_NOW 0
 #define RTLD_LOCAL 0
@@ -40,7 +37,5 @@ void *azh_win_memmem(const void *hay, size_t hn, const void *needle, size_t nn);
 #define mkdir(p, m) azh_win_mkdir(p)
 #define setenv(n, v, o) azh_win_setenv((n), (v), (o))
 
-#else
-#define AZH_O_BINARY 0
 #endif
 #endif

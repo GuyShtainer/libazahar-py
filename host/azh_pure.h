@@ -9,6 +9,7 @@
 #include <stdint.h>
 
 #include "azhost.h"
+#include "plat/azh_plat.h"
 
 /* version.c: 1 when v is the pinned stock version, the stock version plus one of AZH_LAZPY_SUFFIXES exactly, or any_core. */
 int azh_version_ok(const char *v, int any_core);

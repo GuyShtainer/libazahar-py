@@ -223,7 +223,7 @@ static int fsync_path(const char *path)
     int rc;
 
     assert(path != NULL);
-    fd = open(path, O_RDONLY);
+    fd = open(path, O_RDONLY | O_BINARY);
     if (fd < 0) {
         return AZH_E_IO;
     }
@@ -241,7 +241,7 @@ static int write_tmp(const char *tmp, const char *buf, size_t n)
     int rc;
 
     assert(tmp != NULL && buf != NULL);
-    fd = open(tmp, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    fd = open(tmp, O_WRONLY | O_CREAT | O_TRUNC | O_BINARY, 0644);
     if (fd < 0) {
         return AZH_E_IO;
     }
@@ -291,7 +291,7 @@ int azh__meta_read(const char *path, azh_state_meta *m)
     int guard;
 
     assert(path != NULL && m != NULL);
-    fd = open(path, O_RDONLY);
+    fd = open(path, O_RDONLY | O_BINARY);
     if (fd < 0) {
         return (errno == ENOENT) ? AZH_E_SAVESTATE : AZH_E_IO;
     }
