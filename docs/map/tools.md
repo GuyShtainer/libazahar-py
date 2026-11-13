@@ -24,3 +24,7 @@
 - `tests/check_testapp.py`: `markers`, `log` and `event` checks on the test app's output; exports
   `read_png_rgba(path)`, a filter-0 PNG decoder (import it with the absolute `tests/` path; `-I` drops the script
   folder from `sys.path`). Copied from Gen3D on 2026-11-12 (3DPlatinum's design).
+- `tools/docs_check.py`: step H's gate over the docs: README numbers against their sources, the example and steps
+  blocks, links, forbidden claims, the first paragraph; `--plant-red`, `--emit-steps`.
+- `tools/clone_check.sh`: the fresh-clone check (clone, the README's steps and build blocks, the quickstart, the
+  full pytest); `--dry-run` prints the steps.

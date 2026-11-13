@@ -1,27 +1,34 @@
 # Using libazahar-py
 
-A headless Azahar for 3DS homebrew: no window, many copies at once, inputs, screenshots, SD files, savestates.
-Plain sections; no speed claim here comes from the test app (an idle app proves nothing about a real scene).
+A headless Azahar for 3DS homebrew: no window, many copies at once, inputs, screenshots, SD files, savestates, and
+guest memory on our own core. Plain sections. This guide makes no speed claim; the README's table has the numbers, each
+with its scene, load and date. "The stock core" means Azahar's own libretro core; "our core" is the patched build
+(`azahar_lazpy_libretro`, section 17).
 
 ## 1. Install
 
 `python3 -m venv .venv && .venv/bin/pip install -e .` (the worker runs `python -I`, so a venv, not the user site).
 Editable install only: the package finds the repo (`build/`, `dl/`, `host/`) from its own folder; a plain install
-must set `LAZ_ROOT`. `make` builds the host; `tools/fetch.sh` fetches the stock core and MoltenVK.
+must set `LAZ_ROOT`. Needs macOS 15 or later on Apple silicon and Python 3.10 or newer (macOS's own `python3` is 3.9).
+`make` builds the host; `sh tools/fetch.sh --moltenvk --headers --lazpy-core --testapp` fetches MoltenVK, the headers,
+our core and the test app, each sha256-pinned. The README's Install section is the full route.
 
 ## 2. Paths and environment
 
-`LAZ_ROOT` (repo folder), `LAZ_HOST` (the worker's host library), `LAZ_CORE` (the core), `LAZ_MVK` (MoltenVK),
-`LAZ_PROFILE`, `LAZ_LOG_LEVEL`, `LAZ_ANY_CORE`, `LAZ_STATE_ANY_APP` (see section 10), `LAZ_REQUIRE_EMULATOR` (tests:
-a missing emulator fails instead of skipping), `MVK_CONFIG_LOG_LEVEL` (1 unless set). An instance folder `workdir/`
-holds `host.log`, `host.map`, `shots/` and `sys/Azahar/sdmc/` (the SD card; `emu.sd` is that path). `sd_seed` is a
-folder (never named `sdmc`) whose contents are copied onto the SD card: before boot, or with `state=` after the
-restore, so seed files land on top of the snapshot.
+Every variable is in the table in section 15. An instance folder `workdir/` holds `host.log`, `host.map`, `shots/` and
+`sys/Azahar/sdmc/` (the SD card; `emu.sd` is that path). `sd_seed` is a folder (never named `sdmc`) whose contents are
+copied onto the SD card: before boot, or with `state=` after the restore, so seed files land on top of the snapshot.
+Reusing `workdir` keeps everything under `sys/`, the SD included; `sd_seed` is copied on top and nothing is cleared. For
+a warm shader cache and a clean SD, delete `workdir/sys/Azahar/sdmc/` before creating the Emulator.
 
 ## 3. Frames
 
 One `run` frame is one guest VBlank. Frames are 1-based inside a batch (`run(10, inputs=[(1, ...)])` acts on the
-first frame). Shot names carry absolute frame numbers. `frame_total` counts every frame since boot. The frame the
+first frame). `inputs` and `shots` take batch frames 1..`frames`; anything else raises `ValueError` (a bad argument,
+not a `LibAzaharError`: catch both). Shot names carry absolute frame numbers: `result.shots` is keyed by the batch frame
+you asked for; the file name holds `first_frame + f - 1`. `timeout` is a no-progress limit: seconds with no new frame
+(default 30), not a bound on the batch, so a long batch needs no big value. Use `wall_limit` for a wall bound. Raise
+`timeout` only when one frame can stall long (first shader compiles mid-run). `frame_total` counts every frame since boot. The frame the
 guest exits on counts. `RunResult.wall_s` is the batch's wall time; `azhost run` prints one summary per batch,
 `frames= wall= fps= shots= stop= first= last= vblanks= wall_ms_mean= batch= msg=` (the mean frame time; there is no
 max).
@@ -35,7 +42,7 @@ one frame fold into one. `set_input` and `set_keys(raw=...)` set held state for 
 Measured offsets (step C, test app on our host): a change made at batch frame f shows in the guest's log line of host
 frame f + m, or sometimes f + m + 1. Buttons (A and others): m = 0 (counts 0: 1, 1: 29 over 30 changes; the first
 one lands on f, the rest on f + 1); ZL/ZR (irrst path): m = 1 (6 of 6); circle pad: m = 1 (5 of 5); touch: m = 2
-(40 of 40). Plan checks with a tolerance of one frame. Poll-exact movies need our patched core.
+(40 of 40). Plan checks with a tolerance of one frame. Poll-exact movies: not tested.
 
 ## 5. Touch
 
@@ -74,7 +81,8 @@ per frame grows `host.log` by about a line per frame.
 
 `LibAzaharError` is the base. `BootError`: core, Vulkan or the app failed to start. `GuestError`: section 7.
 `HostTimeout`: the heartbeat stopped for `timeout` seconds (Emulator-wide default 30, or per call); the worker is
-killed and reaped. `HostCrashed`: the worker died (a signal gives a negative code). `StateError`: section 10.
+killed and reaped. `SlotTimeout` is a `HostTimeout` (`.op == "slot"`, `.seconds`) raised when no machine-wide slot
+frees up (section 13). `HostCrashed`: the worker died (a signal gives a negative code). `StateError`: section 10.
 `NeedsLazpyCore`: the call needs our patched core. `HostError`: wrong call order, I/O, memory, ABI mismatch, missing
 host, an unsupported call, a guest exit outside `run`. `ValueError` for bad arguments. The crash tests leave a macOS
 crash report each run. On the stock core a guest-exit result has `wall_s` 0.0 and no `shots`. `boot_timeout`
@@ -103,7 +111,9 @@ app path, so a shared state carries it. An I/O failure while saving is a HostErr
 
 Stock: SD text stops, guest errors, savestates (the same log fields after a state restore, gated on the test app).
 Repeats are exact only on our core, where the repeat gates run (PLAN 2.4); on the stock core they record the
-difference only. Our patched core adds debug text, memory reads and the watch list (section 12a) and poll-exact movies if Phase F confirms them. Calls that need it raise `NeedsLazpyCore`.
+difference only. Our patched core adds debug text, memory reads and the watch list (section 12a). It also exports a
+poll-exact movie call, which no gate has run: not tested. Calls that need our core raise `NeedsLazpyCore`. The table of
+both cores is in section 16.
 
 ## 12a. Guest memory (our core only)
 
@@ -138,7 +148,7 @@ Rows 1-17 of docs/research/gen3d-harness-needs.md:
 | 8 `voxel.log` flip lines | `emu.sd` file and `run_until` |
 | 9 window screenshots | `shots` / `screens()` (400x240 top, 320x240 bottom) |
 | 10 framebuffer via gdb | `screens()` |
-| 11, 12 gdb RAM reads | Phase G `emu.memory` (the test app's 32-byte record: magic 0, frame 4, vblank 8, keys 12, tx 16, ty 18, cx 20, cy 22, tick 24) or an app log line |
+| 11, 12 gdb RAM reads | `emu.memory` on our core (the test app's 32-byte record: magic 0, frame 4, vblank 8, keys 12, tx 16, ty 18, cx 20, cy 22, tick 24) or an app log line |
 | 13 `see rec` | `shots` with frame numbers |
 | 14 `gdbio resume` | gone |
 | 15, 16 savewarp, picture judges | unchanged |
@@ -147,3 +157,115 @@ Rows 1-17 of docs/research/gen3d-harness-needs.md:
 Forced-mode seed: a seed folder holding the app's control file, so one Emulator boots straight into a mode (the test
 app's control.txt shows it). For the long world build: boot once, `save_state`, start every test from the state, and
 reuse the instance folder's `sys/` for the shader cache.
+
+## 13. Many instances
+
+`Pool(n, app, root, **emulator_kwargs)` runs jobs on fresh Emulators, `n` at a time. `submit(fn, item, **overrides)`
+returns a `Future`; `map(fn, items, **overrides)` returns the results in item order and raises the first error after
+every job ends; `close(wait=True)` stops it (a `with` block closes it). Each job gets a new instance in
+`root/job-0000`, `job-0001`, ... (its own `sys/`, `shots/`, `host.log`, `host.map`), closed when the job ends, however
+it ends. `fn(emulator, item)` is the job. Per-job overrides, such as `sd_seed`, win over the Pool's keywords:
+
+    with Pool(3, app, "runs/x") as pool:
+        results = pool.map(job, seeds, sd_seed=seed_folder)      # job(emu, item) -> result, in item order
+
+`examples/pool_shots.py` is a runnable one. The machine-wide cap holds the number of live instances: a fixed set of
+lock files, one per slot, shared by every libazahar process on the Mac. `LAZ_MAX_INSTANCES` sets the cap (default 2,
+provisional: it rests on a light scene), `LAZ_SLOT_DIR` the lock folder, `LAZ_SLOT_TIMEOUT` how long an Emulator waits
+for a slot (default 3600 s). When it runs out, `SlotTimeout` is raised (a `HostTimeout`; `.op == "slot"`, `.seconds`;
+its text names the cap and the slot folder). The kernel frees a slot when its worker dies, however it dies. The cap
+counts only libazahar's own workers, so other emulators on the machine are not counted. `Pool(n)` above the cap warns
+(`UserWarning`) and the extra jobs wait; a load above twice the core count warns with `LoadWarning`. Workers run at
+`nice` 10 at least (a parent that is already nicer keeps its value).
+
+## 14. Our core's profile
+
+On our core `core/options-lazpy.txt` is applied first (the extra option lines our core takes), then the default
+profile and your `options`. `azhost run --lazpy-profile FILE|none` and `LAZ_LAZPY_PROFILE` (a file, or `none`) change
+it. The stock core never sees it.
+
+## 15. Environment
+
+Library and host (the last column says who reads it):
+
+| Variable | What it does | Default | Read by |
+|---|---|---|---|
+| `LAZ_ROOT` | the repo folder | the folder the package sits in | Python |
+| `LAZ_HOST` | the host library | `<root>/build/libazhost.dylib` | Python |
+| `LAZ_CORE` | the core | `<root>/dl/lazpy-core/azahar_lazpy_libretro.dylib` | Python, `azhost` |
+| `LAZ_MVK` | MoltenVK | `<root>/dl/moltenvk/MoltenVK/MoltenVK/dynamic/dylib/macOS/libMoltenVK.dylib` | Python, host |
+| `LAZ_PROFILE` | the option profile | `<root>/host/options-default.txt` | Python |
+| `LAZ_LAZPY_PROFILE` | the extra options on our core: a file or `none` | `<root>/core/options-lazpy.txt` when present | Python |
+| `LAZ_MAX_INSTANCES` | the slot cap, 1 to 64 | 2 | Python |
+| `LAZ_SLOT_DIR` | the slot lock folder | `~/Library/Caches/libazahar-py/slots` | Python |
+| `LAZ_SLOT_TIMEOUT` | seconds to wait for a slot | 3600 | Python |
+| `LAZ_PNG_LEVEL` | PNG compression, 0 to 9 (a bad value gives 1) | 1 | host |
+| `LAZ_LOG_LEVEL` | `host.log` threshold: `debug`, `info`, `warn`, `error` (or 0 to 3) | `info` | host |
+| `LAZ_ANY_CORE` | `1` accepts any core version | unset: only the two known versions | host |
+| `MVK_CONFIG_LOG_LEVEL` | MoltenVK's log level | 1 | host |
+| `LAZ_STATE_ANY_APP` | `1` loads a state made with another build of the app | unset | host |
+
+Tests only: `LAZ_REQUIRE_EMULATOR=1` (a missing emulator fails instead of skipping) and `LAZ_STOCK_CORE` (a stock core
+you downloaded; unset, the comparison tests skip). `LAZ_CORE` is the only variable that names a core.
+
+Build and fetch time (the scripts' header comments are the reference):
+
+| Variable | What it does | Default | Script |
+|---|---|---|---|
+| `LAZPY_ROOT` | use this folder instead of the repo root | the repo root | `fetch.sh`, `build-core.sh` |
+| `LAZ_RELEASE_BASE` | where the release downloads come from; a `file://` folder works for a local release | the release page | `fetch.sh` |
+| `LAZ_CORE_PIN` | the pin file | `core/PIN` | `build-core.sh` |
+| `LAZ_CORE_PATCHES` | the patch folder | `core/patches` | `build-core.sh` |
+| `LAZ_CORE_LTO` | link-time optimisation | `ON` | `build-core.sh` |
+| `LAZ_CORE_JOBS` | build jobs | 4 | `build-core.sh` |
+| `LAZ_OPENSSL_PREFIX` | install prefix of the static OpenSSL | the pin's `OPENSSL_PREFIX` | `build-core.sh` |
+
+## 16. The two cores
+
+| | Our core | Azahar's own core (stock) |
+|---|---|---|
+| Where it comes from | our release (`sh tools/fetch.sh --lazpy-core`) or `tools/build-core.sh` | Azahar's releases page, by hand, for comparisons |
+| Input, shots, SD files, savestates | yes | yes |
+| Guest memory, the watch list (`emu.memory`, `watch=`) | yes | `NeedsLazpyCore` |
+| Debug-text stop (`debug_text=`) | yes | `NeedsLazpyCore` |
+| Exact repeats | yes (gated) | no: recorded as a difference only |
+| Poll-exact movies | not tested | no |
+| Option profile | `core/options-lazpy.txt` first (section 14) | the default profile only |
+
+States move between the two cores both ways in the gate, but a state may not load across core versions.
+
+## 17. Getting our core
+
+The release: `sh tools/fetch.sh --lazpy-core` puts it at `dl/lazpy-core/azahar_lazpy_libretro.dylib`, the default path,
+so no `LAZ_CORE` is needed. Or build it: `nice -n 10 tools/build-core.sh --detach` (15 to 90 minutes; the exit code
+lands in `build-core/build.exit`, the log in `build-core/build.log`), then set
+`LAZ_CORE=build-core/azahar_lazpy_libretro.dylib`. The build needs a static OpenSSL at the version in `core/PIN`
+(3.6.5). Homebrew ships only its current `openssl@3`. If that is 3.6.5, the build finds it. If not, build 3.6.5 from
+`openssl-3.6.5.tar.gz` (a release asset; the recipe in `core/OPENSSL.md` is not tested by this project) and set
+`LAZ_OPENSSL_PREFIX` to its install prefix. To rebuild from our stripped source asset instead of Azahar's original
+tarball, set `LAZ_CORE_PIN=core/PIN-nokeys`. `core/README.md` lists the patches; `core/OPENSSL.md` covers OpenSSL.
+The core needs macOS 15 or later (its OpenSSL is built for 15, although its header says 11.0).
+
+## 18. Contributors
+
+`.venv/bin/pip install pytest`, then `.venv/bin/python -m pytest -q tests/python -m "not slow"` (the fast set needs no
+emulator). The full set needs our core and the test app: `LAZ_REQUIRE_EMULATOR=1 .venv/bin/python -m pytest -q
+tests/python`. `make check` runs the rest. To compare with Azahar's own core, download Azahar's libretro core for
+macOS from Azahar's releases page yourself and set `LAZ_STOCK_CORE` to the file. Tests that compare the two cores skip
+without it. Build the test app with the line in the README (`make testapp` needs `DEVKITPRO` and `DEVKITARM` set and
+devkitARM first in `PATH`).
+
+## 19. Troubleshooting
+
+- `BootError: cannot load core <path>: dlopen(...) ... (no such file)`: no core at that path. Run
+  `sh tools/fetch.sh --lazpy-core`, or set `LAZ_CORE` to a core file.
+- A host library or MoltenVK not found: run `make`, or `sh tools/fetch.sh --moltenvk`; check `LAZ_ROOT`, `LAZ_HOST` and
+  `LAZ_MVK`.
+- A dylib you downloaded with a browser is quarantined: `xattr -d com.apple.quarantine <file>` (`curl` sets none).
+- `make testapp` stops with "Set DEVKITARM": set `DEVKITPRO` and `DEVKITARM` and put devkitARM first in `PATH`;
+  Homebrew's arm gcc gives other results.
+- `SlotTimeout`: other instances hold every slot. Look in the slot folder (`LAZ_SLOT_DIR`), or raise
+  `LAZ_MAX_INSTANCES` if the machine can take it.
+- A `LoadWarning`: other sessions' emulators share the machine; wait, or run fewer instances.
+- `HostTimeout` in the first frames: shader compiles. Raise `boot_timeout` (default 300 s).
+- The core refuses to load on macOS older than 15.
