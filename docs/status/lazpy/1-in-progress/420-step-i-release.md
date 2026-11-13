@@ -20,8 +20,11 @@ none yet
 
 ## Pointers
 - Plan section: `docs/PLAN.md:323`
-- Phase plan: none yet
+- Phase plan: `docs/plans/phase-4.md` (index), `docs/plans/phase-i.md` (the builder's brief, revision 2)
 - Review: none yet
 
 ## Lessons and notes
 Read this part only when you work on this item. Blockers, numbers and Guy's words go here verbatim.
+- 2026-11-13 03:18, main loop: launched per phase-4.md section 2 after Phase 3 (29cb592 before G8b), G8b (896c2fe) and
+  the downloads (item 400's notes). Launch defaults: Q1 remove the stock fetch (P17), G2 (a), the consult GREEN.
+  I builder a8e760acbd1172ce5 (sonnet), launched 03:19 in ../libazahar-py-i (step-i at 896c2fe).

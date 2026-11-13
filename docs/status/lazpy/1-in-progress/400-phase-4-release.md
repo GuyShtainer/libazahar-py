@@ -139,3 +139,16 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   verified, rewrite done; HEAD tree 66de44f unchanged; 133 commits; 129 rewritten; one identity; no refs/replace;
   fsck clean; after-scan 0 for rules, windows, needle, messages. Map: docs/commit-map-g8b.tsv (129 rows; pre_g8 for
   G8's 20). HEAD 29cb592 became 8fd0490. make check 0. Next: Gen3D's copy check (8.1b step 9), downloads.
+- Gen3D (3ds-toolkit-1c) confirmed by 03:18: its try-1 package copy holds no .git (phase-i.md 8.1b step 9 closed).
+- Downloads by the main loop 03:17-03:18 (phase-i.md 6 step 4), all in MAIN dl/, ignored, never unpacked:
+  OSSL dl/openssl-src/openssl-3.6.5.tar.gz, 55,078,161 bytes, sha256 = R30's and = OpenSSL's published .sha256;
+  top level has LICENSE.txt and no NOTICE. SNAP dl/sysarch-src/citra_system_archives-f470e0c.tar.gz (commit
+  f470e0c9d341db73b8a24880295d2eab4cd81660), our sha256 faada632bdad4f5d437998aa1ce20a72715e55999387538b7f3ee6aca135d7a3,
+  1074 members; it holds license.txt (GPLv2), Montserrat-Regular.otf and unifont-10.0.05.ttf, but no OFL text and no
+  Unifont notice. So: dl/font-licences/Montserrat-v4.001-OFL.txt (upstream JulietaUla/Montserrat tag v4.001, the
+  nearest tag to the font's 4.000; sha256 7357e56dd20d90f3d743664dc8f51f74fb1ac081608ab360b3368c16b32a612c) and
+  dl/font-licences/unifont-10.0.05-notice.txt (sha256 49f453c7c1111c80c47ab68725facc748ca9d1ac3b551a30d38104c866060531:
+  line 1 the TTF's own name-record copyright from SNAP, then the LICENSE section of the README in GNU's
+  unifont-10.0.05.tar.gz, dl/unifont-src/, sha256 8b85367401729bf22217c44d914dee08770665ff01b5faccb7760a2a06934a1f,
+  verbatim). The fonts' name records match the consult: Montserrat 4.000 (OFL 1.1), Unifont 10.0.05 (GPLv2+ with
+  the font embedding exception).

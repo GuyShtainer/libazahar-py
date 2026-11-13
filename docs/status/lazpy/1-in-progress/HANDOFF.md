@@ -1,7 +1,7 @@
 <!-- handoff: slim v1 | current tasks only | rewritten whole from docs/status/templates/handoff.md | budget 80 lines | never append -->
 # libazahar-py handoff
 
-As of: 2026-11-13 03:15 (this project's own session)
+As of: 2026-11-13 03:19 (this project's own session)
 
 This file lives in docs/status/lazpy/1-in-progress/, beside its item files. It holds only what
 the next session needs to act now, and points at the rest. Goals, rules, decisions and history live elsewhere.
@@ -9,19 +9,18 @@ the next session needs to act now, and points at the rest. Goals, rules, decisio
 ## Running now
 | What | Where | Agent id | It stops when |
 |---|---|---|---|
-| laz-400: Phase 4's before-launch steps (phase-4.md section 2): downloads, Gen3D's copy check, the launch | MAIN | main | H and I builders launched |
+| laz-410: step H builder (phase-h.md): README, STATUS, USING, HOST-API, examples, docs_check, clone_check | ../libazahar-py-h (step-h at 896c2fe) | af156d29564cfc9ce | its report "H1 done" |
+| laz-420: step I builder (phase-i.md): P17 code, NOTICES/mknotices, mkrelease, release_check, fetch.sh, OPENSSL.md | ../libazahar-py-i (step-i at 896c2fe) | a8e760acbd1172ce5 | its report "I1 done" |
 
-Not running: Phase 3 is done (item 300). G8b is done (item 400's notes; map docs/commit-map-g8b.tsv); only MAIN
-and main remain.
+Not running: Phase 3 done (item 300); G8b, Gen3D's copy check and the downloads done (item 400's notes).
 
 ## Next steps, in order
-1. Ask Gen3D's session to confirm its rsync copy of the package has no .git (phase-i.md 8.1b step 9); tell the
-   toolkit main loop the G8b map exists.
-2. Downloads (phase-i.md 6 step 4): OSSL if missing, the system-archives snapshot (SNAP), font licence texts if
-   SNAP lacks them; each sha256 goes in the launch message.
-3. Launch H and I builders side by side (phase-4.md section 2; items 410, 420 to 1-in-progress first), Q1 default
-   (remove the stock fetch). I owns tests/gate-b.sh:45; the gate's event lines changed at Phase 3's close.
-4. Then the joint as-built review, merges, I2, the release-legal-audit (I3); the push waits for Guy.
+1. On "H1 done" / "I1 done": commit each report's files on its branch (exact paths, with the map lines it names, and
+   for I the rules.md rule 3 and runners.md lines); book its hours row; the builders never commit.
+2. When both are committed: one opus as-built review over both diffs (phase-h.md 12, phase-i.md 12); fixes by the
+   resumed builders (SendMessage to the ids above); then merge step-h, then step-i; items 410 (and 420 at I5).
+3. I2 in MAIN (phase-i.md 6), I3 release-legal-audit (its brief: phase-i.md 9.2), I4 fixes.
+4. The push and the release wait for Guy (G5-G7, Q1-Q9).
 
 ## Waiting on Guy (only what blocks a step above)
 - Phase 4's G5-G7 (repo creation, the word "push", publishing the draft), G9 (spike 2's game: default say
