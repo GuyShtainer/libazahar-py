@@ -119,3 +119,4 @@ date	bet	phase	agent_id	model	role	kind	start	end	hours	source
 2026-11-13	I3: release legal audit v0.1.0 (repo, history, 9 assets, claims)	phase-4	aa81b7f45c2e7eb9b	opus	reviewer	review	04:26	04:42	0.27	agent duration 982 s
 2026-11-13	I4 at HEAD: S1-S3 wording, the game name in spike 1, audit saved, G8c rules	phase-4	main	opus	main	process	04:42	04:45	0.12	session clock
 2026-11-13	G8c: third history rewrite (stock core URL, name, hash; a game name), scans, commit map	phase-4	main	opus	main	process	04:44	04:47	0.10	session clock
+2026-11-13	after G8c: mkrelease x3, pins (012c329), notes-rule fix (1132bc1), pre-push 16/16, clone ok, re-audit launch	phase-4	main	opus	main	process	04:51	04:56	0.10	session clock

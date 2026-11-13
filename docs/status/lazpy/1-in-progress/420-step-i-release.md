@@ -85,3 +85,7 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   name in spike 1). After: HEAD tree unchanged, 150 commits, fsck clean, one identity; the full scan finds 0 rule,
   window, needle and message hits; the stock-core strings count 0 in every commit. HEAD d879ee3 is 32f3046 now:
   `docs/commit-map-g8c.tsv`.
+- 2026-11-13 04:56, re-staged after G8c: the zip's sha changed (SOURCE.md names the g8c map), pins in 012c329;
+  release_check's notes rule now accepts "no console keys" (1132bc1, plants 18 of 18 caught); staged at 1132bc1;
+  --pre-push with the private file 16 of 16 PASS; docs_check all PASS; clone_check "clone ok: 99 s wall", full
+  pytest 136 passed, 3 skipped (runs/clone-i4, ignored). Re-audit a88334b832afbc276 launched (B1, S1-S3, the zip).
