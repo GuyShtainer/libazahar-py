@@ -1,7 +1,7 @@
 <!-- handoff: slim v1 | current tasks only | rewritten whole from docs/status/templates/handoff.md | budget 80 lines | never append -->
 # libazahar-py handoff
 
-As of: 2026-11-13 11:07 (this project's own session)
+As of: 2026-11-13 11:09 (this project's own session)
 
 This file lives in docs/status/lazpy/1-in-progress/, beside its item files. It holds only what
 the next session needs to act now, and points at the rest. Goals, rules, decisions and history live elsewhere.
@@ -10,13 +10,14 @@ the next session needs to act now, and points at the rest. Goals, rules, decisio
 | What | Where | Agent id | It stops when |
 |---|---|---|---|
 | Step K gate 2 runner (laz-510): waits for the flag k-gate2.go in this session's scratchpad (set on Gen3D's "lane done"), then the quiet-load gate, then make test-host and the full pytest on lazpy.2 | ../libazahar-py-k, branch core-rev2; log runs/k/gate2.log there | main | it prints pytest rc |
-| v1.0.0 plan review 1 (laz-600), read-only opus | `docs/plans/phase-v1.md` revision 0 | ad7b8a7b2342fa4b1 | it reports; save it as docs/reviews/phase-v1-review-1.md |
+| v1.0.0 plan review 2 (laz-600), read-only opus | `docs/plans/phase-v1.md` revision 1 | ad9c5acb09a5871bc | it reports; save it as docs/reviews/phase-v1-review-2.md |
 
 Guy asked for v1.0.0 (item laz-600, `docs/plans/phase-v1.md`): it replaces the never-published v0.1.0 and step K is
 its step V0, so step K merges before the release, not after a v0.1.0 tag.
 
 ## Next steps, in order
-0. v1.0.0 plan: save review 1, revise, review 2 (opus), revise, then run its steps V0-V8.
+0. v1.0.0 plan: save review 2, revision 2, then V1's API review (opus, one at a time) and V5, then the steps in
+   `docs/plans/phase-v1.md` section 4's order (review 1: `docs/reviews/phase-v1-review-1.md`).
 1. Step K: gates 1, 3 and 4 passed (item laz-510's notes). Left: gate 2 (the runner above; on Gen3D's "lane done",
    `touch` the flag), gate 6 (docs and map checks on the branch), NOTICES.md (tools/mknotices.py) and STATUS.md on the
    branch, 3DPlatinum's A4 numbers, Gen3D's smoke numbers. Then merge (plan V0). Never run tools/fetch.sh in the
