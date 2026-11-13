@@ -41,3 +41,12 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   Darwin Makefile block stays verbatim; device choice unchanged on a one-GPU Mac; `DEFAULT_CAP` stays (the PC sets
   `LAZ_MAX_INSTANCES`); no core/ or build-core.sh change on main before v1.0.0; no Linux release asset without
   Guy and the legal audit; our own review and Mac gates before the merge; USING.md wording is ours.
+- 2026-11-13 14:12, the PC worker's reply: the 8 conditions are binding in its final plan (toolkit
+  docs/pc-worker/GPU-PLAN-v3.md section 8). No GPU-preference logic, only an index override (unset = the first
+  device, as today). Its texts for us, verbatim, for the 1.1.0 merge:
+  1. USING section 15 row: `| LAZ_VK_DEVICE | which Vulkan device the host uses: its index in the loader's list,
+     from 0 | unset: the first device (as before) | host |`. Same name in tests/python's env list. Out of range or
+     not a number = AZH_E_VULKAN at boot, message "LAZ_VK_DEVICE=<v>: <n> devices".
+  2. CI: a second job `fast-linux`, runs-on ubuntu-24.04, same matrix, `sudo apt-get install -y zlib1g-dev
+     libssl-dev`, then the same steps as `fast` minus `make check` (Darwin-only); its name says it runs no emulator.
+  It waits for our "v1.0.0 is out" before any rebase; the bundle, its reviewed handover note and logs come after.
