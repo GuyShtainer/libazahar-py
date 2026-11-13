@@ -15,9 +15,9 @@ Guy asked for v1.0.0 (item laz-600, `docs/plans/phase-v1.md`). V0b is done (main
 Worktree ../libazahar-py-k is removed; branch core-rev2 stays at e28e4c2 (merged). Its logs: runs/wt-k/.
 
 ## Next steps, in order
-0. V6 runs in the two projects on main's core 88cc6188…: 3DPlatinum since 12:35 (the A3 stencil self-test, then the
+0. V6 runs in the two projects on main's core 88cc6188…: 3DPlatinum's A3 self-test passed (item 520); its
    chain with the suite and A4), Gen3D asked for its smoke and Pool 1-4 run. Record each answer verbatim in item 600
-   (and 3DPlatinum's A3 line in item 520, whose exit gate it closes). A fail blocks V8.
+  . A fail blocks V8.
 1. When the V4 agent reports: review its diff, run docs_check, map_check and the fast pytest, scan, commit.
 2. V3 (real-scene multi-instance row, `docs/plans/phase-v1.md` V3): only on a quiet machine, after both projects'
    V6 runs end (rule T); Gen3D's .3dsx and seed as in `docs/research/real-scene-j.md`. Then README's numbers and the
@@ -25,7 +25,7 @@ Worktree ../libazahar-py-k is removed; branch core-rev2 stays at e28e4c2 (merged
 3. V7 full test pass (quiet), then V8 staging and the legal re-audit (16 of 16 on the final HEAD). The test app's
    sha256 is now ba106998… (item 600 notes).
 4. V9: Guy's word for the tag and push (below). After he publishes: I5 (`docs/plans/phase-i.md` section 6) against
-   v1.0.0, items 420, 400, 520 and 600 closed, then delete the three private history bundles.
+   v1.0.0, items 420, 400 and 600 closed, then delete the three private history bundles.
 5. Answer asks from Gen3D (3ds-toolkit-1c) and 3DPlatinum (3ds-toolkit-f4); both use only libazahar-py.
 
 ## Waiting on Guy (only what blocks a step above)
@@ -38,7 +38,7 @@ Worktree ../libazahar-py-k is removed; branch core-rev2 stays at e28e4c2 (merged
 The full list is generated into `docs/status/README.md`.
 
 ## Pointers
-- Items: `docs/status/lazpy/5-done/610-step-v1-api-freeze.md` (V1), `docs/status/lazpy/1-in-progress/520-step-l-stencil-readback.md`
+- Items: `docs/status/lazpy/5-done/610-step-v1-api-freeze.md` (V1), `docs/status/lazpy/5-done/520-step-l-stencil-readback.md`
   (step L, report `docs/research/stencil-readback.md`), `docs/status/lazpy/5-done/510-step-k-core-rev-2.md` (step K), `docs/status/lazpy/1-in-progress/500-phase-5-user-asks.md`
   (the asks verbatim), `docs/status/lazpy/5-done/430-step-j-user-fixes.md` (step J, done),
   `docs/status/lazpy/1-in-progress/420-step-i-release.md` (I2-I4 and G8c evidence),

@@ -24,7 +24,14 @@ Plan (2026-11-13 12:03): the fix is core patch 0010 (the missing first-use barri
 green on the patched one (10 launches each), before V0b's main build; briefs `docs/plans/stencil-briefs.md`.
 
 ## Evidence
-none yet
+2026-11-13 12:37: both halves of the exit gate on main's v1.0.0 candidate core (sha256 88cc6188…, patch 0010).
+Ours: test_stencil_live.py at `LAZ_STENCIL_RUNS=30`, 0 bad of 90 (and 0 of 180 on the worktree build, against 22 bad
+of 210 unpatched). 3DPlatinum's A3 self-test, verbatim: "PASS, 10 of 10, core sha256 88cc6188cb499bf6e5f87c781526d9
+dcc4c2437d2c5ed31c4772afb3bec7fd0c. Bundled MoltenVK, no overrides, 10 fresh headless launches, finished 12:37. -
+Every launch: stencil 0x80 count 8000 of 8000, clear stencil 00, \"selftest ds: PASS\", and make
+emu-pica-replay-port rc 0. - pica_replay's edge band (worst): 54.65% on all 10. That is the same figure the unpatched
+core gave under the old MoltenVK 1.2.9 (54.65%, strict 87.93%, tolerant 97.59%), and better than 31.83% on bundled
+1.4.2 with heaps off. So the color-surface barrier change leaves the good result unchanged."
 
 ## Pointers
 - Ask verbatim: the notes below.
