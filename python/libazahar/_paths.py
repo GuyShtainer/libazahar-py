@@ -31,9 +31,10 @@ def host_path() -> Path:
 
 
 def core_path(core: Optional[str] = None) -> Path:
-    """The core: the argument, else ``LAZ_CORE``, else ``<root>/dl/azahar/azahar_libretro.dylib``."""
+    """The core: the argument, else ``LAZ_CORE``, else our core at ``<root>/dl/lazpy-core/azahar_lazpy_libretro.dylib``
+    (``tools/fetch.sh --lazpy-core`` puts it there)."""
     chosen = core or os.environ.get("LAZ_CORE")
-    return (Path(chosen) if chosen else repo_root() / "dl" / "azahar" / "azahar_libretro.dylib").resolve()
+    return (Path(chosen) if chosen else repo_root() / "dl" / "lazpy-core" / "azahar_lazpy_libretro.dylib").resolve()
 
 
 def mvk_path() -> Path:

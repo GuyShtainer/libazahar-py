@@ -11,7 +11,7 @@
 
 #define DEFAULT_PROFILE "host/options-default.txt"
 #define DEFAULT_LAZPY_PROFILE "core/options-lazpy.txt"
-#define DEFAULT_CORE "dl/azahar/azahar_libretro.dylib"
+#define DEFAULT_CORE "dl/lazpy-core/azahar_lazpy_libretro.dylib"
 #define MAX_OPTS 64
 #define LINE_MAX_LEN 512
 #define MAX_BATCHES 16

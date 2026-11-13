@@ -9,10 +9,12 @@
    2026-11-12): our core build script may run Azahar's own CMake build on the exact pinned Azahar commit, nice'd in
    the background; nothing else in a download is run.
 3. **Licenses.** Azahar is GPLv2-or-later: reading its source is fine; any copied code keeps its header and its notice.
-   MoltenVK is Apache-2.0, the libretro headers MIT. MoltenVK and the stock core are fetched by a script, never
-   shipped. Our own patched core (Guy 2026-11-12: we edit the core to our needs and publish it publicly, no upstream
-   pull request) is the one exception: its patch and build script are public, and any published binary ships with its
-   GPLv2+ corresponding source (the pinned Azahar commit plus our patch).
+   MoltenVK is Apache-2.0, the libretro headers MIT. MoltenVK is fetched by a script, never shipped. Our own patched
+   core (Guy 2026-11-12: we edit the core to our needs and publish it publicly, no upstream pull request) is the one
+   exception: its patches and build script are public, and any published binary ships with its GPLv3 corresponding
+   source (Azahar's source minus the key and certificate data, OpenSSL's source, the system-archive generator
+   snapshot, the build files). Azahar's own stock core is never fetched by a script; it is used only when a person
+   sets `LAZ_STOCK_CORE` to a copy they obtained themselves, for tests that compare cores.
 4. **Commit identity:** `Guy Shtainer <293649481+GuyShtainer@users.noreply.github.com>`, trailer
    `Co-Authored-By: <model> <noreply@anthropic.com>`. Exact paths, never `commit -a`. **No push** unless Guy says;
    `release-legal-audit` runs before the first push and every release.

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "libazahar-py"
-version = "0.1.0.dev0"
+version = "0.1.0"
 description = "A headless, scriptable Azahar (libretro core) for testing Nintendo 3DS homebrew"
 readme = "README.md"
 requires-python = ">=3.10"

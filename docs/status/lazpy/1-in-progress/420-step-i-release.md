@@ -16,12 +16,18 @@ The release legal audit over repo, history and assets; a release with our core, 
 The gate in `docs/PLAN.md` line 323 ("Phase I"), run headless on this Mac with a pass/fail answer.
 
 ## Evidence
-none yet
+- 2026-11-13 04:11: I1 done. Built in 46c808e, review fixes (S4-S6 with COPYING.NEWLIB quoted, N4-N9) in 3c11544, merged
+  into main with --no-ff (code.md and runners.md conflicts kept both sides; runners' mknotices line gained --newlib).
+  Gates after the fixes: release_check runs/release/v0.1.0 --skip-pins 0 FAIL; --plant-red all 18 plants caught, rc 1;
+  pytest -m "not slow" 110 passed in the worktree, 109 passed + 1 skip (process already nice) on merged main;
+  docs_check PASS on all eight checks with NOTICES.md present. The worktree's staging copy is kept in runs/step-i/
+  (ignored). I2 (pins commit, mkrelease in MAIN, --pre-push, clone_check), I3 (release-legal-audit) and I4 remain here;
+  the item stays in 1-in-progress until I3 passes.
 
 ## Pointers
 - Plan section: `docs/PLAN.md:323`
 - Phase plan: `docs/plans/phase-4.md` (index), `docs/plans/phase-i.md` (the builder's brief, revision 2)
-- Review: none yet
+- Review: `docs/reviews/phase-4-as-built.md`
 
 ## Lessons and notes
 Read this part only when you work on this item. Blockers, numbers and Guy's words go here verbatim.

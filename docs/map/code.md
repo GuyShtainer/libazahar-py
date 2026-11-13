@@ -28,3 +28,8 @@
   only); `examples/README.md`.
 - `STATUS.md`: what works, what is measured, what is not tested, and what is next.
 - `docs/HOST-API.md`: the C host API (`azh_*`) and the `azhost` CLI, exit codes and stop reasons.
+- `NOTICES.md`: generated licence notices (`tools/mknotices.py`); also inside the core's release zip.
+- `core/PIN-nokeys`: the pin of the source asset (Azahar's tarball minus the drop list); `core/OPENSSL.md`: where
+  the statically linked OpenSSL came from and how to rebuild it.
+- `docs/release-notes/`: the release notes per tag.
+- `tests/python/test_paths.py`: the default core path and the `LAZ_STOCK_CORE` skips.

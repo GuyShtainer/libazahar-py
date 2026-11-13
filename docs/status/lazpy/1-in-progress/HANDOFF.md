@@ -1,7 +1,7 @@
 <!-- handoff: slim v1 | current tasks only | rewritten whole from docs/status/templates/handoff.md | budget 80 lines | never append -->
 # libazahar-py handoff
 
-As of: 2026-11-13 04:06 (this project's own session)
+As of: 2026-11-13 04:12 (this project's own session)
 
 This file lives in docs/status/lazpy/1-in-progress/, beside its item files. It holds only what
 the next session needs to act now, and points at the rest. Goals, rules, decisions and history live elsewhere.
@@ -9,17 +9,17 @@ the next session needs to act now, and points at the rest. Goals, rules, decisio
 ## Running now
 | What | Where | Agent id | It stops when |
 |---|---|---|---|
-| laz-420: step I fix round (review S4, S5, S6 newlib, N4-N9), re-stage | ../libazahar-py-i (step-i at 46c808e) | a8e760acbd1172ce5 | its report "I fixes done" |
+| laz-420: I2, the release staged in MAIN (phase-i.md 6, I2 steps 1-5; review S9's order) | MAIN | main | `clone ok` in runs/clone-i2 |
 
-Not running: step H is merged (56d5a18, item 410 done); the joint review is done (docs/reviews/phase-4-as-built.md; item 400's notes). Phase 3 done; G8b, Gen3D's copy check, the downloads done.
+Not running: steps H and I are merged (H's item 410 done; I's fixes 3c11544, item 420's Evidence); the joint review is done (docs/reviews/phase-4-as-built.md; item 400's notes). Phase 3 done; G8b, Gen3D's copy check, the downloads done.
 
 ## Next steps, in order
-1. On "I fixes done": commit on step-i (exact paths, scans); book hours.
-2. Merge step-i into main (review S8: code.md and runners.md conflicts, keep both sides, H's runners block keeps its
-   own closing fence; then mkmap, map_check); remove both worktrees (porcelain --ignored looked at).
-3. S7: reword spike 1's stock-core URL and sha256 lines (docs/research/spike-1-headless-core.md:18, :27-28) and the
-   runners.md pointer; then I2 in MAIN (phase-i.md 6; S9's order), I3 release-legal-audit (phase-i.md 9.2), I4.
-4. The push and the release wait for Guy (G5-G7, Q1-Q9).
+1. I2 in MAIN (phase-i.md section 6, I2 steps 2-5): the test app from the README's build block, mkrelease, the
+   two pins into tools/fetch.sh (commit it alone), mkrelease again (zip and test app sha256 unchanged),
+   release_check with LAZ_PRIVATE_NEEDLES, docs_check, clone_check in the background (Monitor, 45 min).
+2. I3: release-legal-audit with phase-i.md 9.2, plus: history before 083cc56 still holds the stock core's asset URL
+   and hash (review S7); report to docs/reviews/release-legal-audit-v0.1.0.md. Then I4 fixes and re-stage.
+3. The push and the release wait for Guy (G5-G7, Q1-Q9).
 
 ## Waiting on Guy (only what blocks a step above)
 - Phase 4's G5-G7 (repo creation, the word "push", publishing the draft), G9 (spike 2's game: default say

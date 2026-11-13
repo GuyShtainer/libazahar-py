@@ -58,29 +58,41 @@ def host_paths(host_lib: Path) -> HostPaths:
     core = _paths.core_path()
     app = REPO / "build" / "testapp.3dsx"
     if not core.is_file():
-        _missing(core, "run tools/fetch.sh or set LAZ_CORE")
+        _missing(core, "run tools/fetch.sh --lazpy-core or set LAZ_CORE")
     if not app.is_file():
         _missing(app, "run make testapp")
     return HostPaths(host_lib, core, app)
 
 
-@pytest.fixture(scope="session")
-def stock_core() -> Path:
-    """The stock core (the default path under the repo), for tests that need it whatever ``LAZ_CORE`` says."""
-    core = REPO / "dl" / "azahar" / "azahar_libretro.dylib"
+def _stock_core_path() -> Path:
+    """``LAZ_STOCK_CORE`` as a path; skip when unset (always, even under LAZ_REQUIRE_EMULATOR=1: the stock core is
+    never required); a failure under LAZ_REQUIRE_EMULATOR=1 when it names no file."""
+    env = os.environ.get("LAZ_STOCK_CORE")
+    if not env:
+        pytest.skip("set LAZ_STOCK_CORE to Azahar's own core to compare cores")
+    core = Path(env)
     if not core.is_file():
-        _missing(core, "run tools/fetch.sh")
+        _missing(core, "LAZ_STOCK_CORE names no file")
     return core
 
 
 @pytest.fixture(scope="session")
+def stock_core() -> Path:
+    """Azahar's own core, only when ``LAZ_STOCK_CORE`` names it (tests that compare cores; otherwise they skip)."""
+    return _stock_core_path()
+
+
+@pytest.fixture(scope="session")
 def lazpy_core() -> Path:
-    """Our patched core: ``LAZ_CORE`` when it names one, else build-core/ under the repo."""
+    """Our patched core: ``LAZ_CORE`` when it names one, else build-core/ under the repo, else dl/lazpy-core/."""
     from libazahar import _paths
     chosen = _paths.core_path()
-    core = chosen if _kind(chosen) == "lazpy" else REPO / "build-core" / "azahar_lazpy_libretro.dylib"
+    candidates = [chosen] if _kind(chosen) == "lazpy" else []
+    candidates += [REPO / "build-core" / "azahar_lazpy_libretro.dylib",
+                   REPO / "dl" / "lazpy-core" / "azahar_lazpy_libretro.dylib"]
+    core = next((c for c in candidates if c.is_file()), candidates[0])
     if not core.is_file():
-        _missing(core, "build our core or set LAZ_CORE")
+        _missing(core, "run tools/fetch.sh --lazpy-core, build our core or set LAZ_CORE")
     return core
 
 

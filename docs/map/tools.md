@@ -7,7 +7,12 @@
   applies `core/patches/` with `--fuzz 0`, configures, and with `--build` or `--detach` builds
   `build-core/azahar_lazpy_libretro.dylib`. `tools/untar_checked.py` pre-scans a tar.xz, refuses unsafe members,
   then extracts with `filter="data"` (Python 3.12+).
-- `tools/fetch.sh`: the stock core, MoltenVK and headers into `dl/`, sha256-pinned.
+- `tools/fetch.sh`: MoltenVK and headers (no flag), or the parts named (`--moltenvk --headers --lazpy-core --testapp`),
+  sha256-pinned; our core and the test app come from the release (`LAZ_RELEASE_BASE` overrides its URL).
+- `tools/mknotices.py`: writes `NOTICES.md` from the link line, the `.o.d` dependency files and the licence texts;
+  exits 1 on an unknown path, component or notice.
+- `tools/mkrelease.sh <tag>`: stages the release assets deterministically in `runs/release/<tag>/`.
+- `tools/release_check.py <dir>`: the release's machine checks (`--skip-pins`, `--pre-push`, `--plant-red`).
 - `tests/gate-a.sh <app.3dsx>`: step A's gate (8 checks in a temporary fresh copy; `KEEP=1` keeps it).
 - `tests/gate-b.sh`: step B's gate (`RUNNER=fe2` default, or `RUNNER=azhost`); one PASS/FAIL line per check.
 - `tests/gate_c.py`: step C's gate (scenarios a1, a2, b-f: frame-exact input, touch, circle pad, stops, raw shots,
