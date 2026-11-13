@@ -124,3 +124,4 @@ date	bet	phase	agent_id	model	role	kind	start	end	hours	source
 2026-11-13	re-audit saved, S1r and the NOTE text fixed, final re-stage, handoff	phase-4	main	opus	main	process	05:04	05:05	0.05	session clock
 2026-11-13	morning: taskcheck, /learn (playbook, KB), /handoff, /progress	phase-4	main	opus	main	process	08:00	08:07	0.15	session clock
 2026-11-13	step J: Gen3D API fixes (ArgumentError, fresh_sd, Shot.frame_total, timeout docs), tests, scene script	phase-4	main	opus	main	build	08:28	08:36	0.13	session clock
+2026-11-13	step J: real scene on both cores (13 runs), research note, README and STATUS rows, item done	phase-4	main	opus	main	build	08:39	09:27	0.80	session clock

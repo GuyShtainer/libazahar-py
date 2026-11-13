@@ -1,7 +1,7 @@
 <!-- handoff: slim v1 | current tasks only | rewritten whole from docs/status/templates/handoff.md | budget 80 lines | never append -->
 # libazahar-py handoff
 
-As of: 2026-11-13 08:39 (this project's own session)
+As of: 2026-11-13 09:27 (this project's own session)
 
 This file lives in docs/status/lazpy/1-in-progress/, beside its item files. It holds only what
 the next session needs to act now, and points at the rest. Goals, rules, decisions and history live elsewhere.
@@ -9,24 +9,21 @@ the next session needs to act now, and points at the rest. Goals, rules, decisio
 ## Running now
 | What | Where | Agent id | It stops when |
 |---|---|---|---|
-| Gen3D's 3D scene, 36000 frames each on our core, Azahar's core, our core again (laz-430) | the session scratchpad's scene/ folder, outside both repos | main | the three runs end; it waits for a quiet machine until 09:30, then runs and marks the rows busy |
 
-v0.1.0 was staged at 7e2cb7e; step J's commits (23eb728, 0165d16) make the staged build-files asset stale, so it
-is re-staged after step J (next step 2).
+Nothing runs. Step J is done (item 430 in 5-done): Gen3D's API fixes and the real scene on our core. Its commits
+make the staged build-files asset (staged at 7e2cb7e) stale: re-stage before the push (step 1).
 
 ## Next steps, in order
-1. Step J (`docs/status/lazpy/1-in-progress/430-step-j-user-fixes.md`): when the scene runs end, write the numbers
-   into docs/research/ with source lines, add the README row and STATUS line, then tell Gen3D (3ds-toolkit-1c) and
-   3DP that the tool is ready and is the only emulator route they use. Item 430 to 5-done.
-2. Re-stage at HEAD: `sh tools/mkrelease.sh v0.1.0`, then `--pre-push` with LAZ_PRIVATE_NEEDLES (16 of 16), and
-   clone_check.
-3. Wait for Guy (below): R1, then G5-G7.
-4. On his word (phase-i.md 8.2): at the commit to be tagged, re-run `sh tools/mkrelease.sh v0.1.0` and
+1. Re-stage at HEAD: `sh tools/mkrelease.sh v0.1.0`, then `python3 -I tools/release_check.py runs/release/v0.1.0
+   --pre-push` with LAZ_PRIVATE_NEEDLES (16 of 16), and clone_check.
+2. Wait for Guy (below): R1, then G5-G7.
+3. On his word (phase-i.md 8.2): at the commit to be tagged, re-run `sh tools/mkrelease.sh v0.1.0` and
    `python3 -I tools/release_check.py runs/release/v0.1.0 --pre-push` with LAZ_PRIVATE_NEEDLES (the private replace
    file plus the needles); it must be 16 of 16 (the re-audit's S4: check 10 compares with HEAD). Tag v0.1.0 there,
    push main and the tag only, upload the staged assets as a draft release for Guy to publish.
-5. After Guy publishes: I5 (phase-i.md 6: download the release, `shasum -c`, clone_check against GitHub,
+4. After Guy publishes: I5 (phase-i.md 6: download the release, `shasum -c`, clone_check against GitHub,
    memory_watch), items 420 and 400 to 5-done, then delete the three private history bundles.
+5. Answer asks from Gen3D (3ds-toolkit-1c) and 3DP: both were told on 2026-11-13 to use only libazahar-py.
 
 ## Waiting on Guy (only what blocks a step above)
 - The audit's R1: accept core/PIN's default build route (it downloads Azahar's unchanged tarball and deletes the
@@ -39,7 +36,7 @@ is re-staged after step J (next step 2).
 The full list is generated into `docs/status/README.md`.
 
 ## Pointers
-- Items: `docs/status/lazpy/1-in-progress/430-step-j-user-fixes.md` (step J),
+- Items: `docs/status/lazpy/5-done/430-step-j-user-fixes.md` (step J, done),
   `docs/status/lazpy/1-in-progress/420-step-i-release.md` (I2-I4 and G8c evidence),
   `docs/status/lazpy/1-in-progress/400-phase-4-release.md` (Guy's asks).
 - The push and I5: `docs/plans/phase-i.md` sections 6 and 8.2.

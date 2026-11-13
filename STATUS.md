@@ -1,6 +1,6 @@
 # libazahar-py status
 
-As of 2026-11-13, commit 896c2fe. v0.1.0 is an early prerelease. Each item below names the work item (`laz-NNN`) whose
+As of 2026-11-13, commit 6d5ca11. v0.1.0 is an early prerelease. Each item below names the work item (`laz-NNN`) whose
 Evidence, in `docs/status/lazpy/5-done/`, proves it. Nothing is listed as working that no gate ran.
 
 ## What works
@@ -20,14 +20,16 @@ Evidence, in `docs/status/lazpy/5-done/`, proves it. Nothing is listed as workin
 - Many instances at once: `Pool`, the machine-wide slot cap, `LoadWarning`, the speed table, a default cap of 2
   (laz-310)
 - Guest memory on our core: `emu.memory` reads and writes and the per-frame watch list (laz-330)
+- A real app on our core: Gen3D's 3D scene (36000 frames, one batch) runs as fast as on Azahar's own core on a quiet
+  machine, and its code reads back through `emu.memory`; bad arguments raise `ArgumentError`, `fresh_sd` and
+  `Shot.frame_total` exist (laz-430)
 
 ## What does not work yet
 
 - macOS before 15, Intel Macs, Windows and Linux. The core needs macOS 15 (see Known limits).
 - Poll-exact movies (`lazpy_movie_play` is in our core, but no gate ran it): not tested.
 - The default instance cap (2) rests on a light scene (the test app). It stays provisional until a real-scene row
-  exists. The real-scene speed rows in the README were measured on Azahar's own core (spike 2 ran before our core
-  existed), on a busy machine; no real scene has run on our core yet.
+  with several instances exists (the real-scene rows on our core are one instance).
 - Guest memory and the watch list on Azahar's own core: they raise `NeedsLazpyCore`.
 - Any app that is not homebrew: no console keys, no Nintendo system files, no encrypted titles.
 
@@ -77,6 +79,6 @@ Evidence, in `docs/status/lazpy/5-done/`, proves it. Nothing is listed as workin
 ## Next
 
 - CI on GitHub runners (about 0.5 h).
-- A real-scene speed row on our core (quiet machine), and a real-scene row for the cap.
+- A real-scene row with several instances, for the cap.
 - A core rebuild with a macOS 15 header and patch 0008's comment fixed.
 - Gen3D's adapter (Gen3D's own work).

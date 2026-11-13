@@ -21,14 +21,18 @@ work: macOS before 15 and Intel Macs, audio output, anything with a window, and 
 | Our core, host share of a batch without shots | 0.1% | test app, light scene | 10.9/9.4 | 2026-11-13 | docs/research/speed-table-e.md:27,3 |
 | Azahar's own core, 1 instance | 27.61x real time (1652.2 fps) | test app, light scene | 16.6/32.8 | 2026-11-13 | docs/research/speed-table-e.md:36,3 |
 | Azahar's own core, 3 instances, each | 15.48x real time (926.1, 926.3, 926.1 fps) | test app, light scene | 35.9/36.3 | 2026-11-13 | docs/research/speed-table-e.md:38,3 |
+| Our core, real scene, 1 instance | 561.4 fps, 9.38x real time | Gen3D (homebrew) drawing a 3D scene from a GBA game run locally, not distributed | 3.85/4.43 | 2026-11-13 | docs/research/real-scene-j.md:22,1 |
+| Our core, real scene, guest memory read | 0.024 ms per 4 KiB | Gen3D (homebrew) drawing a 3D scene from a GBA game run locally, not distributed | 3.85/4.43 | 2026-11-13 | docs/research/real-scene-j.md:22,1 |
+| Azahar's own core, real scene, 1 instance, quiet machine | 564.2 and 541.7 fps, 9.43x and 9.05x real time | Gen3D (homebrew) drawing a 3D scene from a GBA game run locally, not distributed | 4.65/3.87, 4.24/4.37 | 2026-11-13 | docs/research/real-scene-j.md:20,21,1 |
 | Azahar's own core, real scene, 1 instance | 334 fps, 5.6x real time | Gen3D (homebrew) drawing a 3D scene from a GBA game run locally, not distributed | 26.7 (16:07) | 2026-11-12 | docs/research/spike-2-real-scene.md:32,1 |
 | Azahar's own core, real scene, 1 instance, busy machine | 129 fps, 2.2x real time | Gen3D (homebrew) drawing a 3D scene from a GBA game run locally, not distributed | 68-96 (16:09-16:11) | 2026-11-12 | docs/research/spike-2-real-scene.md:34,1 |
 | Azahar's own core, real scene, 3 instances, each | 136-138 fps, 2.3x real time | Gen3D (homebrew) drawing a 3D scene from a GBA game run locally, not distributed | 58 rising to 90 | 2026-11-12 | docs/research/spike-2-real-scene.md:35,1 |
 
 Speed depends on the scene and the machine's load; the light rows are the test app, the real-scene rows are
-Gen3D's (homebrew) 3D scene, measured on a busy machine. Load is the 1-minute load average (at the start and the end of
-a light row). The real-scene rows are not a clean measure: a re-measure on a quiet machine is still owed. Azahar's
-own core ran while the machine was busier.
+Gen3D's (homebrew) 3D scene. Load is the 1-minute load average (at the start and the end of a row; one number is the
+start only). On the real scene at equal, low load the two cores match (all quiet runs 536-571 fps); the 2026-11-12
+rows ran on a busy machine. The light rows of Azahar's own core ran at a higher load than ours, so the gap between
+them is not a clean comparison.
 
 ## Requirements
 
