@@ -59,3 +59,6 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   pytest not slow 103 passed, 1 skipped. It handed back at load 15 before the emulator checks; the main loop runs
   them (runs/g/fixcheck.sh, waiter bt52zbipn): test_memory_live alone, test_state, gate_f2 --only r2, gate_c on
   our core, one at a time when the 1-min load is under 10.
+  The fixer's 14 paths: python/libazahar/{memory,_abi,_slots,_worker,__init__}.py, host/run.c, host/state.c,
+  host/azh_internal.h, docs/USING.md, tests/gate_c.py, tests/gate_f2.py, tests/python/test_memory.py,
+  tests/python/test_memory_live.py, tests/python/test_state.py.
