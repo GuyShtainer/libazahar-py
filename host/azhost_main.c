@@ -595,7 +595,7 @@ static void print_summary(const args_t *a, const azh_result *r, int j)
     fflush(stdout);
 }
 
-/* --save after the last batch; until step D fills state.c this is "Unsupported:" */
+/* --save after the last batch */
 static int save_state(const char *path)
 {
     int32_t k = 0;

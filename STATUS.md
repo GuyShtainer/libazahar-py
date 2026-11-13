@@ -78,7 +78,5 @@ Evidence, in `docs/status/lazpy/5-done/`, proves it. Nothing is listed as workin
 
 - CI on GitHub runners (about 0.5 h).
 - A real-scene speed row on our core (quiet machine), and a real-scene row for the cap.
-- A hint in the missing-core `BootError` ("run tools/fetch.sh --lazpy-core or set LAZ_CORE"), and the stale "until D"
-  comments in `host/azhost.h`.
 - A core rebuild with a macOS 15 header and patch 0008's comment fixed.
 - Gen3D's adapter (Gen3D's own work).

@@ -48,3 +48,11 @@ def test_clear_sd_refuses_a_symlink(tmp_path):
 def test_shot_keeps_its_old_shape():
     shot = Shot(5, "t.png", "b.png")
     assert shot.frame == 5 and shot.frame_total == 0
+
+
+def test_missing_core_names_the_fix(tmp_path):
+    from libazahar import BootError, Emulator
+    app = tmp_path / "app.3dsx"
+    app.write_bytes(b"3DSX")
+    with pytest.raises(BootError, match="fetch.sh --lazpy-core"):
+        Emulator(app, tmp_path / "w", core=tmp_path / "no-such-core.dylib")

@@ -87,8 +87,8 @@ int azh_boot(const char *app, const char *state_or_null); /* state: step D */
 int azh_run(const int32_t *inputs, int32_t n, const azh_batch *b, azh_result *out);
         /* n = number of input records (AZH_INPUT_INTS int32 each), not of ints; see docs/plans/phase-c.md 3.4 */
 int azh_shot(int32_t screens, int32_t format, const char *path_prefix);  /* PNG: <prefix>_top.png / _bottom.png */
-int azh_save_state(const char *path, int32_t *k_out);    /* AZH_E_UNSUPPORTED until D */
-int azh_load_state(const char *path);                    /* AZH_E_UNSUPPORTED until D */
+int azh_save_state(const char *path, int32_t *k_out);    /* k_out: VBlanks the save's drain ran */
+int azh_load_state(const char *path);
 int azh_read(uint32_t addr, uint32_t len, void *buf);    /* AZH_E_NEEDS_LAZPY_CORE on the stock core (G) */
 int azh_write(uint32_t addr, uint32_t len, const void *buf);
 int azh_set_input(const int32_t rec[AZH_INPUT_INTS]);    /* sets the held state now (frame field ignored) */

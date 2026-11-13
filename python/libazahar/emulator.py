@@ -9,7 +9,7 @@ from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
 
 from . import _abi, _paths
 from ._client import Wait, WorkerClient, reap_process
-from .errors import ArgumentError, GuestError, HostError
+from .errors import ArgumentError, BootError, GuestError, HostError
 from .inputs import Buttons, Circle, Held, Item, Touch, _TouchUp, apply_item, check_buttons, fold, held_after
 from .memory import Memory
 from .results import RunResult, SaveInfo, Shot, Stats, WatchRow
@@ -104,6 +104,10 @@ class Emulator:
 
     def _boot(self, core: Union[str, Path, None], options: Options, sd_seed: Union[str, Path, None],
               state: Union[str, Path, None]) -> None:
+        core_file = _paths.core_path(None if core is None else str(core))
+        if not core_file.is_file():
+            raise BootError(f"core {core_file} is missing: run tools/fetch.sh --lazpy-core, or set LAZ_CORE (or core=) "
+                            "to a core file")
         if sd_seed is not None and state is None:
             shutil.copytree(sd_seed, self._sd, symlinks=False, dirs_exist_ok=True)
         pairs = _read_profile(_paths.profile_path()) + _pairs(options)
@@ -111,7 +115,7 @@ class Emulator:
         lazpy_pairs = _read_profile(lazpy_file) if lazpy_file is not None else []
         self._client.spawn(self.boot_timeout)
         self._finalizer = weakref.finalize(self, reap_process, self._client.proc)
-        args = (str(_paths.core_path(None if core is None else str(core))), str(self.workdir / "sys"),
+        args = (str(core_file), str(self.workdir / "sys"),
                 str(self.workdir / "host.log"), str(self.workdir / "host.map"), pairs, str(self.app),
                 str(Path(state).resolve()) if state is not None else None, lazpy_pairs)
         _, stats = self._client.request("start", args, Wait(total=self.boot_timeout))
