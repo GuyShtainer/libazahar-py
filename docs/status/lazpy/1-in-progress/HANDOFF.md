@@ -1,7 +1,7 @@
 <!-- handoff: slim v1 | current tasks only | rewritten whole from docs/status/templates/handoff.md | budget 80 lines | never append -->
 # libazahar-py handoff
 
-As of: 2026-11-13 09:27 (this project's own session)
+As of: 2026-11-13 09:36 (this project's own session)
 
 This file lives in docs/status/lazpy/1-in-progress/, beside its item files. It holds only what
 the next session needs to act now, and points at the rest. Goals, rules, decisions and history live elsewhere.
@@ -14,16 +14,16 @@ Nothing runs. Step J is done (item 430 in 5-done): Gen3D's API fixes and the rea
 make the staged build-files asset (staged at 7e2cb7e) stale: re-stage before the push (step 1).
 
 ## Next steps, in order
-1. Re-stage at HEAD: `sh tools/mkrelease.sh v0.1.0`, then `python3 -I tools/release_check.py runs/release/v0.1.0
-   --pre-push` with LAZ_PRIVATE_NEEDLES (16 of 16), and clone_check.
-2. Wait for Guy (below): R1, then G5-G7.
-3. On his word (phase-i.md 8.2): at the commit to be tagged, re-run `sh tools/mkrelease.sh v0.1.0` and
+1. Wait for Guy (below): R1, then G5-G7. (Re-staged at cd30086, 16 of 16, clone ok: item 420's Evidence.)
+2. On his word (phase-i.md 8.2): at the commit to be tagged, re-run `sh tools/mkrelease.sh v0.1.0` and
    `python3 -I tools/release_check.py runs/release/v0.1.0 --pre-push` with LAZ_PRIVATE_NEEDLES (the private replace
    file plus the needles); it must be 16 of 16 (the re-audit's S4: check 10 compares with HEAD). Tag v0.1.0 there,
    push main and the tag only, upload the staged assets as a draft release for Guy to publish.
-4. After Guy publishes: I5 (phase-i.md 6: download the release, `shasum -c`, clone_check against GitHub,
+3. After Guy publishes: I5 (phase-i.md 6: download the release, `shasum -c`, clone_check against GitHub,
    memory_watch), items 420 and 400 to 5-done, then delete the three private history bundles.
-5. Answer asks from Gen3D (3ds-toolkit-1c) and 3DP: both were told on 2026-11-13 to use only libazahar-py.
+4. Answer asks from Gen3D (3ds-toolkit-1c) and 3DPlatinum (3ds-toolkit-f4; the session named "3DP" is a progress
+   test helper): both were told on 2026-11-13 to use only libazahar-py. 3DPlatinum switched (smoke: 600 frames in
+   0.3 s); its sound lane will ask for an audio route (audio output is not built), with a repro, when that lane nears.
 
 ## Waiting on Guy (only what blocks a step above)
 - The audit's R1: accept core/PIN's default build route (it downloads Azahar's unchanged tarball and deletes the

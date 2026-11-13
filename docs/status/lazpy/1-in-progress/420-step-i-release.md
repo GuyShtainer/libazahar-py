@@ -95,5 +95,10 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   HEAD the same hour; S4: the tag goes on the commit the build-files asset was archived from (re-run mkrelease and
   --pre-push at the tagged commit). R1 still waits for Guy. Its proposed KB entry (prove the scanner on the
   pre-rewrite bundle; a table fix must include the prose beside it) is for the next /learn pass.
+- 2026-11-13 09:33, re-staged after step J (cd30086): mkrelease rc 0, every asset sha unchanged except the build-files
+  archive (fetch.sh pins still match); --pre-push with the private file 16 of 16 PASS; clone_check "clone ok: 102 s
+  wall", its pytest 145 passed, 5 skipped; a rerun in that clone with -rs 147 passed, 3 skipped (the known three:
+  two need LAZ_STOCK_CORE, one a process not already nice). Logs: runs/j/, runs/clone-j/ (ignored). Any later commit
+  makes the build-files asset stale again: re-stage at the tagged commit (handoff).
 - Final staging: done at the commit that adds this line (mkrelease, then --pre-push with the private file); see
   the handoff. This item moves to 5-done after I5 (Guy publishes, the release is downloaded and checked).
