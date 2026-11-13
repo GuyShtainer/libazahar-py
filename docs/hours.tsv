@@ -111,3 +111,4 @@ date	bet	phase	agent_id	model	role	kind	start	end	hours	source
 2026-11-13	save the review, newlib licence download, H and I fix rounds sent	phase-4	main	opus	main	process	04:01	04:02	0.05	session clock
 2026-11-13	step H fix round: review B1, B2, S1-S3, N1-N3, D2 line	phase-4	af156d29564cfc9ce	sonnet	builder	build	04:02	04:03	0.02	agent duration 65 s
 2026-11-13	commit H fixes on step-h (scans), merge step-h into main, item 410 done	phase-4	main	opus	main	process	04:03	04:06	0.05	session clock
+2026-11-13	S7: spike 1's stock-core asset URL and hash reworded, runners pointer	phase-4	main	opus	main	process	04:06	04:06	0.05	session clock

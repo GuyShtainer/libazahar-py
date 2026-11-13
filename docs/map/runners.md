@@ -66,7 +66,7 @@ Fetch first: `tools/fetch.sh` (core, MoltenVK, headers; sha256-checked). Run it 
 MVK_LIB=dl/moltenvk/MoltenVK/MoltenVK/dynamic/dylib/macOS/libMoltenVK.dylib OPT_citra_graphics_api=Vulkan \
   build/fe2 dl/azahar/azahar_libretro.dylib <app.3dsx> <sysdir> <outdir> <seconds> <shot frames, comma list>
 ```
-The core's SD folder is `<sysdir>/Azahar/sdmc/`. The downloads' URLs and sha256: `docs/research/spike-1-headless-core.md`.
+The core's SD folder is `<sysdir>/Azahar/sdmc/`. Azahar's own core (`LAZ_STOCK_CORE`, opt-in) is not downloaded by any script; spike 1 names where it came from: `docs/research/spike-1-headless-core.md`.
 
 Step H's docs gate and the examples (each example with `nice -n 10`; `LAZ_CORE` picks a core):
 ```

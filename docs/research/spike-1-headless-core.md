@@ -15,7 +15,7 @@ harness has no equivalent in the core (see "What the harness needs").
 ## Part 1: survey (web + GitHub API, 2026-11-12)
 | Candidate | macOS arm64 | New 3DS | .3dsx/.cia | GPU accuracy | Speed | Scripting hooks | SD folder | Licence | Maintenance |
 |---|---|---|---|---|---|---|---|---|---|
-| **Azahar libretro core** | yes, official release asset `stock-core.zip` (2126.2 stable, 2127.0-rc2 on 2026-11-06) https://github.com/azahar-emu/azahar/releases | yes, option `citra_is_new_3ds` (default New 3DS) + `citra_cpu_clock_percentage` | .3dsx/.3ds/.cci/.cxi/.elf/.app load (docs list no .cia; Gen3D .3dsx loads fine) | same GPU emulation as Azahar Qt (Vulkan/MoltenVK; options Auto/Vulkan/Software; NO OpenGL on macOS) | fast, see below | libretro API: input callback, video callback, env vars; memory API returns 0 size | `<system or save dir>/Azahar/sdmc/` (option `citra_use_virtual_sd`, `citra_use_libretro_save_path`) | GPLv2+ | very active, 2127 RCs a week old |
+| **Azahar libretro core** | yes, official build on Azahar's releases page (2126.2 stable, 2127.0-rc2 on 2026-11-06) | yes, option `citra_is_new_3ds` (default New 3DS) + `citra_cpu_clock_percentage` | .3dsx/.3ds/.cci/.cxi/.elf/.app load (docs list no .cia; Gen3D .3dsx loads fine) | same GPU emulation as Azahar Qt (Vulkan/MoltenVK; options Auto/Vulkan/Software; NO OpenGL on macOS) | fast, see below | libretro API: input callback, video callback, env vars; memory API returns 0 size | `<system or save dir>/Azahar/sdmc/` (option `citra_use_virtual_sd`, `citra_use_libretro_save_path`) | GPLv2+ | very active, 2127 RCs a week old |
 | Azahar standalone, headless/SDL build | Release assets only Qt (`azahar-macos-*`); the repo has an SDL frontend (`azahar` binary via `ENABLE_SDL2_FRONTEND`) but no prebuilt macOS asset (not verified a build works headless; SDL still opens a window) | yes | yes (.cia too) | reference | window-paced like Qt unless hidden | gdb stub, config file | native | GPLv2+ | active |
 | Panda3DS (libretro core + SDL/Qt) | yes, v0.9 MacOS-SDL/-Qt zips | not clearly supported | .3dsx yes | HLE, "early stage", many games fail, OpenGL/Vulkan(MoltenVK) | decent | libretro, Lua scripting in its own frontend | yes | GPLv3 | last tag v0.9 Dec 2024, repo pushed Nov 2026 |
 | Citra libretro (old) | docs: no working macOS build | partial | yes | old Citra | n/a | libretro | yes | GPLv2 | dead (Citra archived 2024) |
@@ -24,8 +24,8 @@ Pick: **Azahar libretro core**, because it is the same emulator Guy already test
 the Qt 2125.1.2), is official, signed-by-CI prebuilt for arm64 mac, and exposes the New 3DS switch.
 
 ## Part 2: what I built and ran
-* Core: .../scratchpad/azlr/dl/azahar_libretro.dylib from Azahar's releases page
-  sha256 `[stock core sha256]` (version 2126.2, Mach-O arm64, 19 MB, links only system frameworks, no GL/Vulkan inside).
+* Core: .../scratchpad/azlr/dl/azahar_libretro.dylib, Azahar's libretro core for macOS, tag 2126.2, from Azahar's releases page
+  (version 2126.2, Mach-O arm64, 19 MB, links only system frameworks, no GL/Vulkan inside).
 * MoltenVK 1.4.2 (needed by the Vulkan path, the core brings none): https://github.com/KhronosGroup/MoltenVK/releases/download/v1.4.2/MoltenVK-macos.tar
   sha256 `f95765a6229cb7b915990a2890ce12ebe36a730b021545d3d52ae69ce4c4024e`, unpacked in .../azlr/dl-mvk/.
 * Headers (libretro.h, libretro_vulkan.h, Vulkan-Headers main) in .../azlr/hdr/.
