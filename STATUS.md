@@ -29,7 +29,7 @@ Evidence, in `docs/status/lazpy/5-done/`, proves it. Nothing is listed as workin
   exists. The real-scene speed rows in the README were measured on Azahar's own core (spike 2 ran before our core
   existed), on a busy machine; no real scene has run on our core yet.
 - Guest memory and the watch list on Azahar's own core: they raise `NeedsLazpyCore`.
-- Any app that is not homebrew: no keys, no system files, no encrypted titles.
+- Any app that is not homebrew: no console keys, no Nintendo system files, no encrypted titles.
 
 ## Known limits
 

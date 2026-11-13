@@ -21,9 +21,9 @@ work: macOS before 15 and Intel Macs, audio output, anything with a window, and 
 | Our core, host share of a batch without shots | 0.1% | test app, light scene | 10.9/9.4 | 2026-11-13 | docs/research/speed-table-e.md:27,3 |
 | Azahar's own core, 1 instance | 27.61x real time (1652.2 fps) | test app, light scene | 16.6/32.8 | 2026-11-13 | docs/research/speed-table-e.md:36,3 |
 | Azahar's own core, 3 instances, each | 15.48x real time (926.1, 926.3, 926.1 fps) | test app, light scene | 35.9/36.3 | 2026-11-13 | docs/research/speed-table-e.md:38,3 |
-| Azahar's own core, real scene, 1 instance | 334 fps, 5.6x real time | one commercial game's 3D field scene, run locally | 26.7 (16:07) | 2026-11-12 | docs/research/spike-2-real-scene.md:32,1 |
-| Azahar's own core, real scene, 1 instance, busy machine | 129 fps, 2.2x real time | one commercial game's 3D field scene, run locally | 68-96 (16:09-16:11) | 2026-11-12 | docs/research/spike-2-real-scene.md:34,1 |
-| Azahar's own core, real scene, 3 instances, each | 136-138 fps, 2.3x real time | one commercial game's 3D field scene, run locally | 58 rising to 90 | 2026-11-12 | docs/research/spike-2-real-scene.md:35,1 |
+| Azahar's own core, real scene, 1 instance | 334 fps, 5.6x real time | Gen3D (homebrew) drawing a 3D scene from a GBA game run locally, not distributed | 26.7 (16:07) | 2026-11-12 | docs/research/spike-2-real-scene.md:32,1 |
+| Azahar's own core, real scene, 1 instance, busy machine | 129 fps, 2.2x real time | Gen3D (homebrew) drawing a 3D scene from a GBA game run locally, not distributed | 68-96 (16:09-16:11) | 2026-11-12 | docs/research/spike-2-real-scene.md:34,1 |
+| Azahar's own core, real scene, 3 instances, each | 136-138 fps, 2.3x real time | Gen3D (homebrew) drawing a 3D scene from a GBA game run locally, not distributed | 58 rising to 90 | 2026-11-12 | docs/research/spike-2-real-scene.md:35,1 |
 
 Speed depends on the scene and the machine's load; the light rows are the test app, the real-scene rows are one
 commercial game's scene run locally on a busy machine. Load is the 1-minute load average (at the start and the end of
@@ -118,7 +118,7 @@ core. The idea and the name come from libmgba-py.
 
 ## Legal
 
-Homebrew only. This repository and its releases contain no ROMs, game data, system files, NAND data, keys or encrypted
-titles. Our core is built without Azahar's built-in key data and default HTTP client certificate, and it loads no keys.
+Homebrew only. This repository and its releases contain no ROMs, game data, Nintendo system files, NAND data, console keys, Nintendo
+certificates or encrypted titles. Our core is built without Azahar's built-in key data and default HTTP client certificate, and it loads no keys.
 Nintendo 3DS is a trademark of Nintendo; this project is not affiliated with or endorsed by Nintendo or by the Azahar
 project.

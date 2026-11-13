@@ -70,3 +70,12 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   tests/gate-a.sh:32 still works (no-flag fetch = MoltenVK plus headers). release_check.py is 845 lines.
   Lessons: bsdtar's --uid/--gid/--uname skip @archive members and it drops fractional mtimes; cp onto an existing
   644 file keeps 644, so gate 3 runs fetch.sh with sh or after chmod.
+- 2026-11-13 04:42, I3 (aa81b7f45c2e7eb9b): `docs/reviews/release-legal-audit-v0.1.0.md`. Not shippable yet: B1, the
+  stock core's asset URL, name and sha256 in 144 of 149 commits (old spike 1, fetch.sh, three plans); HEAD, messages
+  and all 9 assets clean. SHOULDs S1 (README real-scene rows vs "homebrew only"), S2 ("no keys" too broad), S3
+  (phase-4.md 0.6 and its section 8 row), and a game name in spike 1 at 51 and 55. R1 (core/PIN's SRC_URL default
+  route) needs Guy's sign-off; fix at the next LAZPY_REV. Its three proposed KB entries are at the report's end, for
+  the next /learn pass.
+- 2026-11-13, I4 at HEAD (main loop): S1-S3 and the spike-1 name reworded; mkrelease's SOURCE.md line names the
+  g8c map. B1's fix is G8c, a third filter-repo pass with the same procedure (phase-i.md 8.1b), rules generated
+  into the private replace file; then the commit map, re-stage, pins, pre-push, clone, and a re-audit of B1 and S1-S3.

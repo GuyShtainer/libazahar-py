@@ -89,7 +89,7 @@ Paths below are given per repo: H:, I:, MAIN:.
 - Fix:
   - Reword the spike lines to "Azahar's libretro core for macOS, tag 2126.2, from Azahar's releases page".
   - Change the runners pointer to match.
-  - Optional: extend release_check check 12 to forbid `stock-core`.
+  - Optional: extend release_check check 12 to forbid the stock core's asset name.
 
 **S8. Merging H then I conflicts in two map files.** Owner: the main loop.
 - Where: docs/map/code.md and docs/map/runners.md. Both are append-at-end hunks; docs/map/tools.md auto-merges.

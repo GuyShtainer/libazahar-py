@@ -80,9 +80,9 @@ not counted.
    translate them (`build.inputs`' `head=799e8c3` is 7c33f38 now). One duty stands: nothing committed before the
    push may bring the needle back (`release_check` checks `private` and `repo` with the needle file, and
    `--pre-push`). phase-i.md 8.1 is the procedure for any further pass.
-6. **The stock core carries the blob and ClCertA too, and our script fetched it.** Azahar's own macOS libretro build,
-   which `tools/fetch.sh` downloads today, holds the key blob and the ClCertA arrays (`python3 -I` byte search,
-   2026-11-13). The README's default route is **our core and the test app from our release** (P16). The consult
+6. **The stock core carries the blob and ClCertA too, and our script fetched it.** Azahar's default build embeds the
+   key blob and the ClCertA arrays (its CMake default). The README's default route is **our core and the test app
+   from our release** (P16). The consult
    grades the scripted stock fetch **YELLOW** (section 7): within rule 7's letter, not its "describable" clause.
    **Default (P17):** before the first push, remove the pinned stock-core URL and sha256 from `tools/fetch.sh` and
    the stock core from every default path (the library's and `azhost`'s default core, the test suite's fixtures and
@@ -365,7 +365,7 @@ file on this Mac; after P17 no script of ours fetches it).
 | `default_keys.h` 46,817 bytes, `#error` guard :7-9, array :11; `key.cpp` includes it under `#ifdef` (:21-23) and reads it (:302-312); every key path goes through `GetKeysStream()` (:292-314) | SRC src/core/hw/ |
 | ClCertA: `ctr-common-1-cert.h` (1,264-byte array) and `ctr-common-1-key.h` (1,232) included without `#ifdef` at `http_c.cpp:37-38`; fallback at :2281-2289; `DecryptClCertA()` returns at the missing slot 0x0D (:2262-2266); in no CMake file | SRC src/core/hle/service/http/; review 1 A; Phase 3 review 2 B1, N1 |
 | The 21:09 build: cache `ENABLE_BUILTIN_KEYBLOB:BOOL=OFF` (:728), the blob absent, no `.o.d` names `default_keys.h`, 0 `/Users/` strings, ClCertA arrays present, one `.o.d` names `ctr-common-1-*` | review 1 A; Phase 3 review 2 section 3 |
-| STOCK holds the blob and both ClCertA arrays; 198 `libressl` strings | `python3 -I` byte search, 2026-11-13 |
+| STOCK: Azahar's default build embeds the blob and both ClCertA arrays and links LibreSSL | Azahar's CMake defaults, 2026-11-13 |
 | LibreSSL `externals/libressl/COPYING` (133 lines): ISC :2-4; OpenSSL License :17-72 (clause 3 :35-38, clause 6 :49-52, Young/Hudson :68-70); SSLeay :74-132 (:127-131 "cannot simply be copied and put under another distribution licence [including the GNU Public Licence.]"); built unless `USE_SYSTEM_OPENSSL` (`externals/CMakeLists.txt:319-333`, `find_package(OpenSSL 1.1)`); httplib links it (:361-362) | SRC; review 1 A, S6 |
 | faad2: GPLv2 or later per `faad2/faad2/README:12-39` and each file header (`libfaad/decoder.c:5-8`), "Any non-GPL usage ... strictly forbidden" (README:19-20), required notice "Code from FAAD2 is copyright (c) Nero AG, www.nero.com" (:22-23) (COPYING:308-309 is only GPLv2's own template) | SRC externals/faad2 |
 | Other linked licences: boost BSL-1.0; cryptopp Boost-style; dynarmic 0BSD-style; mcl, oaknut, teakra, enet, fmt, vma MIT; glslang BSD-3/BSD-2/MIT/Apache-2.0 parts (LICENSE.txt:27-99; its GPL-3+Bison part covers a parser removed long ago, :5-6, :303); lodepng zlib; sirit BSD-3; SoundTouch LGPL-2.1 (COPYING.TXT:1-2; complete corresponding source of the whole work meets LGPL 2.1 section 6); SPIRV-Tools Apache-2.0, no NOTICE; spirv-headers Khronos MIT-style; xxHash BSD-2; zstd BSD-3; inih BSD-3. The only NOTICE file under `externals/` is `library-headers/fdk-aac/NOTICE` (not linked); no MPL-2.0 file | each externals/<name>/LICENSE* |

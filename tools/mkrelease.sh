@@ -82,7 +82,7 @@ make_source_md() {
     echo
     echo "What the binary is: \`azahar_lazpy_libretro.dylib\`, macOS 15 or later, arm64. Azahar $AZTAG (commit $(pin AZAHAR_COMMIT)) with libazahar-py's patches, built with OpenSSL $OSV linked statically. Release tag: $TAG."
     echo
-    echo "Built at repository commit $(inp head) (translate older SHAs with \`docs/commit-map-g8.tsv\`, then docs/commit-map-g8b.tsv)."
+    echo "Built at repository commit $(inp head) (translate older SHAs with \`docs/commit-map-g8.tsv\`, then docs/commit-map-g8b.tsv, then docs/commit-map-g8c.tsv)."
     echo
     echo "The build script \`tools/build-core.sh\` has sha256 $(inp script). The patches, in order:"
     echo
