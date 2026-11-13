@@ -132,6 +132,8 @@ else
   export PATH="$ROOT/build-core/toolbin:$PATH"
   { echo EXPORTS; grep -v '^#' "$TREE/src/citra_libretro/libretro.osx.def" | sed 's/^_//'; } >build-core/libretro.win.def
   [ "$(grep -c lazpy_ build-core/libretro.win.def)" -eq 4 ] || die "libretro.win.def does not hold the 4 lazpy_ exports"
+  # mingw-w64: with 64-bit file offsets `struct stat` is `_stat64`, which common/file_util.cpp:551-552 (libretro branch) assumes
+  WIN_CXXDEFS=" -D_FILE_OFFSET_BITS=64"
   set -- "$@" -G "Unix Makefiles" -DCMAKE_TOOLCHAIN_FILE="$ROOT/tools/toolchain-win64.cmake" -DLIBTYPE=STATIC \
     -DCLANG_FORMAT=/bin/true "-DCMAKE_SHARED_LINKER_FLAGS=$ROOT/build-core/libretro.win.def" \
     "-DCMAKE_CXX_STANDARD_LIBRARIES=-lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32 -lws2_32 -lcrypt32 -lbcrypt"
@@ -143,7 +145,7 @@ set -- "$@" \
   -DUSE_SYSTEM_OPENSSL=ON -DOPENSSL_USE_STATIC_LIBS=TRUE -DOPENSSL_ROOT_DIR="$SSL_ROOT" \
   -DOPENSSL_INCLUDE_DIR="$SSL_ROOT/include" -DOPENSSL_SSL_LIBRARY="$SSL_ROOT/lib/libssl.a" \
   -DOPENSSL_CRYPTO_LIBRARY="$SSL_ROOT/lib/libcrypto.a" \
-  -DCMAKE_C_FLAGS="-ffile-prefix-map=$PWD/=" -DCMAKE_CXX_FLAGS="-ffile-prefix-map=$PWD/="
+  -DCMAKE_C_FLAGS="-ffile-prefix-map=$PWD/=" -DCMAKE_CXX_FLAGS="-ffile-prefix-map=$PWD/=${WIN_CXXDEFS:-}"
 if ! "$@" >build-core/configure.log 2>&1; then
   tail -n 30 build-core/configure.log
   die "configure failed"
