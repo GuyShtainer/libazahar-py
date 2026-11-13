@@ -248,8 +248,8 @@ it ends. `fn(emulator, item)` is the job. Per-job overrides, such as `sd_seed`, 
         results = pool.map(job, seeds, sd_seed=seed_folder)      # job(emu, item) -> result, in item order
 
 `examples/pool_shots.py` is a runnable one. The machine-wide cap holds the number of live instances: a fixed set of
-lock files, one per slot, shared by every libazahar process on the Mac. `LAZ_MAX_INSTANCES` sets the cap (default 2,
-provisional: it rests on a light scene), `LAZ_SLOT_DIR` the lock folder, `LAZ_SLOT_TIMEOUT` how long an Emulator waits
+lock files, one per slot, shared by every libazahar process on the Mac. `LAZ_MAX_INSTANCES` sets the cap (default 4,
+from a real 3D scene on an M3 Pro: `docs/research/real-scene-v3.md`), `LAZ_SLOT_DIR` the lock folder, `LAZ_SLOT_TIMEOUT` how long an Emulator waits
 for a slot (default 3600 s). When it runs out, `SlotTimeout` is raised (a `HostTimeout`; `.op == "slot"`, `.seconds`;
 its text names the cap and the slot folder). The kernel frees a slot when its worker dies, however it dies. The cap
 counts only libazahar's own workers, so other emulators on the machine are not counted. `Pool(n)` above the cap warns
@@ -318,7 +318,7 @@ build variables below may change in a minor release:
 | `LAZ_MVK` | MoltenVK | `<root>/dl/moltenvk/MoltenVK/MoltenVK/dynamic/dylib/macOS/libMoltenVK.dylib` | Python, host |
 | `LAZ_PROFILE` | the option profile | `<root>/host/options-default.txt` | Python |
 | `LAZ_LAZPY_PROFILE` | the extra options on our core: a file or `none` | `<root>/core/options-lazpy.txt` when present | Python |
-| `LAZ_MAX_INSTANCES` | the slot cap, 1 to 64 | 2 | Python |
+| `LAZ_MAX_INSTANCES` | the slot cap, 1 to 64 | 4 | Python |
 | `LAZ_SLOT_DIR` | the slot lock folder | `~/Library/Caches/libazahar-py/slots` | Python |
 | `LAZ_SLOT_TIMEOUT` | seconds to wait for a slot | 3600 | Python |
 | `LAZ_PNG_LEVEL` | PNG compression, 0 to 9 (a bad value gives 1) | 1 | host |

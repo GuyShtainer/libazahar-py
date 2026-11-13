@@ -107,3 +107,11 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   the core and app sha256s); `tests/python/test_release_fixture.py` (slow) loads every fixture there and runs 300
   frames; it skips when there is none. Fast pytest 244 passed. Note for V7's "0 unexpected skips": test_api.py:109
   skips by design when a batch ends before its timeout (seen once in four fast runs at load 5).
+- 2026-11-13 18:20, V3 done: `docs/research/real-scene-v3.md` (run 18:11:27-18:17:03, every row check ok). Ours 1/2/3/4
+  instances 550.4 / 1057.9 / 1586.4 / 2071.4 fps total; Azahar's own core 1 instance 533.6. cap_rule: 4 (x1.92,
+  x1.50, x1.31; load at most 5.9). Default cap 2 -> 4: `_slots.py:25`, test_slots.py, USING section 13 and its env
+  table, STATUS (the provisional limit and its Next line gone), README's rows (the light rows labelled core lazpy.1),
+  `examples/pool_shots.py` now Pool(5) over the cap of 4. Holds: Gen3D, 3DPlatinum and the PC worker held builds
+  and emulator runs for it. Two flaws recorded in the research file: perf.csv reaches disk in chunks (the rate
+  check is good to about 6 %), and the script wrote every instance's shots to MAIN's root (only the last pair kept,
+  moved to the scratchpad; the script is fixed). Fast pytest 244 passed, docs_check all PASS.

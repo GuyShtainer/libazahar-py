@@ -18,8 +18,8 @@ Evidence, in `docs/status/lazpy/5-done/`, proves it. Nothing is listed as workin
 - Our core's gate: built without Azahar's built-in key data and default HTTP client certificate, loading no keys; the
   debug-text stop; exact repeats; states restored into equal instances; states moving between the two cores
   (laz-320)
-- Many instances at once: `Pool`, the machine-wide slot cap, `LoadWarning`, the speed table, a default cap of 2
-  (laz-310)
+- Many instances at once: `Pool`, the machine-wide slot cap, `LoadWarning`, the speed table, a default cap of 4
+  (the number from a real 3D scene, docs/research/real-scene-v3.md) (laz-310)
 - Guest memory on our core: `emu.memory` reads and writes and the per-frame watch list (laz-330)
 - A real app on our core: Gen3D's 3D scene (36000 frames, one batch) runs as fast as on Azahar's own core on a quiet
   machine, and its code reads back through `emu.memory`; bad arguments raise `ArgumentError`, `fresh_sd` and
@@ -37,8 +37,6 @@ Evidence, in `docs/status/lazpy/5-done/`, proves it. Nothing is listed as workin
 
 - macOS before 15, Intel Macs, Windows and Linux. The core needs macOS 15 (see Known limits).
 - Poll-exact movies: our core exports `lazpy_movie_play`; the host and Python do not call it; not in 1.0.
-- The default instance cap (2) rests on a light scene (the test app). It stays provisional until a real-scene row
-  with several instances exists (the real-scene rows on our core are one instance).
 - Guest memory and the watch list on Azahar's own core: they raise `NeedsLazpyCore`.
 - Any app that is not homebrew: no console keys, no Nintendo system files, no encrypted titles.
 
@@ -89,6 +87,5 @@ Evidence, in `docs/status/lazpy/5-done/`, proves it. Nothing is listed as workin
 ## Next
 
 - CI on GitHub runners (about 0.5 h).
-- A real-scene row with several instances, for the cap.
 - A core rebuild with patch 0008's comment fixed.
 - Gen3D's adapter (Gen3D's own work).

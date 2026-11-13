@@ -22,7 +22,7 @@ from .errors import ArgumentError, LoadWarning, SlotTimeout
 
 __all__ = ["DEFAULT_CAP", "Slot", "SlotTimeout", "LoadWarning", "slot_dir", "cap", "acquire", "warn_if_loaded", "waited_in"]
 
-DEFAULT_CAP = 2                 # provisional (light scene), from tools/speed_table.py cap_rule, docs/research/speed-table-e.md
+DEFAULT_CAP = 4                 # tools/speed_table.py cap_rule on a real 3D scene, docs/research/real-scene-v3.md
 MAX_CAP = 64
 DEFAULT_TIMEOUT_S = 3600.0
 ROUND_SLEEP_S = 0.1

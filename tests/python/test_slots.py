@@ -77,7 +77,7 @@ def test_s3_cap_from_the_environment(monkeypatch):
     monkeypatch.setenv("LAZ_MAX_INSTANCES", "5")
     assert _slots.cap() == 5
     monkeypatch.delenv("LAZ_MAX_INSTANCES")
-    assert _slots.cap() == _slots.DEFAULT_CAP
+    assert _slots.cap() == _slots.DEFAULT_CAP == 4          # the real-scene cap (docs/research/real-scene-v3.md)
     monkeypatch.setenv("LAZ_MAX_INSTANCES", "2")        # set after import: the next call sees it
     assert _slots.cap() == 2
 
