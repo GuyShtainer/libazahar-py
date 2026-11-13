@@ -1,7 +1,7 @@
 <!-- handoff: slim v1 | current tasks only | rewritten whole from docs/status/templates/handoff.md | budget 80 lines | never append -->
 # libazahar-py handoff
 
-As of: 2026-11-13 04:26 (this project's own session)
+As of: 2026-11-13 04:51 (this project's own session)
 
 This file lives in docs/status/lazpy/1-in-progress/, beside its item files. It holds only what
 the next session needs to act now, and points at the rest. Goals, rules, decisions and history live elsewhere.
@@ -9,19 +9,22 @@ the next session needs to act now, and points at the rest. Goals, rules, decisio
 ## Running now
 | What | Where | Agent id | It stops when |
 |---|---|---|---|
-| laz-420: I3, the release legal audit (phase-i.md 9.2, plus the history's old stock-core URL and hash) | MAIN, read only; notes in runs/i3/ | aa81b7f45c2e7eb9b | its report (saved as runs/i3/release-legal-audit-v0.1.0.md) |
+| laz-420: I4 after the audit: re-stage after G8c (mkrelease, pins, pre-push, clone), then a re-audit of B1 and S1-S3 | MAIN | main | the re-audit's verdict |
 
-Not running: I2 is done (staged at 50ac6c1, pre-push 16/16, clone ok; item 420's Evidence); steps H and I are merged (H's item 410 done; I's fixes 3c11544, item 420's Evidence); the joint review is done (docs/reviews/phase-4-as-built.md; item 400's notes). Phase 3 done; G8b, Gen3D's copy check, the downloads done.
+Not running: I3's audit is done (docs/reviews/release-legal-audit-v0.1.0.md; B1 fixed by G8c, item 420's Evidence); I2 is done (staged at 50ac6c1, pre-push 16/16, clone ok; item 420's Evidence); steps H and I are merged (H's item 410 done; I's fixes 3c11544, item 420's Evidence); the joint review is done (docs/reviews/phase-4-as-built.md; item 400's notes). Phase 3 done; G8b, Gen3D's copy check, the downloads done.
 
 ## Next steps, in order
-1. On the audit's report: save it verbatim to docs/reviews/release-legal-audit-v0.1.0.md and commit it.
-   BLOCKERs go to I4 (a sonnet builder with exact fixes), then re-stage: mkrelease v0.1.0, release_check
-   --pre-push with LAZ_PRIVATE_NEEDLES (the private replace file plus the needles), clone_check (phase-i.md 6, I2
-   steps 3-5), and a re-audit of only the changed items. SHOULD items go to Guy's list.
-2. Any commit after the last staging: mkrelease again before the push (check 10 compares with HEAD).
-3. The push and the release wait for Guy (G5-G7, Q1-Q9).
+1. mkrelease v0.1.0 (SOURCE.md now names the g8c map, so the zip's sha changes); write the zip's and the test
+   app's sha256 into tools/fetch.sh's pins, commit it alone; mkrelease again; release_check --pre-push with
+   LAZ_PRIVATE_NEEDLES (the private replace file plus the needles); clone_check in the background (phase-i.md 6).
+2. Re-audit (release-legal-audit) of only B1 (history), S1-S3 and the zip's SOURCE.md; save it beside the first report.
+3. Any commit after the last staging: mkrelease again before the push (check 10 compares with HEAD).
+4. The push and the release wait for Guy (G5-G7, Q1-Q9).
 
 ## Waiting on Guy (only what blocks a step above)
+- The audit's R1: accept core/PIN's default build route (it downloads Azahar's unchanged tarball and deletes the
+  key and certificate headers before compiling) for v0.1.0, with PIN-nokeys the default at the next LAZPY_REV
+  (docs/reviews/release-legal-audit-v0.1.0.md, remediation 6).
 - Phase 4's G5-G7 (repo creation, the word "push", publishing the draft), G9 (spike 2's game: default say
   nothing), and whether macOS 11-14 users matter for v0.1.0 (default: "macOS 15 or later"): item 400's notes.
 - Phase 4's questions Q1-Q9 (docs/plans/phase-4.md section 7), first Q1: remove the scripted stock-core download

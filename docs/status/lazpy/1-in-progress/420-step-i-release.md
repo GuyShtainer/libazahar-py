@@ -79,3 +79,9 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
 - 2026-11-13, I4 at HEAD (main loop): S1-S3 and the spike-1 name reworded; mkrelease's SOURCE.md line names the
   g8c map. B1's fix is G8c, a third filter-repo pass with the same procedure (phase-i.md 8.1b), rules generated
   into the private replace file; then the commit map, re-stage, pins, pre-push, clone, and a re-audit of B1 and S1-S3.
+- 2026-11-13 04:45-04:50, G8c (main loop): step-h and step-i deleted (both merged), a bundle of all refs kept
+  privately, runs/clone-i2 deleted (old history), then git filter-repo --force --prune-empty never with the
+  cumulative private replace file (six new rules: the stock asset URL, its name in every form, its sha256, the game
+  name in spike 1). After: HEAD tree unchanged, 150 commits, fsck clean, one identity; the full scan finds 0 rule,
+  window, needle and message hits; the stock-core strings count 0 in every commit. HEAD d879ee3 is 32f3046 now:
+  `docs/commit-map-g8c.tsv`.
