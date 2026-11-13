@@ -9,10 +9,9 @@ the next session needs to act now, and points at the rest. Goals, rules, decisio
 ## Running now
 | What | Where | Agent id | It stops when |
 |---|---|---|---|
-| laz-410: step H builder (phase-h.md): README, STATUS, USING, HOST-API, examples, docs_check, clone_check | ../libazahar-py-h (step-h at 896c2fe) | af156d29564cfc9ce | its report "H1 done" |
 | laz-420: step I builder (phase-i.md): P17 code, NOTICES/mknotices, mkrelease, release_check, fetch.sh, OPENSSL.md | ../libazahar-py-i (step-i at 896c2fe) | a8e760acbd1172ce5 | its report "I1 done" |
 
-Not running: Phase 3 done (item 300); G8b, Gen3D's copy check and the downloads done (item 400's notes).
+Not running: step H's builder finished: H1 committed on step-h (4ce7181), report in item 410's notes. Phase 3 done (item 300); G8b, Gen3D's copy check and the downloads done (item 400's notes).
 
 ## Next steps, in order
 1. On "H1 done" / "I1 done": commit each report's files on its branch (exact paths, with the map lines it names, and

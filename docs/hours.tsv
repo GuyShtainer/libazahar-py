@@ -103,3 +103,5 @@ date	bet	phase	agent_id	model	role	kind	start	end	hours	source
 2026-11-13	Phase 3 full suite, gate B fix and reruns, item 300 done	phase-3	main	opus	main	process	02:27	02:56	0.5	session clock; the batch ran 02:27-02:52
 2026-11-13	G8b: worktrees removed, replace lines, scans, trial and real rewrite, map	phase-4	main	opus	main	process	02:57	03:15	0.3	session clock; the slow first scan ran 03:00-03:11
 2026-11-13	Gen3D copy check, downloads (OSSL, SNAP, font texts), items 410 and 420, worktrees, H and I launch	phase-4	main	opus	main	process	03:15	03:19	0.1	session clock
+2026-11-13	step H1 builder: README, STATUS, USING, HOST-API, examples, docs_check, clone_check	phase-4	af156d29564cfc9ce	sonnet	builder	build	03:19	03:29	0.17	agent duration 604 s
+2026-11-13	commit H1 on step-h (map lines, privacy scans), item 410 notes	phase-4	main	opus	main	process	03:29	03:30	0.03	session clock
