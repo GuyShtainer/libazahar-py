@@ -102,3 +102,8 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   wall 13.1 s; peak_rss max 1345 MB; load 6.3 at the end. Every job finished with no error or crash. Note: peak_rss
   for a restored instance (1.2-1.56 GB) is about twice the cold-boot smoke's 732 MB." V6 is done: both projects
   pass on 64026f4a…. (The restored-instance memory is a note for USING's memory line at V3, not a blocker.)
+- 2026-11-13 17:22, V7 prepared: `tools/mkfixture.py <tag>` makes the release's state fixture in
+  runs/release-fixtures/<tag>/ (the test app's `draw=3d` mode, 600 frames, a copy of the app, fixture.json with
+  the core and app sha256s); `tests/python/test_release_fixture.py` (slow) loads every fixture there and runs 300
+  frames; it skips when there is none. Fast pytest 244 passed. Note for V7's "0 unexpected skips": test_api.py:109
+  skips by design when a batch ends before its timeout (seen once in four fast runs at load 5).

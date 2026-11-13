@@ -38,6 +38,12 @@ LAZ_REQUIRE_EMULATOR=1 nice -n 10 python3 -m pytest -q -rs tests/python/test_mem
 ```
 Expect "6 passed", 0 skipped.
 
+A release's state fixture (once per release, at V7; outside git), then the check every later 1.x release runs:
+```
+nice -n 10 python3 -I tools/mkfixture.py v1.0.0       # runs/release-fixtures/v1.0.0/: state, test app, fixture.json
+LAZ_REQUIRE_EMULATOR=1 nice -n 10 python3 -m pytest -q -rs tests/python/test_release_fixture.py
+```
+
 The Python package and step D's tests (the slow ones run one Emulator at a time):
 ```
 python3 -m venv .venv && .venv/bin/pip install -e .          # the Python package (editable install only)
