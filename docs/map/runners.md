@@ -67,3 +67,10 @@ MVK_LIB=dl/moltenvk/MoltenVK/MoltenVK/dynamic/dylib/macOS/libMoltenVK.dylib OPT_
   build/fe2 dl/azahar/azahar_libretro.dylib <app.3dsx> <sysdir> <outdir> <seconds> <shot frames, comma list>
 ```
 The core's SD folder is `<sysdir>/Azahar/sdmc/`. The downloads' URLs and sha256: `docs/research/spike-1-headless-core.md`.
+
+Step H's docs gate and the examples (each example with `nice -n 10`; `LAZ_CORE` picks a core):
+```
+python3 -I tools/docs_check.py                    # README numbers, the example and steps blocks, links, claims (step H's gate)
+.venv/bin/python examples/quickstart.py           # prints "quickstart ok"
+sh tools/clone_check.sh --repo "$PWD" --branch main --out runs/clone --release-base "file://$PWD/runs/release/v0.1.0"   # the fresh clone (I2)
+```

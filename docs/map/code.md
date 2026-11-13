@@ -24,3 +24,7 @@
   headers), `runs/`, `.pytest_cache/`, `.venv/` (the editable-install venv), `roms/`, `sdmc/`, `build/` (host and
   test app output), `build-core/` (our core's build: `build.log`, `build.pid`, `build.exit`,
   `azahar_lazpy_libretro.dylib`).
+- `examples/`: runnable examples (`quickstart.py`, the README's block; `pool_shots.py`; `memory_watch.py`, our core
+  only); `examples/README.md`.
+- `STATUS.md`: what works, what is measured, what is not tested, and what is next.
+- `docs/HOST-API.md`: the C host API (`azh_*`) and the `azhost` CLI, exit codes and stop reasons.

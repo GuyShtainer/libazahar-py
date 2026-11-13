@@ -16,12 +16,15 @@ README with honest status and measured numbers, STATUS.md, USING.md, HOST-API.md
 The gate in `docs/PLAN.md` line 317 ("Phase H"), run headless on this Mac with a pass/fail answer.
 
 ## Evidence
-none yet
+- 2026-11-13 04:06: done. Built in 4ce7181, review fixes (B1, B2, S1-S3, N1-N3, D2's STATUS line) in 56d5a18, merged into main
+  with --no-ff. Gates after the fixes: docs_check --allow-missing NOTICES.md PASS on all eight checks; --plant-red nine
+  FAIL lines, rc 1; clone_check.sh sh -n clean and --dry-run six steps; quickstart ok on our core. The joint review:
+  `docs/reviews/phase-4-as-built.md`. The real clone run is I2's (item 420).
 
 ## Pointers
 - Plan section: `docs/PLAN.md:317`
 - Phase plan: `docs/plans/phase-4.md` (index), `docs/plans/phase-h.md` (the builder's brief, revision 2)
-- Review: none yet
+- Review: `docs/reviews/phase-4-as-built.md`
 
 ## Lessons and notes
 Read this part only when you work on this item. Blockers, numbers and Guy's words go here verbatim.
