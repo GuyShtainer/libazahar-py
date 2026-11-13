@@ -107,13 +107,13 @@ def test_other_app(host_paths, workdir, monkeypatch):
 
 
 def test_abi_outside_range_refused(host_paths, workdir):
-    """A state whose meta names an abi above this host's, or below 2, is refused."""
+    """A state whose meta names a state abi above this host's (AZH_STATE_META_ABI), or below 2, is refused."""
     state = quick_state(host_paths, workdir)
     meta = Path(f"{state}.meta")
     text = meta.read_text()
-    line = f"abi={_abi.AZH_ABI_VERSION}\n"
+    line = f"abi={_abi.AZH_STATE_META_ABI}\n"
     assert line in text
-    for number, bad in enumerate((_abi.AZH_ABI_VERSION + 1, 1)):
+    for number, bad in enumerate((_abi.AZH_STATE_META_ABI + 1, 1)):
         meta.write_text(text.replace(line, f"abi={bad}\n", 1))
         with pytest.raises(StateError, match="abi"):
             Emulator(host_paths.app, workdir / f"n{number}", state=state)

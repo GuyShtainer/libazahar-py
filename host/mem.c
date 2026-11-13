@@ -1,4 +1,5 @@
-/* mem.c: guest memory through our core's two exports (lazpy_read_memory / lazpy_write_memory, core patch 0001) and the
+/* mem.c: guest memory through our core's two exports (lazpy_read_memory / lazpy_write_memory, core patch 0001), the
+ * guest threads through lazpy_threads (patch 0009, core lazpy.2, optional), and the
  * per-frame watch rows written into the map's watch area (docs/plans/phase-g.md 3.3). Everything runs on the thread
  * that calls retro_run, between frames. The pure checks are in watch.c. */
 #include <assert.h>
@@ -11,9 +12,13 @@
 /* function-pointer exception (4): the core's exports have the patch's C signature, address then buffer then length */
 typedef int (*mem_rd_fn)(uint32_t vaddr, void *buf, uint32_t len);
 typedef int (*mem_wr_fn)(uint32_t vaddr, const void *buf, uint32_t len);
+typedef int (*thr_fn)(azh_thread *out, uint32_t max, uint32_t *count);
+
+_Static_assert(sizeof(azh_thread) == 40, "azh_thread must match the core's 40-byte lazpy_thread");
 
 static mem_rd_fn core_read;
 static mem_wr_fn core_write;
+static thr_fn core_threads;                     /* NULL on a lazpy.1 core */
 
 /* the watch plan of the running batch */
 static struct {
@@ -27,12 +32,15 @@ int azh__mem_bind(void *core_handle)
 {
     void *rd;
     void *wr;
+    void *th;
 
     assert(core_handle != NULL);
     rd = dlsym(core_handle, "lazpy_read_memory");
     wr = dlsym(core_handle, "lazpy_write_memory");
+    th = dlsym(core_handle, "lazpy_threads");
     core_read = NULL;
     core_write = NULL;
+    core_threads = NULL;
     if (rd == NULL && wr == NULL) {
         return 0;
     }
@@ -41,6 +49,9 @@ int azh__mem_bind(void *core_handle)
     }
     memcpy(&core_read, &rd, sizeof rd);         /* dlsym gives void *; the cast of a data pointer to a function pointer */
     memcpy(&core_write, &wr, sizeof wr);
+    if (th != NULL) {
+        memcpy(&core_threads, &th, sizeof th);
+    }
     return 1;
 }
 
@@ -92,6 +103,29 @@ int azh__mem_write(uint32_t addr, uint32_t len, const void *buf)
     }
     rc = core_write(addr, buf, len);
     return rc == 0 ? AZH_OK : mem_fail(rc, addr, len);
+}
+
+int azh__mem_threads(azh_thread *out, int32_t max, int32_t *count)
+{
+    uint32_t n = 0;
+    int rc;
+
+    if (count == NULL || max < 0 || (out == NULL && max > 0)) {
+        return azh_fail(AZH_E_ARG, "azh_threads: needs count, max >= 0, and out when max > 0");
+    }
+    *count = 0;
+    if (core_threads == NULL) {
+        return azh_fail(AZH_E_NEEDS_LAZPY_CORE, "core lacks lazpy_threads (lazpy.1): thread registers need core lazpy.2");
+    }
+    rc = core_threads(out, (uint32_t)max, &n);
+    if (rc == -1) {
+        return azh_fail(AZH_E_ORDER, "azh_threads: the core is not running");
+    }
+    if (rc != 0) {
+        return azh_fail(rc == -3 ? AZH_E_ARG : AZH_E_CORE, "azh_threads: the core returned %d", rc);
+    }
+    *count = n > (uint32_t)INT32_MAX ? INT32_MAX : (int32_t)n;
+    return AZH_OK;
 }
 
 /* ---- the watch list ---- */

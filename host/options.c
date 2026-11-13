@@ -121,6 +121,11 @@ int azh_opts_set(const char *key, const char *value)
         if (all_digits(value) == 0) {
             return azh_fail(AZH_E_ARG, "option %s: %s is not a decimal number", key, value);
         }
+    } else if (strcmp(key, "citra_init_ticks_override") == 0) {
+        /* core patch 0002 takes 0 to 2^32 - 1 (a larger base overflows the core's microsecond clock) */
+        if (all_digits(value) == 0 || strlen(value) > 10u || strtoull(value, NULL, 10) > 4294967295ULL) {
+            return azh_fail(AZH_E_ARG, "option %s: %s is not a decimal number from 0 to 4294967295", key, value);
+        }
     } else if (value_listed(o->allowed, value) == 0) {
         return azh_fail(AZH_E_ARG, "option %s: value '%s' is not one of: %s", key, value, o->allowed);
     }

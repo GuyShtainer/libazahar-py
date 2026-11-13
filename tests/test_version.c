@@ -18,6 +18,9 @@ int main(void)
     expect("2126.2", 0, 1);
     expect("2126.3", 0, 0);
     expect("2126.2-lazpy.1", 0, 1);
+    expect("2126.2-lazpy.2", 0, 1);
+    expect("2126.2-lazpy.3", 0, 0);
+    expect("2126.3-lazpy.2", 0, 0);
     expect("2126.2-lazpy", 0, 0);
     expect("2126.2-lazpy.12", 0, 0);
     expect("x", 0, 0);

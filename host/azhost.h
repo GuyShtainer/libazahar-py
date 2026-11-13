@@ -6,7 +6,8 @@
 
 #include <stdint.h>
 
-#define AZH_ABI_VERSION 3
+#define AZH_ABI_VERSION 4                       /* 4: azh_threads (core lazpy.2) */
+#define AZH_STATE_META_ABI 3                    /* the abi= of a state's meta file: states did not change in 4 */
 
 enum { AZH_OK = 0, AZH_E_ARG = -1, AZH_E_ORDER = -2 /* call order */, AZH_E_CORE = -3, AZH_E_BOOT = -4,
        AZH_E_VULKAN = -5, AZH_E_IO = -6, AZH_E_NOMEM = -7, AZH_E_UNSUPPORTED = -8, AZH_E_NEEDS_LAZPY_CORE = -9,
@@ -47,6 +48,10 @@ enum { AZH_STOP_FRAMES = 0, AZH_STOP_SD_TEXT = 1, AZH_STOP_DEBUG_TEXT = 2, AZH_S
 #define AZH_WATCH_ROW_HDR 16
 typedef struct { uint32_t addr, words; } azh_watch;      /* guest virtual address, u32 words to read there */
 typedef struct { char name[32]; int32_t offset, size; } azh_field;
+#define AZH_THREAD_CURRENT 1u                  /* azh_thread.flags: the current thread of its core (live CPU) */
+#define AZH_THREAD_NO_PID 0xFFFFFFFFu          /* azh_thread.pid of a thread with no owner process */
+/* one guest thread (ABI 4, core patch 0009's lazpy_thread, the same 40 bytes): status is Azahar's ThreadStatus */
+typedef struct { uint32_t tid, pid, status, core, priority, flags, pc, lr, sp, cpsr; } azh_thread;
 
 typedef struct { int32_t frame, screens, format; } azh_shot_req;      /* frame: 1-based within the batch */
 
@@ -91,6 +96,8 @@ int azh_save_state(const char *path, int32_t *k_out);    /* k_out: VBlanks the s
 int azh_load_state(const char *path);
 int azh_read(uint32_t addr, uint32_t len, void *buf);    /* AZH_E_NEEDS_LAZPY_CORE on the stock core (G) */
 int azh_write(uint32_t addr, uint32_t len, const void *buf);
+int azh_threads(azh_thread *out, int32_t max, int32_t *count);
+        /* every guest thread; *count is the total even above max (retry larger); lazpy.2 core only (ABI 4) */
 int azh_set_input(const int32_t rec[AZH_INPUT_INTS]);    /* sets the held state now (frame field ignored) */
 int azh_stats(struct azh_stats *out);
 int azh_abi_layout(azh_layout *out);

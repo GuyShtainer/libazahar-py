@@ -7,7 +7,8 @@ into our own `azahar_lazpy_libretro.dylib`.
 ## Pin
 
 `core/PIN` (plain `KEY=value` lines, read with `sed`, never sourced): Azahar tag 2126.2, commit
-`219d743a1e698101fe1ab8bef43e6563126c3c27`, the unified source tarball URL, its size and sha256, and `LAZPY_REV=1`.
+`219d743a1e698101fe1ab8bef43e6563126c3c27`, the unified source tarball URL, its size and sha256, and `LAZPY_REV=2`.
+`core/PIN-nokeys` (the build's default) is the same pin with our stripped source asset as the tarball.
 The tarball is verified (size and sha256) before anything is unpacked; a present file that fails is refused and kept.
 
 ## Patches (`core/patches/`, applied in name order with `patch -p1 --fuzz 0`; each assumes the ones before it)
@@ -16,13 +17,14 @@ The tarball is verified (size and sha256) before anything is unpacked; a present
 |---|---|
 | `0000-lazpy-notices.patch` | one "Modified by libazahar-py" notice per touched file |
 | `0001-lazpy-memory-exports.patch` | `lazpy_read_memory` / `lazpy_write_memory` by guest virtual address, every page checked |
-| `0002-lazpy-options.patch` | six core options: deterministic async operations, async FS operations, instant debug log, init clock, init time, init ticks type (defaults equal stock) |
+| `0002-lazpy-options.patch` | seven core options: deterministic async operations, async FS operations, instant debug log, init clock, init time, init ticks type, init ticks override (0 to 4294967295; defaults equal stock) |
 | `0003-lazpy-run-returns-on-error.patch` | `retro_run` returns after a fatal-error message instead of looping |
 | `0004-lazpy-log-filter.patch` | log level Info, with the emulated program's debug output (`Debug_Emulated`) at Debug |
-| `0005-lazpy-version.patch` | library version string gets the suffix `-lazpy.1` |
+| `0005-lazpy-version.patch` | library version string gets the suffix `-lazpy.2` (`build-core.sh` checks it equals the pin's `LAZPY_REV`) |
 | `0006-lazpy-movie-play.patch` | `lazpy_movie_play(path)` plays a `.ctm` movie from the next boot |
 | `0007-lazpy-no-default-clcert.patch` | the HTTP service no longer falls back to a built-in ClCertA certificate and key; a missing console file is an error |
-| `0008-lazpy-no-key-loading.patch` | `GetKeysStream()` returns an empty stream: no AES, RSA or ECC keys are ever loaded (Azahar's `sysdata/keys.txt` is never read, and there is no built-in blob). The patch's own comment says `aes_keys.txt`, the older Citra name; it is corrected at the next core revision |
+| `0008-lazpy-no-key-loading.patch` | `GetKeysStream()` returns an empty stream: no AES, RSA or ECC keys are ever loaded (Azahar's `sysdata/keys.txt` is never read, and there is no built-in blob). |
+| `0009-lazpy-thread-regs.patch` | `lazpy_threads(out, max, count)`: every guest thread's tid, pid, status, core, priority, pc, lr, sp and cpsr (the current thread of a core from the live CPU) |
 
 ## Dropped from the tree
 

@@ -6,7 +6,7 @@
      info->library_name = "Azahar";
 -    info->library_version = Common::g_build_fullname;
 +    // libazahar-py: mark our build; the string lives in a function-local static so it outlives this call.
-+    static const std::string lazpy_version = std::string(Common::g_build_fullname) + "-lazpy.1";
++    static const std::string lazpy_version = std::string(Common::g_build_fullname) + "-lazpy.2";
 +    info->library_version = lazpy_version.c_str();
      info->need_fullpath = true;
      info->valid_extensions = "3ds|3dsx|z3dsx|elf|axf|cci|zcci|cxi|zcxi|app";

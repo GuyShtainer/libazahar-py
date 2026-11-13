@@ -41,7 +41,7 @@ FORBIDDEN_DIRS = ("dl", "vendor", "runs", "sdmc", "nand", "sysdata")
 KEY_WORDS = ("keys.txt", "aes_keys", "seeddb", "boot9", "title.keys")
 LONG_HEX_RUN = re.compile(r"(0x[0-9a-fA-F]{1,2}[\s,]+){7}0x[0-9a-fA-F]{1,2}")
 ZIP_NAMES = ["COPYING-azahar.txt", "LICENSE", "NOTICES.md", "SOURCE.md", "azahar_lazpy_libretro.dylib", "build.inputs"]
-EXPORT_EXTRA = {"_lazpy_read_memory", "_lazpy_write_memory", "_lazpy_movie_play"}
+EXPORT_EXTRA = {"_lazpy_read_memory", "_lazpy_write_memory", "_lazpy_movie_play", "_lazpy_threads"}
 OSSL_EXPECTED = ("/opt/homebrew/etc/openssl@3", "/opt/homebrew/Cellar/openssl@3/")
 
 

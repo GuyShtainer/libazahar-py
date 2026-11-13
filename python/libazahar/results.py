@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 import struct
 from typing import Dict, Tuple
 
-__all__ = ["Shot", "WatchRow", "RunResult", "SaveInfo", "Stats"]
+__all__ = ["Shot", "WatchRow", "RunResult", "SaveInfo", "Stats", "ThreadInfo"]
 
 
 @dataclass(frozen=True)
@@ -72,3 +72,23 @@ class Stats:
     core_name: str
     core_version: str
     is_lazpy_core: bool
+
+
+@dataclass(frozen=True)
+class ThreadInfo:
+    """One guest thread from ``Emulator.threads()`` (core lazpy.2). ``status`` is Azahar's ThreadStatus number and
+    ``status_name`` its name; ``is_current`` marks the thread a core was running (its registers come from the live
+    CPU, every other thread's from its saved context); ``pid`` is 0xFFFFFFFF for a thread with no owner process.
+    Bit 5 of ``cpsr`` is the Thumb bit."""
+
+    tid: int
+    pid: int
+    status: int
+    status_name: str
+    core: int
+    priority: int
+    is_current: bool
+    pc: int
+    lr: int
+    sp: int
+    cpsr: int

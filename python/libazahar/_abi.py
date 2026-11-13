@@ -8,7 +8,8 @@ from __future__ import annotations
 import ctypes
 from typing import Callable, Dict, Optional, Tuple
 
-__all__ = ["ShotReq", "Watch", "Batch", "Result", "Stats", "Field", "Layout", "check_layout", "STOP_NAMES"]
+__all__ = ["ShotReq", "Watch", "Batch", "Result", "Stats", "Thread", "Field", "Layout", "check_layout", "STOP_NAMES",
+           "THREAD_STATUS_NAMES"]
 
 # ---- error codes, exit codes, screens, formats, stop reasons ----
 AZH_OK = 0
@@ -45,7 +46,9 @@ AZH_STOP_GUEST_BREAK = 3
 AZH_STOP_GUEST_EXITED = 4
 AZH_STOP_GUEST_ERROR = 5
 AZH_STOP_WALL_LIMIT = 6
-AZH_ABI_VERSION = 3
+AZH_ABI_VERSION = 4
+AZH_STATE_META_ABI = 3
+AZH_THREAD_CURRENT = 1
 AZH_MAX_SHOTS = 64
 AZH_PATH_MAX = 1024
 AZH_INPUT_INTS = 7
@@ -118,6 +121,20 @@ class Stats(ctypes.Structure):
                 ("core_version", ctypes.c_char * 128), ("is_lazpy_core", ctypes.c_int32)]
 
 
+class Thread(ctypes.Structure):
+    """azh_thread: one guest thread (ABI 4, core lazpy.2)."""
+
+    _fields_ = [(name, ctypes.c_uint32) for name in
+                ("tid", "pid", "status", "core", "priority", "flags", "pc", "lr", "sp", "cpsr")]
+
+
+# Azahar's Kernel::ThreadStatus by value (src/core/hle/kernel/thread.h, enum class ThreadStatus)
+THREAD_STATUS_NAMES: Dict[int, str] = {
+    0: "running", 1: "ready", 2: "wait_arb", 3: "wait_sleep", 4: "wait_ipc", 5: "wait_synch_any",
+    6: "wait_synch_all", 7: "wait_hle_event", 8: "dormant", 9: "dead",
+}
+
+
 class Field(ctypes.Structure):
     """azh_field."""
 
@@ -135,7 +152,8 @@ class Layout(ctypes.Structure):
                 ("fields", Field * AZH_MAX_FIELDS)]
 
 
-_STRUCTS: Dict[str, type] = {"shot": ShotReq, "watch": Watch, "batch": Batch, "result": Result, "stats": Stats, "layout": Layout}
+_STRUCTS: Dict[str, type] = {"shot": ShotReq, "watch": Watch, "batch": Batch, "result": Result, "stats": Stats,
+                             "thread": Thread, "layout": Layout}
 
 
 def _fail(text: str) -> Exception:

@@ -1,7 +1,8 @@
 # PIN-nokeys: the same pin as core/PIN, but the source is this project's release asset (Azahar's tarball minus the
 # drop list). Its only drop entry is the note member LIBAZAHAR-PY-REMOVED.txt, because build-core.sh refuses an empty
 # drop list and the original entries (the three headers and externals/libressl) are already gone from this tarball.
-# Use: LAZ_CORE_PIN=core/PIN-nokeys tools/build-core.sh --build   (download the asset to the SRC_FILE path first)
+# The default pin of tools/build-core.sh (it downloads the asset to the SRC_FILE path when missing). The route from
+# Azahar's own tarball: LAZ_CORE_PIN=core/PIN tools/build-core.sh --build
 AZAHAR_TAG=2126.2
 AZAHAR_COMMIT=219d743a1e698101fe1ab8bef43e6563126c3c27
 SRC_URL=https://github.com/GuyShtainer/libazahar-py/releases/download/v0.1.0/azahar-unified-source-2126.2-lazpy-nokeys.tar.xz
@@ -9,7 +10,7 @@ SRC_SHA256=f7a70044dfe149942412dc7b987a56051e04b822acb057dfc5c7611a7759913d
 SRC_SIZE=43500628
 SRC_FILE=dl/azahar-src/src-nokeys.tar.xz
 SRC_TOP=azahar-unified-source-2126.2
-LAZPY_REV=1
+LAZPY_REV=2
 LAZ_CORE_DROP=LIBAZAHAR-PY-REMOVED.txt
 OPENSSL_VERSION=3.6.5
 OPENSSL_PREFIX=/opt/homebrew/opt/openssl@3

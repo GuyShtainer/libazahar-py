@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any, Tuple
 
 from . import _abi
-from .errors import HostCallError
+from .errors import HostCallError, HostError
 
 __all__ = ["load", "call", "last_error"]
 
@@ -22,6 +22,7 @@ _PROTOTYPES = {
     "azh_load_state": (_C.c_int, [_C.c_char_p]),
     "azh_read": (_C.c_int, [_C.c_uint32, _C.c_uint32, _C.c_void_p]),
     "azh_write": (_C.c_int, [_C.c_uint32, _C.c_uint32, _C.c_void_p]),
+    "azh_threads": (_C.c_int, [_C.c_void_p, _C.c_int32, _C.POINTER(_C.c_int32)]),
     "azh_set_input": (_C.c_int, [_C.POINTER(_C.c_int32)]),
     "azh_stats": (_C.c_int, [_C.POINTER(_abi.Stats)]),
     "azh_abi_layout": (_C.c_int, [_C.POINTER(_abi.Layout)]),
@@ -33,7 +34,11 @@ def load(path: Path) -> Tuple[ctypes.CDLL, _abi.Layout]:
     """Load the host, set every prototype and check the ABI layout; raises HostError on any mismatch."""
     lib = ctypes.CDLL(str(path))
     for name, (restype, argtypes) in _PROTOTYPES.items():
-        fn = getattr(lib, name)
+        try:
+            fn = getattr(lib, name)
+        except AttributeError:
+            raise HostError(f"host {path} lacks {name}: an older libazhost (azh_threads needs the lazpy.2 host)") \
+                from None
         fn.restype = restype
         fn.argtypes = argtypes
     layout = _abi.Layout()

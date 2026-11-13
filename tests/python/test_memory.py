@@ -178,10 +178,10 @@ def row_of(layout, name):
     raise KeyError(name)
 
 
-def test_layout_is_abi_3(layout):
+def test_layout_is_abi_4(layout):
     _abi.check_layout(layout)
-    assert layout.abi == 3 and layout.size_batch == 3612 and layout.size_result == 312
-    assert layout.n_fields == 137 and layout.map_size == 4890624
+    assert layout.abi == 4 and layout.size_batch == 3612 and layout.size_result == 312
+    assert layout.n_fields == 150 and layout.map_size == 4890624
 
 
 def test_smaller_watch_area_with_matching_map_size_is_accepted(layout):

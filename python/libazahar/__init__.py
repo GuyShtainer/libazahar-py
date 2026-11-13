@@ -6,10 +6,10 @@ from ._slots import LoadWarning, SlotTimeout
 from .inputs import Buttons, Circle, Touch
 from .pool import Pool
 from .memory import Memory
-from .results import RunResult, SaveInfo, Shot, Stats, WatchRow
+from .results import RunResult, SaveInfo, Shot, Stats, ThreadInfo, WatchRow
 
 __version__ = "0.1.0"
 
 __all__ = ["Emulator", "Buttons", "Touch", "Circle", "RunResult", "Shot", "WatchRow", "Memory", "GuestMemoryError",
-           "SaveInfo", "Stats", "LibAzaharError", "ArgumentError", "BootError", "GuestError", "HostTimeout", "HostCrashed", "StateError",
+           "SaveInfo", "Stats", "ThreadInfo", "LibAzaharError", "ArgumentError", "BootError", "GuestError", "HostTimeout", "HostCrashed", "StateError",
            "NeedsLazpyCore", "HostError", "Pool", "LoadWarning", "SlotTimeout", "__version__"]

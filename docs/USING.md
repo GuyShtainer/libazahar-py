@@ -134,6 +134,12 @@ unmapped entry reads as zeros and sets the row status (`AZH_E_UNMAPPED`), the ba
 of `host.map`; a batch that needs more rows is refused with an `ArgumentError` naming the largest frame count that fits at
 that `watch_every`. States saved under ABI 2 still load.
 
+**Threads (core lazpy.2).** `emu.threads()` returns a tuple of `ThreadInfo(tid, pid, status, status_name, core,
+priority, is_current, pc, lr, sp, cpsr)` for every guest thread on every core, read between batches. A core's current
+thread (`is_current`) is read from the live CPU, every other thread from its saved registers. System-module threads may
+be listed too, so filter by `pid`; `pid` is `0xFFFFFFFF` for a thread with no owner process. Bit 5 of `cpsr` is the
+Thumb bit. On the stock core and on a lazpy.1 core it raises `NeedsLazpyCore`.
+
 ## 12. The Gen3D mapping
 
 Rows 1-17 of docs/research/gen3d-harness-needs.md:
@@ -185,6 +191,11 @@ On our core `core/options-lazpy.txt` is applied first (the extra option lines ou
 profile and your `options`. `azhost run --lazpy-profile FILE|none` and `LAZ_LAZPY_PROFILE` (a file, or `none`) change
 it. The stock core never sees it.
 
+The tick seed: with `citra_init_ticks_type=Fixed` (the profile's value), `citra_init_ticks_override` sets the base CPU
+ticks (core lazpy.2; default `0`; any decimal from 0 to 4294967295, else `ArgumentError`). It takes effect at boot. It
+also shifts the guest's clock by that many ticks (268 MHz), a played movie replaces it with the movie's own, and a
+loaded state keeps the ticks it was saved with.
+
 ## 15. Environment
 
 Library and host (the last column says who reads it):
@@ -215,7 +226,7 @@ Build and fetch time (the scripts' header comments are the reference):
 |---|---|---|---|
 | `LAZPY_ROOT` | use this folder instead of the repo root | the repo root | `fetch.sh`, `build-core.sh` |
 | `LAZ_RELEASE_BASE` | where the release downloads come from; a `file://` folder works for a local release | the release page | `fetch.sh` |
-| `LAZ_CORE_PIN` | the pin file | `core/PIN` | `build-core.sh` |
+| `LAZ_CORE_PIN` | the pin file | `core/PIN-nokeys` | `build-core.sh` |
 | `LAZ_CORE_PATCHES` | the patch folder | `core/patches` | `build-core.sh` |
 | `LAZ_CORE_LTO` | link-time optimisation | `ON` | `build-core.sh` |
 | `LAZ_CORE_JOBS` | build jobs | 4 | `build-core.sh` |
@@ -229,6 +240,7 @@ Build and fetch time (the scripts' header comments are the reference):
 | Input, shots, SD files, savestates | yes | yes |
 | Guest memory, the watch list (`emu.memory`, `watch=`) | yes | `NeedsLazpyCore` |
 | Debug-text stop (`debug_text=`) | yes | `NeedsLazpyCore` |
+| Thread registers (`emu.threads()`) | lazpy.2 only (lazpy.1: `NeedsLazpyCore`) | `NeedsLazpyCore` |
 | Exact repeats | yes (gated) | no: recorded as a difference only |
 | Poll-exact movies | not tested | no |
 | Option profile | `core/options-lazpy.txt` first (section 14) | the default profile only |
@@ -243,9 +255,10 @@ lands in `build-core/build.exit`, the log in `build-core/build.log`), then set
 `LAZ_CORE=build-core/azahar_lazpy_libretro.dylib`. The build needs a static OpenSSL at the version in `core/PIN`
 (3.6.5). Homebrew ships only its current `openssl@3`. If that is 3.6.5, the build finds it. If not, build 3.6.5 from
 `openssl-3.6.5.tar.gz` (a release asset; the recipe in `core/OPENSSL.md` is not tested by this project) and set
-`LAZ_OPENSSL_PREFIX` to its install prefix. To rebuild from our stripped source asset instead of Azahar's original
-tarball, set `LAZ_CORE_PIN=core/PIN-nokeys`. `core/README.md` lists the patches; `core/OPENSSL.md` covers OpenSSL.
-The core needs macOS 15 or later (its OpenSSL is built for 15, although its header says 11.0).
+`LAZ_OPENSSL_PREFIX` to its install prefix. The build starts from our stripped source asset (`core/PIN-nokeys`, the
+default); to start from Azahar's original tarball instead, set `LAZ_CORE_PIN=core/PIN`. `core/README.md` lists the
+patches; `core/OPENSSL.md` covers OpenSSL. The core needs macOS 15 or later (core lazpy.2's header says 15.0; the
+lazpy.1 header said 11.0, although its OpenSSL already needed 15). This host accepts cores lazpy.1 and lazpy.2.
 
 ## 18. Contributors
 

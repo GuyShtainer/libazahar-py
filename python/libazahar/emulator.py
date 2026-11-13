@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import os
 import shutil
+import struct
 import weakref
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple, Union
@@ -12,7 +13,7 @@ from ._client import Wait, WorkerClient, reap_process
 from .errors import ArgumentError, BootError, GuestError, HostError
 from .inputs import Buttons, Circle, Held, Item, Touch, _TouchUp, apply_item, check_buttons, fold, held_after
 from .memory import Memory
-from .results import RunResult, SaveInfo, Shot, Stats, WatchRow
+from .results import RunResult, SaveInfo, Shot, Stats, ThreadInfo, WatchRow
 
 __all__ = ["Emulator"]
 
@@ -382,6 +383,19 @@ class Emulator:
         """Restore a state made by the same app; the SD folder becomes the snapshot's. Raises StateError."""
         self._live()
         self._client.request("load_state", (str(Path(path).resolve()),), Wait(total=self.timeout + STATE_EXTRA_S))
+
+    def threads(self) -> Tuple[ThreadInfo, ...]:
+        """Every guest thread on every core, with its pc, lr, sp and cpsr, read between batches (core lazpy.2).
+        System-module threads are listed too: filter by ``pid``. Raises NeedsLazpyCore on the stock core and on a
+        lazpy.1 core."""
+        self._live()
+        _, raw = self._client.request("threads", (), Wait(total=self.timeout))
+        assert isinstance(raw, bytes) and len(raw) % struct.calcsize("<10I") == 0
+        out = []
+        for tid, pid, status, core, priority, flags, pc, lr, sp, cpsr in struct.iter_unpack("<10I", raw):
+            out.append(ThreadInfo(tid, pid, status, _abi.THREAD_STATUS_NAMES.get(status, f"status_{status}"), core,
+                                  priority, bool(flags & _abi.AZH_THREAD_CURRENT), pc, lr, sp, cpsr))
+        return tuple(out)
 
     def stats(self) -> Stats:
         """The host's counters."""

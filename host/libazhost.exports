@@ -8,6 +8,7 @@ _azh_save_state
 _azh_load_state
 _azh_read
 _azh_write
+_azh_threads
 _azh_set_input
 _azh_stats
 _azh_abi_layout
