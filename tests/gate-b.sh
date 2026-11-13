@@ -42,7 +42,7 @@ run_app() {
     else
         MVK_LIB=dl/moltenvk/MoltenVK/MoltenVK/dynamic/dylib/macOS/libMoltenVK.dylib OPT_citra_graphics_api=Vulkan \
         OPT_citra_input_type=none OPT_citra_enable_motion=disabled \
-        nice -n 10 build/fe2 dl/azahar/azahar_libretro.dylib "$APP" "$RUN/sys" "$RUN/out" "$2" "$3" > "$RUN/out.txt" 2>&1 &
+        nice -n 10 build/fe2 "${LAZ_STOCK_CORE:?set LAZ_STOCK_CORE to Azahar's own core}" "$APP" "$RUN/sys" "$RUN/out" "$2" "$3" > "$RUN/out.txt" 2>&1 &
     fi
     wait_pid "$!" "$(($2 + 120))"
     FRAMES="$(sed -n 's/.*frames=\([0-9]*\).*/\1/p' "$RUN/out.txt" | tail -n 1)"

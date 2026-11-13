@@ -9,7 +9,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "python"))
-from libazahar import _slots  # noqa: E402
+from libazahar import _paths, _slots  # noqa: E402
 import checks_c as cc  # noqa: E402
 import testapp_log as tl  # noqa: E402
 
@@ -281,13 +281,13 @@ def core_kind(core: str, want: str) -> str:
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--only", default="a,b,c,d,e,f")
-    ap.add_argument("--core", default=None, help="core to run (default: azhost's own: LAZ_CORE, else the stock core)")
+    ap.add_argument("--core", default=None, help="core to run (default: LAZ_CORE, else our core at dl/lazpy-core/)")
     ap.add_argument("--core-kind", choices=("auto", "stock", "lazpy"), default="auto")
     ap.add_argument("--plant-red", action="store_true", help="shift the expected button frames by 2 (must FAIL a2)")
     args = ap.parse_args()
     only = set(args.only.split(","))
     global KIND
-    core = args.core or os.environ.get("LAZ_CORE") or "dl/azahar/azahar_libretro.dylib"
+    core = args.core or os.environ.get("LAZ_CORE") or str(_paths.core_path())
     KIND = core_kind(core, args.core_kind)
     if args.core:
         CORE_FLAGS[:] = ["--core", args.core]

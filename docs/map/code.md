@@ -24,3 +24,8 @@
   headers), `runs/`, `.pytest_cache/`, `.venv/` (the editable-install venv), `roms/`, `sdmc/`, `build/` (host and
   test app output), `build-core/` (our core's build: `build.log`, `build.pid`, `build.exit`,
   `azahar_lazpy_libretro.dylib`).
+- `NOTICES.md`: generated licence notices (`tools/mknotices.py`); also inside the core's release zip.
+- `core/PIN-nokeys`: the pin of the source asset (Azahar's tarball minus the drop list); `core/OPENSSL.md`: where
+  the statically linked OpenSSL came from and how to rebuild it.
+- `docs/release-notes/`: the release notes per tag.
+- `tests/python/test_paths.py`: the default core path and the `LAZ_STOCK_CORE` skips.

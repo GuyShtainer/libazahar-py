@@ -21,6 +21,7 @@ OUTDIR      := $(CURDIR)/../build
 ARCH    := -march=armv6k -mtune=mpcore -mfloat-abi=hard -mtp=soft
 CFLAGS  := -g -std=gnu11 -Wall -Wextra -Werror -O2 -mword-relocations -ffunction-sections $(ARCH)
 CFLAGS  += $(INCLUDE) -D__3DS__
+CFLAGS  += -ffile-prefix-map=$(abspath $(TOPDIR)/..)/=
 ASFLAGS := -g $(ARCH)
 LDFLAGS  = -specs=3dsx.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
 LIBS    := -lcitro2d -lcitro3d -lctru -lm
