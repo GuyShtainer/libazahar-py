@@ -153,3 +153,13 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   verbatim). The fonts' name records match the consult: Montserrat 4.000 (OFL 1.1), Unifont 10.0.05 (GPLv2+ with
   the font embedding exception).
 - Joint as-built review launched 03:45 (a0dd0f1365ef00ed2, opus): both diffs, rulings asked on D1 (verbatim third-party notices with upstream addresses, check 7 narrowed), D2 (H's code fixes deferred), D3 (release_check's size).
+- Joint as-built review (a0dd0f1365ef00ed2, 03:45-04:01; docs/reviews/phase-4-as-built.md): ready to merge after
+  B1 (README's real-scene rows measured Azahar's own core, not ours) and B2 (fresh-venv pytest needs numpy), S1-S9.
+  Rulings: D1 verbatim third-party notices with check 7 narrowed to the pinned inputs' exact addresses; D2 defer H's
+  code fixes (a STATUS Next line); D3 accept release_check's size. Fix rounds sent: H (B1, B2, S1-S3, N1-N3, D2's
+  line) and I (S4, S5, S6, N4-N9). The main loop's own: S7 (spike 1's stock-core URL and sha256 in
+  docs/research/spike-1-headless-core.md:18, :27-28 and the runners.md pointer; reword after the merges, before I3),
+  S8 (the merge conflicts in code.md and runners.md: keep both sides), S9 (I2 order: pins commit, mkrelease,
+  release_check --pre-push, push, nothing between).
+- newlib for S6 (main loop): dl/newlib-licence/COPYING.NEWLIB-4.6.0, 78,388 bytes, sha256 f3afe48e4bc6ed8466a42e9dacb6be1d8f9cbf5aac15cb8e474a5ccde8b40ef6,
+  sourceware newlib-cygwin.git tag newlib-4.6.0; equal to devkitPro/newlib master b14e2e7's copy; devkitARM ships 4.6.0.

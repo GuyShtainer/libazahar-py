@@ -107,3 +107,5 @@ date	bet	phase	agent_id	model	role	kind	start	end	hours	source
 2026-11-13	commit H1 on step-h (map lines, privacy scans), item 410 notes	phase-4	main	opus	main	process	03:29	03:30	0.03	session clock
 2026-11-13	step I1 builder: P17 code, NOTICES/mknotices, mkrelease, release_check, fetch.sh parts, OPENSSL.md, PIN-nokeys, notes	phase-4	a8e760acbd1172ce5	sonnet	builder	build	03:19	03:42	0.38	agent duration 1383 s
 2026-11-13	commit I1 on step-i (scans, rule 3, runners, maps), item 420 notes, review launch	phase-4	main	opus	main	process	03:42	03:44	0.05	session clock
+2026-11-13	Phase 4 joint as-built review (steps H and I)	phase-4	a0dd0f1365ef00ed2	opus	reviewer	review	03:45	04:01	0.26	agent duration 931 s
+2026-11-13	save the review, newlib licence download, H and I fix rounds sent	phase-4	main	opus	main	process	04:01	04:02	0.05	session clock

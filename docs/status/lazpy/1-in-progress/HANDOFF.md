@@ -9,16 +9,17 @@ the next session needs to act now, and points at the rest. Goals, rules, decisio
 ## Running now
 | What | Where | Agent id | It stops when |
 |---|---|---|---|
-| laz-400: the joint opus as-built review of steps H and I (phase-h.md 12, phase-i.md 12) | report to MAIN runs/review-p4/ | a0dd0f1365ef00ed2 | its report |
+| laz-410: step H fix round (review B1, B2, S1-S3, N1-N3, D2's STATUS line) | ../libazahar-py-h (step-h at 4ce7181) | af156d29564cfc9ce | its report "H fixes done" |
+| laz-420: step I fix round (review S4, S5, S6 newlib, N4-N9), re-stage | ../libazahar-py-i (step-i at 46c808e) | a8e760acbd1172ce5 | its report "I fixes done" |
 
-Not running: both builders finished: H1 on step-h (4ce7181), I1 on step-i (46c808e); reports in items 410, 420. Phase 3 done (item 300); G8b, Gen3D's copy check and the downloads done (item 400's notes).
+Not running: the joint review is done (docs/reviews/phase-4-as-built.md; item 400's notes). Phase 3 done; G8b, Gen3D's copy check, the downloads done.
 
 ## Next steps, in order
-1. On "H1 done" / "I1 done": commit each report's files on its branch (exact paths, with the map lines it names, and
-   for I the rules.md rule 3 and runners.md lines); book its hours row; the builders never commit.
-2. When both are committed: one opus as-built review over both diffs (phase-h.md 12, phase-i.md 12); fixes by the
-   resumed builders (SendMessage to the ids above); then merge step-h, then step-i; items 410 (and 420 at I5).
-3. I2 in MAIN (phase-i.md 6), I3 release-legal-audit (its brief: phase-i.md 9.2), I4 fixes.
+1. On "H fixes done" / "I fixes done": commit each on its branch (exact paths, scans); book hours.
+2. Merge step-h, then step-i, into main (review S8: code.md and runners.md conflicts, keep both sides, H's runners
+   block gets its own closing fence; then mkmap, map_check); remove both worktrees (porcelain --ignored looked at).
+3. S7: reword spike 1's stock-core URL and sha256 lines (docs/research/spike-1-headless-core.md:18, :27-28) and the
+   runners.md pointer; then I2 in MAIN (phase-i.md 6; S9's order), I3 release-legal-audit (phase-i.md 9.2), I4.
 4. The push and the release wait for Guy (G5-G7, Q1-Q9).
 
 ## Waiting on Guy (only what blocks a step above)
