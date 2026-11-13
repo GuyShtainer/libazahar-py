@@ -47,6 +47,9 @@ run_app() {
     wait_pid "$!" "$(($2 + 120))"
     FRAMES="$(sed -n 's/.*frames=\([0-9]*\).*/\1/p' "$RUN/out.txt" | tail -n 1)"
     FRAMES="${FRAMES:-0}"
+    STOP="$(sed -n 's/.* stop=\([a-z_]*\) .*/\1/p' "$RUN/out.txt" | tail -n 1)"
+    # on our core a guest exit ends azhost with _exit(10) and no summary (phase-c.md 3.5); the stock core runs on
+    if [ "$RC" -eq 10 ] && [ "$1" = ev-exit ]; then RC=0; fi
     if [ "$RC" -ne 0 ] && [ "$RUNNER" = azhost ]; then say "note: azhost exit code $RC ($1)"; bad "azhost exit code $RC in run $1"; fi
     LOG="$RUN/sys/Azahar/sdmc/testapp/log.txt"
 }
@@ -99,7 +102,10 @@ if shot_run 3d "draw=3d"; then shots_markers "markers 3d" 3d; fi
 for ev in "break_at=120:break:120" "exit_at=120:exit:120" "ready_at=60:ready:60"; do
     ctl="${ev%%:*}"; rest="${ev#*:}"
     run_app "ev-${rest%%:*}" 10 "" "$ctl"
-    verdict "event $ctl" chk event "$LOG" "${rest%%:*}" "${rest##*:}" --runs "$FRAMES"
+    # azhost on our core stops at a guest break (stop=guest_break); the stock core and fe2 run on past it
+    if [ "${rest%%:*}" = break ] && [ "$STOP" = guest_break ]; then stopped=--stopped; else stopped=""; fi
+    # shellcheck disable=SC2086  # stopped is one flag or empty
+    verdict "event $ctl" chk event "$LOG" "${rest%%:*}" "${rest##*:}" --runs "$FRAMES" $stopped
 done
 if shot_run boot "boot_frames=90"; then
     verdict "event boot_frames=90" chk event "$LOG" booted 90 --runs "$FRAMES"

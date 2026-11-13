@@ -16,12 +16,20 @@ Every step's gate passes (each step file names its PLAN.md line). Before any ste
 (`docs/plans/`), opus review 1, revision, opus review 2, revision (Guy's rule: two loops per phase).
 
 ## Evidence
-none yet
+- 2026-11-13 02:56, main (steps E cbe823c, F2 fac16e9, G 04926c4 merged): Phase 3's full suite once (phase-3.md
+  section 4 step 7, runs/p3/batch.sh, 02:27-02:52, each part at 1-min load under 10): build 0 (test-host 307782
+  checks, 0 failed); gate A all PASS; gate C 28/0 on our core and 28/0 on the stock core; gate_f2 0 FAIL (18 PASS,
+  r2 t_state 1.48 s and 1.79 s, bound 2.5); pytest 131 passed on each core; live pool 2 passed. Gate B first went 2
+  FAIL: its event checks predated step C (our core stops at a guest break, and a guest exit leaves through _exit(10)
+  with no summary, phase-c.md 3.5). Fixed in tests/gate-b.sh and tests/check_testapp.py (event --stopped, keyed on
+  the run's stop= field; exit code 10 accepted for the exit run; planted red: a frame after the break fails), then
+  gate B 15/15 on our core and 15/15 on the stock core (02:55, hold_slot waited 0). Phase 3 done.
 
 ## Pointers
 - Plan section: `docs/PLAN.md` section 3
 - Phase plan: `docs/plans/phase-3.md` (index), `phase-e.md`, `phase-f2.md`, `phase-g.md`
-- Review: none yet
+- Reviews: `docs/reviews/phase-3-review-1.md`, `phase-3-review-2.md`, `step-e-as-built.md`, `step-f2-as-built.md`,
+  `step-g-as-built.md`
 
 ## Lessons and notes
 Read this part only when you work on this item. Blockers, numbers and Guy's words go here verbatim.

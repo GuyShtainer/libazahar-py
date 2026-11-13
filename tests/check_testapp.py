@@ -171,13 +171,16 @@ def cmd_event(args) -> int:
     ok = bool(idx) and bool(fs)
     if ok and kind == "exit":
         ok = idx[0] == len(lines) - 1
+    elif ok and kind == "break" and args.stopped:
+        # the runner stops at the break (azhost on our core, stop=guest_break): the break line is the log's last
+        ok = idx[0] == len(lines) - 1 and fs[-1] == n
     elif ok and kind == "break":
         ok = fs[-1] > n and (n + 1) in fs
     elif ok and kind == "ready":
         ok = fs[-1] > n
     elif ok and kind == "booted":
         ok = fs[0] == n + 1
-    if ok and kind != "exit":
+    if ok and kind != "exit" and not args.stopped:
         # still running at the end: the last frame line is within 0..120 of the runner's frame count
         ok = args.runs is not None and 0 <= args.runs - fs[-1] <= 120
     if not ok:
@@ -204,6 +207,7 @@ def main(argv) -> int:
     ev.add_argument("kind", choices=("break", "exit", "ready", "booted"))
     ev.add_argument("n", type=int)
     ev.add_argument("--runs", type=int, help="runner frame count; required except for exit")
+    ev.add_argument("--stopped", action="store_true", help="break only: the runner stopped at the break")
     args = ap.parse_args(argv)
     if args.cmd == "markers" and not (args.png or (args.top and args.bottom)):
         ap.error("markers needs a PNG or --top and --bottom")

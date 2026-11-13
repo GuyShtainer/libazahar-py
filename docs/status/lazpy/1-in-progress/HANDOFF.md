@@ -1,7 +1,7 @@
 <!-- handoff: slim v1 | current tasks only | rewritten whole from docs/status/templates/handoff.md | budget 80 lines | never append -->
 # libazahar-py handoff
 
-As of: 2026-11-13 02:05 (this project's own session)
+As of: 2026-11-13 02:58 (this project's own session)
 
 This file lives in docs/status/lazpy/1-in-progress/, beside its item files. It holds only what
 the next session needs to act now, and points at the rest. Goals, rules, decisions and history live elsewhere.
@@ -9,17 +9,18 @@ the next session needs to act now, and points at the rest. Goals, rules, decisio
 ## Running now
 | What | Where | Agent id | It stops when |
 |---|---|---|---|
-| laz-300: Phase 3's full suite once (phase-3.md section 4 step 7): build, gates A, B, C on both cores, F2, the full pytest on each core, the live pool test; each part waits for load under 10 | MAIN runs/p3/batch.sh, rc files runs/p3/*.rc | main (background) | runs/p3/summary.txt written |
+| laz-400: Phase 4's before-launch steps (phase-4.md section 2): worktrees removed, G8b, downloads | MAIN | main | phase-4.md section 2 items 1-4 done |
 
-Not running: steps F2 (fac16e9), E (cbe823c) and G (04926c4) are merged; items 320, 310 and 330 are done.
-Worktrees c, d, e, f2 and g are merged and kept (ignored outputs).
+Not running: Phase 3 is done (item 300, Evidence there: the full suite green, gate B updated for our core's stops).
+Worktrees c, d, e, f2 and g are merged; removed next.
 
 ## Next steps, in order
-1. When runs/p3/summary.txt is all 0: item 300 to 5-done with Evidence (Phase 3 done); tell Gen3D Phase 3's timed
-   runs ended; then remove worktrees c, d, e, f2, g (git status --porcelain --ignored checked first).
-2. Phase 4's plan is final (revision 2); items 410/420 stay in 4-not-started until Phase 3 ends.
-3. After the phase merges: section 4 step 7 (the full suite once, one background batch); then Phase 4.
-4. Before the push: G8b (second history rewrite, item 400's last notes), then release-legal-audit.
+1. Remove worktrees c, d, e, f2, g (each one's ignored files looked at first; `git worktree list` shows MAIN only).
+2. G8b: the second history rewrite (phase-i.md 8.1b); docs/commit-map-g8b.tsv; the checks re-run.
+3. Downloads (phase-i.md 6): OSSL if missing, the system-archives snapshot, font licence texts if it lacks them.
+4. Launch H and I builders side by side (phase-4.md section 2; items 410, 420 to 1-in-progress first), Q1 default
+   (remove the stock fetch). I owns tests/gate-b.sh:45; the gate's event lines changed at Phase 3's close.
+5. Then the joint as-built review, merges, I2, the release-legal-audit (I3); the push waits for Guy.
 
 ## Waiting on Guy (only what blocks a step above)
 - Phase 4's G5-G7 (repo creation, the word "push", publishing the draft), G9 (spike 2's game: default say
