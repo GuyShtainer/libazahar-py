@@ -1,7 +1,7 @@
 <!-- handoff: slim v1 | current tasks only | rewritten whole from docs/status/templates/handoff.md | budget 80 lines | never append -->
 # libazahar-py handoff
 
-As of: 2026-11-13 01:56 (this project's own session)
+As of: 2026-11-13 02:05 (this project's own session)
 
 This file lives in docs/status/lazpy/1-in-progress/, beside its item files. It holds only what
 the next session needs to act now, and points at the rest. Goals, rules, decisions and history live elsewhere.
@@ -9,13 +9,13 @@ the next session needs to act now, and points at the rest. Goals, rules, decisio
 ## Running now
 | What | Where | Agent id | It stops when |
 |---|---|---|---|
-| laz-310: step E2's speed table, detached (Gen3D asked to hold its lanes at 01:57); the builder handed back early, the main loop waits | ../libazahar-py-e runs/e-speed/ | main (waiter bdzkkuwb6; builder a444b28ace71428a3) | runs/e-speed.rc written; then E2's last steps (item 310's last note) |
-| laz-330: step G, G1 built and green; parked until E's runs/e-speed.rc, then resume the builder for G2 | ../libazahar-py-g (step-g at 9ca360d, uncommitted) | a974a8613e6508e64 (parked) | resumed for G2 when the waiter fires |
+| laz-310: step E2's last steps (DEFAULT_CAP 2, docs/research/speed-table-e.md; no emulator); the table ended 02:04 | ../libazahar-py-e | a444b28ace71428a3 | reports "E done" |
+| laz-330: step G2, the emulator batch (runs/g/batch.sh: gate_c on our core, the full pytest with test_memory_live.py); Gen3D still held | ../libazahar-py-g (step-g at 9ca360d, uncommitted) | a974a8613e6508e64 | reports "G done"; runs/g-batch.rc |
 
 Not running: step F2 merged (fac16e9, item 320 done). Worktrees c, d and f2 are merged and kept (ignored outputs).
 
 ## Next steps, in order
-1. At "E done": tell Gen3D "free"; opus as-built review of step-e (phase-e.md section 12); fixes and merge as
+1. At "E done" and "G done": tell Gen3D "free". At "E done": opus as-built review of step-e (phase-e.md section 12); fixes and merge as
    phase-3.md section 4 step 5 says (fixes to __init__.py, host/run.c, host/azh_pure.h are held until step-g
    merges); then item 320's slot notes (t_state counts slot waits; gate_f2 under hold_slot).
 2. At "G done": phase-3.md section 4 step 6 (merge main into step-g, opus as-built review, merge).

@@ -40,3 +40,8 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   an EXIT trap writes runs/e-speed.rc). Left: read the table, the cap_rule line, set DEFAULT_CAP in _slots.py
   (stays 3 if any cap-core row is CHECK FAIL), write docs/research/speed-table-e.md (phase-e.md section 7). Only
   tests/python/test_pool_live.py changed since a74aaec.
+- Speed table done 02:04 (rc 0; ../libazahar-py-e/runs/e-speed/table.md, light scene, nice 15): our core n=1 2177
+  fps, n=2 3167 total, n=3 3540, n=4 3434; the stock core n=1 1652, n=2 2305, n=3 2779 (load 17-36 during its
+  rows). Every check ok, slot waits 0. cap_rule on our core: 2 (n=2 x1.45 at load 15.1; n=3 x1.12, under x1.25).
+  Round trip 0.11 ms per call; a shot 6.2 ms at PNG level 1, 5.8 ms at 6. The builder finishes DEFAULT_CAP=2 and
+  docs/research/speed-table-e.md (no emulator).
