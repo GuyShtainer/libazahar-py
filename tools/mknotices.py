@@ -353,8 +353,8 @@ def tail_section() -> str:
     return "\n".join([
         "## Not included\n",
         "MoltenVK (Apache-2.0) is fetched by `tools/fetch.sh` from its upstream, never shipped. Azahar's original "
-        "tarball also contains the bundled LibreSSL; we removed it with the three headers. No ROMs, keys, "
-        "certificates, system files or NAND data are included; the key blob, the default HTTP client certificate and "
+        "tarball also contains the bundled LibreSSL; we removed it with the three headers. No ROMs, console keys, "
+        "Nintendo certificates, Nintendo system files or NAND data are included; the key blob, the default HTTP client certificate and "
         "key loading are removed.\n"])
 
 

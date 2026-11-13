@@ -28,8 +28,8 @@ Evidence, in `docs/status/lazpy/5-done/`, proves it. Nothing is listed as workin
   move between lazpy.1 and lazpy.2 both ways (laz-510)
 - The 1.0 API freeze: keyword-only run options, `Path` returns, one strict option-profile format read the same way
   by the host and Python, the input-script bounds and the `azhost` exit codes, each with tests (laz-610)
-- Depth-stencil readback on MoltenVK: exact on our test app's check (0 bad of 90 on the release core) and on a
-  user's own self-test (laz-520)
+- Depth-stencil readback on MoltenVK: exact on our test app's check (0 bad of 90 on core 88cc6188, the build before
+  patch 0011; the release core 64026f4a passes the same test in the full pass) and on a user's own self-test (laz-520)
 - Restoring a saved state, then drawing 3D: an Azahar bug crashed the first 3D draw after a state load; our core
   fixes it (patch 0011), with a test-app test, and both user projects pass on it (laz-660)
 
@@ -75,17 +75,16 @@ Evidence, in `docs/status/lazpy/5-done/`, proves it. Nothing is listed as workin
   - Any window: the tool is headless.
   - Patching HID's touch truncation: four rows move by one pixel; documented.
   - Azahar's RPC server and gdb stub: not in libretro builds.
-  - Commercial games in tests or docs: homebrew only.
+  - Commercial 3DS titles: not supported or tested; the tests use our own test app. The real-scene speed rows are a
+    user's homebrew (Gen3D) running a GBA game supplied locally, not distributed.
   - `.cia` installs: the host loads `.3dsx`.
   - Wireless, motion and camera: not built.
   - PyPI: the route is a clone and an editable install.
   - A Python command line: not built (`azhost` is the host's command line).
   - HOME: not offered.
-  - CI on GitHub runners: see Next.
   - Gen3D's adapter: Gen3D's own work.
 
 ## Next
 
-- CI on GitHub runners (about 0.5 h).
-- A core rebuild with patch 0008's comment fixed.
+- CI on GitHub runners: the workflow is committed (`.github/workflows/test.yml`); its first run is at the push.
 - Gen3D's adapter (Gen3D's own work).

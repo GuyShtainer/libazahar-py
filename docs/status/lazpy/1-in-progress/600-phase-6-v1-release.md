@@ -85,10 +85,10 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   (every 10 s) records other processes over 50 % CPU or named like builds and emulators. Rows: ours 1, stock 1, ours
   2, 3, 4; 60 s windows. It waits for both V6 runs to end and a load under 6.
 - 2026-11-13 15:01, V6: 3DPlatinum PASS on 64026f4a… (its whole chain headless, 72 steps PASS, its only failures its
-  own link step; A4's 5 pairs differ only in the game ELF's sha, a rebuilt ELF in its fresh tree; verbatim in
+  own link step; A4's 5 pairs differ only in its build's sha, rebuilt in its fresh tree; verbatim in
   laz-660's notes). Gen3D's smoke passed at 13:10; its Pool 1-4 run started on our go at 15:01 (load 1.96).
-- 2026-11-13 15:18, V6: 3DPlatinum's A4 caveat closed, verbatim: "A4 on the final core (64026f4a...): EQUAL. We reran
-  the windowed trio headless on the very game ELF the windowed records used (sha 44d17faa...). route_equal gives
+- 2026-11-13 15:18, V6: 3DPlatinum's A4 caveat closed, verbatim except "[build]" for its word for its own binary: "A4 on the final core (64026f4a...): EQUAL. We reran
+  the windowed trio headless on the very [build] the windowed records used (sha 44d17faa...). route_equal gives
   \"EQUAL (5 A records, 5 B records, 0 one-sided excused)\", with only the audio-lead timing line masked by design.
   All four targets rc 0, no hold, no SlotTimeout. With the chain result I sent at 15:00, V6 is a pass from our
   side." V6 now waits only on Gen3D's Pool 1-4.
@@ -124,3 +124,15 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   passed; map_check, status_check, docs_check OK. No unexpected skip, 0 failed.
 - 2026-11-13 18:45, V8 step 2-3: `sh tools/mkrelease.sh v1.0.0` (18:41-18:45, rc 0) into runs/release/v1.0.0; the
   core zip sha256 d706fd1a… and the test app ba106998… written into tools/fetch.sh's pins.
+- 2026-11-13 18:52, V8 step 1 and 5: mkrelease again at 18:47 (only the build-files asset differs; it embeds HEAD).
+  clone_check from a fresh clone of main (1224dde) with the staged release as file:// base, 18:47:52-18:52:22: "clone
+  ok: 270 s wall; 188M in dl/", quickstart ok twice, full pytest 292 passed, 8 skipped (the clone sets no stock or
+  old core, and no release fixture), 0 failed. The test app built from source under `env -i` in the clone is
+  ba106998…, equal to the staged one.
+- 2026-11-13 19:12, V8 step 2: the release-legal-audit (opus, a1a4df6eeb2bdc776, 18:48-19:06) says SHIPPABLE WITH
+  CHANGES; saved as `docs/reviews/release-legal-audit-v1.0.0.md` (its admission phrase redacted, marked). M2 and the
+  S and note wording are fixed at HEAD in this commit (the first audit's :43, status quotes now say "[build]", "title
+  keys" gone, NOTICES' "console keys, Nintendo certificates", the Python claim, "supplied locally"). M1 is next: the
+  G8d history rewrite (`docs/plans/phase-i.md` 8.1b) of the game title (9c5f959, a41f196), 1748f65's place name,
+  7a532a2's franchise line and the admission phrase; phase-h.md:122 kept. Then the re-stage, the fetch.sh pin and
+  `release_check --pre-push`.

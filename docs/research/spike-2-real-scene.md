@@ -19,7 +19,7 @@ repo by the Gen3D session, not committed (this repo's session commits it). The f
 **Q2, speed on a real scene.**
 - Plain `Gen3D.3dsx` picks layout A and never draws the 3D world; Gen3D's flipdev build (force=1) picks layout B and
   draws it, so every field number uses flipdev.
-- Game: one commercial Gen-3 GBA game, run locally (not distributed); the save boots into the PC box menu; the script reaches the outdoor 3D field at about frame
+- Game: one commercial Gen-3 GBA game, supplied locally (not distributed); the save boots into the PC box menu; the script reaches the outdoor 3D field at about frame
   7600-9200.
 - World build: the app logs "built in 184 s" by its own clock = about 12,000 `retro_run` calls (about 200 guest
   seconds) at roughly 275 emulated fps, so about 44 wall seconds (load not recorded). Qt reference: about 5 minutes.
@@ -54,7 +54,7 @@ would shorten boot scripts (this save lands in the PC box and needs B presses).
 * SET_MEMORY_MAPS (env 36|0x10000) IS sent, once, at frame 0, n=2: [0] flags=4 start=0x0FFFC000 len=0x4000; [1] flags=0x10 start=0x1F000000 select=0xFF800000 len=0x600000 (VRAM). No heap / linear heap / FCRAM descriptor, never re-sent while the game runs. Reading 0x00100000 (app code) through the map: no descriptor, fails. So guest app RAM (Gen3D's GBA EWRAM) is unreachable; VRAM is readable but is GPU data.
 * Not tried: retro_serialize savestate parse (would contain FCRAM; untested).
 ## Q2
-Guest app: Gen3D.3dsx (plain) stays layout A and never draws the voxel world (single session). Gen3D-flipdev.3dsx (the dev build az-i uses, force=1) picks layout B and draws the 3D world, so all field numbers use flipdev. Game = one commercial Gen-3 GBA game, run locally (not distributed). Slider not needed (voxSlider3d=0).
+Guest app: Gen3D.3dsx (plain) stays layout A and never draws the voxel world (single session). Gen3D-flipdev.3dsx (the dev build az-i uses, force=1) picks layout B and draws the 3D world, so all field numbers use flipdev. Game = one commercial Gen-3 GBA game, supplied locally (not distributed). Slider not needed (voxSlider3d=0).
 Boot path script (frames): wait 300, A, mash A/START 4200 frames (title -> Continue -> lands in the PC box menu), mash B 40x (out of PC), LEFT, DOWN x2 (a building door) -> outdoor field with 3D world at frame ~7600-9200. Script: run/x2.scr, z.scr; frontend fe/fe3.c (FE_SCRIPT, H/W/T/P lines; touch implemented via pointer device, untested).
 World build (first boot, no pak): app's own log "built in 184 s"; ~12,000 retro_runs (~200 guest s) at ~275 emulated fps = ~44 wall s (load at the time not recorded; earlier spike saw 9-15). Qt reference ~5 min real.
 Guest time check: HUD clock (guest RTC) advanced 15:56 -> 16:04 over 32000 retro_runs (535 s at 59.83 Hz) = consistent (minute resolution); app frame count from voxel.log "peaks over 600 frames" lines = ~0.53 app frames per retro_run (app runs ~32-37 fps guest, as its HUD says). So 1 retro_run = 1 guest vblank, x real time = fps/59.83.

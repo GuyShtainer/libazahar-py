@@ -22,18 +22,18 @@ audio output, anything with a window, and anything that is not homebrew.
 | Our core, host share of a batch without shots | 0.1% | test app, light scene, core lazpy.1 | 10.9/9.4 | 2026-11-13 | docs/research/speed-table-e.md:27,3 |
 | Azahar's own core, 1 instance | 27.61x real time (1652.2 fps) | test app, light scene, core lazpy.1 | 16.6/32.8 | 2026-11-13 | docs/research/speed-table-e.md:36,3 |
 | Azahar's own core, 3 instances, each | 15.48x real time (926.1, 926.3, 926.1 fps) | test app, light scene, core lazpy.1 | 35.9/36.3 | 2026-11-13 | docs/research/speed-table-e.md:38,3 |
-| Our core, real scene, 1 instance | 550.4 fps, 9.33x real time | Gen3D (homebrew) drawing a 3D scene from a GBA game run locally, not distributed | 3.1/4.8 | 2026-11-13 | docs/research/real-scene-v3.md:34,3 |
-| Our core, real scene, 2 instances at once, total | 1057.9 fps (528.2, 529.7 each) | Gen3D (homebrew) drawing a 3D scene from a GBA game run locally, not distributed | 5.5/4.8 | 2026-11-13 | docs/research/real-scene-v3.md:36,3 |
-| Our core, real scene, 3 instances at once, total | 1586.4 fps (528.9, 528.9, 528.6 each) | Gen3D (homebrew) drawing a 3D scene from a GBA game run locally, not distributed | 4.8/5.7 | 2026-11-13 | docs/research/real-scene-v3.md:37,3 |
-| Our core, real scene, 4 instances at once, total | 2071.4 fps (517.6, 514.2, 520.0, 519.6 each) | Gen3D (homebrew) drawing a 3D scene from a GBA game run locally, not distributed | 5.7/5.9 | 2026-11-13 | docs/research/real-scene-v3.md:38,3 |
-| Our core, real scene, 4 instances, peak memory each | 952, 958, 956, 968 MB | Gen3D (homebrew) drawing a 3D scene from a GBA game run locally, not distributed | 5.7/5.9 | 2026-11-13 | docs/research/real-scene-v3.md:38,3 |
-| Azahar's own core, real scene, 1 instance, same window | 533.6 fps, 8.80x real time | Gen3D (homebrew) drawing a 3D scene from a GBA game run locally, not distributed | 4.8/5.5 | 2026-11-13 | docs/research/real-scene-v3.md:35,3 |
-| Our core, real scene, 1 instance | 561.4 fps, 9.38x real time | Gen3D (homebrew) drawing a 3D scene from a GBA game run locally, not distributed, core lazpy.1 | 3.85/4.43 | 2026-11-13 | docs/research/real-scene-j.md:22,1 |
-| Our core, real scene, guest memory read | 0.024 ms per 4 KiB | Gen3D (homebrew) drawing a 3D scene from a GBA game run locally, not distributed, core lazpy.1 | 3.85/4.43 | 2026-11-13 | docs/research/real-scene-j.md:22,1 |
-| Azahar's own core, real scene, 1 instance, quiet machine | 564.2 and 541.7 fps, 9.43x and 9.05x real time | Gen3D (homebrew) drawing a 3D scene from a GBA game run locally, not distributed | 4.65/3.87, 4.24/4.37 | 2026-11-13 | docs/research/real-scene-j.md:20,21,1 |
-| Azahar's own core, real scene, 1 instance | 334 fps, 5.6x real time | Gen3D (homebrew) drawing a 3D scene from a GBA game run locally, not distributed | 26.7 (16:07) | 2026-11-12 | docs/research/spike-2-real-scene.md:32,1 |
-| Azahar's own core, real scene, 1 instance, busy machine | 129 fps, 2.2x real time | Gen3D (homebrew) drawing a 3D scene from a GBA game run locally, not distributed | 68-96 (16:09-16:11) | 2026-11-12 | docs/research/spike-2-real-scene.md:34,1 |
-| Azahar's own core, real scene, 3 instances, each | 136-138 fps, 2.3x real time | Gen3D (homebrew) drawing a 3D scene from a GBA game run locally, not distributed | 58 rising to 90 | 2026-11-12 | docs/research/spike-2-real-scene.md:35,1 |
+| Our core, real scene, 1 instance | 550.4 fps, 9.33x real time | Gen3D (homebrew) drawing a 3D scene from a GBA game supplied locally, not distributed | 3.1/4.8 | 2026-11-13 | docs/research/real-scene-v3.md:34,3 |
+| Our core, real scene, 2 instances at once, total | 1057.9 fps (528.2, 529.7 each) | Gen3D (homebrew) drawing a 3D scene from a GBA game supplied locally, not distributed | 5.5/4.8 | 2026-11-13 | docs/research/real-scene-v3.md:36,3 |
+| Our core, real scene, 3 instances at once, total | 1586.4 fps (528.9, 528.9, 528.6 each) | Gen3D (homebrew) drawing a 3D scene from a GBA game supplied locally, not distributed | 4.8/5.7 | 2026-11-13 | docs/research/real-scene-v3.md:37,3 |
+| Our core, real scene, 4 instances at once, total | 2071.4 fps (517.6, 514.2, 520.0, 519.6 each) | Gen3D (homebrew) drawing a 3D scene from a GBA game supplied locally, not distributed | 5.7/5.9 | 2026-11-13 | docs/research/real-scene-v3.md:38,3 |
+| Our core, real scene, 4 instances, peak memory each | 952, 958, 956, 968 MB | Gen3D (homebrew) drawing a 3D scene from a GBA game supplied locally, not distributed | 5.7/5.9 | 2026-11-13 | docs/research/real-scene-v3.md:38,3 |
+| Azahar's own core, real scene, 1 instance, same window | 533.6 fps, 8.80x real time | Gen3D (homebrew) drawing a 3D scene from a GBA game supplied locally, not distributed | 4.8/5.5 | 2026-11-13 | docs/research/real-scene-v3.md:35,3 |
+| Our core, real scene, 1 instance | 561.4 fps, 9.38x real time | Gen3D (homebrew) drawing a 3D scene from a GBA game supplied locally, not distributed, core lazpy.1 | 3.85/4.43 | 2026-11-13 | docs/research/real-scene-j.md:22,1 |
+| Our core, real scene, guest memory read | 0.024 ms per 4 KiB | Gen3D (homebrew) drawing a 3D scene from a GBA game supplied locally, not distributed, core lazpy.1 | 3.85/4.43 | 2026-11-13 | docs/research/real-scene-j.md:22,1 |
+| Azahar's own core, real scene, 1 instance, quiet machine | 564.2 and 541.7 fps, 9.43x and 9.05x real time | Gen3D (homebrew) drawing a 3D scene from a GBA game supplied locally, not distributed | 4.65/3.87, 4.24/4.37 | 2026-11-13 | docs/research/real-scene-j.md:20,21,1 |
+| Azahar's own core, real scene, 1 instance | 334 fps, 5.6x real time | Gen3D (homebrew) drawing a 3D scene from a GBA game supplied locally, not distributed | 26.7 (16:07) | 2026-11-12 | docs/research/spike-2-real-scene.md:32,1 |
+| Azahar's own core, real scene, 1 instance, busy machine | 129 fps, 2.2x real time | Gen3D (homebrew) drawing a 3D scene from a GBA game supplied locally, not distributed | 68-96 (16:09-16:11) | 2026-11-12 | docs/research/spike-2-real-scene.md:34,1 |
+| Azahar's own core, real scene, 3 instances, each | 136-138 fps, 2.3x real time | Gen3D (homebrew) drawing a 3D scene from a GBA game supplied locally, not distributed | 58 rising to 90 | 2026-11-12 | docs/research/spike-2-real-scene.md:35,1 |
 
 Speed depends on the scene and the machine's load; the light rows are the test app on the earlier core lazpy.1,
 the real-scene rows are Gen3D's (homebrew) 3D scene. The 1-to-4-instance rows ran on an Apple M3 Pro (12 cores,
@@ -44,7 +44,7 @@ them is not a clean comparison.
 
 ## Requirements
 
-macOS 15 or later on Apple silicon; Xcode command-line tools; Python 3.10 or newer (python.org or Homebrew; macOS's
+macOS 15 or later on Apple silicon; Xcode command-line tools; Python 3.10 or newer (tested on 3.14 here; CI checks 3.10 from the first push; python.org or Homebrew; macOS's
 own `python3` is 3.9); `curl`, `shasum` and `unzip` (stock). devkitARM is needed only to build the test app yourself.
 
 ## Install

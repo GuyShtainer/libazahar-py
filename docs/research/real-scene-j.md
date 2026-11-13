@@ -1,9 +1,9 @@
 # A real scene on our core and on Azahar's own core (step J), 2026-11-13
 
 Main loop, 09:03-09:26. The first real scene on our core: Gen3D's phase-2 flip dev build (homebrew; its sha256
-starts f2f80aeeb47f912f) drawing its 3D world from a GBA game run locally (not distributed; the game, its save and
+starts f2f80aeeb47f912f) drawing its 3D world from a GBA game supplied locally (not distributed; the game, its save and
 Gen3D's world cache came from a seed folder outside this repo). The script is Gen3D's own try-1 soak
-(LAZPY-TRY-1.md in Gen3D's repo), unchanged keys: one `run(1)`, then one `run(35999)` with the title keys and a
+(LAZPY-TRY-1.md in Gen3D's repo), unchanged keys: one `run(1)`, then one `run(35999)` with the title-screen button presses and a
 left-right walk on the field; the 3D world draws from about frame 3000 to the end. One copy at a time, `nice -n 10`,
 never overlapping, a fresh workdir each run, run from a scratch folder outside both repos. After the batch the script
 reads 16 bytes of the app's code at 0x00100000 and times 200 reads of 4 KiB there.

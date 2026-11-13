@@ -96,8 +96,8 @@ The test app is unchanged (ba106998…). Review: `docs/reviews/patch-0011-review
   pica-replay, hwcheck, hw-kit-dryrun), the two hwcheck mutants failing as planted, and the sound mix and its
   mutant. Our only two failures are our own link error (a missing hook in our port, our step pt-181), not the
   library. F2: 54 headless run lines, all stopped_by=guest_exited; 100 records, 93 rc 0, 7 rc 1, all planted. A4
-  route_equal against the windowed trio: 5 pairs. Each differs only in the game ELF's sha, because our fresh tree
-  rebuilt the ELF while the windowed records used the main checkout's. rc, framebuffer and file hashes and count
+  route_equal against the windowed trio: 5 pairs. Each differs only in the [build]'s sha, because our fresh tree
+  rebuilt the [build] while the windowed records used the main checkout's. rc, framebuffer and file hashes and count
   lines are equal (the two timing lines are masked by design). So it is not a library difference. Our review
-  decides whether we rerun the trio on the same ELF; I'll send that line if we do. Host tests on the client: 42/0."
-  (Verbatim except "[3DPlatinum]" for the project's short name.)
+  decides whether we rerun the trio on the same [build]; I'll send that line if we do. Host tests on the client: 42/0."
+  (Verbatim except "[3DPlatinum]" for the project's short name and "[build]" for its words for its own binary.)

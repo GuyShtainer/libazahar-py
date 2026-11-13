@@ -81,4 +81,4 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   jitter). Against the windowed route, all count lines match except one: our audio lead line (ndsp sink watermark
   minus vclock, ms). It is unchanged by the override (e.g. lead=91 headless vs 127 windowed, d_max 23 vs 21), so the
   tick seed does not close that gap. We've ruled it a cross-route timing line (masked across routes only)." It left
-  the worktree (read only, nothing written). Its Platinum runners lane may run on main's lazpy.1: ask before the hold.
+  the worktree (read only, nothing written). Its runners lane may run on main's lazpy.1: ask before the hold.

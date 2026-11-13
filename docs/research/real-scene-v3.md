@@ -6,8 +6,8 @@ Our core is main's build 64026f4a… (Azahar 2126.2-lazpy.2); Azahar's own is th
 ## Method
 
 The scene is the one in `docs/research/real-scene-j.md`: Gen3D's flip dev build (homebrew; sha256 starts f2f80aee)
-drawing its 3D world from a GBA game run locally (not distributed; the game, its save and Gen3D's world cache came
-from a seed folder outside this repo), driven by Gen3D's own title keys and a left-right walk. Each instance boots,
+drawing its 3D world from a GBA game supplied locally (not distributed; the game, its save and Gen3D's world cache came
+from a seed folder outside this repo), driven by Gen3D's own title-screen button presses and a left-right walk. Each instance boots,
 runs 3600 frames (the 3D world draws from about frame 3000), and waits at a barrier; then all instances of a row
 measure in one shared window of 60 s wall time (`run(..., wall_limit=60)`), walking on. `LAZ_MAX_INSTANCES=4`,
 `nice` 10, the slot folder in use, one row at a time. The rows and the cap come from `cap_rule` and `md_core_table`
