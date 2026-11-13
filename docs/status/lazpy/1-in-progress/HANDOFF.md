@@ -1,7 +1,7 @@
 <!-- handoff: slim v1 | current tasks only | rewritten whole from docs/status/templates/handoff.md | budget 80 lines | never append -->
 # libazahar-py handoff
 
-As of: 2026-11-13 10:33 (this project's own session)
+As of: 2026-11-13 10:43 (this project's own session)
 
 This file lives in docs/status/lazpy/1-in-progress/, beside its item files. It holds only what
 the next session needs to act now, and points at the rest. Goals, rules, decisions and history live elsewhere.
@@ -9,14 +9,16 @@ the next session needs to act now, and points at the rest. Goals, rules, decisio
 ## Running now
 | What | Where | Agent id | It stops when |
 |---|---|---|---|
-| Review 2 of the step K plan (laz-510) | read-only in MAIN; it returns its findings as text | a1ec125776e22c832 | it reports |
+| Step K build-out (laz-510): code in the worktree, not yet committed | ../libazahar-py-k, branch core-rev2 | main | the branch commit, then the detached core build |
 
-Step K (core lazpy.2 for 3DPlatinum's asks) is in planning: `docs/plans/phase-k.md` revision 1. The v0.1.0 release
+Step K (core lazpy.2 for 3DPlatinum's asks) is in planning: `docs/plans/phase-k.md` revision 2 (reviews 1 and 2 answered). The v0.1.0 release
 stays staged from main with core lazpy.1; step K works on branch core-rev2 and merges after v0.1.0 is tagged.
 
 ## Next steps, in order
-1. Step K: save review 2 to docs/reviews/phase-k-review-2.md, revise the plan (revision 2), then build per the plan's sections 2-6 in worktree ../libazahar-py-k on branch core-rev2.
-   Tell 3DPlatinum (3ds-toolkit-f4) when A4 lands, with the worktree's core path.
+1. Step K, per the plan's sections 2-6: finish the branch edits (gate_f2 pin choice, release_check exports, the
+   SaveContext read in patch 0009, `_host.load`'s missing-function error, docs), commit on core-rev2, run the build
+   with the plan's `env -u` line, then gates 1-6. Tell 3DPlatinum (3ds-toolkit-f4) when A4 lands, with the
+   worktree's core, host and Python paths and `LAZ_ROOT=<wt>`.
 2. Release: wait for Guy (below): R1, then G5-G7. (Re-staged at cd30086, 16 of 16, clone ok: item 420's
    Evidence; the later step K plan commits make the build-files asset stale again: re-stage at the tagged commit.)
 3. On his word (phase-i.md 8.2): at the commit to be tagged, re-run `sh tools/mkrelease.sh v0.1.0` and

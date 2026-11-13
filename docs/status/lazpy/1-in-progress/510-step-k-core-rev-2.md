@@ -27,3 +27,12 @@ none yet
 
 ## Lessons and notes
 Read this part only when you work on this item. Blockers, numbers and Guy's words go here verbatim.
+- 2026-11-13 10:28 and 10:42: reviews 1 and 2 saved (`docs/reviews/phase-k-review-1.md`, `docs/reviews/phase-k-review-2.md`);
+  plan revision 2 answers both.
+- Process slip, recorded honestly: the worktree seeding and the code edits started at 10:33, while review 2 still ran
+  (the rule is two reviews, then execute). Nothing was committed or built before review 2 returned; its findings were
+  applied to the edits (two of its blockers, the missing vendor/ headers and the two ABI tests, were already fixed).
+- Patch method that worked: a scratch git repo with the six touched files from the unpacked source, one commit per
+  patch, fixup commits squashed with `GIT_SEQUENCE_EDITOR=: git rebase -i --autosquash`, then a fresh apply of the
+  whole stack at fuzz 0 compared byte for byte with the scratch tree. Git's diff aligns hunks differently from the
+  original patches, so unchanged patches are kept as they are and changed ones are edited in place where small.
