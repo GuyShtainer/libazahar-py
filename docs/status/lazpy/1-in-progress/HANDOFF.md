@@ -1,33 +1,32 @@
 <!-- handoff: slim v1 | current tasks only | rewritten whole from docs/status/templates/handoff.md | budget 80 lines | never append -->
 # libazahar-py handoff
 
-As of: 2026-11-13 18:20 (this project's own session)
+As of: 2026-11-13 18:48 (this project's own session)
 
 This file lives in docs/status/lazpy/1-in-progress/, beside its item files. It holds only what
 the next session needs to act now, and points at the rest. Goals, rules, decisions and history live elsewhere.
 
 ## Running now
-Nothing of this session. V6 is done (both projects pass on 64026f4a…), V3 is done (cap 4, item 600's notes).
-Gen3D's two harness agents may run single-instance checks on main's core; Gen3D messages when they end.
+| What | Where | Agent id | Item | Ends |
+|---|---|---|---|---|
+| V8 clone_check of main against the staged v1.0.0 (file:// base) | runs/clone-v1/ | main | laz-600 | "clone ok" line in runs/clone-v1/clone.log, or rc in runs/clone-v1/rc |
+| V8 release-legal-audit (opus, read-only) of the tree, main's history and runs/release/v1.0.0 | MAIN, read only | a1a4df6eeb2bdc776 | laz-600 | its report; the main loop saves it under docs/reviews/ |
 
-Guy asked for v1.0.0 (item laz-600, `docs/plans/phase-v1.md`); "Sure, when ever you can finish these up" means
-V7 and V8 now, V9 on his word.
+V6, V3 and V7 are done (item 600's notes). Guy asked for v1.0.0 (item laz-600, `docs/plans/phase-v1.md`); "Sure,
+when ever you can finish these up" means V8 now, V9 on his word.
 
 ## Next steps, in order
-1. V7 full test pass: after Gen3D's message, ask Gen3D, 3DPlatinum (3ds-toolkit-f4) and the PC worker
-   (3ds-toolkit-11) to hold emulator runs and builds, check load under 6, then run `sh <scratchpad>/v7.sh >
-   runs/v7/v7.log 2>&1` in the background (it makes the v1.0.0 state fixture with `tools/mkfixture.py`), then
-   message "done" to all three. Gate: 0 failed, 0 unexpected skips (test_api.py:109 may skip by design), counts
-   in item 600's Evidence.
+1. V8 (`docs/plans/phase-v1.md` V8): staged at 18:41 and again at 18:47 (only the build-files asset differs, it
+   embeds HEAD), fetch.sh pins in 1224dde. When both rows above end: the test app built in the clone must be
+   ba106998…; save the audit verbatim under docs/reviews/ (release-legal-audit-v1.0.0.md) and act on it; commit it
+   with status, hours and handoff; `sh tools/mkrelease.sh v1.0.0` once more (the zip d706fd1a… and test app
+   ba106998… must not change); then `LAZ_PRIVATE_NEEDLES=<private file> python3 -I tools/release_check.py
+   runs/release/v1.0.0 --pre-push`: 16 of 16. No commit after that until the tag.
 2. No core/ edit or build-core.sh run on main (the gated build is 64026f4a…, build.inputs head 4e830e5).
-3. V8 staging (`docs/plans/phase-v1.md` V8): the test app rebuilt under `env -i` and compared, `sh
-   tools/mkrelease.sh v1.0.0`, fetch.sh's TBD pins (the core zip, the test app ba106998…), commit, mkrelease
-   again, clone_check, then the release-legal-audit agent on the repo, its history (item 600's 13:16 note: game
-   names in three old commits) and the staged assets (16 of 16 on the final HEAD).
-4. V9: Guy's word for the tag and push. After he publishes: I5 (`docs/plans/phase-i.md` section 6) against v1.0.0,
+3. V9: Guy's word for the tag and push. After he publishes: I5 (`docs/plans/phase-i.md` section 6) against v1.0.0,
    items 420, 400 and 600 closed, the three private history bundles deleted, and tell the PC worker session
-   "v1.0.0 is out" so it rebases its Linux port (item 500's PC worker notes: our 8 conditions).
-5. Answer asks from Gen3D and 3DPlatinum; both use only libazahar-py.
+   (3ds-toolkit-11) "v1.0.0 is tagged" so it rebases its Linux port (item 500's PC worker notes).
+4. Answer asks from Gen3D and 3DPlatinum; both use only libazahar-py.
 
 ## Waiting on Guy (only what blocks a step above)
 - The audit's R1 (core/PIN's default build route) is settled by v1.0.0 if Guy keeps the default: PIN-nokeys is the
