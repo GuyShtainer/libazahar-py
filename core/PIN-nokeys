@@ -5,7 +5,7 @@
 # Azahar's own tarball: LAZ_CORE_PIN=core/PIN tools/build-core.sh --build
 AZAHAR_TAG=2126.2
 AZAHAR_COMMIT=219d743a1e698101fe1ab8bef43e6563126c3c27
-SRC_URL=https://github.com/GuyShtainer/libazahar-py/releases/download/v0.1.0/azahar-unified-source-2126.2-lazpy-nokeys.tar.xz
+SRC_URL=https://github.com/GuyShtainer/libazahar-py/releases/download/v1.0.0/azahar-unified-source-2126.2-lazpy-nokeys.tar.xz
 SRC_SHA256=f7a70044dfe149942412dc7b987a56051e04b822acb057dfc5c7611a7759913d
 SRC_SIZE=43500628
 SRC_FILE=dl/azahar-src/src-nokeys.tar.xz
