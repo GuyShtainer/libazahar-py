@@ -169,3 +169,4 @@ date	bet	phase	agent_id	model	role	kind	start	end	hours	source
 2026-11-13	V6: the PC worker Linux-port answer and texts, 3DPlatinum PASS recorded, item 660 done, Gen3D Pool go	phase-6	main	opus	main	build	13:40	15:01	0.15	session clock
 2026-11-13	V6 closed: 3DPlatinum A4 EQUAL and Gen3D Pool 1-4 PASS recorded; task checkup; V3 quiet-window asks	phase-6	main	opus	main	build	15:02	17:19	0.15	session clock
 2026-11-13	V7 prep (mkfixture, fixture test, v7.sh); V3 holds negotiated, run, read; cap 4 across code and docs	phase-6	main	opus	main	build	17:19	18:20	1.20	session clock
+2026-11-13	V7: holds, full pass run and read, skip rerun, records	phase-6	main	opus	main	build	18:24	18:40	0.35	session clock

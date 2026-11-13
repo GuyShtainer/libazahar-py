@@ -115,3 +115,10 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   and emulator runs for it. Two flaws recorded in the research file: perf.csv reaches disk in chunks (the rate
   check is good to about 6 %), and the script wrote every instance's shots to MAIN's root (only the last pair kept,
   moved to the scratchpad; the script is fixed). Fast pytest 244 passed, docs_check all PASS.
+- 2026-11-13 18:40, V7 done (runs/v7/v7.log, 18:37:42-18:40:16, load 5.2-6.5; Gen3D, 3DPlatinum and the PC worker
+  held). Core 64026f4a…, test app ba106998…. `make` nothing to do, `make check` clean, test-host 307973 checks 0
+  failed; the v1.0.0 fixture made (runs/release-fixtures/v1.0.0, frame_total 600, k 0); full pytest with
+  LAZ_REQUIRE_EMULATOR=1, LAZ_STOCK_CORE and LAZ_CORE_OLD: 299 passed, 1 skipped (test_lazpy_profile.py:65, "this
+  process is already nicer than 5": the run was under nice 10; rerun without nice: 10 passed); gate_f2 rc 0, "0
+  FAIL, gate_c.failed 0"; memory_watch ok; pool_shots ok (Pool(5) over the cap of 4); test_release_fixture.py 1
+  passed; map_check, status_check, docs_check OK. No unexpected skip, 0 failed.
