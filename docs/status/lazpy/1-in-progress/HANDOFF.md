@@ -10,7 +10,7 @@ the next session needs to act now, and points at the rest. Goals, rules, decisio
 | What | Where | Agent id | It stops when |
 |---|---|---|---|
 | laz-310: step E2's speed table, detached (Gen3D asked to hold its lanes at 01:57); the builder handed back early, the main loop waits | ../libazahar-py-e runs/e-speed/ | main (waiter bdzkkuwb6; builder a444b28ace71428a3) | runs/e-speed.rc written; then E2's last steps (item 310's last note) |
-| laz-330: step G builder (G1 now; G2's emulator runs wait for E's runs/e-speed.rc) | ../libazahar-py-g (step-g at 9ca360d: main fac16e9 + E1) | a974a8613e6508e64 | reports "G done"; progress in runs/g/progress.md |
+| laz-330: step G, G1 built and green; parked until E's runs/e-speed.rc, then resume the builder for G2 | ../libazahar-py-g (step-g at 9ca360d, uncommitted) | a974a8613e6508e64 (parked) | resumed for G2 when the waiter fires |
 
 Not running: step F2 merged (fac16e9, item 320 done). Worktrees c, d and f2 are merged and kept (ignored outputs).
 

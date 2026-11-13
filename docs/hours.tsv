@@ -87,3 +87,4 @@ date	bet	phase	agent_id	model	role	kind	start	end	hours	source
 2026-11-13	Phase 4 plan revision 2 (final)	phase-4	aa4336428ee833bdf	opus	author	agent	01:26	01:56	0.50	agent duration 1786 s
 2026-11-13	Revision 2 read and scanned, spike 2 reworded, commits	phase-4	main	opus	main	process	01:56	01:58	0.03	session clock
 2026-11-13	Step E2 builder, run 1 (forced hand-back, table running)	phase-3	a444b28ace71428a3	sonnet	builder	agent	01:56	01:58	0.04	agent duration 128 s
+2026-11-13	Step G builder, G1 (waits for E2)	phase-3	a974a8613e6508e64	sonnet	builder	agent	01:56	02:03	0.12	agent duration 435 s
