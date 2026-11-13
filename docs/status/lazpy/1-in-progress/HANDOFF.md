@@ -1,7 +1,7 @@
 <!-- handoff: slim v1 | current tasks only | rewritten whole from docs/status/templates/handoff.md | budget 80 lines | never append -->
 # libazahar-py handoff
 
-As of: 2026-11-13 10:30 (this project's own session)
+As of: 2026-11-13 10:33 (this project's own session)
 
 This file lives in docs/status/lazpy/1-in-progress/, beside its item files. It holds only what
 the next session needs to act now, and points at the rest. Goals, rules, decisions and history live elsewhere.
@@ -9,14 +9,13 @@ the next session needs to act now, and points at the rest. Goals, rules, decisio
 ## Running now
 | What | Where | Agent id | It stops when |
 |---|---|---|---|
-| Revision 1 of the step K plan (laz-510), from review 1 | MAIN, docs/plans/phase-k.md | main | revision 1 is committed |
+| Review 2 of the step K plan (laz-510) | read-only in MAIN; it returns its findings as text | a1ec125776e22c832 | it reports |
 
-Step K (core lazpy.2 for 3DPlatinum's asks) is in planning: `docs/plans/phase-k.md` revision 0. The v0.1.0 release
+Step K (core lazpy.2 for 3DPlatinum's asks) is in planning: `docs/plans/phase-k.md` revision 1. The v0.1.0 release
 stays staged from main with core lazpy.1; step K works on branch core-rev2 and merges after v0.1.0 is tagged.
 
 ## Next steps, in order
-1. Step K: finish revision 1 (every finding in `docs/reviews/phase-k-review-1.md`), launch review 2 (opus,
-   read-only), save it to docs/reviews/phase-k-review-2.md, revise (revision 2), then build per the plan's sections 2-6 in worktree ../libazahar-py-k on branch core-rev2.
+1. Step K: save review 2 to docs/reviews/phase-k-review-2.md, revise the plan (revision 2), then build per the plan's sections 2-6 in worktree ../libazahar-py-k on branch core-rev2.
    Tell 3DPlatinum (3ds-toolkit-f4) when A4 lands, with the worktree's core path.
 2. Release: wait for Guy (below): R1, then G5-G7. (Re-staged at cd30086, 16 of 16, clone ok: item 420's
    Evidence; the later step K plan commits make the build-files asset stale again: re-stage at the tagged commit.)
