@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include "azh_pure.h"
+#include "plat_test.h"
 #include "test_main.h"
 
 #define LINE_MAX_LEN 4096
@@ -147,7 +148,7 @@ static void test_escape(void)
 
     for (i = 0; i < sizeof cases / sizeof cases[0]; i++) {
         char got[128] = { 0 };
-        FILE *f = tmpfile();
+        FILE *f = azh_test_tmpfile();
         size_t n;
 
         check(f != NULL, "tmpfile for the escape test");

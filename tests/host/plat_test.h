@@ -111,8 +111,19 @@ static inline int azh_test_symlink(const char *target, const char *link)
     return CreateSymbolicLinkA(link, target, SYMBOLIC_LINK_FLAG_ALLOW_UNPRIVILEGED_CREATE) != 0 ? 0 : -1;
 }
 
+/* tmpfile() wants the drive root on Windows (admin): a temporary, delete-on-close file in the temp folder instead */
+static inline FILE *azh_test_tmpfile(void)
+{
+    char *name = _tempnam(azh_test_tmp(), "azh");
+    FILE *f = (name != NULL) ? fopen(name, "w+bTD") : NULL;
+
+    free(name);
+    return f;
+}
+
 #define AZH_TEST_TMPDIR(var) ((var) != NULL ? (var) : azh_test_tmp())
 #else
+#define azh_test_tmpfile() tmpfile()
 #define AZH_TEST_TMPDIR(var) ((var) != NULL ? (var) : "/tmp")
 #endif
 
