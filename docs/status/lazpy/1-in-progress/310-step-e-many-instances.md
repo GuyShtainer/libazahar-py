@@ -45,3 +45,8 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   rows). Every check ok, slot waits 0. cap_rule on our core: 2 (n=2 x1.45 at load 15.1; n=3 x1.12, under x1.25).
   Round trip 0.11 ms per call; a shot 6.2 ms at PNG level 1, 5.8 ms at 6. The builder finishes DEFAULT_CAP=2 and
   docs/research/speed-table-e.md (no emulator).
+- E2 done (a444b28ace71428a3, run 2, 02:05 report): DEFAULT_CAP = 2 in _slots.py, docs/research/speed-table-e.md
+  (relative core paths), the own_seed fix in test_pool_live.py; all uncommitted on step-e. pytest not slow 71
+  passed. Notes: DEFAULT_CAP 2 makes 3-job gates wait unless LAZ_MAX_INSTANCES is set (test_pool_live sets 3); the
+  effective-options block starts with a stray "keys" line (the reviewer explains it). Opus as-built review
+  a0d33437db53e74c5 launched 02:05 (phase-e.md section 12).

@@ -9,13 +9,13 @@ the next session needs to act now, and points at the rest. Goals, rules, decisio
 ## Running now
 | What | Where | Agent id | It stops when |
 |---|---|---|---|
-| laz-310: step E2's last steps (DEFAULT_CAP 2, docs/research/speed-table-e.md; no emulator); the table ended 02:04 | ../libazahar-py-e | a444b28ace71428a3 | reports "E done" |
+| laz-310: opus as-built review of step E (phase-e.md section 12; fixes to __init__.py, host/run.c, host/azh_pure.h are held until step-g merges) | ../libazahar-py-e, read-only | a0d33437db53e74c5 | docs/reviews/step-e-as-built.md written |
 | laz-330: step G2, the emulator batch (runs/g/batch.sh: gate_c on our core, the full pytest with test_memory_live.py); Gen3D still held | ../libazahar-py-g (step-g at 9ca360d, uncommitted) | a974a8613e6508e64 | reports "G done"; runs/g-batch.rc |
 
 Not running: step F2 merged (fac16e9, item 320 done). Worktrees c, d and f2 are merged and kept (ignored outputs).
 
 ## Next steps, in order
-1. At "E done" and "G done": tell Gen3D "free". At "E done": opus as-built review of step-e (phase-e.md section 12); fixes and merge as
+1. At "G done": tell Gen3D "free". At the E review: fixes and merge as
    phase-3.md section 4 step 5 says (fixes to __init__.py, host/run.c, host/azh_pure.h are held until step-g
    merges); then item 320's slot notes (t_state counts slot waits; gate_f2 under hold_slot).
 2. At "G done": phase-3.md section 4 step 6 (merge main into step-g, opus as-built review, merge).
