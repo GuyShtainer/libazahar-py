@@ -68,3 +68,11 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   build; the full suite runs on the final core in phase 6's V7); its held runner was stopped before it ran anything.
   3DPlatinum's A4 moves to the final core (phase 6's V6). Step K closes with phase 6's V0b (merge, main build, gate 1
   and the live tests on main).
+- 2026-11-13 by 11:28, 3DPlatinum (3ds-toolkit-f4), A4 on the worktree core, verbatim: "one headless trio had already
+  run on it (11:16, 4 make targets, rc 0 each) with citra_init_ticks_type=Fixed + citra_init_ticks_override=1000. For
+  your step K evidence: against the same trio on lazpy.1 (Fixed, no override) every count line is identical (120,
+  156, 158 x3 lines) except the PICA readback line (edge-marked 1534881 vs 1534877, within our 1e-4 floor, a known
+  jitter). Against the windowed route, all count lines match except one: our audio lead line (ndsp sink watermark
+  minus vclock, ms). It is unchanged by the override (e.g. lead=91 headless vs 127 windowed, d_max 23 vs 21), so the
+  tick seed does not close that gap. We've ruled it a cross-route timing line (masked across routes only)." It left
+  the worktree (read only, nothing written). Its Platinum runners lane may run on main's lazpy.1: ask before the hold.
