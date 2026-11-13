@@ -34,3 +34,10 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   an empty SD for 600 frames, then compare with what where.py gets on the windowed route."
 - 2026-11-13 09:32, 3DPlatinum: its sound lane will need an audio route (audio output is not built); an ask with a
   repro follows when that lane nears.
+- 2026-11-13 13:47, the PC worker session (3ds-toolkit-11) asked whether we accept a Linux port in principle: about 200
+  lines in `#ifdef __linux__` / `sys.platform` branches, the Mac build unchanged, plus `LAZ_VK_DEVICE` and a bare
+  `libvulkan.so.1` loader name. The plan is in the toolkit's docs/pc-worker/GPU-PLAN-v2.md section 2.1. Answered yes,
+  on conditions: it merges after v1.0.0 as 1.1.0, rebased only after our push; its core uses core/PIN-nokeys; the
+  Darwin Makefile block stays verbatim; device choice unchanged on a one-GPU Mac; `DEFAULT_CAP` stays (the PC sets
+  `LAZ_MAX_INSTANCES`); no core/ or build-core.sh change on main before v1.0.0; no Linux release asset without
+  Guy and the legal audit; our own review and Mac gates before the merge; USING.md wording is ours.
