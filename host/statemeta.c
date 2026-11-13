@@ -223,11 +223,14 @@ static int fsync_path(const char *path)
     int rc;
 
     assert(path != NULL);
+    if (AZH_FSYNC_PATH_NOOP != 0) {
+        return AZH_OK;
+    }
     fd = open(path, O_RDONLY | O_BINARY);
     if (fd < 0) {
         return AZH_E_IO;
     }
-    rc = (fsync(fd) == 0) ? AZH_OK : AZH_E_IO;
+    rc = (azh_fsync(fd) == 0) ? AZH_OK : AZH_E_IO;
     if (close(fd) != 0) {
         rc = AZH_E_IO;
     }
@@ -246,7 +249,7 @@ static int write_tmp(const char *tmp, const char *buf, size_t n)
         return AZH_E_IO;
     }
     rc = write_all(fd, buf, n);
-    if (rc == AZH_OK && fsync(fd) != 0) {
+    if (rc == AZH_OK && azh_fsync(fd) != 0) {
         rc = AZH_E_IO;
     }
     if (close(fd) != 0) {
@@ -275,7 +278,7 @@ int azh__meta_write(const char *path, const azh_state_meta *m)
         (void)unlink(tmp);
         return rc;
     }
-    if (rename(tmp, path) != 0) {
+    if (azh_replace(tmp, path) != 0) {
         (void)unlink(tmp);
         return AZH_E_IO;
     }

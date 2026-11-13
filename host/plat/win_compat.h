@@ -29,6 +29,12 @@ void azh_win_map_close(void *p);
 void azh_win_map_flush(void *p, size_t size);
 int azh_win_proc_times(double *user_s, double *sys_s, int64_t *peak_rss);   /* GetProcessTimes + peak working set */   /* TerminateProcess: no atexit, no DLL detach of the core's threads */
 
+/* SHA-256 through BCrypt, shaped like CommonCrypto: each returns 1 on success, 0 on failure (update is sticky) */
+typedef struct { void *alg; void *hash; int failed; } azh_win_sha256;
+int azh_win_sha256_init(azh_win_sha256 *c);
+int azh_win_sha256_update(azh_win_sha256 *c, const void *data, size_t len);
+int azh_win_sha256_final(unsigned char *digest32, azh_win_sha256 *c);
+
 void *azh_win_memmem(const void *hay, size_t hn, const void *needle, size_t nn);
 #define memmem(h, hn, n, nn) azh_win_memmem((h), (hn), (n), (nn))
 #define dlopen(p, f) azh_win_dlopen((p), 0)

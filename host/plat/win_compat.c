@@ -6,6 +6,7 @@
 #include <stdio.h>
 
 #include <windows.h>
+#include <bcrypt.h>
 #include <psapi.h>
 
 #include "win_compat.h"
@@ -107,6 +108,57 @@ void azh_win_exit(int code)
         Sleep(1000);
     }
 }
+
+int azh_win_replace(const char *from, const char *to)
+{
+    assert(from != NULL && to != NULL);
+    return MoveFileExA(from, to, MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH) != 0 ? 0 : -1;
+}
+
+int azh_win_sha256_init(azh_win_sha256 *c)
+{
+    assert(c != NULL);
+    c->alg = NULL;
+    c->hash = NULL;
+    c->failed = 0;
+    if (BCryptOpenAlgorithmProvider((BCRYPT_ALG_HANDLE *)&c->alg, BCRYPT_SHA256_ALGORITHM, NULL, 0) != 0 ||
+        BCryptCreateHash(c->alg, (BCRYPT_HASH_HANDLE *)&c->hash, NULL, 0, NULL, 0, 0) != 0) {
+        c->failed = 1;
+        if (c->alg != NULL) {
+            (void)BCryptCloseAlgorithmProvider(c->alg, 0);
+            c->alg = NULL;
+        }
+        return 0;
+    }
+    return 1;
+}
+
+int azh_win_sha256_update(azh_win_sha256 *c, const void *data, size_t len)
+{
+    assert(c != NULL && data != NULL && len <= 0xffffffffu);
+    if (c->failed == 0 && BCryptHashData(c->hash, (PUCHAR)(uintptr_t)data, (ULONG)len, 0) != 0) {
+        c->failed = 1;
+    }
+    return c->failed == 0 ? 1 : 0;
+}
+
+int azh_win_sha256_final(unsigned char *digest32, azh_win_sha256 *c)
+{
+    int ok;
+
+    assert(digest32 != NULL && c != NULL);
+    ok = (c->failed == 0 && BCryptFinishHash(c->hash, digest32, 32, 0) == 0) ? 1 : 0;
+    if (c->hash != NULL) {
+        (void)BCryptDestroyHash(c->hash);
+    }
+    if (c->alg != NULL) {
+        (void)BCryptCloseAlgorithmProvider(c->alg, 0);
+    }
+    c->hash = NULL;
+    c->alg = NULL;
+    return ok;
+}
+
 void *azh_win_map_create(const char *path, size_t size)
 {
     HANDLE f;
@@ -114,7 +166,7 @@ void *azh_win_map_create(const char *path, size_t size)
     void *p;
 
     assert(path != NULL && size > 0u);
-    f = CreateFileA(path, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, CREATE_ALWAYS,
+    f = CreateFileA(path, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL, CREATE_ALWAYS,
                     FILE_ATTRIBUTE_NORMAL, NULL);
     if (f == INVALID_HANDLE_VALUE) {
         return NULL;

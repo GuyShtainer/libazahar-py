@@ -2,7 +2,9 @@
  * core's buffer (<path>), a copy of the instance's SD folder (<path>.sd/) and a meta file (<path>.meta, written last,
  * whose presence means the state is complete). Restore order: check the meta and the app, read, drain, replace the
  * SD folder, unserialize, set the counters. */
+#ifdef __APPLE__
 #include <CommonCrypto/CommonDigest.h>
+#endif
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -14,6 +16,15 @@
 #include <unistd.h>
 
 #include "azh_internal.h"
+
+#ifdef _WIN32                                    /* BCrypt SHA-256 (win_compat.c) under the CommonCrypto names */
+#define CC_SHA256_DIGEST_LENGTH 32
+#define CC_SHA256_CTX azh_win_sha256
+#define CC_LONG size_t
+#define CC_SHA256_Init azh_win_sha256_init
+#define CC_SHA256_Update azh_win_sha256_update
+#define CC_SHA256_Final azh_win_sha256_final
+#endif
 
 #define STATE_SIZE_CAP ((int64_t)2 << 30)        /* 2 GiB */
 #define STATE_WARMUP_FRAMES 1                    /* retro_run calls before the restore (phase-d 3.4, PLAN risk 8) */
@@ -79,7 +90,10 @@ static int app_sha256(const char *path, char *hex)
     if (fd < 0) {
         return AZH_E_IO;
     }
-    (void)CC_SHA256_Init(&ctx);
+    if (CC_SHA256_Init(&ctx) != 1) {
+        (void)close(fd);
+        return AZH_E_IO;
+    }
     r = 1;
     for (i = 0; i < SHA_CHUNKS_MAX && r != 0; i++) {
         r = read(fd, chunk, sizeof chunk);
@@ -94,7 +108,9 @@ static int app_sha256(const char *path, char *hex)
     if (r != 0) {
         return AZH_E_IO;
     }
-    (void)CC_SHA256_Final(digest, &ctx);
+    if (CC_SHA256_Final(digest, &ctx) != 1) {
+        return AZH_E_IO;
+    }
     for (i = 0; i < CC_SHA256_DIGEST_LENGTH; i++) {
         (void)snprintf(hex + 2 * i, 3, "%02x", digest[i]);
     }
@@ -137,13 +153,13 @@ static int write_file_atomic(const char *path, const void *buf, size_t n)
         return AZH_E_IO;
     }
     rc = write_all(fd, buf, n);
-    if (rc == AZH_OK && fsync(fd) != 0) {
+    if (rc == AZH_OK && azh_fsync(fd) != 0) {
         rc = AZH_E_IO;
     }
     if (close(fd) != 0) {
         rc = AZH_E_IO;
     }
-    if (rc == AZH_OK && rename(tmp, path) != 0) {
+    if (rc == AZH_OK && azh_replace(tmp, path) != 0) {
         rc = AZH_E_IO;
     }
     if (rc != AZH_OK) {
@@ -223,10 +239,10 @@ static int snapshot_sd(const char *path, const char *sd_root)
         return AZH_E_IO;
     }
     have_old = is_dir(cur);
-    if (have_old && rename(cur, old) != 0) {
+    if (have_old && azh_replace(cur, old) != 0) {
         return AZH_E_IO;
     }
-    if (rename(tmp, cur) != 0) {
+    if (azh_replace(tmp, cur) != 0) {
         return AZH_E_IO;
     }
     return have_old ? remove_dir(old) : AZH_OK;
