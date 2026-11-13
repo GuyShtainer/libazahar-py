@@ -178,3 +178,4 @@ date	bet	phase	agent_id	model	role	kind	start	end	hours	source
 2026-11-13	V8: second stage, pre-push 16 of 16, positive control on the old bundle, records	phase-6	main	opus	main	build	19:22	19:27	0.12	session clock
 2026-11-13	V8 close: final stage and pre-push, the hold recorded; Guy's questions on Gen3D use and quality; learn pass (toolkit 660bb8c, 3008af3); handoff	phase-6	main	opus	main	process	19:25	19:52	0.45	session clock
 2026-11-13	Task checkup; answers to the PC worker on the native-Windows port (6 questions + device choice)	phase-5	main	opus	main	process	20:37	21:28	0.12	session clock
+2026-11-13	PC worker: native-Windows phase A start recorded	phase-5	main	opus	main	process	22:42	22:42	0.03	session clock

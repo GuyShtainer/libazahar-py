@@ -66,3 +66,9 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   code 0: yes. (6) A build-only Windows CI job in its own file, non-blocking: yes. LAZ_VK_DEVICE: yes, if the default
   stays the first device, a value that matches nothing fails with a clear error, the chosen device is reported, and
   USING documents it.
+- 2026-11-13 22:42, the PC worker: native-Windows phase A started on Guy's go (toolkit docs/pc-worker/NATIVE-PLAN-v3.md,
+  49e673a). port-linux and port-win are cut on 0537394 in its own PC clone; nothing lands here. The DLL is built from
+  the nokeys source with our patches unchanged and checked by a PE twin of keyblob_findings. Its sha256, and the
+  earlier probe azhost.exe's, are recorded as "unreviewed private build, Guy's PC only". Our host/ and python/
+  changes come in phase B, only if Gen3D's speed test passes. At handover, review the PE twin against
+  keyblob_findings.
