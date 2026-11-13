@@ -132,9 +132,11 @@ else
   export PATH="$ROOT/build-core/toolbin:$PATH"
   { echo EXPORTS; grep -v '^#' "$TREE/src/citra_libretro/libretro.osx.def" | sed 's/^_//'; } >build-core/libretro.win.def
   [ "$(grep -c lazpy_ build-core/libretro.win.def)" -eq 4 ] || die "libretro.win.def does not hold the 4 lazpy_ exports"
-  # mingw-w64 13: fstat() takes `struct stat*`, but common/file_util.cpp:551-552 (libretro branch) passes a `_stat64`; MSVC
-  # builds get `#define fstat _fstat64` there. C++ only (the C flags are untouched), no source patch.
-  WIN_CXXDEFS=" -Dfstat=_fstat64"
+  # mingw-w64 13: fstat() takes `struct stat*`, but common/file_util.cpp:551-552 (libretro branch) passes a `_stat64` (MSVC builds
+  # get `#define fstat _fstat64` there). A force-included C++ overload fixes that one call and leaves every other file's fstat
+  # alone (a global -Dfstat broke fmt and boost). C++ only; no source patch.
+  printf '#include <sys/stat.h>\nstatic inline int fstat(int fd, struct _stat64 *s) { return _fstat64(fd, s); }\n' >build-core/win64-fstat.h
+  WIN_CXXDEFS=" -include $ROOT/build-core/win64-fstat.h"
   set -- "$@" -G "Unix Makefiles" -DCMAKE_TOOLCHAIN_FILE="$ROOT/tools/toolchain-win64.cmake" -DLIBTYPE=STATIC \
     -DCLANG_FORMAT=/bin/true "-DCMAKE_SHARED_LINKER_FLAGS=$ROOT/build-core/libretro.win.def" \
     "-DCMAKE_CXX_STANDARD_LIBRARIES=-lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32 -lws2_32 -lcrypt32 -lbcrypt"
