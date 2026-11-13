@@ -40,8 +40,8 @@ VKH_SHA=5c5c6f64fcce28a24cc934143a048707af036a858e4ed11d7f71fe016006ecda
 REL_TAG=v0.1.0
 REL_BASE="${LAZ_RELEASE_BASE:-https://github.com/GuyShtainer/libazahar-py/releases/download/$REL_TAG}"
 LAZPY_CORE_ZIP=azahar_lazpy_libretro-2126.2-lazpy.1-macos-arm64.zip
-LAZPY_CORE_SHA=TBD-at-I2
-TESTAPP_SHA=TBD-at-I2
+LAZPY_CORE_SHA=6ef0c129f85c996f534394d295d5158d1a6604c8c3f993d3e8a8bf90e122987f
+TESTAPP_SHA=53b699e87974bd5c74cc6d14123eba95f0b0c02cdcd174e28249f768512ccabc
 # ------------------------------------------------------------------------------------------------------------------
 
 FORCE=0; DO_MVK=0; DO_HEADERS=0; DO_CORE=0; DO_APP=0
