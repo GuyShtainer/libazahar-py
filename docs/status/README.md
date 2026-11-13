@@ -30,8 +30,7 @@ publish-ready. What to do this hour: `docs/status/lazpy/1-in-progress/HANDOFF.md
 - in-progress: `docs/status/lazpy/1-in-progress/510-step-k-core-rev-2.md`
 - in-progress: `docs/status/lazpy/1-in-progress/520-step-l-stencil-readback.md`
 - in-progress: `docs/status/lazpy/1-in-progress/600-phase-6-v1-release.md`
-- in-progress: `docs/status/lazpy/1-in-progress/610-step-v1-api-freeze.md`
-- files: 0 in `3-waiting-on-guy/`, 0 in `4-not-started/`, 23 in `5-done/`, 0 in `6-parked/`
+- files: 0 in `3-waiting-on-guy/`, 0 in `4-not-started/`, 24 in `5-done/`, 0 in `6-parked/`
 <!-- generated:end -->
 
 ## How to change a status (one step)
