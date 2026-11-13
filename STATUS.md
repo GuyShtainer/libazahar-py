@@ -12,8 +12,8 @@ Evidence, in `docs/status/lazpy/5-done/`, proves it. Nothing is listed as workin
 - Input and stops: buttons, touch and circle pad as a per-frame movie; stops on SD-file text, a guest break, a guest
   exit, a guest error and a wall-clock limit (laz-210)
 - The Python layer (`Emulator`, `run`, `run_until`, `screens`, `shot`, the error classes) and savestates, with an SD
-  snapshot, on both cores (laz-220)
-- Our patched core builds from Azahar's pinned source with our patch files and a build script (laz-110)
+  snapshot, gated on Azahar's own core; our core's gate below repeats the state checks (laz-220)
+- Our patched core builds from Azahar's pinned source with our patch files and a build script; the build itself is gated in laz-320 (laz-110)
 - Our core's gate: built without Azahar's built-in key data and default HTTP client certificate, loading no keys; the
   debug-text stop; exact repeats; states restored into equal instances; states moving between the two cores
   (laz-320)
@@ -26,7 +26,8 @@ Evidence, in `docs/status/lazpy/5-done/`, proves it. Nothing is listed as workin
 - macOS before 15, Intel Macs, Windows and Linux. The core needs macOS 15 (see Known limits).
 - Poll-exact movies (`lazpy_movie_play` is in our core, but no gate ran it): not tested.
 - The default instance cap (2) rests on a light scene (the test app). It stays provisional until a real-scene row
-  exists. The real-scene speed rows in the README came from a busy machine; a re-measure on a quiet machine is owed.
+  exists. The real-scene speed rows in the README were measured on Azahar's own core (spike 2 ran before our core
+  existed), on a busy machine; no real scene has run on our core yet.
 - Guest memory and the watch list on Azahar's own core: they raise `NeedsLazpyCore`.
 - Any app that is not homebrew: no keys, no system files, no encrypted titles.
 
@@ -76,7 +77,9 @@ Evidence, in `docs/status/lazpy/5-done/`, proves it. Nothing is listed as workin
 ## Next
 
 - CI on GitHub runners (about 0.5 h).
-- A quiet-machine real-scene speed row, and a real-scene row for the cap.
+- A real-scene speed row on our core (quiet machine), and a real-scene row for the cap.
+- A hint in the missing-core `BootError` ("run tools/fetch.sh --lazpy-core or set LAZ_CORE"), and the stale "until D"
+  comments in `host/azhost.h`.
 - `ArgumentError`: a `LibAzaharError` that is also a `ValueError`, raised for every bad argument.
 - A `fresh_sd=True` option that clears the SD folder before seeding.
 - A core rebuild with a macOS 15 header and patch 0008's comment fixed.

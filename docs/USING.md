@@ -90,8 +90,8 @@ crash report each run. On the stock core a guest-exit result has `wall_s` 0.0 an
 
 ## 9. Screens
 
-`screens()` returns numpy views (top 400x240, bottom 320x240, read-only) that change at the next raw shot; `.copy()`
-to keep one. `shots=[frames]` saves PNGs and returns them in `result.shots`.
+`screens()` returns numpy views if numpy is installed (`pip install '.[numpy]'`), else `bytes`: top 400x240, bottom
+320x240, read-only, and they change at the next raw shot; `.copy()` (numpy) to keep one. `shots=[frames]` saves PNGs and returns them in `result.shots`.
 
 ## 10. Savestates
 
@@ -206,7 +206,7 @@ Library and host (the last column says who reads it):
 | `LAZ_STATE_ANY_APP` | `1` loads a state made with another build of the app | unset | host |
 
 Tests only: `LAZ_REQUIRE_EMULATOR=1` (a missing emulator fails instead of skipping) and `LAZ_STOCK_CORE` (a stock core
-you downloaded; unset, the comparison tests skip). `LAZ_CORE` is the only variable that names a core.
+you downloaded; unset, the comparison tests skip). `LAZ_CORE` is the only variable the library reads to find a core.
 
 Build and fetch time (the scripts' header comments are the reference):
 
@@ -248,7 +248,7 @@ The core needs macOS 15 or later (its OpenSSL is built for 15, although its head
 
 ## 18. Contributors
 
-`.venv/bin/pip install pytest`, then `.venv/bin/python -m pytest -q tests/python -m "not slow"` (the fast set needs no
+`.venv/bin/pip install pytest numpy` (the tests import numpy), then `.venv/bin/python -m pytest -q tests/python -m "not slow"` (the fast set needs no
 emulator). The full set needs our core and the test app: `LAZ_REQUIRE_EMULATOR=1 .venv/bin/python -m pytest -q
 tests/python`. `make check` runs the rest. To compare with Azahar's own core, download Azahar's libretro core for
 macOS from Azahar's releases page yourself and set `LAZ_STOCK_CORE` to the file. Tests that compare the two cores skip

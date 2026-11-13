@@ -57,14 +57,21 @@ run_step() {
   fi
 }
 
-# step 4 rule: a failed suite is re-run once on the failed tests only; a pass then is logged as a time-bound rerun
+# step 4 rule: the suite fails unless it passes. Only a failure of the named time-bound tests (TIMED, a grep pattern;
+# today D'"'"'s state-boot bound) is re-run once, on the failed tests only; any other failure, or a second one, fails.
+TIMED="::test_state_boot"
+export CENV PYTEST OUT TIMED
+PYSTEP='eval "$CENV $PYTEST -rf" > "$OUT/pytest1.log" 2>&1; rc=$?; cat "$OUT/pytest1.log"; [ "$rc" -eq 0 ] && exit 0
+n=$(grep -c "^FAILED" "$OUT/pytest1.log"); o=$(grep "^FAILED" "$OUT/pytest1.log" | grep -vc "$TIMED")
+{ [ "$n" -gt 0 ] && [ "$o" -eq 0 ]; } || { echo "failure outside the time-bound tests"; exit 1; }
+echo "time-bound failure; load: $(uptime)"; eval "$CENV $PYTEST --lf" && echo "time-bound rerun passed (load $(uptime | sed "s/.*load averages*: //"))"'
 PYTEST="LAZ_REQUIRE_EMULATOR=1 nice -n 10 .venv/bin/python -m pytest -q tests/python"
 run_step clone "" "git clone --branch \"$BRANCH\" \"$REPO\" \"$CLONE\""
 run_step steps "quickstart ok" "cd \"$CLONE\" && $CENV python3 -I tools/docs_check.py --emit-steps README.md > \"$OUT/steps.sh\" && $CENV sh -eux \"$OUT/steps.sh\""
 run_step build "" "cd \"$CLONE\" && $CENV python3 -I tools/docs_check.py --emit-steps README.md --block build > \"$OUT/build.sh\" && $CENV sh -eux \"$OUT/build.sh\""
 run_step quickstart-built "quickstart ok" "cd \"$CLONE\" && $CENV .venv/bin/python examples/quickstart.py build/testapp.3dsx"
-run_step pytest-install "" "cd \"$CLONE\" && $CENV .venv/bin/pip install pytest"
-run_step pytest "" "cd \"$CLONE\" && ($CENV $PYTEST || (uptime; $CENV $PYTEST --lf && echo \"time-bound rerun passed (load \$(uptime | sed 's/.*load averages*: //'))\"))"
+run_step pytest-install "" "cd \"$CLONE\" && $CENV .venv/bin/pip install pytest numpy"
+run_step pytest "" "cd \"$CLONE\" && $PYSTEP"
 
 if [ "$DRY" -eq 1 ]; then echo "dry run: nothing was cloned or downloaded"; exit 0; fi
 echo "clone ok: $(( $(date +%s) - START )) s wall; $(du -sh "$CLONE/dl" | cut -f1) in dl/" | tee -a "$LOG"

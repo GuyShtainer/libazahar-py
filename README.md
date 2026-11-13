@@ -21,9 +21,9 @@ work: macOS before 15 and Intel Macs, audio output, anything with a window, and 
 | Our core, host share of a batch without shots | 0.1% | test app, light scene | 10.9/9.4 | 2026-11-13 | docs/research/speed-table-e.md:27,3 |
 | Azahar's own core, 1 instance | 27.61x real time (1652.2 fps) | test app, light scene | 16.6/32.8 | 2026-11-13 | docs/research/speed-table-e.md:36,3 |
 | Azahar's own core, 3 instances, each | 15.48x real time (926.1, 926.3, 926.1 fps) | test app, light scene | 35.9/36.3 | 2026-11-13 | docs/research/speed-table-e.md:38,3 |
-| Our core, real scene, 1 instance | 334 fps, 5.6x real time | one commercial game's 3D field scene, run locally | 26.7 (16:07) | 2026-11-12 | docs/research/spike-2-real-scene.md:32,1 |
-| Our core, real scene, 1 instance, busy machine | 129 fps, 2.2x real time | one commercial game's 3D field scene, run locally | 68-96 (16:09-16:11) | 2026-11-12 | docs/research/spike-2-real-scene.md:34,1 |
-| Our core, real scene, 3 instances, each | 136-138 fps, 2.3x real time | one commercial game's 3D field scene, run locally | 58 rising to 90 | 2026-11-12 | docs/research/spike-2-real-scene.md:35,1 |
+| Azahar's own core, real scene, 1 instance | 334 fps, 5.6x real time | one commercial game's 3D field scene, run locally | 26.7 (16:07) | 2026-11-12 | docs/research/spike-2-real-scene.md:32,1 |
+| Azahar's own core, real scene, 1 instance, busy machine | 129 fps, 2.2x real time | one commercial game's 3D field scene, run locally | 68-96 (16:09-16:11) | 2026-11-12 | docs/research/spike-2-real-scene.md:34,1 |
+| Azahar's own core, real scene, 3 instances, each | 136-138 fps, 2.3x real time | one commercial game's 3D field scene, run locally | 58 rising to 90 | 2026-11-12 | docs/research/spike-2-real-scene.md:35,1 |
 
 Speed depends on the scene and the machine's load; the light rows are the test app, the real-scene rows are one
 commercial game's scene run locally on a busy machine. Load is the 1-minute load average (at the start and the end of
@@ -90,7 +90,7 @@ print("quickstart ok")
 | | Our core | Azahar's own core |
 |---|---|---|
 | Where it comes from | our release (`sh tools/fetch.sh --lazpy-core`), or `tools/build-core.sh` | Azahar's releases page, by hand, for comparisons |
-| Input, shots, SD files, savestates | yes (laz-220) | yes (laz-220) |
+| Input, shots, SD files, savestates | yes (laz-220, laz-320) | yes (laz-220) |
 | Guest memory reads and writes, the watch list | yes (laz-330) | no: `NeedsLazpyCore` |
 | Debug-text stop | yes (laz-320) | no: `NeedsLazpyCore` |
 | Exact repeats | yes (laz-320) | no: repeats are not exact |

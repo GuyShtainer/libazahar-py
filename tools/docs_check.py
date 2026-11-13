@@ -259,7 +259,7 @@ def plant_red(allow: tuple[str, ...]) -> int:
             target.write_text(edit(target.read_text(encoding="utf-8")), encoding="utf-8")
             failed = run_checks(Path(tmp), allow, quiet=True)
         if list(failed) == [check]:
-            print(f"FAIL {check}: planted {label}: {"; ".join(failed[check][:3])}")
+            print(f"FAIL {check}: planted {label}: {'; '.join(failed[check][:3])}")
         else:
             missed += 1
             print(f"PLANT-MISS {check}: planted {label}: checks that failed: {sorted(failed) or 'none'}")
