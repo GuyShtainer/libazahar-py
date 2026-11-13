@@ -63,7 +63,7 @@ def test_p3_overrides_win_over_kwargs(tmp_path):
     assert second.kwargs == {"sd_seed": "base", "timeout": 5.0}
 
 
-def test_p4_size_checks(tmp_path):
+def test_p4_size_checks(tmp_path, monkeypatch):
     with pytest.warns(UserWarning, match=r"Pool\(5\) > cap 3") as caught:
         Pool(5, "app", tmp_path, factory=FakeEmu).close()
     assert len([w for w in caught if "cap 3" in str(w.message)]) == 1
@@ -72,5 +72,5 @@ def test_p4_size_checks(tmp_path):
             Pool(bad, "app", tmp_path, factory=FakeEmu)
     with warnings.catch_warnings():
         warnings.simplefilter("error", UserWarning)
-        if _slots.os.getloadavg()[0] <= 2 * (_slots.os.cpu_count() or 1):
-            Pool(3, "app", tmp_path, factory=FakeEmu).close()
+        monkeypatch.setattr(_slots.os, "getloadavg", lambda: (0.0, 0.0, 0.0))
+        Pool(3, "app", tmp_path, factory=FakeEmu).close()

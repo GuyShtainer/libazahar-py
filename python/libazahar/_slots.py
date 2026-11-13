@@ -22,7 +22,7 @@ from .errors import HostTimeout
 
 __all__ = ["DEFAULT_CAP", "Slot", "SlotTimeout", "LoadWarning", "slot_dir", "cap", "acquire", "warn_if_loaded"]
 
-DEFAULT_CAP = 3                 # E2 sets it from the speed table's rule (1..4); nothing else reads a literal 3
+DEFAULT_CAP = 2                 # provisional (light scene), from tools/speed_table.py cap_rule, docs/research/speed-table-e.md
 MAX_CAP = 64
 DEFAULT_TIMEOUT_S = 3600.0
 ROUND_SLEEP_S = 0.1

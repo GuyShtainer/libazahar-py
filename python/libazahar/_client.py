@@ -124,7 +124,12 @@ class WorkerClient:
         except FileNotFoundError:
             pass
         slot = _slots.acquire() if self._take_slot else None        # may wait; nothing to undo if it raises
-        parent, child = multiprocessing.Pipe(duplex=True)
+        try:
+            parent, child = multiprocessing.Pipe(duplex=True)
+        except BaseException:
+            if slot is not None:
+                slot.release()
+            raise
         try:
             self._proc = self._popen(child.fileno(), slot)
         except BaseException:

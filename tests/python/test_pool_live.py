@@ -39,17 +39,22 @@ def load() -> str:
 @pytest.fixture
 def gate_slots(monkeypatch, repo_root):
     """Rule 1: hold the real machine-wide slots (real folder, default cap) while the gate runs; rule 2: then a
-    private folder with cap 3 for the Emulators under test. Order matters: the real ones are taken first."""
+    private folder with cap 3 for the Emulators under test. Order matters: the real ones are taken first.
+
+    The gate holds every real slot (cap(), 2 by default) and runs 3 workers, one over the cap, on purpose. Never run
+    it under tools/hold_slot.py: an outer slot plus the fixture's would exceed the cap and wait 1800 s."""
     monkeypatch.delenv("LAZ_SLOT_DIR", raising=False)
     monkeypatch.delenv("LAZ_MAX_INSTANCES", raising=False)
     begin = time.monotonic()
-    held = [_slots.acquire(timeout=1800) for _ in range(min(REAL_SLOTS, _slots.cap()))]
-    info(f"real slots: took {len(held)} after {time.monotonic() - begin:.1f} s ({load()})")
-    private = repo_root / "runs" / "e-pytest" / "slots"
-    shutil.rmtree(private, ignore_errors=True)
-    monkeypatch.setenv("LAZ_SLOT_DIR", str(private))
-    monkeypatch.setenv("LAZ_MAX_INSTANCES", "3")
+    held = []
     try:
+        for _ in range(min(REAL_SLOTS, _slots.cap())):
+            held.append(_slots.acquire(timeout=1800))
+        info(f"real slots: took {len(held)} after {time.monotonic() - begin:.1f} s ({load()})")
+        private = repo_root / "runs" / "e-pytest" / "slots"
+        shutil.rmtree(private, ignore_errors=True)
+        monkeypatch.setenv("LAZ_SLOT_DIR", str(private))
+        monkeypatch.setenv("LAZ_MAX_INSTANCES", "3")
         yield private
     finally:
         for slot in held:
@@ -110,6 +115,13 @@ def test_g1_g2_g4_cap_kill_and_nice(host_paths, workdir, seed, gate_slots):
                 emu.close()
 
 
+def own_seed(workdir: Path, ready_at: int) -> Path:
+    """A seed folder of its own (the ``seed`` fixture reuses one folder, which the pool's threads would race on)."""
+    folder = workdir / f"seed-{ready_at}"
+    tl.write_control(folder, ready_at=ready_at)
+    return folder
+
+
 def job(emu: Emulator, ready_at: int):
     """400 frames with a PNG shot at 300; returns the SD log text and the shot paths."""
     result = emu.run(400, shots=[300])
@@ -121,7 +133,8 @@ def test_g3_pool_of_three(host_paths, workdir, seed, gate_slots):
     info(f"start: {load()}")
     seeds = [100, 200, 300]
     with Pool(3, host_paths.app, workdir / "pool") as pool:
-        futures = [pool.submit(job, ready_at, sd_seed=seed(ready_at=ready_at)) for ready_at in seeds]
+        futures = [pool.submit(job, ready_at, sd_seed=own_seed(workdir, ready_at))
+                   for ready_at in seeds]
         results = [future.result() for future in futures]
     for index, (ready_at, (text, top, bottom)) in enumerate(zip(seeds, results)):
         folder = workdir / "pool" / f"job-{index:04d}"

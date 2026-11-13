@@ -16,12 +16,16 @@ The instance pool, per-instance folders, the slot cap and nice; a 1-2-3 instance
 The gate in `docs/PLAN.md` line 296 ("Phase E"), run headless on this Mac with a pass/fail answer.
 
 ## Evidence
-none yet
+- 2026-11-13 02:18, merged into main as cbe823c (step-e: E1 a74aaec, E2 and the review fixes 871e9ab). Gate 1:
+  make check, make, test-host 307743/0; pytest not slow 71 passed. Gate 2: test_pool_live.py 2 passed, 0 skipped
+  (after the fixes too, runs/e-fix-pool.log): a 4th Emulator waits, kill-to-acquire 0.063 s, worker nice 10.
+  Gate 3: the speed table (docs/research/speed-table-e.md), every row ok, our core 2177 fps at n=1 and 3167 total
+  at n=2, the stock core 1652 at n=1; DEFAULT_CAP = 2. Review: docs/reviews/step-e-as-built.md (no blocker).
 
 ## Pointers
 - Plan section: `docs/PLAN.md:296`
 - Phase plan: `docs/plans/phase-e.md` (the builder brief), `docs/plans/phase-3.md`
-- Review: none yet
+- Review: `docs/reviews/step-e-as-built.md`
 
 ## Lessons and notes
 Read this part only when you work on this item. Blockers, numbers and Guy's words go here verbatim.
@@ -50,3 +54,14 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   passed. Notes: DEFAULT_CAP 2 makes 3-job gates wait unless LAZ_MAX_INSTANCES is set (test_pool_live sets 3); the
   effective-options block starts with a stray "keys" line (the reviewer explains it). Opus as-built review
   a0d33437db53e74c5 launched 02:05 (phase-e.md section 12).
+- As-built review (a0d33437db53e74c5, docs/reviews/step-e-as-built.md): no blocker; checklist 1-10 PASS; merge after
+  S1-S5 (all on step-e: the live pool test's slot leak on a timeout, the option parse, the research doc's versions
+  and reasons, p4's skipped load check, the slot left held when Pipe() raises). Fixer aabe4967660dca2d8 launched.
+  The "keys" line is the host's own "core registered 38 option keys" log line caught by a loose parse, not key
+  loading; our core's log has no key-file line. Held for main after step-g merges (NICE): N4 one host.log line per
+  batch, N5 last_run_ns via a file static, N6 the long __all__ line, N10 the worker keeps the slot fd inheritable.
+- After both merges (on main, review section on F2's timing): gate_f2.py:435-437 subtract b/slot.txt's waited_s
+  from t_state and show it at :467; test_state.py:32-52 subtract a's wait from t_core_start and t_boot and b's from
+  t_state, print both; run gate_f2 and pytest with no outer hold_slot.py (cap 2: the outer slot plus one Emulator
+  uses both); gate_c.py:46-48 run_azhost takes a slot in-process (pass_fds), releases it after Popen, records
+  waited_s; phase-3.md section 4 step 7 wraps only gate-a.sh's and gate-b.sh's direct azhost lines in hold_slot.py.

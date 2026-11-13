@@ -175,3 +175,18 @@ def test_speed_rule_cap_rule():
     assert table.cap_rule(_rule((100, 5), (180, 8), (260, 24), (340, 16)), 12)[0] == 2        # load stops the step to 3
     cap_now, reasons = table.cap_rule(_rule((100, 5), (180, 8), (260, 12), (340, 16), ok=False), 12)
     assert cap_now == 3 and "CHECK FAIL" in reasons[0]                                          # a failed check
+
+
+def test_s7_pipe_failure_releases_the_slot(tmp_path, monkeypatch):
+    """A failure between the acquire and the worker start (here Pipe, as with EMFILE) must free the slot."""
+    monkeypatch.setenv("LAZ_SLOT_DIR", str(tmp_path / "slots"))
+    monkeypatch.setenv("LAZ_MAX_INSTANCES", "1")
+
+    def boom(*args, **kwargs):
+        raise OSError("too many open files")
+
+    monkeypatch.setattr("libazahar._client.multiprocessing.Pipe", boom)
+    client = _with_slot(tmp_path / "w")
+    with pytest.raises(OSError, match="too many open files"):
+        client.spawn(10.0)
+    _slots.acquire(timeout=0.3).release()                # the only slot is free again
