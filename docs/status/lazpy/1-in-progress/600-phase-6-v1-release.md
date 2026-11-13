@@ -87,3 +87,8 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
 - 2026-11-13 15:01, V6: 3DPlatinum PASS on 64026f4a… (its whole chain headless, 72 steps PASS, its only failures its
   own link step; A4's 5 pairs differ only in the game ELF's sha, a rebuilt ELF in its fresh tree; verbatim in
   laz-660's notes). Gen3D's smoke passed at 13:10; its Pool 1-4 run started on our go at 15:01 (load 1.96).
+- 2026-11-13 15:18, V6: 3DPlatinum's A4 caveat closed, verbatim: "A4 on the final core (64026f4a...): EQUAL. We reran
+  the windowed trio headless on the very game ELF the windowed records used (sha 44d17faa...). route_equal gives
+  \"EQUAL (5 A records, 5 B records, 0 one-sided excused)\", with only the audio-lead timing line masked by design.
+  All four targets rc 0, no hold, no SlotTimeout. With the chain result I sent at 15:00, V6 is a pass from our
+  side." V6 now waits only on Gen3D's Pool 1-4.
