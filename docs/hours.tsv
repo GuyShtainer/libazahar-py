@@ -97,3 +97,5 @@ date	bet	phase	agent_id	model	role	kind	start	end	hours	source
 2026-11-13	E review recorded, E commit and merge, item 310 done	phase-3	main	opus	main	process	02:14	02:17	0.07	session clock
 2026-11-13	Step G as-built review	phase-3	a73a231eabc07771f	opus	reviewer	agent	02:08	02:17	0.15	agent duration 548 s
 2026-11-13	G review read, main into step-g, G fixer launched, phase-3 step 7 edit	phase-3	main	opus	main	process	02:18	02:18	0.05	session clock
+2026-11-13	Step G fixer (code fixes; emulator checks left)	phase-3	a16674883dc9a5396	sonnet	builder	agent	02:18	02:20	0.04	agent duration 145 s
+2026-11-13	Fixer watchers stopped, G check script and waiter	phase-3	main	opus	main	process	02:20	02:20	0.02	session clock

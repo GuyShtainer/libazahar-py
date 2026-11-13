@@ -52,3 +52,10 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   every call site. The torn rule would catch a tear, but reads land while the app waits for VBlank, so 0 torn proves
   correct reads, not the torn handling. Main (with E) merged into step-g at 76beb4f. Fixer a16674883dc9a5396 takes
   S1-S3, E's post-merge timing changes (slot waits out of t_state; gate_c takes its own slot) and E's held NICEs.
+- Fixer (a16674883dc9a5396, 02:18-02:20, uncommitted in ../libazahar-py-g): G S1-S3; E's timing changes (one
+  slot.txt reader _slots.waited_in(); gate_f2 r2 and test_state subtract the waits; gate_c's run_azhost takes its
+  own slot via pass_fds and releases it after Popen); E's NICEs N4 (documented in USING.md), N5 (run_ns out-param,
+  no file static), N6, N10 (the worker makes the slot fd non-inheritable). make check, make, test-host 307782/0;
+  pytest not slow 103 passed, 1 skipped. It handed back at load 15 before the emulator checks; the main loop runs
+  them (runs/g/fixcheck.sh, waiter bt52zbipn): test_memory_live alone, test_state, gate_f2 --only r2, gate_c on
+  our core, one at a time when the 1-min load is under 10.
