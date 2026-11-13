@@ -9,7 +9,7 @@ the next session needs to act now, and points at the rest. Goals, rules, decisio
 ## Running now
 | What | Where | Agent id | It stops when |
 |---|---|---|---|
-| laz-310: opus as-built review of step E (phase-e.md section 12; fixes to __init__.py, host/run.c, host/azh_pure.h are held until step-g merges) | ../libazahar-py-e, read-only | a0d33437db53e74c5 | docs/reviews/step-e-as-built.md written |
+| laz-310: step E review fixes S1-S5 on step-e (sonnet; one live pool test rerun) | ../libazahar-py-e | aabe4967660dca2d8 | reports "E fixes done" |
 | laz-330: opus as-built review of step G (phase-g.md section 12; judges host.map's 4.8 MB disk size) | ../libazahar-py-g (step-g 1b3dc93: G at 32f3b7c + main), read-only | a73a231eabc07771f | docs/reviews/step-g-as-built.md written |
 
 Not running: step F2 merged (fac16e9, item 320 done). Worktrees c, d and f2 are merged and kept (ignored outputs).
