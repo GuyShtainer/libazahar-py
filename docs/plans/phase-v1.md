@@ -16,7 +16,8 @@ of the 1.0 promise in writing.
   `host/azhost.h` at source level (names and meaning; struct layouts may grow with an ABI bump, so C callers rebuild
   for each release) [R2-B1 fix]; the `azhost` command line, its exit-code table and the keys of its summary line (new
   keys may be added); the input-script file and the option-profile file, in the formats USING.md writes down (V1);
-  the environment variables of USING.md section 15 [R2-B2]. [R1-S8]
+  the environment variables in the first table of USING.md section 15 (test and build variables are not covered)
+  [R2-B2, V1 diff review 11]. [R1-S8]
 - Host and Python are one unit [R1-B1, R2-B1 fix]: use the host library and the Python package from one checkout or
   one release. Mixing is unsupported; the layout check raises `HostError` when the ABI or layout differs. So
   `AZH_ABI_VERSION` may bump in a minor release; it is not part of the promise.

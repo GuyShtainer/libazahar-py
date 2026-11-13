@@ -61,3 +61,32 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   NOTICES row, no build). 3DPlatinum asked to run experiment 2 (`MVK_CONFIG_USE_MTLHEAP=0`) and optionally 1
   (MoltenVK 1.2.9 through `LAZ_MVK`) on its self-test.
 
+- 2026-11-13 12:05: patch agent done: core/patches/0010-lazpy-ds-barriers.patch (sha256 7a443f32…) in the worktree,
+  every cited line right for 2126.2, 0000-0010 apply with `--fuzz 0`, no rejects; NOTICES row added. Not built yet
+  (the build waits for the repro's red counts on the unpatched core). The `type != Texture` condition also widens
+  color surfaces' first-use barriers (the same gap, cause 4); kept as the report wrote it.
+- 2026-11-13 12:08: repro agent done (branch commit 39aff14 with the patch). On the unpatched lazpy.2 core, N=10 per
+  variant: a (first use) bad 1/10, d (second readback, same process) bad 4/10, b (dummy draw first) bad 5/10; then
+  N=30: a 0/30, b 0/30, d 7/30. So it is not first-use only (the report expected b and d always to pass): the
+  readback's transfer-to-compute gap (cause 2) fits d. Bad shapes: stencil ff everywhere with depth partly stale
+  (n80=0 nff=16384 dbad=10368..16384), or a tile mix with exact depth (n80=3952 n00=5264 nff=7168). Good line:
+  `n80=8000 n00=8384 nff=0 nother=0 bbox=10,20,109,99 dq=8000 dbad=0`. Because the rate swings, the pass gate is 0
+  bad across a, b and d at N=30 or more (`LAZ_STENCIL_RUNS=30`), not N=10. The unpatched core is kept in the
+  worktree's runs/stencil/core-unpatched/ (sha256 8f72e75d…) for A/B.
+- 2026-11-13 by 12:10, 3DPlatinum, verbatim: "A3 results (stencil readback, 10 fresh headless launches per setting,
+  make emu-pica-replay-port, instance r, finished 12:08): the old MoltenVK fixes it every time; turning heaps off
+  does not. LAZ_MVK = the windowed app's libMoltenVK 1.2.9: 10 of 10 exact (stencil 0x80 count 8000 of 8000, clear
+  00, rc 0 on every launch). MVK_CONFIG_USE_MTLHEAP=0 on the bundled 1.4.2: 2 of 10 exact. The other 8: counts 0 (6
+  launches), 288 and 64, with clear reading ff. rc 2 on all 10 (on the two exact launches, self-test A passed but the
+  run still failed elsewhere: \"selftest ds: FAIL\" and pica_replay FAIL, edge band worst 31.83%). ... heap0 1-10
+  counts: 0, 0, 288, 0, 8000, 0, 0, 64, 0, 8000 (clear ff except launches 5 and 10, which read 00); mvk129 1-10
+  counts: 8000 x10 (clear 00 x10). So the heap setting alone is not the trigger. Something else that changed between
+  1.2.9 and 1.4.2 is."
+- So: the MoltenVK version is confirmed as the trigger (experiment 1), the heap default is not (experiment 2). If
+  patch 0010 does not reach 0 bad at N=30, the fallback is our own A/B with MoltenVK 1.2.9 through `LAZ_MVK` on the
+  test app, then a choice between more barrier work and pinning an older MoltenVK in tools/fetch.sh.
+- 2026-11-13 12:14: patched core (worktree, 0000-0010, incremental build 12:08-12:09, sha256 f89d34492df6dd45…)
+  passes our repro: N=30 per variant at 12:10, 0 bad of 90; then an A/B back to back (12:12-12:14): unpatched a 1/30,
+  b 0/30, d 4/30 bad; patched 0/30 each. Totals: unpatched 22 bad of 210 readbacks, patched 0 of 180. Our half of
+  the exit gate is met on the worktree core; it is rerun on main's final core in V7, and 3DPlatinum's self-test on
+  that core (V6) is the other half. 3DPlatinum was offered a preview run on the worktree core.

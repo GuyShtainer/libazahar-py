@@ -1,7 +1,7 @@
 <!-- handoff: slim v1 | current tasks only | rewritten whole from docs/status/templates/handoff.md | budget 80 lines | never append -->
 # libazahar-py handoff
 
-As of: 2026-11-13 12:03 (this project's own session)
+As of: 2026-11-13 12:15 (this project's own session)
 
 This file lives in docs/status/lazpy/1-in-progress/, beside its item files. It holds only what
 the next session needs to act now, and points at the rest. Goals, rules, decisions and history live elsewhere.
@@ -9,19 +9,19 @@ the next session needs to act now, and points at the rest. Goals, rules, decisio
 ## Running now
 | What | Where | Agent id | It stops when |
 |---|---|---|---|
-| Review of the V1 API-freeze commit 64f5d18 (laz-610), read-only opus | ../libazahar-py-k, branch core-rev2; notes in this session's scratchpad v1review/ | a04d832ad11619ae6 | it reports; save it as docs/reviews/api-freeze-1.0-diff-review.md |
-| Stencil repro in the test app (laz-520), sonnet | ../libazahar-py-k; progress in runs/stencil/repro-progress.md there | a3f2709cf168b11c4 | it reports red counts on the unpatched core; brief `docs/plans/stencil-briefs.md` R |
-| Core patch 0010 for the stencil barriers (laz-520), sonnet | ../libazahar-py-k; progress in runs/stencil/patch-progress.md there | a7a04c6135194c45c | it reports the patch applies; brief `docs/plans/stencil-briefs.md` P |
+| V1 review fixes, host side (laz-610), sonnet | ../libazahar-py-k; progress in runs/v1/fix-host-progress.md there | a444f6a4e5d19a299 | it reports; brief `docs/plans/v1-fix-briefs.md` HF |
+| V1 review fixes, Python side (laz-610), sonnet | ../libazahar-py-k; progress in runs/v1/fix-py-progress.md there | aa0abb629238080e0 | it reports; brief `docs/plans/v1-fix-briefs.md` PF |
 
 Guy asked for v1.0.0 (item laz-600, `docs/plans/phase-v1.md`): it replaces the never-published v0.1.0 and step K is
 its step V0, so step K merges before the release, not after a v0.1.0 tag.
 
 ## Next steps, in order
-0. v1.0.0: `docs/plans/phase-v1.md` revision 2 is the plan; follow section 4's order. Now: V1 is on the branch
-   (64f5d18, item 610); fix the review's must-fix items on the branch. Step L (item 520): when the repro is red and
-   the patch applies, commit both on the branch, rebuild the worktree core (`env -u LAZ_ROOT ... tools/build-core.sh`
-   there, about 10 min), rerun the repro (10 launches green), the fast pytest and test-host. 3DPlatinum was asked
-   for experiment 2 (`MVK_CONFIG_USE_MTLHEAP=0`) on its self-test; record its answer in item 520.
+0. v1.0.0: `docs/plans/phase-v1.md` revision 2 is the plan; follow section 4's order. Now: V1's review fixes run
+   (`docs/reviews/api-freeze-1.0-diff-review.md`). When both report: edit USING.md from their progress notes (the exit
+   table's seed and `--save` rows, `options=`, CRLF, `0X`, the `\r` drop in `msg=`, 4097 lines, `LAZ_CORE_OLD` in
+   the test-only list, `HostCrashed.signal_name`), rerun make check, test-host, the fast pytest and test_profile_format
+   (with `LAZ_STOCK_CORE`), commit on the branch. Step L (item 520): patch 0010 and the repro are on the branch
+   (39aff14) and pass on the worktree core (0 bad of 180); 3DPlatinum was offered a preview run on it.
 1. Then V0b (merge and main build; plan section 3): ask both projects for the hold first (3DPlatinum's OK; Gen3D needs
    none). Step K (laz-510) closes inside it. Never run tools/fetch.sh in the worktree (its dl/ parts link to MAIN).
 2. V3, V4, V6 (Gen3D and 3DPlatinum run their real suites on main's final core sha256; both answers needed), V7, V8.

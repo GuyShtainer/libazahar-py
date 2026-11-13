@@ -38,3 +38,8 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   LAZ_STOCK_CORE). The layout test now expects 151 fields (the AZH_EXIT_STATE row). Next: the opus review of
   64f5d18 (agent a04d832ad11619ae6), its fixes, then V0b.
 
+- 2026-11-13 12:12: the diff review is saved (`docs/reviews/api-freeze-1.0-diff-review.md`): not ready; must-fix 1
+  (the C and Python profile parsers differ on invalid UTF-8, NUL and a BOM on line 2) and 2 (the exit table's seed
+  and `--save` rows), 9 should-fix, nits. Decisions D-a..D-g and two fix briefs: `docs/plans/v1-fix-briefs.md`;
+  agents hostfix a444f6a4e5d19a299 and pyfix aa0abb629238080e0 in the worktree by 12:15. Review 11's plan line
+  (phase-v1.md section 1, the environment-variable promise) is fixed on main. The main loop edits USING.md after.

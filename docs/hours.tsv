@@ -149,3 +149,8 @@ date	bet	phase	agent_id	model	role	kind	start	end	hours	source
 2026-11-13	V1: USING.md merge (promise, exit codes, 4a, profile format, errors table, API reference), gates, branch commit 64f5d18, review launched	phase-6	main	opus	main	build	11:56	12:00	0.07	session clock
 2026-11-13	step L: D24S8 stencil readback investigation (cause, patch, repro recipe)	phase-5	a68ab49f94481d0d2	opus	researcher	research	11:51	12:01	0.17	agent duration 600 s
 2026-11-13	step L: report saved, briefs written, repro and patch agents launched, 3DPlatinum asked for experiments	phase-5	main	opus	main	plan	12:00	12:03	0.05	session clock
+2026-11-13	step L: core patch 0010 (first-use barrier stages) written, applies after 0000-0009 with no fuzz, NOTICES row	phase-5	a7a04c6135194c45c	sonnet	builder	build	12:03	12:05	0.04	agent duration 144 s
+2026-11-13	step L: test-app stencil self-test and test_stencil_live.py; red on the unpatched core	phase-5	a3f2709cf168b11c4	sonnet	builder	build	12:03	12:08	0.09	agent duration 313 s
+2026-11-13	step L: branch commit 39aff14 (repro and patch), unpatched core kept, patched core build started	phase-5	main	opus	main	build	12:05	12:09	0.07	session clock
+2026-11-13	V1: API-freeze commit review (2 must-fix, 9 should-fix, nits)	phase-6	a04d832ad11619ae6	opus	reviewer	review	12:00	12:12	0.19	agent duration 683 s
+2026-11-13	step L: patched-core gate (90 readbacks, then the A/B), V1 review saved, fix briefs and two fix agents, plan line 19	phase-6	main	opus	main	build	12:09	12:15	0.10	session clock
