@@ -1,0 +1,36 @@
+# Fast tests on every push and pull request: build the host library and azhost, run the host's C tests and the Python
+# tests that need no emulator. No core is downloaded or run here (the emulator tests need our core and a quiet Mac;
+# docs/USING.md says how to run them).
+name: test
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  fast:
+    runs-on: macos-15
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.10", "3.14"]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0  # v7.1.0
+        with:
+          python-version: ${{ matrix.python }}
+      - name: headers (libretro and Vulkan, pinned by sha256)
+        run: sh tools/fetch.sh --headers
+      - name: build the host
+        run: make check && make && make test-version
+      - name: host C tests
+        run: make test-host
+      - name: Python layer
+        run: |
+          python -m venv .venv
+          .venv/bin/pip install -e . pytest numpy
+      - name: fast Python tests (no emulator)
+        run: .venv/bin/python -m pytest -q -m "not slow" tests/python

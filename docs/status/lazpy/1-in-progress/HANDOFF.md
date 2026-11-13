@@ -1,7 +1,7 @@
 <!-- handoff: slim v1 | current tasks only | rewritten whole from docs/status/templates/handoff.md | budget 80 lines | never append -->
 # libazahar-py handoff
 
-As of: 2026-11-13 11:21 (this project's own session)
+As of: 2026-11-13 11:23 (this project's own session)
 
 This file lives in docs/status/lazpy/1-in-progress/, beside its item files. It holds only what
 the next session needs to act now, and points at the rest. Goals, rules, decisions and history live elsewhere.
@@ -16,7 +16,7 @@ its step V0, so step K merges before the release, not after a v0.1.0 tag.
 
 ## Next steps, in order
 0. v1.0.0: `docs/plans/phase-v1.md` revision 2 (both reviews answered) is the plan; follow section 4's order. Now:
-   V5's CI workflow (item laz-650) while the API review runs; then V1's changes on the branch; then V0b (merge and
+   V5 (CI) is done (item laz-650); next V1's changes on the branch; then V0b (merge and
    main build, after 11:55 when Gen3D's timed soak ends; Gen3D needs no hold, 3DPlatinum's OK is asked first).
 1. Step K (laz-510) closes inside V0b: its gates 1, 3, 4 and 6 passed in the worktree; gate 2 there was dropped
    (item notes). Never run tools/fetch.sh in the worktree (its dl/ parts link to MAIN).

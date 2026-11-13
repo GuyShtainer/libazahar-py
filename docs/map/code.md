@@ -26,6 +26,8 @@
   `azahar_lazpy_libretro.dylib`).
 - `examples/`: runnable examples (`quickstart.py`, the README's block; `pool_shots.py`; `memory_watch.py`, our core
   only); `examples/README.md`.
+- `.github/`: CI, `.github/workflows/test.yml` (runs after the first push): the host build, `make test-host` and the fast
+  Python tests on a macos-15 runner, Python 3.10 and 3.14; no core, no emulator.
 - `STATUS.md`: what works, what is measured, what is not tested, and what is next.
 - `docs/HOST-API.md`: the C host API (`azh_*`) and the `azhost` CLI, exit codes and stop reasons.
 - `NOTICES.md`: generated licence notices (`tools/mknotices.py`); also inside the core's release zip.
