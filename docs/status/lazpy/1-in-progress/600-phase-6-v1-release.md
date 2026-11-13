@@ -76,3 +76,11 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   1748f65 (`docs/research/spike-2-real-scene.md` line 58, 2026-11-12; touches Guy's G9 "say nothing" default),
   9c5f959 and a41f196 (status notes quoting Gen3D). Nothing is pushed; the audit rules whether history needs a
   rewrite (as G8c did) before the first push.
+- 2026-11-13 13:38, V3 prepared (not run): the scene script is in the session scratchpad (scene/v3scene.py), Gen3D's
+  build pinned by sha256 f2f80aee…, the step J seed. One change from the plan: the guest rate comes from Gen3D's
+  perf.csv (one row per guest second, its t_ms column is guest time), not voxel.log's flip lines, which appear only
+  when the top screen changes (12 in step J's 36000-frame run), too few for a rate. check_ok: guest seconds per
+  wall second within 10 % of host fps / 59.831, world=6 (ready) and top=0 (the 3D world) in the perf rows at the
+  window's start and end, the batch stopped by its wall limit; v3start/v3end shots are kept for a look. A ps sampler
+  (every 10 s) records other processes over 50 % CPU or named like builds and emulators. Rows: ours 1, stock 1, ours
+  2, 3, 4; 60 s windows. It waits for both V6 runs to end and a load under 6.

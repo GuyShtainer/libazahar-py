@@ -165,3 +165,4 @@ date	bet	phase	agent_id	model	role	kind	start	end	hours	source
 2026-11-13	step M: patch 0011, worktree test build, red/green, review changes, merge, hold, main build start	phase-6	main	opus	main	build	12:49	13:02	0.22	session clock
 2026-11-13	step M: main gates on 64026f4a, hold released, worktree removed, records	phase-6	main	opus	main	build	13:02	13:11	0.15	session clock
 2026-11-13	V6 records (Gen3D smoke, 3DPlatinum A3), V8 NOTICES regen, mknotices notice sentence from the patches	phase-6	main	opus	main	build	13:11	13:14	0.05	session clock
+2026-11-13	V3 scene script written in the scratchpad (perf.csv guest rate, quiet sampler), dry-tested on step J data	phase-6	main	opus	main	build	13:14	13:38	0.40	session clock
