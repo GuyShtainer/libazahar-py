@@ -63,3 +63,12 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
 - 2026-11-13 13:11: V6's first Gen3D smoke failed (state restore, item laz-660); patch 0011 fixed it, and main's
   core is now 64026f4a… (4e830e5), replacing 88cc6188 as the v1.0.0 candidate. V6 restarts on it in both projects;
   V8's fetch.sh pin and release zip use the new sha256. The 88cc6188 core is kept in runs/core-88cc/.
+- 2026-11-13 by 13:14, 3DPlatinum, verbatim: "V6 on the final core, sha256
+  64026f4afa2036a552345ac4b73c95ebbf27190ad8590a1cfd70f6b5ab1893cf: A3 self-test PASS, 10 of 10, finished 13:13.
+  Bundled MoltenVK, no overrides. Every launch gave: stencil 0x80 count 8000 of 8000, clear 00, \"selftest ds:
+  PASS\", make emu-pica-replay-port rc 0, and edge band worst 54.65% (the same as on 88cc6188 and on the old
+  MoltenVK). The whole chain with records starts now on instance p, and its result plus A4 come when it ends."
+  Gen3D's smoke on 64026f4a: PASS (verbatim in item 660); its Pool 1-4 waits for 3DPlatinum's chain to end.
+- 2026-11-13 13:13: V8's NOTICES step done early on main's 64026f4a build: tools/mknotices.py with the runners.md
+  inputs; the notice sentence is now derived from the patches (0007, 0008, 0010 and 0011 add their own notices;
+  the hand text named only 0010 and 0011). Every file any patch changes carries a notice (9 of 9).

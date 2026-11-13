@@ -81,3 +81,10 @@ The test app is unchanged (ba106998…). Review: `docs/reviews/patch-0011-review
   launches) started at 13:10, and the whole chain with records follows it in the same tree." The worktree
   ../libazahar-py-m is removed (its build logs in runs/wt-m/); branch core-rev3 stays at aa29901 (merged).
   The release notes say the fix in one line; STATUS.md gets its works line when this item closes.
+- 2026-11-13 by 13:12, Gen3D, verbatim except a game name replaced and a path cut: "Gen3D V6 smoke on core 64026f4a
+  (main 4e830e5): PASS, including the restore with [a GBA game] running in Gen3D. app Gen3D-flipdev.3dsx (Gen3D
+  main 752b09d build), script lazgame.py ... game: 3600 frames wall=10.1 s fps=356.4 (machine load 27.5 on 12 cores
+  during the run: your LoadWarning fired, 3DPlatinum's chain was running, so this speed is not a quiet-machine
+  number; the old core's quiet run was 400-509); stats: peak_rss=732 MB, core Azahar 2126.2-lazpy.2; save_state
+  1.14 s, k=0, frame_total=8400; state boot 1.80 s; restored run ok (300 frames); its top shot 300 frames on is
+  byte-identical to the original run's. The Pool 1-4 instance run waits for a quiet machine (rule T)."

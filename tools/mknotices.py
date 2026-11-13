@@ -294,15 +294,40 @@ def read_member_deep(snap: Path, kind: str) -> str | None:
     return None
 
 
+PATCH_DIR = Path(__file__).resolve().parent.parent / "core" / "patches"
+OWN_NOTICE = "\n+// Modified by libazahar-py"
+
+
+def notice_sentence(patch_names: list[str]) -> str:
+    """The 'Modified by libazahar-py' sentence: patch 0000 adds the notice, and each later patch that adds its own
+    (a line starting ``+// Modified by libazahar-py`` in ``core/patches/<name>``) is named. Exits 1 on a missing patch."""
+    own = []
+    for name in patch_names:
+        if name.startswith("0000-"):
+            continue
+        path = PATCH_DIR / name
+        if not path.is_file():
+            die(f"patch {name} named in build.inputs is not in {PATCH_DIR}")
+        if OWN_NOTICE in path.read_text(encoding="utf-8"):
+            own.append(name[:4])
+    if not own:
+        return "(patch 0000)"
+    if len(own) == 1:
+        return f"(patch 0000; patch {own[0]} adds its own for the files it changes)"
+    return f"(patch 0000; patches {', '.join(own[:-1])} and {own[-1]} add their own for the files they change)"
+
+
 def header_section(inputs: dict[str, str], commit: str) -> str:
-    patches = [f"- `{k[6:]}` sha256 {v}" for k, v in sorted(inputs.items()) if k.startswith("patch ")]
+    names = [k[6:] for k in sorted(inputs) if k.startswith("patch ")]
+    patches = [f"- `{name}` sha256 {inputs['patch ' + name]}" for name in names]
     return "\n".join([
         "# NOTICES\n",
         "This file covers the core `azahar_lazpy_libretro.dylib` and the test app `testapp.3dsx`. The repository's "
         "own code is GPLv3 (`LICENSE`). The core binary is distributed under GPLv3 (Azahar's 'or any later version' "
         "grant permits it; the binary links Apache-2.0 code, which GPLv2 does not accept).\n",
         "## libazahar-py's changes to Azahar\n", "\n".join(patches) + "\n",
-        "Each changed file carries a 'Modified by libazahar-py' notice (patch 0000). Removed before the build: three "
+        f"Each changed file carries a 'Modified by libazahar-py' notice {notice_sentence(names)}. Removed before the "
+        "build: three "
         "header files (`src/core/hw/default_keys.h` and the two `src/core/hle/service/http/ctr-common-1-*.h` "
         "headers; console key and certificate data, not used by this build) and `externals/libressl/`, the bundled "
         "LibreSSL, not used: this build links OpenSSL 3.\n",

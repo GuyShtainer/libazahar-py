@@ -17,7 +17,7 @@ This file covers the core `azahar_lazpy_libretro.dylib` and the test app `testap
 - `0010-lazpy-ds-barriers.patch` sha256 7a443f32337ba19f7b8f08b7125a5fa4e6ca376380b75cefc55254acaf323603
 - `0011-lazpy-shader-cache-switch.patch` sha256 64dc6cbf56f8bba45081c0b5802b6587a4b5b5a12493a0bc3fd75927731b1ae5
 
-Each changed file carries a 'Modified by libazahar-py' notice (patch 0000; patches 0010 and 0011 add their own for the files they change). Removed before the build: three header files (`src/core/hw/default_keys.h` and the two `src/core/hle/service/http/ctr-common-1-*.h` headers; console key and certificate data, not used by this build) and `externals/libressl/`, the bundled LibreSSL, not used: this build links OpenSSL 3.
+Each changed file carries a 'Modified by libazahar-py' notice (patch 0000; patches 0007, 0008, 0010 and 0011 add their own for the files they change). Removed before the build: three header files (`src/core/hw/default_keys.h` and the two `src/core/hle/service/http/ctr-common-1-*.h` headers; console key and certificate data, not used by this build) and `externals/libressl/`, the bundled LibreSSL, not used: this build links OpenSSL 3.
 
 ## Azahar
 
