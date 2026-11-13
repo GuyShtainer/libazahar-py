@@ -649,8 +649,9 @@ def notes_wording_findings(text: str) -> Items:
         out.append(("FAIL", "release notes hold a speed token"))
     for found in re.finditer(r"\bkeys?\b", text):
         window = text[max(0, found.start() - 3):found.end() + 5]
-        if not (text[max(0, found.start() - 3):found.start()] == "no " or "key data" in window):
-            out.append(("FAIL", "release notes hold 'key' outside 'no keys' or 'key data'"))
+        before = text[max(0, found.start() - 11):found.start()]
+        if not (before.endswith("no ") or before.endswith("no console ") or "key data" in window):
+            out.append(("FAIL", "release notes hold 'key' outside 'no keys', 'no console keys' or 'key data'"))
             break
     return out
 
