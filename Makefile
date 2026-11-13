@@ -39,7 +39,7 @@ testapp:
 	$(MAKE) -C testapp
 
 # step C's pure-C unit tests: no core, no Vulkan. -ffp-contract=off keeps the float32 touch model exact.
-TEST_SRC = host/input.c host/match.c host/msg.c host/rawcopy.c host/crop.c host/png.c host/sdcopy.c host/statemeta.c \
+TEST_SRC = host/input.c host/match.c host/msg.c host/rawcopy.c host/crop.c host/png.c host/sdcopy.c host/statemeta.c host/watch.c \
            $(wildcard tests/host/*.c)
 
 test-host: build/test-host

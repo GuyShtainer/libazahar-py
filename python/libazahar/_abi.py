@@ -1,4 +1,4 @@
-"""ctypes mirrors of host/azhost.h (ABI 2) and the layout check against ``azh_abi_layout()``.
+"""ctypes mirrors of host/azhost.h (ABI 3) and the layout check against ``azh_abi_layout()``.
 
 The constants below are plain module integers on purpose: ``check_layout`` reads them by name at call time, so a
 changed value is caught by its ``const.<NAME>`` row of the host's table.
@@ -8,7 +8,7 @@ from __future__ import annotations
 import ctypes
 from typing import Callable, Dict, Optional, Tuple
 
-__all__ = ["ShotReq", "Batch", "Result", "Stats", "Field", "Layout", "check_layout", "STOP_NAMES"]
+__all__ = ["ShotReq", "Watch", "Batch", "Result", "Stats", "Field", "Layout", "check_layout", "STOP_NAMES"]
 
 # ---- error codes, exit codes, screens, formats, stop reasons ----
 AZH_OK = 0
@@ -22,6 +22,7 @@ AZH_E_NOMEM = -7
 AZH_E_UNSUPPORTED = -8
 AZH_E_NEEDS_LAZPY_CORE = -9
 AZH_E_SAVESTATE = -10
+AZH_E_UNMAPPED = -11
 AZH_EXIT_OK = 0
 AZH_EXIT_USAGE = 2
 AZH_EXIT_BOOT = 3
@@ -44,7 +45,7 @@ AZH_STOP_GUEST_BREAK = 3
 AZH_STOP_GUEST_EXITED = 4
 AZH_STOP_GUEST_ERROR = 5
 AZH_STOP_WALL_LIMIT = 6
-AZH_ABI_VERSION = 2
+AZH_ABI_VERSION = 3
 AZH_MAX_SHOTS = 64
 AZH_PATH_MAX = 1024
 AZH_INPUT_INTS = 7
@@ -61,6 +62,14 @@ AZH_CIRCLE_MAX = 32767
 AZH_SD_EVERY_DEFAULT = 30
 AZH_MSG_MAX = 256
 AZH_MAX_FIELDS = 160
+AZH_MEM_MAX_LEN = 0x4000000
+AZH_MAX_WATCH = 32
+AZH_WATCH_MAX_WORDS = 256
+AZH_WATCH_EVERY_MAX = 100000
+AZH_WATCH_AREA_OFF = 696320
+AZH_WATCH_AREA_BYTES = 4194304
+AZH_WATCH_HDR_BYTES = 64
+AZH_WATCH_ROW_HDR = 16
 
 STOP_NAMES: Dict[int, str] = {
     AZH_STOP_FRAMES: "frames", AZH_STOP_SD_TEXT: "sd_text", AZH_STOP_DEBUG_TEXT: "debug_text",
@@ -75,6 +84,12 @@ class ShotReq(ctypes.Structure):
     _fields_ = [("frame", ctypes.c_int32), ("screens", ctypes.c_int32), ("format", ctypes.c_int32)]
 
 
+class Watch(ctypes.Structure):
+    """azh_watch: a guest virtual address and a count of u32 words."""
+
+    _fields_ = [("addr", ctypes.c_uint32), ("words", ctypes.c_uint32)]
+
+
 class Batch(ctypes.Structure):
     """azh_batch."""
 
@@ -82,7 +97,8 @@ class Batch(ctypes.Structure):
                 ("shot_dir", ctypes.c_char * AZH_PATH_MAX), ("sd_file", ctypes.c_char * AZH_PATH_MAX),
                 ("sd_text", ctypes.c_char * 256), ("sd_every", ctypes.c_int32),
                 ("debug_text", ctypes.c_char * 256), ("wall_limit_ms", ctypes.c_int32),
-                ("sd_from_end", ctypes.c_int32)]
+                ("sd_from_end", ctypes.c_int32), ("n_watch", ctypes.c_int32), ("watch_every", ctypes.c_int32),
+                ("watch", Watch * AZH_MAX_WATCH)]
 
 
 class Result(ctypes.Structure):
@@ -90,7 +106,8 @@ class Result(ctypes.Structure):
 
     _fields_ = [("frames_run", ctypes.c_int64), ("first_frame", ctypes.c_int64), ("last_frame", ctypes.c_int64),
                 ("stop_reason", ctypes.c_int32), ("shots_done", ctypes.c_int32), ("wall_s", ctypes.c_double),
-                ("vblanks", ctypes.c_int64), ("message", ctypes.c_char * AZH_MSG_MAX)]
+                ("vblanks", ctypes.c_int64), ("message", ctypes.c_char * AZH_MSG_MAX),
+                ("watch_rows", ctypes.c_int32), ("watch_status", ctypes.c_int32)]
 
 
 class Stats(ctypes.Structure):
@@ -118,7 +135,7 @@ class Layout(ctypes.Structure):
                 ("fields", Field * AZH_MAX_FIELDS)]
 
 
-_STRUCTS: Dict[str, type] = {"shot": ShotReq, "batch": Batch, "result": Result, "stats": Stats, "layout": Layout}
+_STRUCTS: Dict[str, type] = {"shot": ShotReq, "watch": Watch, "batch": Batch, "result": Result, "stats": Stats, "layout": Layout}
 
 
 def _fail(text: str) -> Exception:
@@ -138,20 +155,45 @@ def _check_struct_row(cls: type, name: str, field: str, offset: int, size: int) 
         raise _fail(f"{name}: host offset {offset} size {size}, ctypes offset {member.offset} size {member.size}")
 
 
-def _check_map_row(name: str, offset: int, size: int, rows: Dict[str, Tuple[int, int]]) -> None:
+def _check_map_row(name: str, offset: int, size: int, rows: Dict[str, Tuple[int, int]],
+                   host_data: Tuple[int, int]) -> None:
     if name not in rows:
         raise _fail(f"{name}: unknown to _map.py")
+    if name == "map.watch_data":      # the area's size is the host's to resize: check its shape, not its value
+        floor = AZH_WATCH_ROW_HDR + 4 * AZH_MAX_WATCH * AZH_WATCH_MAX_WORDS
+        if offset != rows[name][0] or size < floor:
+            raise _fail(f"{name}: host offset {offset} size {size}, _map.py offset {rows[name][0]}, "
+                        f"size at least {floor}")
+        return
+    if name == "map.__size__":
+        data_offset, data_size = host_data
+        if offset != 0 or size != data_offset + data_size:
+            raise _fail(f"{name}: host size {size} is not the watch data's offset {data_offset} plus its "
+                        f"size {data_size}")
+        return
     if rows[name] != (offset, size):
         raise _fail(f"{name}: host offset {offset} size {size}, _map.py {rows[name]}")
 
 
-def _check_const_row(name: str, value: int) -> None:
+def _check_const_row(name: str, value: int, host_data: Tuple[int, int]) -> None:
     python_name = name.split(".", 1)[1]
     mine = globals().get(python_name)
     if not isinstance(mine, int):
         raise _fail(f"{name}: unknown to _abi.py")
+    if name == "const.AZH_WATCH_AREA_BYTES":  # the area's size is host-only: it must fit the host's map size
+        if value != host_data[0] + host_data[1] - AZH_WATCH_AREA_OFF:
+            raise _fail(f"{name}: host {value} is not the map size minus the area offset {AZH_WATCH_AREA_OFF}")
+        return
     if mine != value:
         raise _fail(f"{name}: host {value}, _abi.py {mine}")
+
+
+def _host_watch_data(layout: Layout, n_fields: int) -> Tuple[int, int]:
+    """The host's (offset, size) of ``map.watch_data``; (0, 0) when the row is missing (the row loop then fails)."""
+    for index in range(n_fields):
+        if layout.fields[index].name == b"map.watch_data":
+            return int(layout.fields[index].offset), int(layout.fields[index].size)
+    return 0, 0
 
 
 def check_layout(layout: Layout, structs: Optional[Dict[str, type]] = None,
@@ -174,6 +216,7 @@ def check_layout(layout: Layout, structs: Optional[Dict[str, type]] = None,
     if not 0 < n_fields <= AZH_MAX_FIELDS:
         raise _fail(f"n_fields {n_fields}")
     mapping = map_rows()
+    host_data = _host_watch_data(layout, n_fields)
     for index in range(n_fields):
         row = layout.fields[index]
         name = row.name.decode("ascii", "replace")
@@ -181,9 +224,9 @@ def check_layout(layout: Layout, structs: Optional[Dict[str, type]] = None,
         if prefix in classes:
             _check_struct_row(classes[prefix], name, rest, row.offset, row.size)
         elif prefix == "map":
-            _check_map_row(name, row.offset, row.size, mapping)
+            _check_map_row(name, row.offset, row.size, mapping, host_data)
         elif prefix == "const":
-            _check_const_row(name, row.offset)
+            _check_const_row(name, row.offset, host_data)
         else:
             raise _fail(f"{name}: unknown row")
 

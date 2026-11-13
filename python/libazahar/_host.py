@@ -20,6 +20,8 @@ _PROTOTYPES = {
     "azh_shot": (_C.c_int, [_C.c_int32, _C.c_int32, _C.c_char_p]),
     "azh_save_state": (_C.c_int, [_C.c_char_p, _C.POINTER(_C.c_int32)]),
     "azh_load_state": (_C.c_int, [_C.c_char_p]),
+    "azh_read": (_C.c_int, [_C.c_uint32, _C.c_uint32, _C.c_void_p]),
+    "azh_write": (_C.c_int, [_C.c_uint32, _C.c_uint32, _C.c_void_p]),
     "azh_set_input": (_C.c_int, [_C.POINTER(_C.c_int32)]),
     "azh_stats": (_C.c_int, [_C.POINTER(_abi.Stats)]),
     "azh_abi_layout": (_C.c_int, [_C.POINTER(_abi.Layout)]),

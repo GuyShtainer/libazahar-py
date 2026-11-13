@@ -7,6 +7,7 @@ from __future__ import annotations
 import ctypes
 import faulthandler
 import os
+import sys
 from multiprocessing.connection import Connection
 from pathlib import Path
 from typing import Any, Dict, List, Sequence, Tuple
@@ -80,6 +81,19 @@ def _op_load_state(lib: ctypes.CDLL, args: Tuple[Any, ...]) -> None:
     _host.call(lib, "azh_load_state", _c_str(args[0]))
 
 
+def _op_read(lib: ctypes.CDLL, args: Tuple[Any, ...]) -> bytes:
+    addr, length = args
+    buf = ctypes.create_string_buffer(length)
+    _host.call(lib, "azh_read", addr, length, ctypes.cast(buf, ctypes.c_void_p))
+    return buf.raw
+
+
+def _op_write(lib: ctypes.CDLL, args: Tuple[Any, ...]) -> None:
+    addr, data = args
+    buf = ctypes.create_string_buffer(bytes(data), max(len(data), 1))
+    _host.call(lib, "azh_write", addr, len(data), ctypes.cast(buf, ctypes.c_void_p))
+
+
 def _op_stats(lib: ctypes.CDLL, args: Tuple[Any, ...]) -> Dict[str, Any]:
     return _stats(lib)
 
@@ -89,7 +103,7 @@ def _op_close(lib: ctypes.CDLL, args: Tuple[Any, ...]) -> None:
 
 
 _OPS = {"start": _op_start, "run": _op_run, "set_input": _op_set_input, "shot": _op_shot,
-        "save_state": _op_save_state, "load_state": _op_load_state, "stats": _op_stats, "close": _op_close}
+        "save_state": _op_save_state, "load_state": _op_load_state, "read": _op_read, "write": _op_write, "stats": _op_stats, "close": _op_close}
 
 
 def _serve(conn: Connection, lib: ctypes.CDLL) -> int:
@@ -127,6 +141,8 @@ def raise_nice_floor(floor: int = 10) -> int:
 def main(fd: int) -> int:
     """Worker entry: nice at least 10, faulthandler, hello (or fatal), then the request loop. Returns the exit code."""
     faulthandler.enable()
+    if len(sys.argv) > 3:               # the slot's lock fd (argv[3]): keep it here, never hand it to a child
+        os.set_inheritable(int(sys.argv[3]), False)
     conn = Connection(fd)
     try:
         raise_nice_floor()

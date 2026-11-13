@@ -6,11 +6,12 @@
 
 #include <stdint.h>
 
-#define AZH_ABI_VERSION 2
+#define AZH_ABI_VERSION 3
 
 enum { AZH_OK = 0, AZH_E_ARG = -1, AZH_E_ORDER = -2 /* call order */, AZH_E_CORE = -3, AZH_E_BOOT = -4,
        AZH_E_VULKAN = -5, AZH_E_IO = -6, AZH_E_NOMEM = -7, AZH_E_UNSUPPORTED = -8, AZH_E_NEEDS_LAZPY_CORE = -9,
-       AZH_E_SAVESTATE = -10 /* reserved for step D */ };
+       AZH_E_SAVESTATE = -10 /* reserved for step D */,
+       AZH_E_UNMAPPED = -11 /* step G: a guest page in the range is unmapped */ };
 enum { AZH_EXIT_OK = 0, AZH_EXIT_USAGE = 2, AZH_EXIT_BOOT = 3, AZH_EXIT_CORE = 4, AZH_EXIT_VULKAN = 5,
        AZH_EXIT_IO = 6, AZH_EXIT_NEEDS_LAZPY = 7 /* azhost: a debug-text stop asked of the stock core */,
        AZH_EXIT_UNSUPPORTED = 8 /* azhost: an entry point still returns AZH_E_UNSUPPORTED */,
@@ -36,6 +37,15 @@ enum { AZH_STOP_FRAMES = 0, AZH_STOP_SD_TEXT = 1, AZH_STOP_DEBUG_TEXT = 2, AZH_S
 #define AZH_SD_EVERY_DEFAULT 30
 #define AZH_MSG_MAX 256
 #define AZH_MAX_FIELDS 160
+#define AZH_MEM_MAX_LEN 0x4000000u             /* the core's cap on one guest read or write (patch 0001) */
+#define AZH_MAX_WATCH 32                       /* watch entries per batch (ABI 3, step G) */
+#define AZH_WATCH_MAX_WORDS 256                /* u32 words per entry */
+#define AZH_WATCH_EVERY_MAX 100000
+#define AZH_WATCH_AREA_OFF 696320              /* page-aligned, right after the map's pixels */
+#define AZH_WATCH_AREA_BYTES 4194304           /* header + rows (fixed 4 MiB) */
+#define AZH_WATCH_HDR_BYTES 64
+#define AZH_WATCH_ROW_HDR 16
+typedef struct { uint32_t addr, words; } azh_watch;      /* guest virtual address, u32 words to read there */
 typedef struct { char name[32]; int32_t offset, size; } azh_field;
 
 typedef struct { int32_t frame, screens, format; } azh_shot_req;      /* frame: 1-based within the batch */
@@ -48,11 +58,16 @@ typedef struct {
     char debug_text[256];                  /* step C, our core; empty in A */
     int32_t wall_limit_ms;                 /* step C; 0 in A */
     int32_t sd_from_end;                   /* 1: the SD matcher starts at the file's size when the batch starts */
+    int32_t n_watch;                       /* ABI 3: watch entries (0: no rows); our core only */
+    int32_t watch_every;                   /* one row every this many batch frames (0 means 1) */
+    azh_watch watch[AZH_MAX_WATCH];
 } azh_batch;
 
 typedef struct { int64_t frames_run, first_frame, last_frame; int32_t stop_reason, shots_done; double wall_s;
                  int64_t vblanks;                  /* guest VBlanks in this batch (input_poll_cb calls) */
                  char message[AZH_MSG_MAX];        /* the message that caused a guest stop; empty otherwise */
+                 int32_t watch_rows;               /* ABI 3: watch rows written in this batch */
+                 int32_t watch_status;             /* 0, or the first non-zero row status */
                } azh_result;
 
 /* the function azh_stats and a type azh_stats cannot share one C name, so the struct is "struct azh_stats" (plus the

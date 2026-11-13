@@ -61,6 +61,12 @@ static const struct { const char *name; int32_t offset; int32_t size; } field_ro
     { "batch.debug_text", offsetof(azh_batch, debug_text), sizeof(((azh_batch *)0)->debug_text) },
     { "batch.wall_limit_ms", offsetof(azh_batch, wall_limit_ms), sizeof(((azh_batch *)0)->wall_limit_ms) },
     { "batch.sd_from_end", offsetof(azh_batch, sd_from_end), sizeof(((azh_batch *)0)->sd_from_end) },
+    { "batch.n_watch", offsetof(azh_batch, n_watch), sizeof(((azh_batch *)0)->n_watch) },
+    { "batch.watch_every", offsetof(azh_batch, watch_every), sizeof(((azh_batch *)0)->watch_every) },
+    { "batch.watch", offsetof(azh_batch, watch), sizeof(((azh_batch *)0)->watch) },
+    { "watch.addr", offsetof(azh_watch, addr), sizeof(((azh_watch *)0)->addr) },
+    { "watch.words", offsetof(azh_watch, words), sizeof(((azh_watch *)0)->words) },
+    { "watch.__size__", 0, sizeof(azh_watch) },
     { "batch.__size__", 0, sizeof(azh_batch) },
     { "result.frames_run", offsetof(azh_result, frames_run), sizeof(((azh_result *)0)->frames_run) },
     { "result.first_frame", offsetof(azh_result, first_frame), sizeof(((azh_result *)0)->first_frame) },
@@ -70,6 +76,8 @@ static const struct { const char *name; int32_t offset; int32_t size; } field_ro
     { "result.wall_s", offsetof(azh_result, wall_s), sizeof(((azh_result *)0)->wall_s) },
     { "result.vblanks", offsetof(azh_result, vblanks), sizeof(((azh_result *)0)->vblanks) },
     { "result.message", offsetof(azh_result, message), sizeof(((azh_result *)0)->message) },
+    { "result.watch_rows", offsetof(azh_result, watch_rows), sizeof(((azh_result *)0)->watch_rows) },
+    { "result.watch_status", offsetof(azh_result, watch_status), sizeof(((azh_result *)0)->watch_status) },
     { "result.__size__", 0, sizeof(azh_result) },
     { "stats.frames", offsetof(struct azh_stats, frames), sizeof(((struct azh_stats *)0)->frames) },
     { "stats.wall_s", offsetof(struct azh_stats, wall_s), sizeof(((struct azh_stats *)0)->wall_s) },
@@ -110,6 +118,12 @@ static const struct { const char *name; int32_t offset; int32_t size; } field_ro
     { "map.pid", AZH_MAP_OFF_PID, 4 },
     { "map.exit_code", AZH_MAP_OFF_EXIT_CODE, 4 },
     { "map.pixels", AZH_MAP_HEADER, AZH_MAP_PX_SIZE },
+    { "map.watch_rows", AZH_MAP_OFF_WATCH_ROWS, 4 },
+    { "map.watch_row_bytes", AZH_MAP_OFF_WATCH_ROW_BYTES, 4 },
+    { "map.watch_words", AZH_MAP_OFF_WATCH_WORDS, 4 },
+    { "map.watch_seq", AZH_MAP_OFF_WATCH_SEQ, 4 },
+    { "map.watch_first", AZH_MAP_OFF_WATCH_FIRST, 8 },
+    { "map.watch_data", AZH_MAP_OFF_WATCH_DATA, AZH_WATCH_AREA_BYTES - AZH_WATCH_HDR_BYTES },
     { "map.__size__", 0, AZH_MAP_SIZE },
     { "const.AZH_OK", (int32_t)AZH_OK, 0 },
     { "const.AZH_E_ARG", (int32_t)AZH_E_ARG, 0 },
@@ -122,6 +136,7 @@ static const struct { const char *name; int32_t offset; int32_t size; } field_ro
     { "const.AZH_E_UNSUPPORTED", (int32_t)AZH_E_UNSUPPORTED, 0 },
     { "const.AZH_E_NEEDS_LAZPY_CORE", (int32_t)AZH_E_NEEDS_LAZPY_CORE, 0 },
     { "const.AZH_E_SAVESTATE", (int32_t)AZH_E_SAVESTATE, 0 },
+    { "const.AZH_E_UNMAPPED", (int32_t)AZH_E_UNMAPPED, 0 },
     { "const.AZH_EXIT_OK", (int32_t)AZH_EXIT_OK, 0 },
     { "const.AZH_EXIT_USAGE", (int32_t)AZH_EXIT_USAGE, 0 },
     { "const.AZH_EXIT_BOOT", (int32_t)AZH_EXIT_BOOT, 0 },
@@ -161,6 +176,14 @@ static const struct { const char *name; int32_t offset; int32_t size; } field_ro
     { "const.AZH_SD_EVERY_DEFAULT", (int32_t)AZH_SD_EVERY_DEFAULT, 0 },
     { "const.AZH_MSG_MAX", (int32_t)AZH_MSG_MAX, 0 },
     { "const.AZH_MAX_FIELDS", (int32_t)AZH_MAX_FIELDS, 0 },
+    { "const.AZH_MEM_MAX_LEN", (int32_t)AZH_MEM_MAX_LEN, 0 },
+    { "const.AZH_MAX_WATCH", (int32_t)AZH_MAX_WATCH, 0 },
+    { "const.AZH_WATCH_MAX_WORDS", (int32_t)AZH_WATCH_MAX_WORDS, 0 },
+    { "const.AZH_WATCH_EVERY_MAX", (int32_t)AZH_WATCH_EVERY_MAX, 0 },
+    { "const.AZH_WATCH_AREA_OFF", (int32_t)AZH_WATCH_AREA_OFF, 0 },
+    { "const.AZH_WATCH_AREA_BYTES", (int32_t)AZH_WATCH_AREA_BYTES, 0 },
+    { "const.AZH_WATCH_HDR_BYTES", (int32_t)AZH_WATCH_HDR_BYTES, 0 },
+    { "const.AZH_WATCH_ROW_HDR", (int32_t)AZH_WATCH_ROW_HDR, 0 },
 };
 #define FIELD_ROWS ((int32_t)(sizeof field_rows / sizeof field_rows[0]))
 _Static_assert(sizeof field_rows / sizeof field_rows[0] <= AZH_MAX_FIELDS, "fields[] is too small for the table");
@@ -198,7 +221,7 @@ int azh_abi_layout(azh_layout *out)
     out->off_msg = AZH_MAP_OFF_MSG;
     out->off_px_frame = AZH_MAP_OFF_PXFRAME;
     fill_fields(out);
-    assert(out->size_layout == sizeof(azh_layout) && out->map_size == AZH_MAP_HEADER + out->map_px_size);
+    assert(out->size_layout == sizeof(azh_layout) && out->map_size == AZH_WATCH_AREA_OFF + AZH_WATCH_AREA_BYTES);
     return AZH_OK;
 }
 
@@ -466,6 +489,8 @@ static int check_shots(const azh_batch *b)
 
 static int check_batch(const azh_batch *b)
 {
+    int rc;
+
     assert(b != NULL);
     if (b->frames < 1 || b->frames > 100000000) {
         return azh_fail(AZH_E_ARG, "azh_run: frames must be 1 to 100,000,000");
@@ -473,7 +498,8 @@ static int check_batch(const azh_batch *b)
     if (check_shots(b) != AZH_OK) {
         return AZH_E_ARG;
     }
-    return check_stop_rules(b);
+    rc = check_stop_rules(b);
+    return (rc != AZH_OK) ? rc : azh__watch_check(b);
 }
 
 int azh_run(const int32_t *inputs, int32_t n, const azh_batch *b, azh_result *out)
@@ -527,33 +553,32 @@ int azh_load_state(const char *path)
     return azh__state_load(path);
 }
 
-/* memory access needs our patched core; the stock core says so */
-static int memory_gate(void)
+/* the order and core checks of a memory call: after boot like azh_shot, and our core only */
+static int memory_gate(const char *who)
 {
+    assert(who != NULL);
     assert(azh_g.phase >= AZH_PH_NONE && azh_g.phase <= AZH_PH_DEAD);
-    if (azh_g.phase == AZH_PH_NONE) {
-        return azh_fail(AZH_E_ORDER, "memory access needs azh_open first");
+    if (azh_g.phase != AZH_PH_BOOTED) {
+        return azh_fail(AZH_E_ORDER, "%s: needs a successful azh_boot", who);
     }
     if (azh_g.is_lazpy == 0) {
         return azh_fail(AZH_E_NEEDS_LAZPY_CORE, "guest memory access needs the libazahar core (this core is stock)");
     }
-    return azh_fail(AZH_E_UNSUPPORTED, "guest memory access arrives in step G");
+    return AZH_OK;
 }
 
 int azh_read(uint32_t addr, uint32_t len, void *buf)
 {
-    (void)addr;
-    (void)len;
-    (void)buf;
-    return memory_gate();
+    int rc = memory_gate("azh_read");
+
+    return (rc != AZH_OK) ? rc : azh__mem_read(addr, len, buf);
 }
 
 int azh_write(uint32_t addr, uint32_t len, const void *buf)
 {
-    (void)addr;
-    (void)len;
-    (void)buf;
-    return memory_gate();
+    int rc = memory_gate("azh_write");
+
+    return (rc != AZH_OK) ? rc : azh__mem_write(addr, len, buf);
 }
 
 int azh_set_input(const int32_t rec[AZH_INPUT_INTS])

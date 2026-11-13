@@ -2,9 +2,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Dict
+import struct
+from typing import Dict, Tuple
 
-__all__ = ["Shot", "RunResult", "SaveInfo", "Stats"]
+__all__ = ["Shot", "WatchRow", "RunResult", "SaveInfo", "Stats"]
 
 
 @dataclass(frozen=True)
@@ -14,6 +15,21 @@ class Shot:
     frame: int
     top: str
     bottom: str
+
+
+@dataclass(frozen=True)
+class WatchRow:
+    """One row of a batch's watch list: the absolute frame it was read after, the row status (0, or an AZH_E_* code of
+    the first entry that failed), and one ``bytes`` per watch entry in list order (a failed entry reads as zeros).
+    The guest may be part-way into a frame when a row is read, so a multi-field record can be torn."""
+
+    frame: int
+    status: int
+    data: Tuple[bytes, ...]
+
+    def u32(self, entry: int, word: int = 0) -> int:
+        """The little-endian u32 at ``word`` of watch entry ``entry``."""
+        return int(struct.unpack_from("<I", self.data[entry], 4 * word)[0])
 
 
 @dataclass(frozen=True)
@@ -30,6 +46,7 @@ class RunResult:
     wall_s: float
     message: str = ""
     shots: Dict[int, Shot] = field(default_factory=dict)
+    watch: Tuple[WatchRow, ...] = ()
 
 
 @dataclass(frozen=True)

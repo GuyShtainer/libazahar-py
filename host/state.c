@@ -496,7 +496,7 @@ int azh__state_boot(const char *app, const char *state_path)
         return rc;                                     /* before any frame */
     }
     for (i = 0; i < STATE_WARMUP_FRAMES; i++) {
-        rc = azh__run_one_frame();
+        rc = azh__run_one_frame(NULL);
         if (rc != AZH_OK) {
             return rc;
         }

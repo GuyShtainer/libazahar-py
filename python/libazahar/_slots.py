@@ -20,7 +20,7 @@ from typing import Optional
 
 from .errors import HostTimeout
 
-__all__ = ["DEFAULT_CAP", "Slot", "SlotTimeout", "LoadWarning", "slot_dir", "cap", "acquire", "warn_if_loaded"]
+__all__ = ["DEFAULT_CAP", "Slot", "SlotTimeout", "LoadWarning", "slot_dir", "cap", "acquire", "warn_if_loaded", "waited_in"]
 
 DEFAULT_CAP = 2                 # provisional (light scene), from tools/speed_table.py cap_rule, docs/research/speed-table-e.md
 MAX_CAP = 64
@@ -99,6 +99,15 @@ class Slot:
 
     def __exit__(self, *exc: object) -> None:
         self.release()
+
+
+def waited_in(workdir: Path) -> float:
+    """The seconds an Emulator waited for its slot, from ``<workdir>/slot.txt`` (0.0 when the file is missing)."""
+    try:
+        text = (Path(workdir) / "slot.txt").read_text()
+    except FileNotFoundError:
+        return 0.0
+    return float(dict(part.split("=", 1) for part in text.split())["waited_s"])
 
 
 def warn_if_loaded(stacklevel: int = 3) -> None:

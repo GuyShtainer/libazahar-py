@@ -15,7 +15,6 @@ static azh_held held;                   /* the held input state; written only be
 static int64_t vblanks_total;           /* input_poll_cb calls since boot */
 static pthread_t run_thread;            /* the thread inside retro_run, for the callbacks' assert */
 static int run_active;
-static int64_t last_run_ns;             /* wall of the last retro_run call (azh__run_one_frame) */
 
 static int16_t input_state_cb(unsigned port, unsigned device, unsigned index, unsigned id)
 {
@@ -108,7 +107,7 @@ static int check_first_frame(void)
     return AZH_OK;
 }
 
-int azh__run_one_frame(void)
+int azh__run_one_frame(int64_t *run_ns)
 {
     int rc = AZH_OK;
     int64_t t_run;
@@ -120,7 +119,9 @@ int azh__run_one_frame(void)
     run_active = 1;
     t_run = now_ns();
     azh_g.core.run();
-    last_run_ns = now_ns() - t_run;
+    if (run_ns != NULL) {
+        *run_ns = now_ns() - t_run;         /* wall of the retro_run call */
+    }
     run_active = 0;
     azh_g.abs_frames++;
     if (azh_g.first_run_done == 0) {
@@ -281,6 +282,7 @@ static int batch_init(batch_t *c, const int32_t *in, int32_t n, const azh_batch 
         azh__log_set_debug_stop(b->debug_text);
         c->debug_on = 1;
     }
+    azh__watch_begin(b);
     return AZH_OK;
 }
 
@@ -366,14 +368,18 @@ static int run_frames(batch_t *c)
     int sd_error = 0;
     int stop = -1;
     int64_t t_shot;
+    int64_t run_ns = 0;
 
     c->out->first_frame = azh_g.abs_frames + 1;
     for (i = 1; i <= b->frames && stop < 0 && rc == AZH_OK && sd_error == 0; i++) {
         apply_inputs(c, i);
-        rc = azh__run_one_frame();
-        c->core_ns += last_run_ns;
+        rc = azh__run_one_frame(&run_ns);
+        c->core_ns += run_ns;
         c->out->frames_run = i;
         c->out->vblanks = azh__vblanks_total() - v0;
+        if (rc == AZH_OK) {
+            azh__watch_row(b, i);
+        }
         if (rc == AZH_OK && i >= c->lo && i <= c->hi) {
             t_shot = now_ns();
             rc = take_shots(b, i, &c->out->shots_done);
@@ -387,6 +393,9 @@ static int run_frames(batch_t *c)
         rc = azh_fail(AZH_E_IO, "azh_run: cannot read the SD file %s", c->sd_path);
     }
     c->out->stop_reason = (stop < 0) ? AZH_STOP_FRAMES : stop;
+    if (rc == AZH_OK) {
+        azh__watch_finish(b, (int32_t)c->out->frames_run, c->out);
+    }
     return rc;
 }
 

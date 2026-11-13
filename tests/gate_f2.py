@@ -434,7 +434,9 @@ def r2_chain(a, c: int) -> dict:
     out["copied"] = tree_files(wd / "b" / "sys") + tree_files(wd / "b" / "sys" / "Azahar")
     t0 = time.monotonic()
     emu_b = Emulator(app, wd / "b", state=wd / "s.state", core=a.ours)
-    out["t_state"] = time.monotonic() - t0
+    from libazahar import _slots
+    out["slot_wait_b"] = _slots.waited_in(wd / "b")
+    out["t_state"] = time.monotonic() - t0 - out["slot_wait_b"]
     try:
         snap = (Path(f"{wd / 's.state'}.sd") / LOG).stat().st_size
         shots_b = emu_b.run(300, shots=[100, 300]).shots
@@ -464,7 +466,7 @@ def scen_r2(a) -> None:
     check("r2.b", b1["b_lines"] == b2["b_lines"] and b1["b_shots"] == b2["b_shots"] and len(b1["b_lines"]) > 200,
           f"restored instances: {len(b1['b_lines'])} vs {len(b2['b_lines'])} log lines, shots equal {b1['b_shots'] == b2['b_shots']}")
     for c, ch in enumerate(chains, start=1):
-        check(f"r2.{c}.t_state", ch["t_state"] < T_STATE_BOUND, f"t_state={ch['t_state']:.2f} s (bound {T_STATE_BOUND}) load={os.getloadavg()}")
+        check(f"r2.{c}.t_state", ch["t_state"] < T_STATE_BOUND, f"t_state={ch['t_state']:.2f} s (bound {T_STATE_BOUND}) slot_wait={ch['slot_wait_b']:.2f} s load={os.getloadavg()}")
         record(f"r2.{c}", f"a==b {ch['a_lines'] == ch['b_lines']} (lines), shots equal {ch['a_shots'] == ch['b_shots']}; k={ch['k']}; {ch['load_line']}")
         record(f"r2.{c}", f"copied into b/sys: {ch['copied']}")
     s1, s2 = b1["state"], b2["state"]
