@@ -3,7 +3,11 @@
  * per-frame watch rows written into the map's watch area (docs/plans/phase-g.md 3.3). Everything runs on the thread
  * that calls retro_run, between frames. The pure checks are in watch.c. */
 #include <assert.h>
+#ifdef _WIN32
+#include "plat/win_compat.h"
+#else
 #include <dlfcn.h>
+#endif
 #include <stdint.h>
 #include <string.h>
 

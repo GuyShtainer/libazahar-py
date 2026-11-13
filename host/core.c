@@ -1,6 +1,10 @@
 /* core.c: dlopen the core, bind its 25 retro_* symbols, check name and version, install the callbacks. */
 #include <assert.h>
+#ifdef _WIN32
+#include "plat/win_compat.h"
+#else
 #include <dlfcn.h>
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

@@ -4,13 +4,21 @@
  * Sync rule for the readback (the core passes no semaphores): lock the queue mutex, wait for the queue to go idle,
  * barrier the image to TRANSFER_SRC, copy to the host buffer, barrier back, submit, wait idle, unlock. */
 #include <assert.h>
+#ifdef _WIN32
+#include "plat/win_compat.h"
+#else
 #include <dlfcn.h>
+#endif
 #include <stdlib.h>
 #include <string.h>
 
 #include "azh_internal.h"
 
+#ifdef _WIN32
+#define MVK_DEFAULT_PATH "vulkan-1.dll"
+#else
 #define MVK_DEFAULT_PATH "dl/moltenvk/MoltenVK/MoltenVK/dynamic/dylib/macOS/libMoltenVK.dylib"
+#endif
 #define MAX_GPUS 8u
 
 /* ---------- the proc tables, filled once, every entry checked ---------- */
@@ -200,7 +208,11 @@ static int open_loader(azh_vk *v)
     if (path == NULL || *path == '\0') {
         path = MVK_DEFAULT_PATH;
     }
+#ifdef _WIN32
+    v->dl = azh_win_dlopen(path, 1);                 /* the loader comes from system32 only */
+#else
     v->dl = dlopen(path, RTLD_NOW | RTLD_LOCAL);
+#endif
     if (v->dl == NULL) {
         const char *e = dlerror();
 

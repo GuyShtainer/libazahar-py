@@ -16,6 +16,13 @@
 
 #include "azh_pure.h"
 #include "azhost.h"
+#ifdef _WIN32
+#include "plat/win_compat.h"
+#define AZH_FMT gnu_printf
+#else
+#define AZH_O_BINARY 0
+#define AZH_FMT printf
+#endif
 
 /* ---- host.map layout (hostmap.c) ---- */
 #define AZH_MAP_HEADER 4096u
@@ -189,12 +196,12 @@ typedef struct {
 extern azh_state azh_g;
 
 /* error text (api.c) */
-int azh_fail(int code, const char *fmt, ...) __attribute__((format(printf, 2, 3)));
+int azh_fail(int code, const char *fmt, ...) __attribute__((format(AZH_FMT, 2, 3)));
 
 /* log.c */
 int azh_log_open(const char *path);
 void azh_log_close(void);
-void azh_log(int level, const char *fmt, ...) __attribute__((format(printf, 2, 3)));
+void azh_log(int level, const char *fmt, ...) __attribute__((format(AZH_FMT, 2, 3)));
 void azh_core_log(enum retro_log_level level, const char *fmt, ...);
 
 /* hostmap.c */

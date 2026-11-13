@@ -53,4 +53,19 @@ build/test-host: $(TEST_SRC) $(HEADERS) $(wildcard tests/host/*.h)
 clean:
 	rm -rf build/libazhost.dylib build/azhost build/test-version build/test-host build/obj
 
-.PHONY: all check test-version test-host testapp clean
+.PHONY: all check test-version test-host testapp clean win64
+
+# Windows probe host (branch probe-win): "azhost.exe run" and "layout" only, one static exe, mingw-w64 (posix threads).
+#   make win64 [ZLIB_PREFIX=<prefix of a mingw-built zlib>]
+# State, SD seeding and the tree walk live in host/plat/win_stubs.c and return AZH_E_UNSUPPORTED.
+WIN_CC ?= x86_64-w64-mingw32-gcc-posix
+ZLIB_PREFIX ?= $(HOME)/3ds/zlib-mingw
+WIN_SRC = $(filter-out host/azhost_main.c host/sdcopy.c host/state.c host/statemeta.c,$(wildcard host/*.c)) $(wildcard host/plat/*.c)
+WIN_CFLAGS = -std=gnu11 -D__USE_MINGW_ANSI_STDIO=1 -O2 -g -Wall -Wextra -Werror -Wshadow -Wstrict-prototypes -Wmissing-prototypes \
+             -isystem vendor -isystem vendor/include -isystem $(ZLIB_PREFIX)/include -Ihost -Ihost/plat
+
+win64: build/win64/azhost.exe
+
+build/win64/azhost.exe: $(WIN_SRC) host/azhost_main.c $(HEADERS) $(wildcard host/plat/*.h)
+	@mkdir -p build/win64
+	$(WIN_CC) $(WIN_CFLAGS) -o $@ host/azhost_main.c $(WIN_SRC) -static -static-libgcc -L$(ZLIB_PREFIX)/lib -lz -lpsapi -lm

@@ -6,6 +6,11 @@
 #include <string.h>
 
 #include "azh_pure.h"
+#ifdef _WIN32
+#include "plat/win_compat.h"
+#else
+#define AZH_O_BINARY 0
+#endif
 
 #define SCAN_MAX 1048576u
 #define FATAL_PREFIX "Fatal Error encountered ("

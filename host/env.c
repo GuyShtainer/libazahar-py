@@ -6,6 +6,9 @@
 #include <unistd.h>
 
 #include "azh_internal.h"
+#ifdef _WIN32
+#include "plat/win_compat.h"
+#endif
 
 azh_msgstate azh_msgs;      /* the guest-message state of the current retro_run (run.c reads it) */
 
@@ -53,7 +56,11 @@ static void exit_path(int stop_code, int exit_code)
     if (fd >= 0) {
         (void)write(fd, line, sizeof line - 1u);     /* nowhere to report a failed log write */
     }
+#ifdef _WIN32
+    azh_win_exit(exit_code);
+#else
     _exit(exit_code);
+#endif
 }
 
 /* one guest message, handed in full to the detector; only a booted host in a retro_run gets here */

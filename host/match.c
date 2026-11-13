@@ -8,6 +8,11 @@
 #include <unistd.h>
 
 #include "azh_pure.h"
+#ifdef _WIN32
+#include "plat/win_compat.h"
+#else
+#define AZH_O_BINARY 0
+#endif
 
 #define CHUNK 65536u
 
@@ -128,7 +133,7 @@ int azh__match_poll_file(azh_matcher *m, const char *path)
     if ((int64_t)st.st_size == m->offset) {
         return 0;
     }
-    fd = open(path, O_RDONLY);
+    fd = open(path, O_RDONLY | AZH_O_BINARY);
     if (fd < 0) {
         return (errno == ENOENT) ? 0 : AZH_E_IO;
     }
