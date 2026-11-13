@@ -62,3 +62,9 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   ("count Gen3D as 'not tested'" until then). Gate 2 is held for that lane (rule T): its runner waits for a flag the
   main loop sets on Gen3D's "lane done", then for the quiet-load gate. My gate 3/4 run (11:03-11:05) overlapped
   Gen3D's probe before its message came; Gen3D was told.
+- 2026-11-13 11:13: gate 6 holds on the branch (docs_check 0 FAIL, map_check OK); NOTICES.md regenerated for lazpy.2
+  (only the patch hashes and a 0009 row changed), branch commit 6eacf41.
+- 2026-11-13 11:17: gate 2 in the worktree dropped on phase 6 review 2's hour-saving (that core is replaced by main's
+  build; the full suite runs on the final core in phase 6's V7); its held runner was stopped before it ran anything.
+  3DPlatinum's A4 moves to the final core (phase 6's V6). Step K closes with phase 6's V0b (merge, main build, gate 1
+  and the live tests on main).

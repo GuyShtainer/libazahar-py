@@ -1,7 +1,7 @@
 <!-- handoff: slim v1 | current tasks only | rewritten whole from docs/status/templates/handoff.md | budget 80 lines | never append -->
 # libazahar-py handoff
 
-As of: 2026-11-13 11:09 (this project's own session)
+As of: 2026-11-13 11:21 (this project's own session)
 
 This file lives in docs/status/lazpy/1-in-progress/, beside its item files. It holds only what
 the next session needs to act now, and points at the rest. Goals, rules, decisions and history live elsewhere.
@@ -9,37 +9,32 @@ the next session needs to act now, and points at the rest. Goals, rules, decisio
 ## Running now
 | What | Where | Agent id | It stops when |
 |---|---|---|---|
-| Step K gate 2 runner (laz-510): waits for the flag k-gate2.go in this session's scratchpad (set on Gen3D's "lane done"), then the quiet-load gate, then make test-host and the full pytest on lazpy.2 | ../libazahar-py-k, branch core-rev2; log runs/k/gate2.log there | main | it prints pytest rc |
-| v1.0.0 plan review 2 (laz-600), read-only opus | `docs/plans/phase-v1.md` revision 1 | ad9c5acb09a5871bc | it reports; save it as docs/reviews/phase-v1-review-2.md |
+| 1.0 API freeze review (laz-610), read-only opus | ../libazahar-py-k, branch core-rev2 | a5a4eeb6772bd50c9 | it reports; save it as docs/reviews/api-freeze-1.0.md, then code its changes on the branch once 3DPlatinum says "left the worktree" |
 
 Guy asked for v1.0.0 (item laz-600, `docs/plans/phase-v1.md`): it replaces the never-published v0.1.0 and step K is
 its step V0, so step K merges before the release, not after a v0.1.0 tag.
 
 ## Next steps, in order
-0. v1.0.0 plan: save review 2, revision 2, then V1's API review (opus, one at a time) and V5, then the steps in
-   `docs/plans/phase-v1.md` section 4's order (review 1: `docs/reviews/phase-v1-review-1.md`).
-1. Step K: gates 1, 3 and 4 passed (item laz-510's notes). Left: gate 2 (the runner above; on Gen3D's "lane done",
-   `touch` the flag), gate 6 (docs and map checks on the branch), NOTICES.md (tools/mknotices.py) and STATUS.md on the
-   branch, 3DPlatinum's A4 numbers, Gen3D's smoke numbers. Then merge (plan V0). Never run tools/fetch.sh in the
-   worktree (its dl/ parts link to MAIN).
-2. Release: wait for Guy (below): R1, then G5-G7. (Re-staged at cd30086, 16 of 16, clone ok: item 420's
-   Evidence; the later step K plan commits make the build-files asset stale again: re-stage at the tagged commit.)
-3. On his word (phase-i.md 8.2): at the commit to be tagged, re-run `sh tools/mkrelease.sh v0.1.0` and
-   `python3 -I tools/release_check.py runs/release/v0.1.0 --pre-push` with LAZ_PRIVATE_NEEDLES (the private replace
-   file plus the needles); it must be 16 of 16 (the re-audit's S4: check 10 compares with HEAD). Tag v0.1.0 there,
-   push main and the tag only, upload the staged assets as a draft release for Guy to publish.
-4. After Guy publishes: I5 (phase-i.md 6: download the release, `shasum -c`, clone_check against GitHub,
-   memory_watch), items 420 and 400 to 5-done, then delete the three private history bundles.
+0. v1.0.0: `docs/plans/phase-v1.md` revision 2 (both reviews answered) is the plan; follow section 4's order. Now:
+   V5's CI workflow (item laz-650) while the API review runs; then V1's changes on the branch; then V0b (merge and
+   main build, after 11:55 when Gen3D's timed soak ends; Gen3D needs no hold, 3DPlatinum's OK is asked first).
+1. Step K (laz-510) closes inside V0b: its gates 1, 3, 4 and 6 passed in the worktree; gate 2 there was dropped
+   (item notes). Never run tools/fetch.sh in the worktree (its dl/ parts link to MAIN).
+2. Release v1.0.0 (not v0.1.0): V8 and V9 of `docs/plans/phase-v1.md` (staging, the legal re-audit, 16 of 16 on the
+   final HEAD), then Guy's word for the tag and push (below).
+3. After Guy publishes: I5 (`docs/plans/phase-i.md` section 6) against v1.0.0, items 420, 400, 510 and 600 closed,
+   then delete the three private history bundles.
+4. V6: Gen3D and 3DPlatinum run their real suites on main's final core (sha256 sent to them); both answers are needed
+   before staging.
 5. Answer asks from Gen3D (3ds-toolkit-1c) and 3DPlatinum (3ds-toolkit-f4; the session named "3DP" is a progress
    test helper): both were told on 2026-11-13 to use only libazahar-py. 3DPlatinum switched (smoke: 600 frames in
    0.3 s); its sound lane will ask for an audio route (audio output is not built), with a repro, when that lane nears.
 
 ## Waiting on Guy (only what blocks a step above)
-- The audit's R1: accept core/PIN's default build route (it downloads Azahar's unchanged tarball and deletes the
-  key and certificate headers before compiling) for v0.1.0, with PIN-nokeys the default at the next LAZPY_REV
-  (docs/reviews/release-legal-audit-v0.1.0.md, remediation 6).
+- The audit's R1 (core/PIN's default build route) is settled by v1.0.0 if Guy keeps the default: PIN-nokeys is the
+  default route (`docs/plans/phase-v1.md` D2). Guy may overrule any of D1-D6 there.
 - Phase 4's G5-G7 (repo creation, the word "push", publishing the draft), G9 (spike 2's game: default say
-  nothing), and whether macOS 11-14 users matter for v0.1.0 (default: "macOS 15 or later"): item 400's notes.
+  nothing), and whether macOS 11-14 users matter (default D4: "macOS 15 or later"), now for v1.0.0: item 400's notes.
 - Phase 4's Q1-Q9 (docs/plans/phase-4.md section 7); Q1 took its default (the stock-core download is removed, and
   history no longer holds it).
 The full list is generated into `docs/status/README.md`.

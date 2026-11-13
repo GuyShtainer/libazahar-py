@@ -32,3 +32,9 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   Python are one unit (the layout check refuses a mix); main's rebuild needs the PIN-nokeys URL moved to v1.0.0 and
   the nokeys tarball copied into dl/ first; the merge itself waits until Gen3D and 3DPlatinum run nothing.
 - Guy, 2026-11-13 (during step K's gates): "Dont forget to use the gen3d and 3dp agents for real live testings" (V6).
+- 2026-11-13 11:17: review 2 saved (`docs/reviews/phase-v1-review-2.md`); revision 2 answers it and is the plan
+  work follows. The API review (V1, item laz-610) runs; 3DPlatinum was asked to leave the worktree before V1's edits.
+- 2026-11-13 11:20, Gen3D (3ds-toolkit-1c), verbatim: "nothing in Gen3D uses main's libazahar-py right now. the GBA game's
+  lane runs on the old Azahar app ... so you can merge and rebuild main whenever you like. The only cost is CPU load
+  during our timed soak, which runs until about 11:55. A heavy build before then could add a frame gap. After that,
+  build freely." So V0b's core build starts after 11:55.

@@ -29,6 +29,8 @@ publish-ready. What to do this hour: `docs/status/lazpy/1-in-progress/HANDOFF.md
 - in-progress: `docs/status/lazpy/1-in-progress/500-phase-5-user-asks.md`
 - in-progress: `docs/status/lazpy/1-in-progress/510-step-k-core-rev-2.md`
 - in-progress: `docs/status/lazpy/1-in-progress/600-phase-6-v1-release.md`
+- in-progress: `docs/status/lazpy/1-in-progress/610-step-v1-api-freeze.md`
+- in-progress: `docs/status/lazpy/1-in-progress/650-step-v5-ci-workflow.md`
 - files: 0 in `3-waiting-on-guy/`, 0 in `4-not-started/`, 22 in `5-done/`, 0 in `6-parked/`
 <!-- generated:end -->
 
