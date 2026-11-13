@@ -53,3 +53,16 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
 - 2026-11-13 19:20, the PC worker (3ds-toolkit-11), told of the G8d rewrite, verbatim: "noted. Nothing will be pushed
   or merged from the old history. I'll rebase port-linux onto the new main (via docs/commit-map-g8d.tsv) when you
   say v1.0.0 is tagged, and re-run the Mac no-regression check then."
+- 2026-11-13 21:28, the PC worker (3ds-toolkit-11): Guy chose (20:07) to plan a native-Windows port (toolkit
+  docs/pc-worker/NATIVE-PLAN-v2.md, in review). It runs the same model as port-linux: Windows code only under _WIN32
+  and host/plat/, Darwin blocks verbatim, DEFAULT_CAP unchanged, handed to us as a branch, nothing published. Its
+  questions and our answers, in short: (1) 0537394 is not yet the v1.0.0 commit (the push is held). Cut on it; no
+  change under host/, python/, core/, tools/, tests/, testapp/, examples/, Makefile, pyproject.toml or .github/ until
+  the tag. (2) A private DLL on Guy's PC before our review: yes, if it is built from PIN-nokeys with our patches
+  unchanged, keyblob_findings is empty, and its sha256 is recorded; it is never copied off his PC. (3) A slot lock as
+  an exclusive Windows handle inherited by the worker: yes, if it is inherited only into that worker, kept from the
+  worker's children and not held by the parent, and a hard-kill test gets the slot back. (4) O_BINARY at the 8 sites,
+  0 by default in one plat header, with a grep check. (5) TerminateProcess after the close reply is written, exit
+  code 0: yes. (6) A build-only Windows CI job in its own file, non-blocking: yes. LAZ_VK_DEVICE: yes, if the default
+  stays the first device, a value that matches nothing fails with a clear error, the chosen device is reported, and
+  USING documents it.
