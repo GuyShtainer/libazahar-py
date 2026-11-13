@@ -7,7 +7,7 @@ from typing import Optional
 from . import _abi
 
 __all__ = ["LibAzaharError", "BootError", "GuestError", "HostTimeout", "HostCrashed", "StateError",
-           "NeedsLazpyCore", "HostError", "HostCallError", "from_code"]
+           "NeedsLazpyCore", "GuestMemoryError", "HostError", "HostCallError", "from_code"]
 
 
 class LibAzaharError(Exception):
@@ -78,6 +78,16 @@ class NeedsLazpyCore(LibAzaharError):
     """The call needs our patched core (AZH_E_NEEDS_LAZPY_CORE)."""
 
 
+class GuestMemoryError(LibAzaharError):
+    """A guest address range has an unmapped page (AZH_E_UNMAPPED). A read or write is all-or-nothing, so a failed write
+    changed nothing. ``addr`` and ``length`` are the request (None when unknown)."""
+
+    def __init__(self, message: str, addr: Optional[int] = None, length: Optional[int] = None) -> None:
+        super().__init__(message)
+        self.addr = addr
+        self.length = length
+
+
 class HostError(LibAzaharError):
     """Wrong call order, I/O, memory, an unsupported call, an ABI mismatch or a missing host."""
 
@@ -101,4 +111,6 @@ def from_code(code: int, text: str, during_start: bool = False) -> Exception:
         return StateError(text)
     if code == _abi.AZH_E_NEEDS_LAZPY_CORE:
         return NeedsLazpyCore(text)
+    if code == _abi.AZH_E_UNMAPPED:
+        return GuestMemoryError(text)
     return HostError(text)

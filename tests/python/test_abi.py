@@ -35,7 +35,7 @@ def test_wrong_size_layout_is_caught_before_rows(layout):
 
 def test_wrong_abi(layout):
     bad = copy(layout)
-    bad.abi = 3
+    bad.abi = 4
     with pytest.raises(HostError, match="abi"):
         _abi.check_layout(bad)
 

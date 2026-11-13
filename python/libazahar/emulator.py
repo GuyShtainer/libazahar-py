@@ -11,7 +11,8 @@ from . import _abi, _paths
 from ._client import Wait, WorkerClient, reap_process
 from .errors import GuestError, HostError
 from .inputs import Buttons, Circle, Held, Item, Touch, _TouchUp, apply_item, check_buttons, fold, held_after
-from .results import RunResult, SaveInfo, Shot, Stats
+from .memory import Memory
+from .results import RunResult, SaveInfo, Shot, Stats, WatchRow
 
 __all__ = ["Emulator"]
 
@@ -72,6 +73,7 @@ class Emulator:
             raise ValueError("sd_seed must not be named 'sdmc' (pass the folder whose contents become the SD card)")
         self._held = Held()
         self._is_lazpy = False
+        self._memory: Optional[Memory] = None
         self._shots_dir = self.workdir / "shots"
         self._sd = self.workdir / "sys" / "Azahar" / "sdmc"
         for folder in (self._sd, self._shots_dir):
@@ -127,6 +129,18 @@ class Emulator:
         hostmap = self._client.host_map()
         return hostmap.frame_total() if hostmap is not None else self._client.final_frame_total
 
+    @property
+    def memory(self) -> Memory:
+        """Guest memory by virtual address (our core only): ``read``, ``write``, ``u32(addr)``, ``raw_read``."""
+        if self._memory is None:
+            self._memory = Memory(self._memory_request)
+        return self._memory
+
+    def _memory_request(self, op: str, args: tuple) -> object:
+        self._live()
+        _, payload = self._client.request(op, args, Wait(total=self.timeout))
+        return payload
+
     def _live(self) -> None:
         if self._client.closed:
             raise HostError("the emulator is closed")
@@ -135,7 +149,8 @@ class Emulator:
     def run(self, frames: int, inputs: Iterable[Tuple[int, Item]] = (), shots: Iterable[int] = (), *,
             stop_file: Optional[str] = None, stop_text: Optional[str] = None, stop_every: int = 30,
             stop_new: bool = False, debug_text: Optional[str] = None, wall_limit: Optional[float] = None,
-            timeout: Optional[float] = None) -> RunResult:
+            timeout: Optional[float] = None, watch: Optional[Sequence[Tuple[int, int]]] = None,
+            watch_every: int = 1) -> RunResult:
         """Run ``frames`` guest frames (one frame = one guest VBlank, 1-based within the batch).
 
         ``inputs`` are ``(frame, item)`` pairs; an item is Buttons/int (the whole button mask), ``Touch(x, y)``,
@@ -144,7 +159,11 @@ class Emulator:
         ``shots`` are batch frames to save as PNG (``result.shots[f]``). ``stop_file`` (relative to the SD folder) with
         ``stop_text`` stops the batch when the file holds the text, checked every ``stop_every`` frames and after the
         last; ``stop_new`` looks only at text written after the batch starts. ``debug_text`` needs our core.
-        ``wall_limit`` is in seconds. ``timeout`` replaces the heartbeat timeout for this call. Returns a RunResult;
+        ``wall_limit`` is in seconds. ``watch`` (our core only) is a list of ``(addr, words)`` pairs: after every
+        ``watch_every``-th frame (and after the last frame run) the host reads each entry (``words`` u32 words at guest
+        address ``addr``) into ``result.watch``, a tuple of ``WatchRow``; the host refuses a batch whose rows do not
+        fit and says the largest frame count that does. The guest may be part-way into a frame at each read.
+        ``timeout`` replaces the heartbeat timeout for this call. Returns a RunResult;
         a guest exit gives ``stopped_by == "guest_exited"`` and a closed Emulator on both cores (on our core the
         worker is shut down cleanly after the result is built). On the stock core the exit result has ``wall_s`` 0.0 and
         no ``shots`` even if PNGs were written before the exit. A guest crash raises GuestError (with
@@ -155,6 +174,7 @@ class Emulator:
         self._live()
         batch, shot_frames = self._build_batch(frames, shots, stop_file, stop_text, stop_every, stop_new,
                                                debug_text, wall_limit)
+        watch_sizes = self._fill_watch(batch, watch, watch_every)
         prev = self._held
         records, _ = fold(inputs, frames, prev)
         before = self.frame_total
@@ -167,7 +187,7 @@ class Emulator:
                                vblanks=payload["vblanks"], wall_s=0.0, message=payload["message"])
             self.close()
             return result
-        result = self._result(_abi.Result.from_buffer_copy(payload), shot_frames, before)
+        result = self._result(_abi.Result.from_buffer_copy(payload), shot_frames, before, watch_sizes)
         self._held = held_after(records, result.frames, prev)
         if result.stopped_by == "guest_error":
             raise GuestError(result.message or "the guest stopped with a fatal error", result)
@@ -219,7 +239,48 @@ class Emulator:
                 raise ValueError("wall_limit must be positive seconds")
             batch.wall_limit_ms = max(1, int(wall_limit * 1000))
 
-    def _result(self, raw: _abi.Result, shot_frames: List[int], before: int) -> RunResult:
+    @staticmethod
+    def _fill_watch(batch: _abi.Batch, watch: Optional[Sequence[Tuple[int, int]]], every: int) -> List[int]:
+        """Shape checks only (the host's plan checks the rest); returns the words of each entry."""
+        entries = [] if watch is None else list(watch)
+        if len(entries) > _abi.AZH_MAX_WATCH:
+            raise ValueError(f"watch: at most {_abi.AZH_MAX_WATCH} entries")
+        if isinstance(every, bool) or not isinstance(every, int) or every < 0:
+            raise ValueError("watch_every must be an integer >= 0")
+        words: List[int] = []
+        for entry in entries:
+            if (not isinstance(entry, (tuple, list)) or len(entry) != 2
+                    or any(isinstance(v, bool) or not isinstance(v, int) for v in entry)):
+                raise ValueError(f"watch entry {entry!r} must be an (addr, words) pair of integers")
+            addr, count = entry
+            if not 0 <= addr < (1 << 32) or not 0 <= count < (1 << 32):
+                raise ValueError(f"watch entry {entry!r}: addr and words must fit an unsigned 32-bit integer")
+            words.append(count)
+        batch.n_watch = len(entries)
+        batch.watch_every = min(every, 0x7FFFFFFF)
+        for index, (addr, count) in enumerate(entries):
+            batch.watch[index].addr = addr
+            batch.watch[index].words = count
+        return words
+
+    def _watch_rows(self, count: int, words: List[int]) -> Tuple[WatchRow, ...]:
+        """The rows of the batch just run, copied out of the map and split per entry."""
+        if count <= 0:
+            return ()
+        hostmap = self._client.host_map()
+        if hostmap is None:
+            raise HostError("the map is gone: the watch rows cannot be read")
+        rows: List[WatchRow] = []
+        for frame, status, blob in hostmap.watch_copy(count):
+            parts, at = [], 0
+            for n in words:
+                parts.append(blob[at:at + 4 * n])
+                at += 4 * n
+            rows.append(WatchRow(frame, status, tuple(parts)))
+        return tuple(rows)
+
+    def _result(self, raw: _abi.Result, shot_frames: List[int], before: int,
+                watch_sizes: Optional[List[int]] = None) -> RunResult:
         done: Dict[int, Shot] = {}
         for frame in shot_frames[:raw.shots_done]:
             stem = self._shots_dir / f"shot_{before + frame:06d}"
@@ -227,17 +288,18 @@ class Emulator:
         return RunResult(frames=raw.frames_run, stopped_by=_abi.STOP_NAMES.get(raw.stop_reason, str(raw.stop_reason)),
                          first_frame=raw.first_frame, last_frame=raw.last_frame, frame_total=self.frame_total,
                          vblanks=raw.vblanks, wall_s=raw.wall_s, message=raw.message.decode("utf-8", "replace"),
-                         shots=done)
+                         shots=done, watch=self._watch_rows(raw.watch_rows, watch_sizes or []))
 
     def run_until(self, file: str, text: str, max_frames: int, *, every: int = 30, new_only: bool = False,
                   inputs: Iterable[Tuple[int, Item]] = (), shots: Iterable[int] = (),
-                  timeout: Optional[float] = None) -> RunResult:
+                  timeout: Optional[float] = None, watch: Optional[Sequence[Tuple[int, int]]] = None,
+                  watch_every: int = 1) -> RunResult:
         """Run until ``text`` appears in the SD file ``file`` (checked every ``every`` frames) or ``max_frames``.
 
         The caller checks ``result.stopped_by == "sd_text"``.
         """
         return self.run(max_frames, inputs, shots, stop_file=file, stop_text=text, stop_every=every,
-                        stop_new=new_only, timeout=timeout)
+                        stop_new=new_only, timeout=timeout, watch=watch, watch_every=watch_every)
 
     def run_frame(self) -> RunResult:
         """Run exactly one frame."""

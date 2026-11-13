@@ -1,7 +1,7 @@
 /* azh_internal.h: the one state struct and the prototypes shared by the host's files. Everything else is file-static.
  *
  * Function-pointer exception (C golden rule 9, documented): function pointers appear only for (1) the libretro
- * callbacks and the core's retro_* table, (2) the Vulkan interface callbacks, (3) the two Vulkan proc tables. */
+ * callbacks and the core's retro_* table, (2) the Vulkan interface callbacks, (3) the two Vulkan proc tables, (4) the two memory exports of our core (mem.c). */
 #ifndef AZH_INTERNAL_H
 #define AZH_INTERNAL_H
 
@@ -20,7 +20,14 @@
 /* ---- host.map layout (hostmap.c) ---- */
 #define AZH_MAP_HEADER 4096u
 #define AZH_MAP_PX_SIZE (400u * 240u * 4u + 320u * 240u * 4u)      /* top RGBA, then bottom RGBA: 691,200 */
-#define AZH_MAP_SIZE (AZH_MAP_HEADER + AZH_MAP_PX_SIZE)            /* 695,296 */
+#define AZH_MAP_SIZE (AZH_WATCH_AREA_OFF + AZH_WATCH_AREA_BYTES)    /* 4,890,624: header, pixels, watch area */
+#define AZH_MAP_PX_END (AZH_MAP_HEADER + AZH_MAP_PX_SIZE)           /* 695,296; the watch area starts at the next page */
+#define AZH_MAP_OFF_WATCH_ROWS 696320u    /* = AZH_WATCH_AREA_OFF: u32 rows written */
+#define AZH_MAP_OFF_WATCH_ROW_BYTES 696324u
+#define AZH_MAP_OFF_WATCH_WORDS 696328u
+#define AZH_MAP_OFF_WATCH_SEQ 696332u
+#define AZH_MAP_OFF_WATCH_FIRST 696336u   /* i64 */
+#define AZH_MAP_OFF_WATCH_DATA 696384u    /* AZH_WATCH_AREA_OFF + AZH_WATCH_HDR_BYTES */
 #define AZH_MAP_OFF_HEARTBEAT 16u
 #define AZH_MAP_OFF_STOP 24u
 #define AZH_MAP_OFF_MSGLEN 28u
@@ -33,7 +40,7 @@
 #define AZH_MAP_OFF_MSG_SEQ 1096u
 #define AZH_MAP_OFF_PID 1100u
 #define AZH_MAP_OFF_EXIT_CODE 1104u
-#define AZH_MAP_VERSION 2u
+#define AZH_MAP_VERSION 3u
 
 /* ---- log levels (same numbers as retro_log_level) ---- */
 enum { AZH_LOG_DEBUG = 0, AZH_LOG_INFO = 1, AZH_LOG_WARN = 2, AZH_LOG_ERROR = 3 };
@@ -202,6 +209,16 @@ void azh_map_sync(void);                                    /* msync(MS_SYNC) of
 uint8_t *azh_map_pixels(void);                              /* the pixel area (4096 on), NULL when no map */
 void azh_map_raw_begin(const uint32_t dims[4]);             /* px_frame = -1, then the dims */
 void azh_map_raw_end(int64_t px_frame);                     /* px_frame = the frame, release store */
+uint8_t *azh_map_watch(void);                               /* the watch area (at AZH_WATCH_AREA_OFF), NULL when no map */
+
+/* mem.c (step G): guest memory through our core's two exports, and the watch rows */
+int azh__mem_bind(void *core_handle);                       /* dlsym both exports: 1 both, 0 neither, -1 only one */
+int azh__mem_read(uint32_t addr, uint32_t len, void *buf);  /* AZH_E_* of azh__mem_code, with the error text set */
+int azh__mem_write(uint32_t addr, uint32_t len, const void *buf);
+int azh__watch_check(const azh_batch *b);                   /* stock core / plan check, no side effects */
+void azh__watch_begin(const azh_batch *b);                  /* batch start: map header, counters (no-op without entries) */
+void azh__watch_row(const azh_batch *b, int32_t i);         /* after batch frame i (1-based): a row when i % every == 0 */
+void azh__watch_finish(const azh_batch *b, int32_t frames_run, azh_result *out);  /* last-frame row, result fields */
 
 /* options.c */
 void azh_opts_register(const struct retro_variable *vars);

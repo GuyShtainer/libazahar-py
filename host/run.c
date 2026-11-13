@@ -281,6 +281,7 @@ static int batch_init(batch_t *c, const int32_t *in, int32_t n, const azh_batch 
         azh__log_set_debug_stop(b->debug_text);
         c->debug_on = 1;
     }
+    azh__watch_begin(b);
     return AZH_OK;
 }
 
@@ -374,6 +375,9 @@ static int run_frames(batch_t *c)
         c->core_ns += last_run_ns;
         c->out->frames_run = i;
         c->out->vblanks = azh__vblanks_total() - v0;
+        if (rc == AZH_OK) {
+            azh__watch_row(b, i);
+        }
         if (rc == AZH_OK && i >= c->lo && i <= c->hi) {
             t_shot = now_ns();
             rc = take_shots(b, i, &c->out->shots_done);
@@ -387,6 +391,9 @@ static int run_frames(batch_t *c)
         rc = azh_fail(AZH_E_IO, "azh_run: cannot read the SD file %s", c->sd_path);
     }
     c->out->stop_reason = (stop < 0) ? AZH_STOP_FRAMES : stop;
+    if (rc == AZH_OK) {
+        azh__watch_finish(b, (int32_t)c->out->frames_run, c->out);
+    }
     return rc;
 }
 

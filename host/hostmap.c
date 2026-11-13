@@ -50,7 +50,7 @@ int azh_map_create(const char *path)
     }
     map = p;
     heartbeat = 0u;
-    memset(map, 0, AZH_MAP_SIZE);
+    memset(map, 0, AZH_MAP_PX_END);      /* the watch area stays untouched: zero pages take no memory until written */
     memcpy(map, "LAZMAP1", 8);     /* includes the terminating NUL */
     put32(map + 8, AZH_MAP_VERSION);
     put32(map + 12, AZH_MAP_HEADER);
@@ -130,6 +130,11 @@ void azh_map_sync(void)
 uint8_t *azh_map_pixels(void)
 {
     return (map != NULL) ? map + AZH_MAP_HEADER : NULL;
+}
+
+uint8_t *azh_map_watch(void)
+{
+    return (map != NULL) ? map + AZH_WATCH_AREA_OFF : NULL;
 }
 
 void azh_map_raw_begin(const uint32_t dims[4])

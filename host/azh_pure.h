@@ -1,5 +1,5 @@
 /* azh_pure.h: prototypes of the pure modules (version.c, crop.c, png.c, input.c, match.c, msg.c, rawcopy.c,
- * statemeta.c). They include only this header, azhost.h and <stdint.h>/<string.h>/zlib, never libretro or Vulkan,
+ * statemeta.c, watch.c). They include only this header, azhost.h and <stdint.h>/<string.h>/zlib, never libretro or Vulkan,
  * so the unit tests can link them alone. */
 #ifndef AZH_PURE_H
 #define AZH_PURE_H
@@ -25,6 +25,12 @@ int azh_png_write(const char *path, const uint8_t *px, uint32_t w, uint32_t h, s
 int azh_png_level(void);
 /* NULL when LAZ_PNG_LEVEL was fine or unset, else the bad text (cut at 31 bytes) for the caller's log line. */
 const char *azh_png_level_bad(void);
+
+/* watch.c (step G): guest memory and watch-list checks */
+int azh__mem_check(uint32_t addr, uint32_t len, char *err, size_t cap);      /* 0, or AZH_E_ARG with a reason */
+int azh__mem_code(int core_rc);              /* the core's 0/-1/-2/-3 to 0/AZH_E_ORDER/AZH_E_UNMAPPED/AZH_E_ARG/AZH_E_CORE */
+int azh__watch_plan(const azh_watch *w, int32_t n, int32_t frames, int32_t every,
+                    uint32_t *row_bytes, uint32_t *total_words, uint32_t *rows_max, char *err, size_t cap);
 
 /* input.c */
 typedef struct { uint32_t buttons; int32_t touch_x, touch_y, touch_down, circle_x, circle_y;

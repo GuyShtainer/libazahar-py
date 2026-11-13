@@ -100,8 +100,25 @@ app path, so a shared state carries it. An I/O failure while saving is a HostErr
 
 Stock: SD text stops, guest errors, savestates (the same log fields after a state restore, gated on the test app).
 Repeats are exact only on our core, where the repeat gates run (PLAN 2.4); on the stock core they record the
-difference only. Our patched core adds debug text, memory reads (Phase
-G) and poll-exact movies if Phase F confirms them. Calls that need it raise `NeedsLazpyCore`.
+difference only. Our patched core adds debug text, memory reads and the watch list (section 12a) and poll-exact movies if Phase F confirms them. Calls that need it raise `NeedsLazpyCore`.
+
+## 12a. Guest memory (our core only)
+
+`emu.memory.read(addr, n)` returns `n` bytes at a guest virtual address of the running app's process;
+`write(addr, data)` stores bytes. Widths `u8 u16 u32 u64 s8 s16 s32 s64` are callable (`emu.memory.u32(addr)`) and have
+`raw_read(addr)` and `raw_write(addr, value)` (libmgba-py's names); `write_u8 .. write_u64` are range-checked,
+little-endian. Calls happen between batches. The guest may be part-way into a frame, so a record of several fields can
+be torn (some fields from the frame before); the watch list has the same property. A range with an unmapped page
+(address 0 included) raises `GuestMemoryError` (`.addr`, `.length`); a failed write changes nothing. A bad range
+(negative, past 4 GiB, length 0 or over 64 MiB) is a `ValueError`. On the stock core every memory call and every
+`watch=` raises `NeedsLazpyCore`.
+
+**Watch list.** `run(frames, watch=[(addr, words), ...], watch_every=1)`: at most 32 entries of 1..256 u32 words. After
+every `watch_every`-th batch frame, and after the last frame run, the host reads each entry; `result.watch` is a tuple
+of `WatchRow(frame, status, data)` (`frame` absolute, `data` one `bytes` per entry, `row.u32(entry, word)`). An
+unmapped entry reads as zeros and sets the row status (`AZH_E_UNMAPPED`), the batch goes on. Rows live in a 4 MiB area
+of `host.map`; a batch that needs more rows is refused with a `ValueError` naming the largest frame count that fits at
+that `watch_every`. States saved under ABI 2 still load.
 
 ## 12. The Gen3D mapping
 

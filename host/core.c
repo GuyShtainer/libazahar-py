@@ -81,6 +81,7 @@ int azh_core_open(const char *path)
 {
     const char *miss = NULL;
     azh_core *c = &azh_g.core;
+    int bound;
 
     assert(path != NULL && c->dl == NULL);
     c->dl = dlopen(path, RTLD_NOW | RTLD_LOCAL);
@@ -97,7 +98,12 @@ int azh_core_open(const char *path)
     if (c->api_version() != (unsigned)RETRO_API_VERSION) {
         return azh_fail(AZH_E_CORE, "core speaks libretro API %u, not %d", c->api_version(), RETRO_API_VERSION);
     }
-    azh_g.is_lazpy = (dlsym(c->dl, "lazpy_read_memory") != NULL) ? 1 : 0;
+    bound = azh__mem_bind(c->dl);
+    if (bound < 0) {
+        return azh_fail(AZH_E_CORE, "our core lacks lazpy_write_memory (or lazpy_read_memory): half-exported core %s",
+                        path);
+    }
+    azh_g.is_lazpy = bound;
     return check_version();
 }
 

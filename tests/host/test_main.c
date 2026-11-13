@@ -38,6 +38,7 @@ int main(void)
     test_png();
     test_sdcopy();
     test_statemeta();
+    test_watch();
     printf("test-host: %ld checks, %ld failed\n", checks, failed);
     return failed == 0 ? 0 : 1;
 }
