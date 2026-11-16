@@ -17,6 +17,9 @@ from .errors import HostCallError, LibAzaharError
 
 __all__ = ["main", "option_plan"]
 
+_WIN = sys.platform == "win32"
+if _WIN:
+    from multiprocessing.connection import PipeConnection
 MAX_REQUESTS = 1 << 40
 _REC_BYTES = 4 * _abi.AZH_INPUT_INTS
 
@@ -139,8 +142,30 @@ def _serve(conn: Connection, lib: ctypes.CDLL) -> int:
             reply = ["err", _abi.AZH_E_ARG, f"{op}: {exc}"]
         conn.send(tuple(reply))
         if op == "close":
+            if _WIN:
+                hard_exit()             # only now: azh_close has run and its reply is in the pipe
             return 0
     return 1
+
+
+def hard_exit(code: int = 0) -> None:
+    """Windows: ``TerminateProcess(GetCurrentProcess(), code)``. It skips the DLL detach of the core and the GPU driver,
+    which can hang on exit. Call it only after the ``close`` reply has been written to the pipe (``azh_close`` ran
+    first). The slot HANDLE closes with the process."""
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.flush()
+        except (OSError, ValueError, AttributeError):
+            pass
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    kernel32.GetCurrentProcess.restype = ctypes.c_void_p
+    kernel32.TerminateProcess.argtypes = [ctypes.c_void_p, ctypes.c_uint]
+    kernel32.TerminateProcess(kernel32.GetCurrentProcess(), code)
+
+
+def set_error_mode() -> None:
+    """Windows: no crash dialog, no error box (FAILCRITICALERRORS | NOGPFAULTERRORBOX | NOOPENFILEERRORBOX)."""
+    ctypes.WinDLL("kernel32").SetErrorMode(0x0001 | 0x0002 | 0x8000)
 
 
 def raise_nice_floor(floor: int = 10) -> int:
@@ -154,12 +179,18 @@ def raise_nice_floor(floor: int = 10) -> int:
 
 def main(fd: int) -> int:
     """Worker entry: nice at least 10, faulthandler, hello (or fatal), then the request loop. Returns the exit code."""
+    if _WIN:
+        set_error_mode()
     faulthandler.enable()
     if len(sys.argv) > 3:               # the slot's lock fd (argv[3]): keep it here, never hand it to a child
-        os.set_inheritable(int(sys.argv[3]), False)
-    conn = Connection(fd)
+        if _WIN:
+            os.set_handle_inheritable(int(sys.argv[3]), False)
+        else:
+            os.set_inheritable(int(sys.argv[3]), False)
+    conn = PipeConnection(fd) if _WIN else Connection(fd)      # Windows: fd is the pipe's HANDLE
     try:
-        raise_nice_floor()
+        if not _WIN:                    # Windows: the priority class comes from the parent's creationflags
+            raise_nice_floor()
     except OSError as exc:
         conn.send(("fatal", f"cannot set the worker's nice value: {exc}"))
         return 1

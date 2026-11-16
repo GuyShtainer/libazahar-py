@@ -7,18 +7,30 @@ process dies, however it dies; a parent that was SIGKILLed leaks nothing. Nothin
 The cap is machine-wide only if every user reads the same ``LAZ_MAX_INSTANCES``: a process with cap 5 takes slots
 3 and 4 beside three cap-3 users. The folder, the cap and the timeout are read from the environment on every
 call, never at import, so a test or a tool may change them between acquisitions.
+
+On Windows the lock is a handle on ``slot-<k>.lock`` opened with share mode 0 (``CreateFile``): a second open of the
+file fails with a sharing violation while any process holds a handle. The parent makes the handle inheritable only just
+before its ``Popen`` (which passes it through ``PROC_THREAD_ATTRIBUTE_HANDLE_LIST`` alone) and closes its own copy right
+after; the worker keeps it, and Windows closes it the moment the worker dies, however it dies (TerminateProcess
+included). There ``Slot.fd`` is that handle number, not a C fd.
 """
 from __future__ import annotations
 
-import fcntl
 import math
 import os
+import sys
 import time
 import warnings
 from pathlib import Path
 from typing import Optional
 
 from .errors import ArgumentError, LoadWarning, SlotTimeout
+
+_WIN = sys.platform == "win32"
+if _WIN:
+    import _winapi
+else:
+    import fcntl
 
 __all__ = ["DEFAULT_CAP", "Slot", "SlotTimeout", "LoadWarning", "slot_dir", "cap", "acquire", "warn_if_loaded", "waited_in"]
 
@@ -29,9 +41,15 @@ ROUND_SLEEP_S = 0.1
 
 
 def slot_dir() -> Path:
-    """The lock folder: ``LAZ_SLOT_DIR``, else ``~/Library/Caches/libazahar-py/slots``; created mode 0700."""
+    """The lock folder: ``LAZ_SLOT_DIR``, else ``~/Library/Caches/libazahar-py/slots`` (Windows:
+    ``%LOCALAPPDATA%\\libazahar-py\\slots``); created mode 0700."""
     text = os.environ.get("LAZ_SLOT_DIR")
-    folder = Path(text) if text else Path.home() / "Library" / "Caches" / "libazahar-py" / "slots"
+    if text:
+        folder = Path(text)
+    elif _WIN:
+        folder = Path(os.environ.get("LOCALAPPDATA") or Path.home() / "AppData" / "Local") / "libazahar-py" / "slots"
+    else:
+        folder = Path.home() / "Library" / "Caches" / "libazahar-py" / "slots"
     folder.mkdir(mode=0o700, parents=True, exist_ok=True)
     return folder
 
@@ -61,8 +79,8 @@ def _timeout_default() -> float:
 
 
 class Slot:
-    """One held slot: ``index``, the lock file's ``fd`` (inheritable by a child on request), ``path`` and
-    ``waited_s``. ``release()`` closes the fd (idempotent); a context manager."""
+    """One held slot: ``index``, the lock file's ``fd`` (inheritable by a child on request; a HANDLE number on
+    Windows), ``path`` and ``waited_s``. ``release()`` closes the fd (idempotent); a context manager."""
 
     def __init__(self, index: int, fd: int, path: Path, waited_s: float) -> None:
         self.index = index
@@ -74,7 +92,10 @@ class Slot:
     def release(self) -> None:
         """Close the fd. The lock stays alive in any process that inherited the fd."""
         if self.fd >= 0:
-            os.close(self.fd)
+            if _WIN:
+                _winapi.CloseHandle(self.fd)
+            else:
+                os.close(self.fd)
             self.fd = -1
 
     def __enter__(self) -> "Slot":
@@ -87,7 +108,7 @@ class Slot:
 def waited_in(workdir: Path) -> float:
     """The seconds an Emulator waited for its slot, from ``<workdir>/slot.txt`` (0.0 when the file is missing)."""
     try:
-        text = (Path(workdir) / "slot.txt").read_text()
+        text = (Path(workdir) / "slot.txt").read_text(encoding="utf-8")
     except FileNotFoundError:
         return 0.0
     return float(dict(part.split("=", 1) for part in text.split())["waited_s"])
@@ -95,6 +116,8 @@ def waited_in(workdir: Path) -> float:
 
 def warn_if_loaded(stacklevel: int = 3) -> None:
     """Warn (LoadWarning) when the 1-minute load average is above twice the core count."""
+    if _WIN:
+        return                          # no load average on Windows
     load = os.getloadavg()[0]
     cores = os.cpu_count() or 1
     if load > 2 * cores:
@@ -102,8 +125,31 @@ def warn_if_loaded(stacklevel: int = 3) -> None:
                                   "this Mac"), stacklevel=stacklevel)
 
 
+ERROR_SHARING_VIOLATION = 32
+ERROR_LOCK_VIOLATION = 33
+OPEN_ALWAYS = 4                 # _winapi (3.10) has OPEN_EXISTING only
+FILE_ATTRIBUTE_NORMAL = 0x80
+
+
+def _try_round_win(folder: Path, slots: int) -> Optional[tuple]:
+    """Windows round: ``CreateFile`` share mode 0 (OPEN_ALWAYS); a sharing violation means the slot is held."""
+    for index in range(slots):
+        path = folder / f"slot-{index}.lock"
+        try:
+            handle = _winapi.CreateFile(str(path), _winapi.GENERIC_READ | _winapi.GENERIC_WRITE, 0, 0,
+                                        OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0)
+        except OSError as exc:
+            if getattr(exc, "winerror", None) in (ERROR_SHARING_VIOLATION, ERROR_LOCK_VIOLATION):
+                continue
+            raise
+        return index, int(handle), path
+    return None
+
+
 def _try_round(folder: Path, slots: int) -> Optional[tuple]:
     """One pass over the lock files; ``(index, fd, path)`` of the first free one, else None."""
+    if _WIN:
+        return _try_round_win(folder, slots)
     for index in range(slots):
         path = folder / f"slot-{index}.lock"
         fd = os.open(path, os.O_RDWR | os.O_CREAT | os.O_CLOEXEC, 0o600)
