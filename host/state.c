@@ -62,7 +62,10 @@ static int join_path(char *out, size_t cap, const char *base, const char *suffix
 {
     int n;
 
-    assert(out != NULL && base != NULL && suffix != NULL && cap > 0u);
+    assert(out != NULL && cap > 0u);
+    if (base == NULL || suffix == NULL) {
+        return AZH_E_ARG;
+    }
     n = snprintf(out, cap, "%s%s", base, suffix);
     return (n > 0 && (size_t)n < cap) ? AZH_OK : AZH_E_ARG;
 }
