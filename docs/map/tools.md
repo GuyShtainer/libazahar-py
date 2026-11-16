@@ -3,6 +3,9 @@
 - `tools/`: `mkprogress.py` (writes `docs/progress.html` and the lists in `docs/status/README.md`), `status_check.py`
   (items, handoff rows, hours rows), `mkmap.py` (writes `docs/map/gen/`), `map_check.py` (paths in docs exist, every
   top-level entry and script folder is mapped).
+- `tools/check-obinary.sh`: every `open(` in `host/` must carry `O_BINARY` (0 on POSIX; Windows CRLF-translates without
+  it); prints `check-obinary: ok N open() sites` or the offending lines and exits 1. Run by `make check` and
+  `make test-host-win`.
 - `tools/build-core.sh`: verifies (or fetches) the pinned Azahar tarball, unpacks it with `tools/untar_checked.py`,
   applies `core/patches/` with `--fuzz 0`, configures, and with `--build` or `--detach` builds
   `build-core/azahar_lazpy_libretro.dylib`. `tools/untar_checked.py` pre-scans a tar.xz, refuses unsafe members,

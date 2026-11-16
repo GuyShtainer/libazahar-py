@@ -318,6 +318,7 @@ build variables below may change in a minor release:
 | `LAZ_MVK` | MoltenVK | `<root>/dl/moltenvk/MoltenVK/MoltenVK/dynamic/dylib/macOS/libMoltenVK.dylib` | Python, host |
 | `LAZ_PROFILE` | the option profile | `<root>/host/options-default.txt` | Python |
 | `LAZ_LAZPY_PROFILE` | the extra options on our core: a file or `none` | `<root>/core/options-lazpy.txt` when present | Python |
+| `LAZ_VK_DEVICE` | which Vulkan device the host uses: its index in the loader's list, from 0, or a part of its name (case ignored); a value of digits only is always an index (no name fallback for digits); no match is an `AZH_E_VULKAN` error at boot naming every device, never a silent fallback; the choice goes to `host.log`, and to stderr when set or when more than one device exists | unset: the first device | host |
 | `LAZ_MAX_INSTANCES` | the slot cap, 1 to 64 | 4 | Python |
 | `LAZ_SLOT_DIR` | the slot lock folder | `~/Library/Caches/libazahar-py/slots` | Python |
 | `LAZ_SLOT_TIMEOUT` | seconds to wait for a slot | 3600 | Python |
