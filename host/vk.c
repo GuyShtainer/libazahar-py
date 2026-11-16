@@ -423,6 +423,7 @@ static int make_device(azh_state *s)
     if (v->fn.EnumeratePhysicalDevices(v->inst, &count, gpus) < 0 || count == 0u) {
         return azh_fail(AZH_E_VULKAN, "no Vulkan physical device");
     }
+    memset(names, 0, sizeof names);            /* every byte defined: contains_nocase reads names[i][0..255] */
     read_device_props(v, gpus, count, names, types);
     if (explicit_pick != 0 && pick_device(want, count, names, &dev) != AZH_OK) {
         return AZH_E_VULKAN;                   /* azh_fail already set the text; never a silent fallback */
