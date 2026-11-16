@@ -112,9 +112,34 @@ static int feed_file(azh_matcher *m, int fd, int64_t size)
     return found;
 }
 
+/* The size of a file another writer may hold open. stat() on Windows reports the directory entry's size, which NTFS
+ * updates only when the writer closes the file, so a growing guest log looks empty; the size from an open handle
+ * (fstat) is current. Elsewhere stat is current: the caller's value is returned unchanged. */
+int64_t azh__file_size_fresh(const char *path, int64_t from_stat)
+{
+#ifdef _WIN32
+    struct stat st;
+    int fd = open(path, O_RDONLY | O_BINARY);
+    int64_t size = from_stat;
+
+    assert(path != NULL);
+    if (fd >= 0) {
+        if (fstat(fd, &st) == 0) {
+            size = (int64_t)st.st_size;
+        }
+        (void)close(fd);
+    }
+    return size;
+#else
+    assert(path != NULL);
+    return from_stat;
+#endif
+}
+
 int azh__match_poll_file(azh_matcher *m, const char *path)
 {
     struct stat st;
+    int64_t size;
     int fd;
     int rc;
 
@@ -125,17 +150,18 @@ int azh__match_poll_file(azh_matcher *m, const char *path)
     if (!S_ISREG(st.st_mode)) {
         return AZH_E_IO;
     }
-    if ((int64_t)st.st_size < m->offset) {
+    size = azh__file_size_fresh(path, (int64_t)st.st_size);
+    if (size < m->offset) {
         azh__match_restart(m);
     }
-    if ((int64_t)st.st_size == m->offset) {
+    if (size == m->offset) {
         return 0;
     }
     fd = open(path, O_RDONLY | O_BINARY);
     if (fd < 0) {
         return (errno == ENOENT) ? 0 : AZH_E_IO;
     }
-    rc = feed_file(m, fd, (int64_t)st.st_size);
+    rc = feed_file(m, fd, size);
     (void)close(fd);
     return rc;
 }

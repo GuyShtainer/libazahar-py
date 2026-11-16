@@ -252,7 +252,7 @@ static int sd_start(batch_t *c)
         return azh_fail(AZH_E_ARG, "azh_run: the SD file path is too long");
     }
     if (c->b->sd_from_end != 0 && stat(c->sd_path, &st) == 0) {
-        from = (int64_t)st.st_size;
+        from = azh__file_size_fresh(c->sd_path, (int64_t)st.st_size);
     }
     c->sd_every = (c->b->sd_every == 0) ? AZH_SD_EVERY_DEFAULT : c->b->sd_every;
     c->sd_on = 1;
