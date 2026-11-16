@@ -3,6 +3,7 @@ both on core lazpy.2 (patches 0002 and 0009). Numbers worth reporting go to runs
 from __future__ import annotations
 
 import re
+import struct
 import subprocess
 import sys
 from pathlib import Path
@@ -32,9 +33,40 @@ def note(line: str) -> None:
         handle.write(line + "\n")
 
 
+def elf_info(path: Path) -> Tuple[Dict[str, int], Tuple[int, int]]:
+    """({symbol: address}, (.text start, end)) of a 32-bit little-endian ELF: what ``nm`` and ``objdump -h`` give on
+    the Mac, for Windows where neither exists."""
+    data = path.read_bytes()
+    shoff, shentsize, shnum, shstrndx = struct.unpack_from("<I", data, 0x20)[0], *struct.unpack_from("<3H", data, 0x2E)
+    sections = [struct.unpack_from("<10I", data, shoff + i * shentsize) for i in range(shnum)]
+    # (name, type, flags, addr, offset, size, link, info, addralign, entsize)
+    names = sections[shstrndx]
+
+    def name_at(table: bytes, offset: int) -> str:
+        return table[offset:table.index(b"\0", offset)].decode()
+
+    shstr = data[names[4]:names[4] + names[5]]
+    text = next((s for s in sections if name_at(shstr, s[0]) == ".text"), None)
+    assert text is not None, "no .text in the test app's section headers"
+    symbols: Dict[str, int] = {}
+    for sec in sections:
+        if sec[1] != 2:                                     # SHT_SYMTAB
+            continue
+        strtab = sections[sec[6]]
+        strings = data[strtab[4]:strtab[4] + strtab[5]]
+        for i in range(sec[5] // 16):
+            st_name, st_value, _size, st_info, _other, st_shndx = struct.unpack_from("<IIIBBH", data, sec[4] + i * 16)
+            if st_name and st_shndx != 0 and (st_info & 0xF) not in (3, 4):       # not undefined, SECTION or FILE
+                symbols[name_at(strings, st_name)] = st_value
+    return symbols, (text[3], text[3] + text[5])
+
+
 def needs_rev2(core: Path) -> None:
     """Skip on a core without patch 0009 (lazpy.1), unless LAZ_REQUIRE_EMULATOR=1 (then fail)."""
-    out = subprocess.run(["nm", "-gU", str(core)], capture_output=True, text=True, check=False).stdout
+    if sys.platform == "win32":                             # no nm: the export name sits in the PE export table
+        out = "_lazpy_threads" if b"lazpy_threads" in core.read_bytes() else ""
+    else:
+        out = subprocess.run(["nm", "-gU", str(core)], capture_output=True, text=True, check=False).stdout
     if "_lazpy_threads" not in out:
         import os
         if os.environ.get("LAZ_REQUIRE_EMULATOR") == "1":
@@ -80,11 +112,15 @@ def test_k_ticks_override_refused(host_paths, lazpy_core, workdir, bad):
 
 
 def elf_symbols() -> Dict[str, int]:
+    if sys.platform == "win32":
+        return elf_info(ELF)[0]
     out = subprocess.run(["nm", str(ELF)], capture_output=True, text=True, check=True).stdout
     return {m.group(2): int(m.group(1), 16) for m in re.finditer(r"^([0-9a-f]+) \w (\S+)$", out, re.M)}
 
 
 def text_range() -> Tuple[int, int]:
+    if sys.platform == "win32":
+        return elf_info(ELF)[1]
     out = subprocess.run(["objdump", "-h", str(ELF)], capture_output=True, text=True, check=True).stdout
     match = re.search(r"^\s*\d+ \.text\s+([0-9a-f]+) ([0-9a-f]+)", out, re.M)
     assert match, "no .text in the test app's section headers"

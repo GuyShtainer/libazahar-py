@@ -146,11 +146,24 @@ def test_m2_m6_watch_rows_and_footprint(host_paths, lazpy_core, workdir, seed):
             verify([decode(r.data[entry]) for r in res.watch], by_f, f"m2 every1 {name}")
             verify([decode(r.data[entry]) for r in res10.watch], by_f, f"m2 every10 {name}")
         # m6: the footprint after m2
-        du = subprocess.run(["du", "-k", str(workdir / "host.map")], capture_output=True, text=True, check=True)
-        note(f"m6: du -k host.map = {du.stdout.split()[0]} KiB; peak_rss = {emu.stats().peak_rss} bytes")
+        note(f"m6: du -k host.map = {footprint_kib(workdir / 'host.map')} KiB; peak_rss = {emu.stats().peak_rss} bytes")
         # a batch whose rows do not fit says the largest that does
         with pytest.raises(ValueError, match="largest batch"):
             emu.run(60000, watch=[(glob, 256)] * 2)
+
+
+def footprint_kib(path: Path) -> int:
+    """``du -k``: the disk blocks a file takes (Windows: GetCompressedFileSizeW, rounded up to KiB)."""
+    if sys.platform != "win32":
+        done = subprocess.run(["du", "-k", str(path)], capture_output=True, text=True, check=True)
+        return int(done.stdout.split()[0])
+    import ctypes
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    kernel32.GetCompressedFileSizeW.restype = ctypes.c_uint32
+    kernel32.GetCompressedFileSizeW.argtypes = [ctypes.c_wchar_p, ctypes.POINTER(ctypes.c_uint32)]
+    high = ctypes.c_uint32(0)
+    low = kernel32.GetCompressedFileSizeW(str(path), ctypes.byref(high))
+    return ((high.value << 32 | low) + 1023) // 1024
 
 
 def test_m3_write_the_control_struct(host_paths, lazpy_core, workdir, seed):
@@ -235,9 +248,9 @@ def test_m7_abi_2_state_loads(host_paths, lazpy_core, workdir, seed):
         emu.run(60)
         emu.save_state(state)
     meta = Path(f"{state}.meta")
-    text = meta.read_text()
+    text = meta.read_bytes().decode()
     assert "abi=3\n" in text
-    meta.write_text(text.replace("abi=3\n", "abi=2\n", 1))
+    meta.write_bytes(text.replace("abi=3\n", "abi=2\n", 1).encode())
     with Emulator(host_paths.app, workdir / "b", state=state, core=lazpy_core) as emu:
         assert emu.run(10).stopped_by == "frames"
         note("m7: a state with abi=2 in its meta loaded under ABI 3 and ran 10 frames")
