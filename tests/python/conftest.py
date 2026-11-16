@@ -32,8 +32,9 @@ def _missing(what: Path, why: str) -> None:
 
 @pytest.fixture(scope="session")
 def host_lib() -> Path:
-    """build/libazhost.dylib (skip, or fail under LAZ_REQUIRE_EMULATOR=1, when it is not built)."""
-    path = REPO / "build" / "libazhost.dylib"
+    """build/libazhost<suffix> (skip, or fail under LAZ_REQUIRE_EMULATOR=1, when it is not built)."""
+    from libazahar import _paths
+    path = REPO / "build" / f"libazhost{_paths.SUFFIX}"
     if not path.is_file():
         _missing(path, "run make")
     return path
@@ -88,8 +89,8 @@ def lazpy_core() -> Path:
     from libazahar import _paths
     chosen = _paths.core_path()
     candidates = [chosen] if _kind(chosen) == "lazpy" else []
-    candidates += [REPO / "build-core" / "azahar_lazpy_libretro.dylib",
-                   REPO / "dl" / "lazpy-core" / "azahar_lazpy_libretro.dylib"]
+    name = f"azahar_lazpy_libretro{_paths.SUFFIX}"
+    candidates += [REPO / "build-core" / name, REPO / "dl" / "lazpy-core" / name]
     core = next((c for c in candidates if c.is_file()), candidates[0])
     if not core.is_file():
         _missing(core, "run tools/fetch.sh --lazpy-core, build our core or set LAZ_CORE")

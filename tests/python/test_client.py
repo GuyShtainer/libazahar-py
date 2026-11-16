@@ -8,8 +8,9 @@ from pathlib import Path
 import pytest
 
 from libazahar import _map
-from libazahar._client import Wait, WorkerClient
+from libazahar._client import Wait, WorkerClient, worker_python
 from libazahar.errors import GuestError, HostCrashed, HostError, HostTimeout
+from proc_helpers import WIN, pid_alive
 
 FAKE = Path(__file__).resolve().parent / "fakeworker.py"
 PKG = Path(__file__).resolve().parents[2] / "python"
@@ -18,7 +19,7 @@ RUN = Wait(heartbeat=5.0, first_heartbeat=5.0)
 
 def make(workdir, mode):
     def argv(fd):
-        return [sys.executable, "-I", str(FAKE), mode, str(fd), str(workdir / "host.map"), str(PKG)]
+        return [worker_python(), "-I", str(FAKE), mode, str(fd), str(workdir / "host.map"), str(PKG)]
     client = WorkerClient(workdir, workdir / "host.map", workdir / "host.log", dict(os.environ), argv=argv)
     return client
 
@@ -30,11 +31,7 @@ def started(tmp_path, mode):
 
 
 def alive(pid):
-    try:
-        os.kill(pid, 0)
-    except ProcessLookupError:
-        return False
-    return True
+    return pid_alive(pid)
 
 
 def test_round_trip_times(tmp_path):
@@ -83,7 +80,11 @@ def test_segv_is_host_crashed_within_a_second(tmp_path):
     raised = time.time()
     died = float(Path(str(tmp_path / "host.map") + ".died").read_text())
     print(f"\nsegv: death to raise {raised - died:.3f} s", file=sys.stderr)
-    assert caught.value.signal == signal.SIGSEGV and raised - died < 1.0 and not alive(client.pid)
+    if WIN:                                             # no signals: the NTSTATUS is the exit code
+        assert caught.value.signal is None and caught.value.returncode == 0xC0000005
+    else:
+        assert caught.value.signal == signal.SIGSEGV
+    assert raised - died < 1.0 and not alive(client.pid)
 
 
 def test_hang_times_out_and_reaps(tmp_path):
@@ -95,8 +96,7 @@ def test_hang_times_out_and_reaps(tmp_path):
     stopped = float(Path(str(tmp_path / "host.map") + ".stopped").read_text())
     print(f"\nhang: heartbeat stop to raise {raised - stopped:.2f} s", file=sys.stderr)
     assert 0.8 <= raised - stopped <= 4.0
-    with pytest.raises(ProcessLookupError):
-        os.kill(pid, 0)
+    assert not alive(pid)
 
 
 def test_die_at_start(tmp_path):
@@ -118,3 +118,17 @@ def test_closed_client_refuses(tmp_path):
     client.close()
     with pytest.raises(HostError, match="closed"):
         client.request("echo", (), Wait(total=1.0))
+
+
+@pytest.mark.skipif(not WIN, reason="the Windows priority class")
+def test_windows_worker_runs_below_normal(tmp_path):
+    """The Windows twin of the worker's nice 10: the parent starts it BELOW_NORMAL (0x4000)."""
+    import ctypes
+    client = started(tmp_path, "ok")
+    try:
+        kernel32 = ctypes.WinDLL("kernel32")
+        kernel32.GetPriorityClass.argtypes = [ctypes.c_void_p]
+        assert kernel32.GetPriorityClass(int(client.proc._handle)) == 0x4000
+    finally:
+        client.close()
+

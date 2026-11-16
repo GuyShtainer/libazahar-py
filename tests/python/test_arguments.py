@@ -43,7 +43,10 @@ def test_clear_sd_refuses_a_symlink(tmp_path):
     target.mkdir()
     (target / "f").write_text("z")
     link = tmp_path / "sdmc"
-    os.symlink(target, link)
+    try:
+        os.symlink(target, link)
+    except OSError as exc:                  # Windows without Developer Mode may not create symlinks
+        pytest.skip(f"cannot create a symlink here: {exc}")
     with pytest.raises(ArgumentError):
         _clear_sd(link)
     assert (target / "f").is_file()

@@ -12,7 +12,13 @@ import time
 
 MODE, FD, MAP_PATH, PKG = sys.argv[1], int(sys.argv[2]), sys.argv[3], sys.argv[4]
 sys.path.insert(0, PKG)
-from multiprocessing.connection import Connection  # noqa: E402
+if sys.platform == "win32":
+    import ctypes
+    from multiprocessing.connection import PipeConnection as Connection  # noqa: E402
+
+    ctypes.WinDLL("kernel32").SetErrorMode(0x8003)      # a crash ends the process at once: no WER box
+else:
+    from multiprocessing.connection import Connection  # noqa: E402
 
 from libazahar import _map  # noqa: E402
 
@@ -64,7 +70,14 @@ def handle_run(view, conn):
         os._exit(11)
     if MODE == "segv":
         sidecar("died")
-        os.kill(os.getpid(), signal.SIGSEGV)
+        if sys.platform == "win32":
+            # ctypes turns a real access violation into a Python exception, so end the process with that NTSTATUS
+            kernel32 = ctypes.WinDLL("kernel32")
+            kernel32.GetCurrentProcess.restype = ctypes.c_void_p
+            kernel32.TerminateProcess.argtypes = [ctypes.c_void_p, ctypes.c_uint]
+            kernel32.TerminateProcess(kernel32.GetCurrentProcess(), 0xC0000005)
+        else:
+            os.kill(os.getpid(), signal.SIGSEGV)
         time.sleep(30)
     if MODE == "hang":
         for _ in range(5):

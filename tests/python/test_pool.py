@@ -72,7 +72,7 @@ def test_p4_size_checks(tmp_path, monkeypatch):
             Pool(bad, "app", tmp_path, factory=FakeEmu)
     with warnings.catch_warnings():
         warnings.simplefilter("error", UserWarning)
-        monkeypatch.setattr(_slots.os, "getloadavg", lambda: (0.0, 0.0, 0.0))
+        monkeypatch.setattr(_slots.os, "getloadavg", lambda: (0.0, 0.0, 0.0), raising=False)
         Pool(3, "app", tmp_path, factory=FakeEmu).close()
 
 
