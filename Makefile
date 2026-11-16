@@ -23,6 +23,7 @@ build/azhost: build/obj/azhost_main.o build/obj/sdcopy.o build/obj/profile.o bui
 
 # static analysis: one pass per host source, no .plist output
 check:
+	tools/check-obinary.sh
 	@for f in host/*.c; do \
 	    echo "analyze $$f"; \
 	    clang --analyze -Xclang -analyzer-werror -Xanalyzer -analyzer-output=text $(CFLAGS) -o /dev/null $$f || exit 1; \

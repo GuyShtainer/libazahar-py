@@ -344,6 +344,21 @@ static void read_device_props(azh_vk *v, const VkPhysicalDevice *gpus, uint32_t 
     }
 }
 
+/* 1 when s is one or more decimal digits and nothing else */
+static int digits_only(const char *s)
+{
+    assert(s != NULL);
+    if (*s == '\0') {
+        return 0;
+    }
+    for (; *s != '\0'; s++) {
+        if (*s < '0' || *s > '9') {
+            return 0;
+        }
+    }
+    return 1;
+}
+
 /* "LAZ_VK_DEVICE=<index or name part>": the index into *dev, or an AZH_E_VULKAN error naming every device */
 static int pick_device(const char *want, uint32_t count, char names[][DEV_NAME_MAX], uint32_t *dev)
 {
@@ -352,7 +367,7 @@ static int pick_device(const char *want, uint32_t count, char names[][DEV_NAME_M
     uint32_t i;
 
     assert(want != NULL && dev != NULL && count >= 1u && count <= MAX_GPUS);
-    if (*want >= '0' && *want <= '9') {
+    if (digits_only(want)) {                    /* one rule: digits only is always an index, never a name */
         char *end = NULL;
         unsigned long pick;
 
@@ -379,12 +394,13 @@ static int pick_device(const char *want, uint32_t count, char names[][DEV_NAME_M
     return azh_fail(AZH_E_VULKAN, "LAZ_VK_DEVICE=%s matches no Vulkan device (%u found: %s)", want, (unsigned)count, list);
 }
 
-/* the choice, logged to host.log always and to stderr when LAZ_VK_DEVICE decided it */
+/* the choice, logged to host.log always and to stderr when LAZ_VK_DEVICE decided it or, with it unset, when more than
+   one device exists (the default gpus[0] may then be an iGPU) */
 static void report_device(uint32_t dev, uint32_t count, const char *name, int type, int explicit_pick)
 {
     azh_log(AZH_LOG_INFO, "vulkan device: index=%u of %u name=\"%s\" type=%d%s", (unsigned)dev, (unsigned)count, name,
             type, explicit_pick != 0 ? " (LAZ_VK_DEVICE)" : "");
-    if (explicit_pick != 0) {
+    if (explicit_pick != 0 || count > 1u) {
         (void)fprintf(stderr, "vulkan device: index=%u of %u name=\"%s\"\n", (unsigned)dev, (unsigned)count, name);
     }
 }
