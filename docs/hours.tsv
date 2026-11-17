@@ -194,3 +194,4 @@ date	bet	phase	agent_id	model	role	kind	start	end	hours	source
 2026-11-17	phase 7 W1 diff review of port-win-v1 (docs/reviews/phase-7-diff-review.md)	phase-7	agent	opus	agent	review	12:26	12:40	0.23	stat -L
 2026-11-17	phase 7 W6 docs, version 1.1.0, release notes (branch p7-docs c55a52b)	phase-7	agent	sonnet	agent	docs	12:43	12:44	0.03	stat -L
 2026-11-17	phase 7 W1b licence delta for v1.1.0 (docs/reviews/phase-7-ip-legal.md)	phase-7	agent	opus	agent	legal	12:43	12:51	0.13	stat -L
+2026-11-17	phase 7 W2b1 Windows core build route (branch p7-w2b1 edfb145)	phase-7	agent	sonnet	agent	execute	12:43	12:55	0.20	stat -L
