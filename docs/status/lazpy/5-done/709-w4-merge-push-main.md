@@ -37,6 +37,12 @@ The W4 gate in the plan. Plan: `docs/plans/phase-7.md` line 276.
   the runner's core.autocrlf=true checks the .expect files out as CRLF (the PC's bundle clones had no autocrlf). Fix:
   .gitattributes `* text=auto eol=lf`, the 3 CRLF inputs -text (1442a84; nothing renormalizes). PC, clones with
   core.autocrlf=true: 361fef5 test-host FAIL (reproduced), 1442a84 "307983 checks, 0 failed" with 3 CRLF files.
+- 2026-11-17 14:35 W4 gate PASS on 49c81ed: test (macos-15, incl. make -B -n and vtool) green; test-windows green (make
+  check clean, test-host "307983 checks, 0 failed", fast 246 passed 5 skipped, skips_check 0 problems); macos-live
+  job green but its pytest step (the outcome that counts, R2-S8) FAILED: "2 failed, 292 passed, 13 skipped", the same
+  2 on all three pushes, both CI-environment: test_state_boot timing 4.46 s > 2.5 s on the VM (3/3 on the PC), and
+  test_k_threads needs testapp.elf (CI fetches only the .3dsx). So section 7.6's fallback macOS sentence goes in
+  STATUS at W7. Done.
 
 ## Pointers
 - Plan section: `docs/plans/phase-7.md:276`; briefs: `docs/plans/phase-7-briefs.md`

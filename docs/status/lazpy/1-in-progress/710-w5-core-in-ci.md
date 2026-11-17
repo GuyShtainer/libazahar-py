@@ -16,7 +16,7 @@ Main loop: dispatch core-win64.yml, download, sha match, needle scan, one smoke 
 The W5 gate in the plan. Plan: `docs/plans/phase-7.md` line 295.
 
 ## Evidence
-none yet
+- 2026-11-17 14:35 core-win64.yml dispatched on main 49c81ed: run 44084612822 (watch log runs/p7/w5/watch.txt).
 
 ## Pointers
 - Plan section: `docs/plans/phase-7.md:295`; briefs: `docs/plans/phase-7-briefs.md`
