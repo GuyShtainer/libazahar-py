@@ -167,3 +167,11 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   `--replace-text`/`--replace-message` literal ("[build]"). After: 219 commits, identities unchanged, 0 hits of the
   phrase in all history and messages, the file in no commit, fsck clean, no refs/replace. 17 commits rewritten:
   `docs/commit-map-g8e.tsv` (0537394 is now f93c755; port-win and port-linux rebase through it).
+- 2026-11-17 10:17, V9 pushed: mkrelease at 6f1a713 kept zip ced9a362… and test app ba106998…
+  (`LAZ_REL_APP=runs/release/testapp-gcc15-ba106998.3dsx`). Under --pre-push a needle SKIP is a FAIL (checks 7 and
+  12), so the needles file was rebuilt privately (`~/.lazpy-private/needles.txt`, 12 needles, mode 600; planted
+  strings hit, clean text passes). Pre-push check with it: rc 0, 16 PASS. History: 440 identity lines, no-reply
+  only; no ROM/key/dylib file tracked. Public repo GuyShtainer/libazahar-py created; main and tag v1.0.0 (annotated,
+  on 6f1a713, no-reply tagger) pushed; draft release v1.0.0, not prerelease, 9 assets whose GitHub digests equal
+  SHA256SUMS. First CI run on push: 44045482328. Publishing the draft (G7) is Guy's.
+- 2026-11-17 10:19, V9: first CI run on push 44045482328 green (test workflow, 1m41s). The draft is ready for G7.

@@ -182,3 +182,4 @@ date	bet	phase	agent_id	model	role	kind	start	end	hours	source
 2026-11-14	PC worker: port-win B1 device-report question answered (USING freeze, strtol ranges checked)	phase-5	main	opus	main	process	00:15	00:15	0.08	session clock
 2026-11-17	V9: delta legal audit (opus) of af29729..HEAD	phase-6	acc7976e82978e8a7	opus	audit	review	08:29	10:09	0.05	agent run 139 s plus a crash restart
 2026-11-17	V9: G8e history rewrite (saved audit out of history), map, records	phase-6	main	opus	main	process	10:07	10:11	0.07	session clock
+2026-11-17	V9: re-stage, needles rebuilt, pre-push check, repo created, main+tag pushed, draft release	phase-6	main	opus	main	process	10:12	10:18	0.10	session clock
