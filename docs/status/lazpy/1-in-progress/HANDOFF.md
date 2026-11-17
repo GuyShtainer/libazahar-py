@@ -1,7 +1,7 @@
 <!-- handoff: slim v1 | current tasks only | rewritten whole from docs/status/templates/handoff.md | budget 80 lines | never append -->
 # libazahar-py handoff
 
-As of: 2026-11-17 22:28 (session 3ds-toolkit-eb; it also runs the PC worker)
+As of: 2026-11-17 22:42 (session 3ds-toolkit-eb; it also runs the PC worker)
 
 This file lives in docs/status/lazpy/1-in-progress/, beside its item files. It holds only what
 the next session needs to act now, and points at the rest. Goals, rules, decisions and history live elsewhere.
@@ -10,14 +10,16 @@ the next session needs to act now, and points at the rest. Goals, rules, decisio
 - Item 700: the Windows port, proven (Guy: "move forward so its windows proven"). Plan revision 2 is final
   (`docs/plans/phase-7.md`); briefs in `docs/plans/phase-7-briefs.md`. Steps are items 701-714.
 - Item 711: W7 passed 22:26 (clone_check run 5 clean in a quiet window, release_check rc 0); candidate local main
-  309fd0e, staged on the PC (SHA256SUMS 25487e9a...). W7c open. The PC crashed twice today (CPU instability under
+  309fd0e, staged on the PC (SHA256SUMS 25487e9a...). W7c: RC deploys deploy-win-99d843c8c2 and deploy-py-04f977e97f
+  built (toolkit 1bc50a5 opt-in LAZPY_DEPLOY; STAMP unchanged); waiting on one job each from Gen3D and 3DP (3DP after
+  its running round, 1-2 h). The PC crashed twice today (CPU instability under
   all-core load, per gba-toolkit): Guy "if it crashes so much dont overload it"; at most 2 copies.
 - Item 712: W8, the release-legal-audit agent runs (brief runs/p7/w8/brief.md, report runs/reviews/).
 - Item 600 / 420: v1.0.0 published 11:08. W10's post-publish check closes I5 part 2.
 
 ## Next steps, in order
-1. W7c (item 711): make a release-candidate deploy id from the W7 host and the W5 core (default deploy unchanged);
-   ask Gen3D and 3DP to run their next normal job on it; gate: each job log names the id and says PASS.
+1. W7c (item 711): Gen3D and 3DP report one job each with LAZPY_DEPLOY (ids above); gate: the result names the id,
+   deploy_optin true, PASS. Record both in item 711, then W7 closes (git mv to 2-done).
 2. W8 (item 712): when the audit returns, fix, re-stage (bundle main --tags, stage-pc.sh, rc-pc.ps1), then ask Guy
    for the publish word and quote it in item 712. W9 and W10 after that (pushes need Guy's word).
 3. After W10 passes: close items 420, 400 and 600; delete the private history bundles (incl. ~/.lazpy-private/g8e),

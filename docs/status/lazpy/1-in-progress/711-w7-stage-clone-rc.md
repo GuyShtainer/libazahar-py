@@ -59,6 +59,17 @@ The W7 and W7c gates in the plan. Plan: `docs/plans/phase-7.md` line 311.
   refusal), clone ok 270 s (runs/p7/w7/cc5.out). release_check on staging 309fd0e (SHA256SUMS 25487e9a...): rc 0,
   17 PASS, PEND only `<pick after W9>`, plant-red rc 0 (release_check6.out). W8's staged copy refreshed; all 13 check.
   W7c (Gen3D and 3DP jobs on a release-candidate deploy id) is open.
+- 2026-11-17 22:30 W7c started. Found: the PC job path has no per-job deploy choice (job_native.py takes the folder
+  from STAMP.native.win_lib or STAMP.py.root only), so "a release-candidate deploy id, default not switched" needs
+  an opt-in first. A sonnet agent adds job.json "deploy" (+ LAZPY_DEPLOY in lazpy-py), checked against the folder's
+  own shas, in toolkit worktree .claude/worktrees/rc-deploy (tests on the PC). Then the main loop deploys it, builds
+  deploy-win-<sha> and deploy-py-<sha> from the W7 host and the W5 core, and asks Gen3D and 3DP for one job each.
+- 2026-11-17 22:41 W7c deploy ready. Toolkit 1bc50a5: per-job opt-in (job.json "deploy", LAZPY_DEPLOY); the pyjob name check
+  skips job-written __pycache__ (the live deploy-py-94713d6e07 has 15 .pyc). PC: all three live folders hash to
+  their names; job_native_py_test 34 OK; lazpy_py_test's Windows failures (POSIX fakes) identical to main 95ab1d5.
+  C:\lazpy\bin\job_native.py replaced (old copy .before-rcdeploy). RC folders from clone 309fd0e (host build of
+  W7 cc5) + W5 core 9f45bca5...: deploy-win-99d843c8c2, deploy-py-04f977e97f (base 6345b83, fp fb0def449f16);
+  STAMP.json unchanged. Asked Gen3D and 3DP for one normal job each with LAZPY_DEPLOY.
 
 ## Pointers
 - Plan section: `docs/plans/phase-7.md:311`; briefs: `docs/plans/phase-7-briefs.md`
