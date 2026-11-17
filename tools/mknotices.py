@@ -39,6 +39,13 @@ COMPONENTS = {
     "faad2": ("faad2", [("faad2/faad2/README", 12, 39)], "GPL-2.0-or-later", ["faad2"],
               "Code from FAAD2 is copyright (c) Nero AG, www.nero.com"),
     "fmt": ("fmt", ["fmt/LICENSE"], "MIT", ["fmt"], ""),
+    "glad": ("glad", [("glad/include/KHR/khrplatform.h", 4, 25)],  # win64: Azahar turns ENABLE_OPENGL on there
+             "Public Domain, WTFPL or CC0 (the glad 0.1.36 output); Khronos notice for khrplatform.h", ["glad"],
+             "glad is a generated OpenGL loader and ships no licence file. glad's README (tag v0.1.36, the version that "
+             "generated these files) says: \"The glad generated code itself is any of Public Domain, WTFPL or CC0, the "
+             "source files for the generated code are under various licenses from Khronos\"; for GL that is Apache "
+             "Version 2.0 (the Apache-2.0 text is in the vulkan-headers section). The Khronos header khrplatform.h carries "
+             "the notice above."),
     "glslang": ("glslang", ["glslang/LICENSE.txt"], "BSD-3-Clause and others (see text)", ["glslang", "SPIRV"], ""),
     "httplib": ("httplib", [("MIT-BODY", "httplib/httplib.h", 3, 5)], "MIT", [], ""),
     "json": ("json", [("MIT-BODY", "json/json.hpp", 6, 7)], "MIT", [], ""),

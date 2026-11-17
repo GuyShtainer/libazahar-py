@@ -46,6 +46,10 @@ The W5 gate in the plan. Plan: `docs/plans/phase-7.md` line 295.
   their LICENSE files; libs Zydis, Zycore); every licence file exists in the pinned source. mknotices now lists all
   missing components and all unknown link libraries in one message (libressl still refused). Not in the W1b licence
   delta; all three permissive (notice only). Rerun next.
+- 2026-11-17 17:16 rerun 44107891900 (main 05acacd): the three pass; mknotices lists one more: glad (Azahar turns
+  ENABLE_OPENGL on for Windows, off on Apple). glad has no licence file: the table quotes glad v0.1.36's README
+  (fetched with gh from Dav1dde/glad at tag v0.1.36: "Public Domain, WTFPL or CC0", GL sources Apache-2.0) and
+  khrplatform.h's Khronos notice verbatim (lines 4-25); lib glad (static). Flagged for the W8 audit in item 712.
 
 ## Pointers
 - Plan section: `docs/plans/phase-7.md:295`; briefs: `docs/plans/phase-7-briefs.md`

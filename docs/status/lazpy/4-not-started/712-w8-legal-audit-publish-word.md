@@ -23,4 +23,7 @@ none yet
 - Review: `docs/reviews/phase-7-review-2.md`
 
 ## Lessons and notes
-None yet; planned in phase-7 revision 2.
+- For the audit (found in W5, 2026-11-17): the Windows core holds four components the macOS core does not and the W1b
+  licence delta did not list: xbyak (BSD-3-Clause), zydis and zycore (MIT), all dynarmic's x86-64 backend; and glad
+  (Azahar sets ENABLE_OPENGL on Windows), which ships no licence file: NOTICES-windows-x64.md quotes glad v0.1.36's
+  README ("Public Domain, WTFPL or CC0"; GL spec Apache-2.0) and khrplatform.h's Khronos notice. Check those texts.
