@@ -3,6 +3,13 @@
 
 Usage: python3 -I tools/mknotices.py --link LINK.txt --deps BUILD --tree TREE --src SRC --inputs build.inputs
            --openssl openssl-3.6.5.tar.gz --sysarch citra_system_archives.tar.gz --newlib COPYING.NEWLIB [--ofl FILE] [--unifont FILE] > NOTICES.md
+       python3 -I tools/mknotices.py --target win64 --link link.all --deps build-core/build --tree TREE --src TREE
+           --inputs build-core/build.inputs --openssl openssl-3.6.5.tar.gz --sysarch citra_system_archives.tar.gz
+           --fonts-from-notices NOTICES.md --runtime-copyright PKG=FILE [--runtime-copyright ...] > NOTICES-windows-x64.md
+The win64 form covers the Windows core DLL only (no test app, no newlib). --fonts-from-notices takes the OFL and
+Unifont texts out of the macOS release's NOTICES.md, which holds them verbatim, so CI needs no font files.
+--runtime-copyright adds one named text, verbatim: an Ubuntu package's copyright file, and the two files the win64
+form requires, `winpthreads-COPYING` and `COPYING.MinGW-w64-runtime.txt`, unpacked from the mingw-w64 source (D13).
 
 Reads the link line's static libraries and every compile dependency file (*.o.d) under BUILD, sorts each path into a
 component (table COMPONENTS), a src/ notice (table SRC_NOTICES), OpenSSL (the Cellar path in build.inputs), generated
@@ -223,7 +230,7 @@ def read_member(tar_path: Path, suffix: str) -> str | None:
     return None
 
 
-def openssl_section(ossl: Path, version: str) -> str:
+def openssl_section(ossl: Path, version: str, target: str = "mac") -> str:
     licence = read_member(ossl, "LICENSE.txt") or die("OpenSSL tarball has no LICENSE.txt") or ""
     readme = read_member(ossl, "README.md") or ""
     lines = [ln.strip() for ln in readme.split("\n") if ln.startswith("Copyright (c)")]
@@ -231,7 +238,9 @@ def openssl_section(ossl: Path, version: str) -> str:
         die("no OpenSSL Project Authors copyright line in the tarball's README.md")
     line = "\n".join(lines)
     notice = read_member(ossl, "NOTICE")
-    out = [f"### openssl\n", f"OpenSSL {version} (Homebrew `openssl@3`, statically linked), Apache-2.0.\n",
+    how = ("Homebrew `openssl@3`" if target == "mac" else
+           f"built from the release's `openssl-{version}.tar.gz` by `tools/build-core-win64.sh`; recipe in `core/OPENSSL.md`")
+    out = [f"### openssl\n", f"OpenSSL {version} ({how}, statically linked), Apache-2.0.\n",
            fence(line), fence(licence)]
     out.append(fence(notice) if notice else "OpenSSL's source tarball has no NOTICE file (checked).\n")
     return "\n".join(out)
@@ -270,9 +279,25 @@ def archives_section(tree: Path, snap: Path, ofl: Path | None, uni: Path | None)
     return "\n".join(head)
 
 
+FONTS_FROM: Path | None = None    # --fonts-from-notices: the macOS release's NOTICES.md
+
+
+def fonts_from_notices(path: Path) -> tuple[str, str]:
+    """The OFL text and the Unifont notice, read back out of the macOS NOTICES.md (font_texts wrote them verbatim)."""
+    text = path.read_text(encoding="utf-8")
+    ofl = re.search(r"The SIL Open Font License 1\.1 file of Montserrat v4\.001, verbatim:\n\n```text\n(.*?)\n```\n", text, re.S)
+    uni = re.search(r"GNU Unifont 10\.0\.05: (.*?) GPLv2 or later with the GNU font embedding exception\.\n\n```text\n(.*?)\n```\n",
+                    text, re.S)
+    if ofl is None or uni is None:
+        die(f"{path} holds no OFL text or no Unifont notice")
+    return ofl.group(1) + "\n", uni.group(1) + "\n\n" + uni.group(2) + "\n"
+
+
 def font_texts(snap: Path, ofl: Path | None, uni: Path | None) -> str:
     ofl_text = read_member_deep(snap, "OFL") or (ofl.read_text() if ofl else None)
     uni_text = read_member_deep(snap, "unifont-notice") or (uni.read_text() if uni else None)
+    if (ofl_text is None or uni_text is None) and FONTS_FROM is not None:
+        ofl_text, uni_text = fonts_from_notices(FONTS_FROM)
     if ofl_text is None or uni_text is None:
         die("no OFL text or no Unifont notice (snapshot has none; pass --ofl and --unifont)")
     uni_lines = uni_text.split("\n")
@@ -317,13 +342,15 @@ def notice_sentence(patch_names: list[str]) -> str:
     return f"(patch 0000; patches {', '.join(own[:-1])} and {own[-1]} add their own for the files they change)"
 
 
-def header_section(inputs: dict[str, str], commit: str) -> str:
+def header_section(inputs: dict[str, str], commit: str, target: str = "mac") -> str:
     names = [k[6:] for k in sorted(inputs) if k.startswith("patch ")]
     patches = [f"- `{name}` sha256 {inputs['patch ' + name]}" for name in names]
     return "\n".join([
         "# NOTICES\n",
-        "This file covers the core `azahar_lazpy_libretro.dylib` and the test app `testapp.3dsx`. The repository's "
-        "own code is GPLv3 (`LICENSE`). The core binary is distributed under GPLv3 (Azahar's 'or any later version' "
+        ("This file covers the core `azahar_lazpy_libretro.dylib` and the test app `testapp.3dsx`. The repository's "
+         if target == "mac" else
+         "This file covers the Windows core `azahar_lazpy_libretro.dll` (x86-64). The repository's ")
+        + "own code is GPLv3 (`LICENSE`). The core binary is distributed under GPLv3 (Azahar's 'or any later version' "
         "grant permits it; the binary links Apache-2.0 code, which GPLv2 does not accept).\n",
         "## libazahar-py's changes to Azahar\n", "\n".join(patches) + "\n",
         f"Each changed file carries a 'Modified by libazahar-py' notice {notice_sentence(names)}. Removed before the "
@@ -358,7 +385,45 @@ def tail_section() -> str:
         "key loading are removed.\n"])
 
 
+# verbatim files the Windows notices must carry (taken from the D13 mingw-w64 source of the pinned image)
+WIN_REQUIRED = ("winpthreads-COPYING", "COPYING.MinGW-w64-runtime.txt")
+
+
+def runtime_section(items: list[str]) -> str:
+    """The mingw-w64 runtime the Windows DLL links statically: each Ubuntu package's copyright file, verbatim."""
+    out = ["## mingw-w64 runtime\n",
+           "The Windows core links the GCC runtime libraries (libstdc++ and libgcc), winpthreads and the mingw-w64 C "
+           "runtime statically. They come from Ubuntu's packages. Every text below is verbatim: the copyright files of "
+           "those packages, and two files from the source of the mingw-w64 version that is linked (winpthreads' "
+           "`COPYING` and `COPYING.MinGW-w64-runtime.txt`).\n"]
+    for item in items:
+        name, sep, path = item.partition("=")
+        if not sep or not name or not Path(path).is_file():
+            die(f"--runtime-copyright wants PKG=FILE with an existing file (got {item!r})")
+        out += [f"### {name}\n", fence(Path(path).read_text(encoding="utf-8", errors="replace"))]
+    return "\n".join(out)
+
+
+def tail_win64() -> str:
+    return "\n".join([
+        "## Not included\n",
+        "The Vulkan loader (`vulkan-1.dll`) comes with the GPU driver and is not shipped; no Vulkan loader, driver "
+        "(ICD) or dzn library is part of this release. Azahar's original tarball also contains the bundled LibreSSL; "
+        "we removed it with the three headers. No ROMs, console keys, Nintendo certificates, Nintendo system files or "
+        "NAND data are included; the key blob, the default HTTP client certificate and key loading are removed.\n"])
+
+
 def build(args: argparse.Namespace) -> str:
+    global FONTS_FROM
+    FONTS_FROM = Path(args.fonts_from_notices) if args.fonts_from_notices else None
+    win = args.target == "win64"
+    if win:
+        labels = {item.partition("=")[0] for item in args.runtime_copyright}
+        for need in WIN_REQUIRED:
+            if need not in labels:
+                die(f"--target win64 needs --runtime-copyright {need}=FILE (verbatim, from the linked version's source)")
+    if not win and not args.newlib:
+        die("--newlib is required for the macOS notices")
     inputs = read_kv(Path(args.inputs))
     keg = inputs.get("openssl_prefix") or die("build.inputs has no openssl_prefix") or ""
     tree, src = Path(args.tree), Path(args.src)
@@ -371,15 +436,18 @@ def build(args: argparse.Namespace) -> str:
         owner = next((n for n, c in COMPONENTS.items() if lib in c[3]), None)
         if owner is not None and owner not in comps:
             die(f"linked library {lib} has no dependency path for its component {owner}")
-    parts = [header_section(inputs, pin.get("AZAHAR_COMMIT", "?")), src_section(scan_src(tree, src_files)),
+    parts = [header_section(inputs, pin.get("AZAHAR_COMMIT", "?"), args.target), src_section(scan_src(tree, src_files)),
              "## Components\n"]
     for name in sorted(comps - {"open_source_archives"}):
         parts.append(component_section(name, src, libs))
-    parts.append(openssl_section(Path(args.openssl), inputs.get("openssl_version", "?")))
+    parts.append(openssl_section(Path(args.openssl), inputs.get("openssl_version", "?"), args.target))
     if "open_source_archives" in comps:
         parts.append(archives_section(tree, Path(args.sysarch), Path(args.ofl) if args.ofl else None,
                                       Path(args.unifont) if args.unifont else None))
-    parts += [testapp_section(Path(args.newlib)), tail_section()]
+    if win:
+        parts += [runtime_section(args.runtime_copyright), tail_win64()]
+    else:
+        parts += [testapp_section(Path(args.newlib)), tail_section()]
     return "\n".join(parts)
 
 
@@ -387,7 +455,10 @@ def main(argv: list[str]) -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     for flag in ("link", "deps", "tree", "src", "inputs", "openssl", "sysarch"):
         ap.add_argument("--" + flag, required=True)
-    ap.add_argument("--newlib", required=True)
+    ap.add_argument("--newlib")
+    ap.add_argument("--target", choices=("mac", "win64"), default="mac")
+    ap.add_argument("--fonts-from-notices")
+    ap.add_argument("--runtime-copyright", action="append", default=[])
     ap.add_argument("--ofl")
     ap.add_argument("--unifont")
     sys.stdout.write(build(ap.parse_args(argv)))

@@ -1,0 +1,6 @@
+.github/workflows/core-win64.yml
+core
+tools/build-core-win64.sh
+tools/build-files.txt
+tools/toolchain-win64.cmake
+tools/untar_checked.py

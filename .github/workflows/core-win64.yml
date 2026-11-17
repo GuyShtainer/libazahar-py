@@ -1,0 +1,336 @@
+# Builds the Windows core (azahar_lazpy_libretro.dll) from the pinned source, in CI, and checks it. Runs only by hand
+# (workflow_dispatch), on main. Three jobs: build (job 1), load test on a clean Windows runner (job 2), leak check (job 3).
+# What the build does and what it records: tools/build-core-win64.sh, tests/gate_f2_pe.py, docs/plans/phase-7.md (D4, D5, D10, D13).
+# The key headers are read only in the build job and in the leak check, into a folder outside the workspace, and are
+# deleted at once. No log line, artifact or file holds them, their bytes or their hashes.
+name: core-win64
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  LAZ_IMAGE: ubuntu:26.04@sha256:d66b366dac61b575bee2aef07e9c26e8070096fbe84a3d4d3eb0da069b5d76db
+
+jobs:
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    container:
+      image: ubuntu:26.04@sha256:d66b366dac61b575bee2aef07e9c26e8070096fbe84a3d4d3eb0da069b5d76db
+    permissions:
+      contents: read
+    defaults:
+      run:
+        shell: bash
+    outputs:
+      dll_sha256: ${{ steps.dll.outputs.sha256 }}
+    steps:
+      - name: packages (before checkout, so actions/checkout makes a real git clone)
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends git ca-certificates curl perl python3 cmake ninja-build make xz-utils file gcc-mingw-w64-x86-64-posix g++-mingw-w64-x86-64-posix binutils-mingw-w64-x86-64
+
+      - name: source packages for the runtime source tar (deb822 deb-src) and two more tools
+        run: |
+          sed -i 's/^Types: deb$/Types: deb deb-src/' /etc/apt/sources.list.d/ubuntu.sources
+          grep -q '^Types: deb deb-src$' /etc/apt/sources.list.d/ubuntu.sources
+          apt-get update
+          # patch: build-core-win64.sh applies core/patches with it. dpkg-dev: apt-get source. Neither is in the minimal image.
+          apt-get install -y --no-install-recommends patch dpkg-dev
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+
+      - name: prepare (head, image pin, build user)
+        run: |
+          git config --system --add safe.directory "$GITHUB_WORKSPACE"
+          git rev-parse HEAD
+          [ "$(git rev-parse HEAD)" = "$GITHUB_SHA" ]
+          # the image appears twice in this file (the container line and the env line); the env one is what build.inputs records
+          [ "$(grep -cF "image: $LAZ_IMAGE" .github/workflows/core-win64.yml)" = 1 ]
+          useradd -m b
+          mkdir -p /opt/lazpy
+          chown b:b /opt/lazpy
+          chown -R b:b "$GITHUB_WORKSPACE"
+
+      - name: build the core (OpenSSL, patched tree, cmake, make), as a non-root user
+        run: |
+          su b -c "cd '$GITHUB_WORKSPACE' && LAZ_IMAGE='$LAZ_IMAGE' LAZ_CORE_JOBS='$(nproc)' sh tools/build-core-win64.sh --build"
+          cat build-core/build.exit
+          [ "$(cat build-core/build.exit)" = 0 ]
+          # the link map's answer: which runtime archives the final link pulled in
+          grep '^runtime_libs=' build-core/build.inputs | sed 's/^runtime_libs=/runtime-libs: /'
+
+      - name: gate_f2 win64 on the live tree (key window search included)
+        run: |
+          set -eu
+          T="$RUNNER_TEMP/src.tar.xz"; K="$RUNNER_TEMP/keyhdr"
+          trap 'rm -rf "$K" "$T"' EXIT
+          pin() { sed -n "s/^$1=//p" core/PIN; }
+          URL="$(pin SRC_URL)"; SHA="$(pin SRC_SHA256)"; TOP="$(pin SRC_TOP)"; DROP="$(pin LAZ_CORE_DROP)"
+          curl -fsSL --retry 2 -o "$T" "$URL"
+          [ "$(sha256sum "$T" | cut -d' ' -f1)" = "$SHA" ] || { echo "the core/PIN tarball does not match its sha256"; exit 1; }
+          mkdir -p "$K"
+          set -f
+          N=0
+          for D in $DROP; do
+            case "$D" in
+              src/*) tar -xJf "$T" -C "$K" "$TOP/$D"; N=$((N + 1)) ;;
+            esac
+          done
+          set +f
+          echo "key headers extracted: $N (outside the workspace)"
+          [ "$N" = 3 ]
+          python3 -I tests/gate_f2_pe.py --repo . --build-dir build-core --src-root "$K/$TOP" --out build-core/gate_f2.txt
+
+      - name: mingw-w64 runtime source (D13)
+        run: |
+          set -eu
+          mkdir -p out "$RUNNER_TEMP/rt"
+          cd "$RUNNER_TEMP/rt"
+          apt-get source --download-only gcc-mingw-w64 mingw-w64
+          N="$(dpkg-query -W -f='${Version}' gcc-mingw-w64-x86-64-posix | sed -n 's/^\([0-9][0-9]*\).*/\1/p')"
+          [ -n "$N" ]
+          apt-get download "gcc-$N-source"
+          ls -l
+          tar -cf "$GITHUB_WORKSPACE/out/mingw-w64-runtime-source.tar" *
+          ls -l "$GITHUB_WORKSPACE/out/mingw-w64-runtime-source.tar"
+          # the two licence files of the mingw-w64 version that is linked, from its source in this image (not upstream master)
+          mkdir -p "$RUNNER_TEMP/mingw-lic"
+          for T in mingw-w64_*.orig.tar.*; do
+            tar -xf "$T" -C "$RUNNER_TEMP/mingw-lic" --wildcards '*/mingw-w64-libraries/winpthreads/COPYING' \
+              '*/COPYING.MinGW-w64-runtime/COPYING.MinGW-w64-runtime.txt'
+          done
+          [ "$(find "$RUNNER_TEMP/mingw-lic" -name COPYING -path '*winpthreads*' | wc -l)" = 1 ]
+          [ "$(find "$RUNNER_TEMP/mingw-lic" -name COPYING.MinGW-w64-runtime.txt | wc -l)" = 1 ]
+
+      - name: NOTICES-windows-x64.md (mknotices win64)
+        run: |
+          set -eu
+          mkdir -p out "$RUNNER_TEMP/sysarch"
+          SNAP=citra_system_archives-f470e0c.tar.gz
+          curl -fsSL --retry 2 -o "$RUNNER_TEMP/sysarch/$SNAP" "https://github.com/GuyShtainer/libazahar-py/releases/download/v1.0.0/$SNAP"
+          [ "$(sha256sum "$RUNNER_TEMP/sysarch/$SNAP" | cut -d' ' -f1)" = faada632bdad4f5d437998aa1ce20a72715e55999387538b7f3ee6aca135d7a3 ]
+          TOP="$(sed -n 's/^SRC_TOP=//p' core/PIN)"
+          # the packages named by the GCC-ident map in build.inputs, plus the mingw-w64 headers and CRT package
+          PKGS="$(sed -n 's/^gcc_ident [^=]*=//p' build-core/build.inputs | tr ';' '\n' | sed 's/(.*//' | sort -u) mingw-w64-x86-64-dev"
+          WP="$(find "$RUNNER_TEMP/mingw-lic" -name COPYING -path '*winpthreads*')"
+          RT="$(find "$RUNNER_TEMP/mingw-lic" -name COPYING.MinGW-w64-runtime.txt)"
+          ARGS=" --runtime-copyright winpthreads-COPYING=$WP --runtime-copyright COPYING.MinGW-w64-runtime.txt=$RT"
+          for P in $(printf '%s\n' $PKGS | sort -u); do
+            [ -f "/usr/share/doc/$P/copyright" ] || { echo "no copyright file for package $P"; exit 1; }
+            ARGS="$ARGS --runtime-copyright $P=/usr/share/doc/$P/copyright"
+          done
+          python3 -I tools/mknotices.py --target win64 --link build-core/link.all --deps build-core/build \
+            --tree "dl/azahar-src/build-src/$TOP" --src "dl/azahar-src/build-src/$TOP" --inputs build-core/build.inputs \
+            --openssl dl/openssl-src/openssl-3.6.5.tar.gz --sysarch "$RUNNER_TEMP/sysarch/$SNAP" \
+            --fonts-from-notices NOTICES.md $ARGS >out/NOTICES-windows-x64.md
+          wc -c out/NOTICES-windows-x64.md
+
+      - name: stage, print the DLL sha256
+        id: dll
+        run: |
+          set -eu
+          cp build-core/azahar_lazpy_libretro.dll build-core/build.inputs build-core/gate_f2.txt out/
+          S="$(sha256sum out/azahar_lazpy_libretro.dll | cut -d' ' -f1)"
+          echo "azahar_lazpy_libretro.dll sha256 $S"
+          echo "sha256=$S" >>"$GITHUB_OUTPUT"
+          ls -l out
+          cat out/gate_f2.txt
+
+      - name: upload the artifact
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
+        with:
+          name: core-win64
+          path: |
+            out/azahar_lazpy_libretro.dll
+            out/build.inputs
+            out/NOTICES-windows-x64.md
+            out/gate_f2.txt
+            out/mingw-w64-runtime-source.tar
+          if-no-files-found: error
+
+      - name: end marker (job 3 refuses a log without it)
+        run: echo "CORE-WIN64-BUILD-LOG-END"
+
+  load-test:
+    name: load-test
+    needs: build
+    runs-on: windows-2025
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0  # v7.1.0
+        with:
+          python-version: "3.10"
+      - name: download the artifact into a fresh empty folder
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333  # v8.0.2
+        with:
+          name: core-win64
+          path: ${{ runner.temp }}/fresh-core
+      - name: load the DLL (default search; no os.add_dll_directory, no PATH help)
+        shell: bash
+        env:
+          WANT_SHA: ${{ needs.build.outputs.dll_sha256 }}
+          WANT_HEAD: ${{ github.sha }}
+          WANT_IMAGE: ${{ env.LAZ_IMAGE }}
+          FRESH: ${{ runner.temp }}/fresh-core
+        run: |
+          cat >"$RUNNER_TEMP/loadtest.py" <<'PY'
+          import ctypes, hashlib, os, sys
+          from pathlib import Path
+          sys.path.insert(0, os.path.join(os.environ["GITHUB_WORKSPACE"], "tests"))
+          import gate_f2_pe as pe
+          fresh = Path(os.environ["FRESH"])
+          names = sorted(p.name for p in fresh.iterdir())
+          print("artifact files:", names)
+          want = {"azahar_lazpy_libretro.dll", "build.inputs", "NOTICES-windows-x64.md", "gate_f2.txt", "mingw-w64-runtime-source.tar"}
+          if set(names) != want:
+              raise SystemExit(f"unexpected artifact files: {sorted(set(names) ^ want)}")
+          dll = fresh / "azahar_lazpy_libretro.dll"
+          data = dll.read_bytes()
+          sha = hashlib.sha256(data).hexdigest()
+          print("dll sha256", sha)
+          if sha != os.environ["WANT_SHA"]:
+              raise SystemExit("the DLL is not the one the build job printed")
+          machine, bad = pe.machine_findings(data)
+          n, more = pe.import_findings(data)
+          bad += more
+          print("pe machine", machine, "imports", n)
+          report = (fresh / "gate_f2.txt").read_text(encoding="utf-8")
+          bad += pe.contract_findings(report, sha, os.environ["WANT_HEAD"], os.environ["WANT_IMAGE"])
+          lib = ctypes.CDLL(str(dll))     # default winmode: the loader does not use PATH for dependents
+          lib.retro_api_version.restype = ctypes.c_uint
+          version = lib.retro_api_version()
+          print("retro_api_version", version)
+          if version != 1:
+              bad.append(f"retro_api_version is {version}, want 1")
+          for name in ("lazpy_read_memory", "lazpy_write_memory", "lazpy_movie_play", "lazpy_threads"):
+              getattr(lib, name)
+              print("export ok", name)
+          if bad:
+              print("\n".join(bad))
+              raise SystemExit(1)
+          print("load test ok")
+          PY
+          cd "$FRESH"
+          python -I "$RUNNER_TEMP/loadtest.py"
+
+  leak-check:
+    name: leak-check
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333  # v8.0.2
+        with:
+          name: core-win64
+          path: ${{ runner.temp }}/art
+      - name: job 1's log, through the API
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          set -eu
+          JOB="$(gh api "repos/$REPO/actions/runs/$RUN_ID/jobs" --jq '.jobs[] | select(.name == "build") | .id')"
+          [ -n "$JOB" ]
+          gh api "repos/$REPO/actions/jobs/$JOB/logs" >"$RUNNER_TEMP/build-job.log"
+          BYTES="$(wc -c <"$RUNNER_TEMP/build-job.log" | tr -d ' ')"
+          echo "build job log: $BYTES bytes"
+          [ "$BYTES" -gt 10000 ]
+          grep -q 'CORE-WIN64-BUILD-LOG-END' "$RUNNER_TEMP/build-job.log"
+          grep -q 'gate_f2 1 target=win64' "$RUNNER_TEMP/build-job.log"
+      - name: the 16-byte window search over the log and every artifact file
+        run: |
+          set -eu
+          T="$RUNNER_TEMP/src.tar.xz"; K="$RUNNER_TEMP/keyhdr"
+          trap 'rm -rf "$K" "$T"' EXIT
+          pin() { sed -n "s/^$1=//p" core/PIN; }
+          URL="$(pin SRC_URL)"; SHA="$(pin SRC_SHA256)"; TOP="$(pin SRC_TOP)"; DROP="$(pin LAZ_CORE_DROP)"
+          curl -fsSL --retry 2 -o "$T" "$URL"
+          [ "$(sha256sum "$T" | cut -d' ' -f1)" = "$SHA" ] || { echo "the core/PIN tarball does not match its sha256"; exit 1; }
+          mkdir -p "$K"
+          set -f
+          N=0
+          for D in $DROP; do
+            case "$D" in
+              src/*) tar -xJf "$T" -C "$K" "$TOP/$D"; N=$((N + 1)) ;;
+            esac
+          done
+          set +f
+          [ "$N" = 3 ]
+          export KEYSRC="$K/$TOP" ART="$RUNNER_TEMP/art" JOBLOG="$RUNNER_TEMP/build-job.log"
+          python3 -I - <<'PY'
+          import os, sys
+          from pathlib import Path
+          sys.path.insert(0, os.path.join(os.environ["GITHUB_WORKSPACE"], "tests"))
+          import gate_f2 as g
+          src = Path(os.environ["KEYSRC"])
+          files = [Path(os.environ["JOBLOG"])] + sorted(p for p in Path(os.environ["ART"]).rglob("*") if p.is_file())
+          hits = 0
+          closed = 0
+          for path in files:
+              found = g._window_findings(path.read_bytes(), src)
+              hits += sum(1 for f in found if f.startswith("windows: the core holds window"))
+              closed += sum(1 for f in found if "nothing was checked" in f)
+              print(f"checked a file of {path.stat().st_size} bytes")
+          print(f"files={len(files)} arrays={len(g.KEY_ARRAYS)} windows={8 * len(g.KEY_ARRAYS)} hits={hits} unchecked={closed}")
+          if len(files) < 6 or closed or hits:
+              raise SystemExit(1)
+          PY
+
+  attest:
+    name: attest
+    # last, and only when the key search (job 1), the load test and the leak check all passed: no attestation for a bad run
+    needs: [build, load-test, leak-check]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333  # v8.0.2
+        with:
+          name: core-win64
+          path: ${{ runner.temp }}/art
+      - name: the DLL is the one job 1 printed
+        env:
+          WANT_SHA: ${{ needs.build.outputs.dll_sha256 }}
+        run: |
+          set -eu
+          [ "$(sha256sum "$RUNNER_TEMP/art/azahar_lazpy_libretro.dll" | cut -d' ' -f1)" = "$WANT_SHA" ]
+          echo "azahar_lazpy_libretro.dll sha256 $WANT_SHA"
+      - name: attest the DLL (a permanent record; logs expire)
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8  # v4.2.2
+        with:
+          subject-path: ${{ runner.temp }}/art/azahar_lazpy_libretro.dll
+
+  delete-on-leak:
+    name: delete-on-leak
+    # if the leak check fails, do not leave the artifact around. The main loop then also deletes the run's logs (nothing is
+    # attested: the attest job never runs after a failed leak check).
+    needs: [leak-check]
+    if: ${{ always() && needs.leak-check.result == 'failure' }}
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+    steps:
+      - name: delete the artifact, then fail loudly
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          set -eu
+          for ID in $(gh api "repos/$REPO/actions/runs/$RUN_ID/artifacts" --jq '.artifacts[].id'); do
+            gh api -X DELETE "repos/$REPO/actions/artifacts/$ID"
+            echo "deleted an artifact of this run"
+          done
+          echo "LEAK CHECK FAILED: the artifact is deleted. Delete this run's logs too."
+          exit 1
