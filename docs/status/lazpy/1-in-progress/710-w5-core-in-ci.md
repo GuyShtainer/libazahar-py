@@ -50,6 +50,11 @@ The W5 gate in the plan. Plan: `docs/plans/phase-7.md` line 295.
   ENABLE_OPENGL on for Windows, off on Apple). glad has no licence file: the table quotes glad v0.1.36's README
   (fetched with gh from Dav1dde/glad at tag v0.1.36: "Public Domain, WTFPL or CC0", GL sources Apache-2.0) and
   khrplatform.h's Khronos notice verbatim (lines 4-25); lib glad (static). Flagged for the W8 audit in item 712.
+- 2026-11-17 17:37 rerun 44112733637 (main 1b660f6): the components all pass; link_libs stopped at two words of the
+  core itself: "-Wl,--out-implib,libazahar_libretro.dll.a" and CMake's CMakeFiles/citra_libretro.dir/objects.a. Fix:
+  exactly those two words are skipped (OWN_LINK_WORD_RE, fullmatch); a fake other.dir/objects.a and libevil.dll.a still
+  fail rc 1. Ahead of the rerun, the src/ notice scan run over every src/ file of the pinned tree: only 2 Android files
+  miss the table (never built for Windows). Rerun next.
 
 ## Pointers
 - Plan section: `docs/plans/phase-7.md:295`; briefs: `docs/plans/phase-7-briefs.md`

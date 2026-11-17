@@ -159,10 +159,15 @@ def external_name(rel: str, raw: str) -> str:
     return name
 
 
+# win64 link words that end in .a but are the core itself: CMake's archive of the target's own objects (mingw links
+# through it) and the import library the link writes
+OWN_LINK_WORD_RE = re.compile(r"(^|/)CMakeFiles/citra_libretro\.dir/objects\.a|-Wl,--out-implib,libazahar_libretro\.dll\.a")
+
+
 def link_libs(link: Path) -> set[str]:
     libs = set()
     for word in link.read_text(errors="replace").split():
-        if word.endswith(".a"):
+        if word.endswith(".a") and not OWN_LINK_WORD_RE.fullmatch(word):
             libs.add(re.sub(r"^lib|\.a$", "", os.path.basename(word)))
     known = OWN_LIBS | OPENSSL_LIBS | {lib for c in COMPONENTS.values() for lib in c[3]}
     if libs - known:
