@@ -29,6 +29,10 @@ The W4 gate in the plan. Plan: `docs/plans/phase-7.md` line 276.
   at `make check`: clang's analyzer on host/azhost_main.c:512 (mingw-w64's _assert is not noreturn, so the analyzer
   walks past assert(p != NULL)). Fix: host/plat/analyze_assert.h forced into the Windows analysis only; the check
   now analyses every file before failing. make -n and a gcc parse with the header OK on the PC.
+- 2026-11-17 14:05 CI on 9026e0b: test and macos-live green; test-windows: all files clean except host/frame.c:121
+  (core.NullPointerArithm, a newer clang checker than Apple's; it cannot see that azh_fail returns an error). Fix: a
+  `px == NULL` guard after frame_pixels in azh_frame_write (behaviour unchanged; one macOS-visible hunk, so W1a's
+  macOS list gains it). PC: make rc 0, test-host "307983 checks, 0 failed".
 
 ## Pointers
 - Plan section: `docs/plans/phase-7.md:276`; briefs: `docs/plans/phase-7-briefs.md`
