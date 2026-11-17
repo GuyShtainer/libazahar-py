@@ -29,3 +29,8 @@ none yet
 
 ## Lessons and notes
 - 2026-11-17 11:09: README and STATUS say "Windows: work in progress, not proven" (Guy's ask).
+- 2026-11-17 11:13: port-win rebased on the PC onto main a551d5f as port-win-v1 (1c8650f, 22 commits, clean; port-win
+  kept); bundle runs/p7/port-win-v1.bundle (sha256 4669d8a4…) fetched to the Mac as local branch port-win-v1. Opus
+  plan agent writing docs/plans/phase-7.md (notes in runs/p7/notes.md).
+- 2026-11-17 11:14: Guy, verbatim: "moev forward doesnt include push to github. but this time you can push to github". So
+  phase 7 may push reviewed, gated work to GitHub (main, the tag); publishing the release still waits for his word.
