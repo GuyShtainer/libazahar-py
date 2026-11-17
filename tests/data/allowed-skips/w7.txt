@@ -1,0 +1,18 @@
+# Skips the full Windows run (every test, LAZ_REQUIRE_EMULATOR=1, --stock-core and --fixture given) may show.
+# Read by tools/skips_check.py --list w7. Format as fast.txt. A needs_core skip is not allowed here: the core, the
+# stock core, the host and the fixture are all present. test_release_fixture.py and test_profile_format.py must run
+# and pass (skips_check.py checks that itself).
+
+# no lazpy.1 Windows core exists
+test_threads_live.py::test_k_threads_lazpy1_core => ^set LAZ_CORE_OLD to a lazpy.1 core
+test_threads_live.py::test_k_states_both_ways => ^set LAZ_CORE_OLD to a lazpy.1 core
+
+# by design on Windows (the twin test runs in its place)
+test_slots.py::test_s5_load_warning => ^no load average on Windows
+test_lazpy_profile.py::test_worker_nice_floor => ^no nice values on Windows
+
+# the batch ended inside the timeout on a fast machine
+test_api.py::test_long_batch_outlives_a_short_timeout => not longer than the timeout
+
+# Developer Mode is off, so a plain user cannot make a symlink
+test_arguments.py::test_clear_sd_refuses_a_symlink => cannot create a symlink

@@ -4,7 +4,7 @@
 #   tools/build-core.sh --build            the above, then compile, copy, strip, codesign (long; use --detach)
 #   tools/build-core.sh --detach           run --build in its own session; pid -> build-core/build.pid,
 #                                          exit code -> build-core/build.exit, log -> build-core/build.log
-# Env: LAZ_CORE_TARGET (mac, the default, or win64: a mingw-w64 cross build to .dll, run on Linux/WSL), LAZ_ROOT (old name LAZPY_ROOT), LAZ_CORE_PIN (default core/PIN-nokeys; core/PIN builds from Azahar's own tarball), LAZ_CORE_PATCHES (default core/patches), LAZ_CORE_LTO (ON),
+# Env: LAZ_ROOT (old name LAZPY_ROOT), LAZ_CORE_PIN (default core/PIN-nokeys; core/PIN builds from Azahar's own tarball), LAZ_CORE_PATCHES (default core/patches), LAZ_CORE_LTO (ON),
 #      LAZ_CORE_JOBS (4), LAZ_OPENSSL_PREFIX (default: the pin's OPENSSL_PREFIX; a static OpenSSL of the pinned version, resolved to its real path). The pin file is read with sed, never sourced. Output and rules: core/README.md.
 set -eu
 SELF="$(cd "$(dirname "$0")" && pwd)/$(basename "$0")"
@@ -13,11 +13,6 @@ MODE="${1:-}"
 case "$MODE" in --configure-only | --build | --detach) ;; *) echo "usage: $0 --configure-only | --build | --detach" >&2; exit 2 ;; esac
 cd "$ROOT"
 export MACOSX_DEPLOYMENT_TARGET=15.0
-case "${LAZ_CORE_TARGET:-mac}" in
-  mac) TARGET=mac; CORE_EXT=dylib ;;
-  win64) TARGET=win64; CORE_EXT=dll ;;
-  *) echo "build-core: LAZ_CORE_TARGET must be mac or win64 (got '$LAZ_CORE_TARGET')" >&2; exit 2 ;;
-esac
 say() { echo "build-core: $*"; }
 die() { say "$*" >&2; exit 1; }
 [ "$(id -u)" -ne 0 ] || die "refusing to run as root"
@@ -121,34 +116,15 @@ fi
 
 # stale objects of the bundled LibreSSL from earlier builds (their .o.d files name it)
 rm -rf build-core/build/externals/libressl
-set -- cmake -S "$TREE" -B build-core/build -DENABLE_LIBRETRO=ON
-if [ "$TARGET" = mac ]; then
-  set -- "$@" -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_OSX_DEPLOYMENT_TARGET=15.0
-else
-  # win64: mingw-w64 (posix threads) on Linux. The toolchain file names the compilers; the .def is made from the patched tree.
-  mkdir -p build-core/toolbin
-  printf '#!/bin/sh\nexec x86_64-w64-mingw32-gcc-ar-posix "$@"\n' >build-core/toolbin/x86_64-w64-mingw32.static-gcc-ar
-  chmod +x build-core/toolbin/x86_64-w64-mingw32.static-gcc-ar
-  export PATH="$ROOT/build-core/toolbin:$PATH"
-  { echo EXPORTS; grep -v '^#' "$TREE/src/citra_libretro/libretro.osx.def" | sed 's/^_//'; } >build-core/libretro.win.def
-  [ "$(grep -c lazpy_ build-core/libretro.win.def)" -eq 4 ] || die "libretro.win.def does not hold the 4 lazpy_ exports"
-  # mingw-w64 13: fstat() takes `struct stat*`, but common/file_util.cpp:551-552 (libretro branch) passes a `_stat64` (MSVC builds
-  # get `#define fstat _fstat64` there). A force-included C++ overload fixes that one call and leaves every other file's fstat
-  # alone (a global -Dfstat broke fmt and boost). C++ only; no source patch.
-  printf '#include <sys/stat.h>\nstatic inline int fstat(int fd, struct _stat64 *s) { return _fstat64(fd, s); }\n' >build-core/win64-fstat.h
-  WIN_CXXDEFS=" -include $ROOT/build-core/win64-fstat.h"
-  set -- "$@" -G "Unix Makefiles" -DCMAKE_TOOLCHAIN_FILE="$ROOT/tools/toolchain-win64.cmake" -DLIBTYPE=STATIC \
-    -DCLANG_FORMAT=/bin/true "-DCMAKE_SHARED_LINKER_FLAGS=$ROOT/build-core/libretro.win.def" \
-    "-DCMAKE_CXX_STANDARD_LIBRARIES=-lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32 -lws2_32 -lcrypt32 -lbcrypt"
-fi
-set -- "$@" \
+set -- cmake -S "$TREE" -B build-core/build -DENABLE_LIBRETRO=ON -DCMAKE_OSX_ARCHITECTURES=arm64 \
+  -DCMAKE_OSX_DEPLOYMENT_TARGET=15.0 \
   -DCMAKE_BUILD_TYPE=Release -DFETCHCONTENT_FULLY_DISCONNECTED=ON -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
-  -DCITRA_WARNINGS_AS_ERRORS=OFF -DENABLE_LTO="${LAZ_CORE_LTO:-$([ "$TARGET" = mac ] && echo ON || echo OFF)}" \
+  -DCITRA_WARNINGS_AS_ERRORS=OFF -DENABLE_LTO="${LAZ_CORE_LTO:-ON}" \
   -DENABLE_BUILTIN_KEYBLOB=OFF \
   -DUSE_SYSTEM_OPENSSL=ON -DOPENSSL_USE_STATIC_LIBS=TRUE -DOPENSSL_ROOT_DIR="$SSL_ROOT" \
   -DOPENSSL_INCLUDE_DIR="$SSL_ROOT/include" -DOPENSSL_SSL_LIBRARY="$SSL_ROOT/lib/libssl.a" \
   -DOPENSSL_CRYPTO_LIBRARY="$SSL_ROOT/lib/libcrypto.a" \
-  -DCMAKE_C_FLAGS="-ffile-prefix-map=$PWD/=" -DCMAKE_CXX_FLAGS="-ffile-prefix-map=$PWD/=${WIN_CXXDEFS:-}"
+  -DCMAKE_C_FLAGS="-ffile-prefix-map=$PWD/=" -DCMAKE_CXX_FLAGS="-ffile-prefix-map=$PWD/="
 if ! "$@" >build-core/configure.log 2>&1; then
   tail -n 30 build-core/configure.log
   die "configure failed"
@@ -156,13 +132,8 @@ fi
 grep -q '^ENABLE_BUILTIN_KEYBLOB:BOOL=OFF$' build-core/build/CMakeCache.txt \
   || die "the built-in console key blob is not OFF (we never ship console keys)"
 CACHE=build-core/build/CMakeCache.txt
-if [ "$TARGET" = mac ]; then
-  grep -Eq '^CMAKE_OSX_DEPLOYMENT_TARGET:[A-Z]*=15.0$' "$CACHE" \
-    || die "configure did not take macOS 15.0 as the minimum (an older build tree's cache?)"
-else
-  grep -q 'SSE4.2 enabled' build-core/configure.log || die "configure: no 'SSE4.2 enabled' line (CMAKE_SYSTEM_PROCESSOR?)"
-  grep -q 'Enabling SSE2 for xxHash' build-core/configure.log || die "configure: no 'Enabling SSE2 for xxHash' line"
-fi
+grep -Eq '^CMAKE_OSX_DEPLOYMENT_TARGET:[A-Z]*=15.0$' "$CACHE" \
+  || die "configure did not take macOS 15.0 as the minimum (an older build tree's cache?)"
 grep -q '^USE_SYSTEM_OPENSSL:BOOL=ON$' "$CACHE" || die "configure did not take USE_SYSTEM_OPENSSL"
 for L in SSL:libssl CRYPTO:libcrypto; do
   grep -Eq "^OPENSSL_${L%%:*}_LIBRARY:[A-Z]*=$SSL_ROOT/lib/${L#*:}\.a\$" "$CACHE" \
@@ -187,7 +158,6 @@ CLEAN=no
   echo "openssl_prefix=$SSL_ROOT"
   echo "openssl_libssl_sha256=$(sha "$SSL_ROOT/lib/libssl.a")"
   echo "openssl_libcrypto_sha256=$(sha "$SSL_ROOT/lib/libcrypto.a")"
-  [ "$TARGET" = mac ] || echo "target=win64 def=$(sha build-core/libretro.win.def)"
   echo "head=$(git -C "$ROOT" rev-parse HEAD 2>/dev/null || echo none)"
   echo "clean=$CLEAN"
   printf 'cmake='; printf ' %s' "$@" | sed "s|$ROOT|<repo>|g; s|^ ||"; echo
@@ -202,28 +172,17 @@ for D in $DROP; do
   fi
 done
 LINK=build-core/build/src/citra_libretro/CMakeFiles/citra_libretro.dir/link.txt
-if [ "$TARGET" = win64 ]; then   # mingw puts the libraries into linkLibs.rsp, not link.txt
-  cat "$LINK" "${LINK%link.txt}linkLibs.rsp" >build-core/link.all
-  LINK=build-core/link.all
-  grep -qF -e -lole32 "$LINK" || die "the link line lacks -lole32"
-fi
 for A in libssl.a libcrypto.a; do grep -qF "$SSL_ROOT/lib/$A" "$LINK" || die "the link line lacks $SSL_ROOT/lib/$A"; done
 if grep -qi libressl "$LINK"; then die "the link line still names libressl"; fi
-OUTLIB=build-core/build/bin/Release/azahar_libretro.$CORE_EXT
+OUTLIB=build-core/build/bin/Release/azahar_libretro.dylib
 if strings -a "$OUTLIB" | grep -qi 'libressl'; then die "LibreSSL is still in the core"; fi
 if strings -a "$OUTLIB" | grep -q "OpenSSL $SSL_VER"; then :; else say "note: no 'OpenSSL $SSL_VER' string in the core"; fi
-DYLIB=build-core/azahar_lazpy_libretro.$CORE_EXT
+DYLIB=build-core/azahar_lazpy_libretro.dylib
 cp "$OUTLIB" "$DYLIB.tmp"
-if [ "$TARGET" = mac ]; then
-  strip -x "$DYLIB.tmp"
-  codesign --force -s - "$DYLIB.tmp"
-  codesign -v "$DYLIB.tmp"
-  LINKED="$(otool -L "$DYLIB.tmp")"
-else
-  x86_64-w64-mingw32-strip --strip-unneeded "$DYLIB.tmp"
-  LINKED="$(x86_64-w64-mingw32-objdump -p "$DYLIB.tmp" | grep 'DLL Name')"
-fi
-if printf '%s\n' "$LINKED" | grep -Eq 'libssl|libcrypto|libtls'; then
+strip -x "$DYLIB.tmp"
+codesign --force -s - "$DYLIB.tmp"
+codesign -v "$DYLIB.tmp"
+if otool -L "$DYLIB.tmp" | grep -Eq 'libssl|libcrypto|libtls'; then
   rm -f "$DYLIB.tmp"; die "the core links an SSL dylib (static OpenSSL only; stop and report)"
 fi
 mv -f "$DYLIB.tmp" "$DYLIB"

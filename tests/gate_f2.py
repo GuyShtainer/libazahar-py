@@ -95,6 +95,7 @@ def _window_findings(core_bytes: bytes, src_root: Path) -> list[str]:
 
 
 PIN_NAMES = ("PIN-nokeys", "PIN")    # build-core.sh's default pin first
+BUILD_SCRIPTS = {"mac": "build-core.sh", "win64": "build-core-win64.sh"}   # the script whose sha256 build.inputs records
 
 
 def built_pin(build_dir: Path, repo: Path) -> Path:
@@ -106,7 +107,7 @@ def built_pin(build_dir: Path, repo: Path) -> Path:
     return repo / "core" / PIN_NAMES[0]
 
 
-def _inputs_findings(build_dir: Path, repo: Path) -> tuple[dict[str, str], list[str]]:
+def _inputs_findings(build_dir: Path, repo: Path, target: str = "mac") -> tuple[dict[str, str], list[str]]:
     bad: list[str] = []
     pin_file = built_pin(build_dir, repo)
     pin = read_kv(pin_file)
@@ -115,7 +116,7 @@ def _inputs_findings(build_dir: Path, repo: Path) -> tuple[dict[str, str], list[
         return {}, ["build.inputs: missing (the old build has none)"]
     got = read_kv(path)       # "patch NAME=sha": the first '=' splits, names hold none
     want = {"tarball": pin.get("SRC_SHA256", "?"), "pin": sha256_file(pin_file),
-            "script": sha256_file(repo / "tools" / "build-core.sh"), "drop": pin.get("LAZ_CORE_DROP", "?"),
+            "script": sha256_file(repo / "tools" / BUILD_SCRIPTS[target]), "drop": pin.get("LAZ_CORE_DROP", "?"),
             "openssl_version": pin.get("OPENSSL_VERSION", "?"), "clean": "yes"}
     for key, value in want.items():
         if got.get(key) != value:
@@ -176,8 +177,10 @@ def _strings_findings(core: Path, version: str, suffix: str) -> list[str]:
     return bad
 
 
-def keyblob_findings(build_dir: Path, core: Path, src_root: Path, tree: Path, repo: Path) -> list[str]:
-    """Everything f1 checks; an empty list means the rebuilt core is the one that may ship."""
+def keyblob_findings(build_dir: Path, core: Path, src_root: Path, tree: Path, repo: Path, target: str = "mac") -> list[str]:
+    """Everything f1 checks; an empty list means the rebuilt core is the one that may ship. ``target`` picks the build
+    script whose sha256 build.inputs must record (mac: build-core.sh; win64: build-core-win64.sh). The win64 core is
+    checked by tests/gate_f2_pe.py, which reuses the parts below."""
     build_dir, core, src_root, tree, repo = (Path(x) for x in (build_dir, core, src_root, tree, repo))
     bad: list[str] = []
     exit_file = build_dir / "build.exit"
@@ -186,7 +189,7 @@ def keyblob_findings(build_dir: Path, core: Path, src_root: Path, tree: Path, re
     cache = build_dir / "build" / "CMakeCache.txt"
     if not core.is_file() or not cache.is_file() or core.stat().st_mtime <= cache.stat().st_mtime:
         bad.append("core: missing, or not newer than build/CMakeCache.txt")
-    got, found = _inputs_findings(build_dir, repo)
+    got, found = _inputs_findings(build_dir, repo, target)
     bad += found
     pin = read_kv(repo / "core" / "PIN")     # core/PIN's drop list (the key headers, libressl), whatever pin built
     drop = pin.get("LAZ_CORE_DROP", "").split()

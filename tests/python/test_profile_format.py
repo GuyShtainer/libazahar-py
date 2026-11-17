@@ -43,7 +43,7 @@ def test_profile_case(name: str):
 def azhost(*args: str, cwd: Path = REPO, timeout: int = 300) -> subprocess.CompletedProcess:
     exe = REPO / "build" / ("azhost.exe" if sys.platform == "win32" else "azhost")
     if not exe.is_file():
-        pytest.skip(f"build/{exe.name} is missing (run make)")
+        pytest.skip(f"needs_core: build/{exe.name} is missing (run make)")
     prefix = [] if sys.platform == "win32" else ["nice", "-n", "10"]
     return subprocess.run([*prefix, str(exe), *args], cwd=cwd, capture_output=True, text=True,
                           timeout=timeout)

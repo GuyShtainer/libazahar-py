@@ -7,7 +7,7 @@ import struct
 import subprocess
 import sys
 from pathlib import Path
-from typing import Dict, Tuple
+from typing import Dict, Set, Tuple
 
 import pytest
 
@@ -61,17 +61,46 @@ def elf_info(path: Path) -> Tuple[Dict[str, int], Tuple[int, int]]:
     return symbols, (text[3], text[3] + text[5])
 
 
+def pe_exports(path: Path) -> Set[str]:
+    """The names in a 64-bit PE file's export directory (not a byte search: a string in the data section is no export)."""
+    data = path.read_bytes()
+    pe = struct.unpack_from("<I", data, 0x3C)[0]
+    assert data[pe:pe + 4] == b"PE\0\0", f"{path} is not a PE file"
+    count, opt_size = struct.unpack_from("<H", data, pe + 6)[0], struct.unpack_from("<H", data, pe + 20)[0]
+    opt = pe + 24
+    export_rva = struct.unpack_from("<I", data, opt + 112)[0]            # PE32+: data directory 0 at optional header +112
+    if export_rva == 0:
+        return set()
+    sections = [struct.unpack_from("<IIII", data, opt + opt_size + 40 * i + 8) for i in range(count)]
+
+    def offset(rva: int) -> int:                                         # (virtual size, rva, raw size, raw pointer)
+        for vsize, base, rsize, raw in sections:
+            if base <= rva < base + max(vsize, rsize):
+                return raw + rva - base
+        raise AssertionError(f"RVA {rva:#x} is in no section")
+
+    table = offset(export_rva)
+    names_count = struct.unpack_from("<I", data, table + 24)[0]
+    names_rva = struct.unpack_from("<I", data, table + 32)[0]
+    out: Set[str] = set()
+    for i in range(names_count):
+        name_rva = struct.unpack_from("<I", data, offset(names_rva) + 4 * i)[0]
+        start = offset(name_rva)
+        out.add(data[start:data.index(b"\0", start)].decode("ascii"))
+    return out
+
+
 def needs_rev2(core: Path) -> None:
     """Skip on a core without patch 0009 (lazpy.1), unless LAZ_REQUIRE_EMULATOR=1 (then fail)."""
     if sys.platform == "win32":                             # no nm: the export name sits in the PE export table
-        out = "_lazpy_threads" if b"lazpy_threads" in core.read_bytes() else ""
+        out = "_lazpy_threads" if "lazpy_threads" in pe_exports(core) else ""
     else:
         out = subprocess.run(["nm", "-gU", str(core)], capture_output=True, text=True, check=False).stdout
     if "_lazpy_threads" not in out:
         import os
         if os.environ.get("LAZ_REQUIRE_EMULATOR") == "1":
             pytest.fail(f"{core} is not core lazpy.2 (no lazpy_threads)")
-        pytest.skip(f"{core} is not core lazpy.2")
+        pytest.skip(f"needs_core: {core} is not core lazpy.2")
 
 
 def ticks_boot(host_paths, core, workdir, name, options) -> Tuple[Emulator, int, int]:

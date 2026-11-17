@@ -67,8 +67,13 @@ def run_windows(command, slot):
         child = subprocess.Popen(command, close_fds=True, startupinfo=info)
     finally:
         os.set_handle_inheritable(slot.fd, False)
-    slot.release()                                      # the parent never holds the lock after the spawn
-    kernel32.AssignProcessToJobObject(job, int(child._handle))
+    # The slot goes first: the parent never holds the lock after the spawn, and a failed assign below must not keep it.
+    slot.release()
+    if not kernel32.AssignProcessToJobObject(job, int(child._handle)):
+        error = ctypes.WinError(ctypes.get_last_error())
+        child.kill()                                    # without the job it could outlive us, with its own children
+        child.wait()
+        raise error
     return child.wait()
 
 

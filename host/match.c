@@ -140,7 +140,7 @@ int azh__match_poll_file(azh_matcher *m, const char *path)
 {
     struct stat st;
     int64_t size;
-    int fd;
+    int fd = -1;
     int rc;
 
     assert(m != NULL && path != NULL);
@@ -150,16 +150,31 @@ int azh__match_poll_file(azh_matcher *m, const char *path)
     if (!S_ISREG(st.st_mode)) {
         return AZH_E_IO;
     }
-    size = azh__file_size_fresh(path, (int64_t)st.st_size);
+    size = (int64_t)st.st_size;
+#ifdef _WIN32
+    /* stat is stale while the guest holds the file (see azh__file_size_fresh): open once, take the size from the handle */
+    fd = open(path, O_RDONLY | O_BINARY);
+    if (fd < 0) {
+        return (errno == ENOENT) ? 0 : AZH_E_IO;
+    }
+    if (fstat(fd, &st) == 0) {
+        size = (int64_t)st.st_size;
+    }
+#endif
     if (size < m->offset) {
         azh__match_restart(m);
     }
     if (size == m->offset) {
+        if (fd >= 0) {
+            (void)close(fd);
+        }
         return 0;
     }
-    fd = open(path, O_RDONLY | O_BINARY);
     if (fd < 0) {
-        return (errno == ENOENT) ? 0 : AZH_E_IO;
+        fd = open(path, O_RDONLY | O_BINARY);
+        if (fd < 0) {
+            return (errno == ENOENT) ? 0 : AZH_E_IO;
+        }
     }
     rc = feed_file(m, fd, size);
     (void)close(fd);
