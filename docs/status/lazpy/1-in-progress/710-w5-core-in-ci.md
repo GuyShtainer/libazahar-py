@@ -55,6 +55,11 @@ The W5 gate in the plan. Plan: `docs/plans/phase-7.md` line 295.
   exactly those two words are skipped (OWN_LINK_WORD_RE, fullmatch); a fake other.dir/objects.a and libevil.dll.a still
   fail rc 1. Ahead of the rerun, the src/ notice scan run over every src/ file of the pinned tree: only 2 Android files
   miss the table (never built for Windows). Rerun next.
+- 2026-11-17 17:59 rerun 44116764453 (main 8404fa3): link libs pass; mknotices then: "OpenSSL is not both linked and
+  included". gate_f2 (passed) already proves the link names /opt/lazpy/openssl-3.6.5-mingw64/lib/libssl.a and
+  libcrypto.a, and Azahar builds httplib with CPPHTTPLIB_OPENSSL_SUPPORT on every platform, so the dependency-side
+  test is the suspect; the job log holds no dependency paths. The message now names which half failed, the libraries
+  seen and four dependency paths naming ssl. Rerun for that data.
 
 ## Pointers
 - Plan section: `docs/plans/phase-7.md:295`; briefs: `docs/plans/phase-7-briefs.md`

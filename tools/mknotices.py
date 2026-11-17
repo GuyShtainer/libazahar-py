@@ -446,10 +446,13 @@ def build(args: argparse.Namespace) -> str:
     inputs = read_kv(Path(args.inputs))
     keg = inputs.get("openssl_prefix") or die("build.inputs has no openssl_prefix") or ""
     tree, src = Path(args.tree), Path(args.src)
-    comps, src_files, ssl = classify(dep_paths(Path(args.deps)), tree.resolve().name, keg)
+    deps = dep_paths(Path(args.deps))
+    comps, src_files, ssl = classify(deps, tree.resolve().name, keg)
     libs = link_libs(Path(args.link))
     if not ssl or not OPENSSL_LIBS <= libs:
-        die("OpenSSL is not both linked and included")
+        seen = sorted(p for p in deps if "ssl" in p.lower())[:4]
+        die(f"OpenSSL is not both linked and included: headers under {keg}/: {'yes' if ssl else 'none'}; "
+            f"linked: {sorted(OPENSSL_LIBS & libs)} of {sorted(OPENSSL_LIBS)}; dependency paths naming ssl: {seen}")
     pin = read_kv(Path(__file__).resolve().parents[1] / "core" / "PIN")
     for lib in sorted(libs):
         owner = next((n for n, c in COMPONENTS.items() if lib in c[3]), None)
