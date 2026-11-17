@@ -39,6 +39,19 @@ The W7 and W7c gates in the plan. Plan: `docs/plans/phase-7.md` line 311.
   verify GitHub's certificate: SSL_CERT_FILE=MSYS2's ca-bundle.crt for release_check; (3) the bundle clone's
   refs/remotes/origin: `git remote remove origin`. Every commit needs a re-stage (git archive embeds HEAD's id).
   Logs: runs/p7/w7/release_check3.out, stage3.out. Steps 3-5 (4-copy clone_check) wait for Guy's word on the PC.
+- 2026-11-17 20:24 W7 steps 3-5, clone_check run 2 (4 copies, Guy "Run it, 4 copies"), main 9fe82b8: 1 failed,
+  298 passed. Run 1 (015fd8a) had 6 failures, fixed: (1) Azahar's own CI-built Windows stock core names itself
+  "219d743" (the pinned commit; GenerateBuildInfo ignores GIT-TAG under CI): pins.h AZH_STOCK_COMMIT, accepted
+  exactly, no suffixes (4 tests); (2) the v1.0.0 fixture (macOS) is refused on Windows, boost "incompatible native
+  format - size of long": a documented limit now (USING 15a, release notes); the fixture test expects StateError plus
+  that host.log reason (0913489); (3) test_k_threads skips without build/testapp.elf (the release test app has
+  none), listed in allowed-skips/w7.txt. release_check on staging 0913489 (SHA256SUMS 0f94dcb3...): rc 0, PEND only
+  `<pick after W9>`; plant-red rc 0 (runs/p7/w7/release_check5.out).
+- 2026-11-17 20:35 clone_check run 3 (0913489): 2 failed, 297 passed, 8 skipped, under other sessions' builds (PC
+  CPU 46 %): test_state_boot 2.97 s over Guy's 2.5 s bound (passed on the quiet run 2), and test_m5_stock_core_refuses
+  found no start line after 30 frames: the memory test now boots up to 300 frames until the line is logged (d6b9793).
+  The bound stays; run 4 needs a quiet PC. Then 20:48 the PC crashed a second time (3DP's builds running; nothing of
+  ours). 20:51: all PC work held until Guy has looked at the PC; d6b9793 still needs a re-stage before run 4.
 
 ## Pointers
 - Plan section: `docs/plans/phase-7.md:311`; briefs: `docs/plans/phase-7-briefs.md`
