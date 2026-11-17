@@ -32,6 +32,10 @@ The W5 gate in the plan. Plan: `docs/plans/phase-7.md` line 295.
   .dsc, .debian.tar.xz, .orig.tar.gz) from Launchpad's API, each file checked against Launchpad's size + sha256 and the
   .dsc's Checksums-Sha256, the .dsc's Version checked; anything else exits 1. The fetch code ran on the PC: rc 0, 3
   files; a made-up version rc 1 "launchpad has no gcc-13 13.2.0-6ubuntu99". bash -n and the python parse OK.
+- 2026-11-17 15:58 rerun 44094377884 (main 7b861d8): the Launchpad fallback held (3 files verified, runtime-source tar
+  105 MB); the same step then FAILED: the licence loop's glob mingw-w64_*.orig.tar.* also matched the new upstream
+  signature mingw-w64_13.0.0.orig.tar.bz2.asc ("tar: This does not look like a tar archive"). Fix: the loop skips
+  *.asc; tested locally on a .bz2 + .asc pair, both licence files found, rc 0. Rerun next.
 
 ## Pointers
 - Plan section: `docs/plans/phase-7.md:295`; briefs: `docs/plans/phase-7-briefs.md`

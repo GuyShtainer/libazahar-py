@@ -159,6 +159,7 @@ jobs:
           # the two licence files of the mingw-w64 version that is linked, from its source in this image (not upstream master)
           mkdir -p "$RUNNER_TEMP/mingw-lic"
           for T in mingw-w64_*.orig.tar.*; do
+            case "$T" in *.asc) continue ;; esac     # the upstream signature, not an archive
             tar -xf "$T" -C "$RUNNER_TEMP/mingw-lic" --wildcards '*/mingw-w64-libraries/winpthreads/COPYING' \
               '*/COPYING.MinGW-w64-runtime/COPYING.MinGW-w64-runtime.txt'
           done
