@@ -4,9 +4,8 @@
 # run's conclusion.
 name: macos-live
 
+# Started by hand only: macOS runners often never start here, and each cancelled run mails the owner.
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 permissions:

@@ -1,12 +1,12 @@
-# Fast tests on every push and pull request: build the host library and azhost, run the host's C tests and the Python
-# tests that need no emulator. No core is downloaded or run here (the emulator tests need our core and a quiet Mac;
-# docs/USING.md says how to run them; macos-live.yml tries them, best effort). Two guards show the Mac side is
+# Fast tests, started by hand (Actions > test > Run workflow): build the host library and azhost, run the host's C
+# tests and the Python tests that need no emulator. No core is downloaded or run here (the emulator tests need our
+# core and a quiet Mac; docs/USING.md says how to run them; macos-live.yml tries them, best effort). Two guards show the Mac side is
 # unchanged by the Windows port: the Makefile's commands match v1.0.0's, and the library keeps its macOS 15 arm64 target.
 name: test
 
+# Not on push: macOS runners often never start here, and each cancelled run mails the owner.
 on:
-  push:
-  pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read

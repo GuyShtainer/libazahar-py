@@ -28,6 +28,11 @@ The W8 gate in the plan; Guy's publish word quoted below. Plan: `docs/plans/phas
 - 2026-11-17 22:47 re-staged from 3543987 (runs/p7/w7/stage7.out): mkrelease rc 0, Windows zip sha unchanged (791efc1a...),
   SHA256SUMS 01d284b81ac07689...; release_check rc 0, all PASS, PEND only `<pick after W9>`, plant-red rc 0
   (release_check7.out). runs/p7/w8/staged/ refreshed: 12 of 12 check. Next: Guy's publish word.
+- 2026-11-17 22:52 Guy's publish word (AskUserQuestion). Asked: "... Gen3D and 3DP still have to run one job each on it first. Once
+  they pass, may I publish it? That means pushing main and the tag and making the GitHub release public." Guy:
+  "Yes, publish after the jobs". Same prompt, "may I switch those macOS workflows to start only by hand?" Guy: "Yes,
+  manual only (Recommended)". The macOS runs since 16:53 sat ~15 min unstarted and were cancelled (each mailed him);
+  test.yml and macos-live.yml are now workflow_dispatch only. W8 gate passed: verdict shippable, word quoted.
 
 ## Pointers
 - Plan section: `docs/plans/phase-7.md:343`; briefs: `docs/plans/phase-7-briefs.md`

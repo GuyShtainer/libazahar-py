@@ -106,5 +106,6 @@ lazpy.1 Windows core, no `LoadWarning`, no nice values, the symlink test while D
 
 ## Next
 
-- CI on GitHub runners: `.github/workflows/test.yml` (macOS) and `test-windows.yml` (Windows).
+- CI on GitHub runners: `.github/workflows/test-windows.yml` (Windows, every push) and `test.yml` (macOS, started by
+  hand).
 - Gen3D's adapter (Gen3D's own work).

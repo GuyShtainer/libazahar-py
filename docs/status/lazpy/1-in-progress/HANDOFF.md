@@ -1,7 +1,7 @@
 <!-- handoff: slim v1 | current tasks only | rewritten whole from docs/status/templates/handoff.md | budget 80 lines | never append -->
 # libazahar-py handoff
 
-As of: 2026-11-17 22:42 (session 3ds-toolkit-eb; it also runs the PC worker)
+As of: 2026-11-17 22:52 (session 3ds-toolkit-eb; it also runs the PC worker)
 
 This file lives in docs/status/lazpy/1-in-progress/, beside its item files. It holds only what
 the next session needs to act now, and points at the rest. Goals, rules, decisions and history live elsewhere.
@@ -14,24 +14,25 @@ the next session needs to act now, and points at the rest. Goals, rules, decisio
   built (toolkit 1bc50a5 opt-in LAZPY_DEPLOY; STAMP unchanged); waiting on one job each from Gen3D and 3DP (3DP after
   its running round, 1-2 h). The PC crashed twice today (CPU instability under
   all-core load, per gba-toolkit): Guy "if it crashes so much dont overload it"; at most 2 copies.
-- Item 712: W8, the release-legal-audit agent runs (brief runs/p7/w8/brief.md, report runs/reviews/).
+- Item 712 done: audit shippable, fixes in 3543987, re-staged (SHA256SUMS 01d284b8...), Guy: "Yes, publish after the
+  jobs". macOS workflows are manual-only (Guy: "Yes, manual only"), committed.
 - Item 600 / 420: v1.0.0 published 11:08. W10's post-publish check closes I5 part 2.
 
 ## Next steps, in order
 1. W7c (item 711): Gen3D and 3DP report one job each with LAZPY_DEPLOY (ids above); gate: the result names the id,
    deploy_optin true, PASS. Record both in item 711, then W7 closes (git mv to 2-done).
-2. W8 (item 712): when the audit returns, fix, re-stage (bundle main --tags, stage-pc.sh, rc-pc.ps1), then ask Guy
-   for the publish word and quote it in item 712. W9 and W10 after that (pushes need Guy's word).
+2. W9 (item 713) once W7c passes: re-stage if HEAD moved (bundle main --tags, stage-pc.sh, rc-pc.ps1 with needles on
+   stdin), needle scan, push main (Windows CI only now), dispatch test.yml + macos-live.yml once, pick STATUS's macOS
+   line (713's notes), tag, release, publish (Guy's word in 712). Then W10 (item 714).
 3. After W10 passes: close items 420, 400 and 600; delete the private history bundles (incl. ~/.lazpy-private/g8e),
    their clones and .git/filter-repo.
 4. Pre-push checks need `LAZ_PRIVATE_NEEDLES=~/.lazpy-private/needles.txt` (keep that file; not in the repo).
 5. Answer asks from Gen3D and 3DPlatinum; coordinate the PC (free RAM >= 2 GB + 0.6 GB per copy).
 
 ## Waiting on Guy (only what blocks a step above)
-- Pushes: Guy 2026-11-17 ~19:50 "No pushes for now" (each failed GitHub run mails him; the macOS jobs of test.yml
-  and macos-live.yml get no GitHub runner and end failed). Ask before any push.
+- Pushes: "No pushes for now" (~19:50) is replaced for v1.1.0 by "Yes, publish after the jobs" (item 712): pushes
+  for W9 only, after W7c; push only expected-green; after a red run, ask Guy before the next push.
 - The PC install of diffutils and actionlint: denied by the permission classifier; Guy asked, no answer.
-- The v1.1.0 publish word is asked at the end of W8 (item 712).
 The full list is generated into `docs/status/README.md`.
 
 ## Pointers
