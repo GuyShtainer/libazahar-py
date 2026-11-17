@@ -189,3 +189,4 @@ date	bet	phase	agent_id	model	role	kind	start	end	hours	source
 2026-11-17	phase 7 plan review 1 (docs/reviews/phase-7-review-1.md)	phase-7	agent	opus	agent	review	11:32	11:47	0.25	stat -L
 2026-11-17	phase 7 plan revision 1 (answers review 1)	phase-7	agent	opus	agent	plan	11:48	11:54	0.10	stat -L
 2026-11-17	phase 7 plan review 2 (docs/reviews/phase-7-review-2.md)	phase-7	agent	opus	agent	review	11:54	12:09	0.25	stat -L
+2026-11-17	phase 7 plan revision 2 + briefs (answers review 2)	phase-7	agent	opus	agent	plan	12:10	12:18	0.13	stat -L
