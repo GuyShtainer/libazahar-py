@@ -1,6 +1,7 @@
 # Fast tests on every push and pull request: build the host library and azhost, run the host's C tests and the Python
 # tests that need no emulator. No core is downloaded or run here (the emulator tests need our core and a quiet Mac;
-# docs/USING.md says how to run them).
+# docs/USING.md says how to run them; macos-live.yml tries them, best effort). Two guards show the Mac side is
+# unchanged by the Windows port: the Makefile's commands match v1.0.0's, and the library keeps its macOS 15 arm64 target.
 name: test
 
 on:
@@ -19,13 +20,40 @@ jobs:
         python: ["3.10", "3.14"]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          fetch-depth: 0                  # the Makefile guard needs the v1.0.0 tag
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0  # v7.1.0
         with:
           python-version: ${{ matrix.python }}
+      - name: Makefile commands match v1.0.0 (make -B -n, before any build)
+        run: |
+          set -eu
+          root="$RUNNER_TEMP/mk"
+          rm -rf "$root"
+          mkdir -p "$root/a" "$root/b"
+          # same depth for both trees; neither has built anything yet
+          git worktree add --detach "$root/a/src" v1.0.0
+          git worktree add --detach "$root/b/src" HEAD
+          for t in a b; do
+            ( cd "$root/$t/src" && make -B -n HOST_OS=Darwin all test-host test-version check ) > "$root/$t.raw"
+            sed "s|$root/$t/src|<root>|g" "$root/$t.raw" > "$root/$t.txt"
+          done
+          # the one allowed difference is the check-obinary line the owner asked for
+          diff "$root/a.txt" "$root/b.txt" > "$root/ab.diff" || true
+          cat "$root/ab.diff"
+          grep '^[<>]' "$root/ab.diff" > "$root/ab.lines" || true
+          printf '> tools/check-obinary.sh\n' > "$root/want.lines"
+          diff "$root/ab.lines" "$root/want.lines"
       - name: headers (libretro and Vulkan, pinned by sha256)
         run: sh tools/fetch.sh --headers
       - name: build the host
         run: make check && make && make test-version
+      - name: the library targets macOS 15 on arm64
+        run: |
+          set -eu
+          vtool -show-build build/libazhost.dylib | tee "$RUNNER_TEMP/vtool.txt"
+          grep -q 'minos 15.0' "$RUNNER_TEMP/vtool.txt"
+          [ "$(lipo -archs build/libazhost.dylib)" = arm64 ]
       - name: host C tests
         run: make test-host
       - name: Python layer
@@ -33,4 +61,6 @@ jobs:
           python -m venv .venv
           .venv/bin/pip install -e . pytest numpy
       - name: fast Python tests (no emulator)
-        run: .venv/bin/python -m pytest -q -m "not slow" tests/python
+        run: .venv/bin/python -m pytest -q -m "not slow" -rs --junitxml=fast.xml tests/python
+      - name: only the allowed skips
+        run: .venv/bin/python -I tools/skips_check.py fast.xml --list fast

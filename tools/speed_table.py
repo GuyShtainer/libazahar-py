@@ -82,11 +82,13 @@ def load_now():
 
 def vram_used_mb():
     """Used GPU memory in MB from ``nvidia-smi`` (``nvidia-smi.exe`` on Windows), or None when there is no such tool."""
+    if sys.platform == "darwin":                        # no nvidia-smi on a Mac
+        return None
     exe = "nvidia-smi.exe" if sys.platform == "win32" else "nvidia-smi"
     try:
         done = subprocess.run([exe, "--query-gpu=memory.used", "--format=csv,noheader,nounits"], capture_output=True,
-                              text=True, check=False)
-    except FileNotFoundError:
+                              text=True, check=False, timeout=10)
+    except (OSError, subprocess.TimeoutExpired):
         return None
     text = done.stdout.strip().splitlines()
     return int(text[0]) if text and text[0].strip().isdigit() else None

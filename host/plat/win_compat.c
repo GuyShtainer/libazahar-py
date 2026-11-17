@@ -24,8 +24,21 @@ void *azh_win_dlopen(const char *path, int system32_only)
 {
     HMODULE h;
     DWORD flags;
+    char full[MAX_PATH];
+    DWORD n;
 
     assert(path != NULL);
+    /* LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR needs a fully qualified path, and with the SYSTEM32 flag a relative path would
+     * be looked up under System32: resolve anything that holds a separator or a drive. A bare name stays bare. */
+    if (strpbrk(path, "/\\:") != NULL) {
+        n = GetFullPathNameA(path, (DWORD)sizeof full, full, NULL);
+        if (n == 0u || n >= (DWORD)sizeof full) {
+            snprintf(err_text, sizeof err_text, "GetFullPathNameA failed for the path, Windows error %lu",
+                     (unsigned long)GetLastError());
+            return NULL;
+        }
+        path = full;
+    }
     if (system32_only != 0) {
         flags = LOAD_LIBRARY_SEARCH_SYSTEM32;
     } else {
@@ -45,6 +58,10 @@ void *azh_win_dlsym(void *h, const char *name)
 
     assert(h != NULL && name != NULL);
     p = GetProcAddress((HMODULE)h, name);
+    if (p == NULL) {
+        snprintf(err_text, sizeof err_text, "GetProcAddress(%.150s) failed, Windows error %lu", name,
+                 (unsigned long)GetLastError());
+    }
     memcpy(&out, &p, sizeof out);
     return out;
 }

@@ -295,12 +295,14 @@ static int make_instance(azh_state *s)
 /* case-insensitive substring: 1 when needle is inside hay */
 static int contains_nocase(const char *hay, const char *needle)
 {
-    size_t hn = strnlen(hay, DEV_NAME_MAX);
-    size_t nn = strnlen(needle, DEV_NAME_MAX);
+    size_t hn;
+    size_t nn;
     size_t i;
     size_t j;
 
     assert(hay != NULL && needle != NULL);
+    hn = strnlen(hay, DEV_NAME_MAX);
+    nn = strnlen(needle, DEV_NAME_MAX);
     if (nn == 0u || nn > hn) {
         return 0;
     }
