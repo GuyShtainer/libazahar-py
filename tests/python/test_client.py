@@ -131,4 +131,3 @@ def test_windows_worker_runs_below_normal(tmp_path):
         assert kernel32.GetPriorityClass(int(client.proc._handle)) == 0x4000
     finally:
         client.close()
-

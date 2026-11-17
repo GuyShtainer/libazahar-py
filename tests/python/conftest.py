@@ -23,11 +23,24 @@ class HostPaths(NamedTuple):
     app: Path
 
 
+# The skip messages of every core, host or emulator fixture start with this, and the tests that use those fixtures carry
+# the needs_core marker (set below). tools/skips_check.py allows exactly such skips in the fast tier.
+NEEDS_CORE = "needs_core: "
+CORE_FIXTURES = {"host_lib", "host_paths", "stock_core", "lazpy_core"}
+
+
+def pytest_collection_modifyitems(items: list) -> None:
+    """Mark every test that asks for a core, host or emulator fixture with ``needs_core``."""
+    for item in items:
+        if CORE_FIXTURES & set(getattr(item, "fixturenames", ())):
+            item.add_marker(pytest.mark.needs_core)
+
+
 def _missing(what: Path, why: str) -> None:
     text = f"{what} is missing ({why})"
     if os.environ.get("LAZ_REQUIRE_EMULATOR") == "1":
         pytest.fail(text)
-    pytest.skip(text)
+    pytest.skip(NEEDS_CORE + text)
 
 
 @pytest.fixture(scope="session")
@@ -70,7 +83,7 @@ def _stock_core_path() -> Path:
     never required); a failure under LAZ_REQUIRE_EMULATOR=1 when it names no file."""
     env = os.environ.get("LAZ_STOCK_CORE")
     if not env:
-        pytest.skip("set LAZ_STOCK_CORE to Azahar's own core to compare cores")
+        pytest.skip(NEEDS_CORE + "set LAZ_STOCK_CORE to Azahar's own core to compare cores")
     core = Path(env)
     if not core.is_file():
         _missing(core, "LAZ_STOCK_CORE names no file")

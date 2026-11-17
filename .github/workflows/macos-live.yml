@@ -1,0 +1,37 @@
+# Best effort: the slow tests (they boot the emulator) on a macOS runner, with our public v1.0.0 core. A hosted runner
+# may have no usable Vulkan path, so a red result here never blocks anything: continue-on-error is set on the job, and
+# the result is read from the pytest step's own outcome and its summary line (passed above 0, failed 0), never from the
+# run's conclusion.
+name: macos-live
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  live:
+    runs-on: macos-15
+    continue-on-error: true
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0  # v7.1.0
+        with:
+          python-version: "3.14"
+      - name: MoltenVK, headers, our core and the test app (pinned by sha256)
+        run: sh tools/fetch.sh --moltenvk --headers --lazpy-core --testapp
+      - name: build the host
+        run: make
+      - name: Python layer
+        run: |
+          python -m venv .venv
+          .venv/bin/pip install -e . pytest numpy
+      - name: every test, emulator required
+        id: pytest
+        env:
+          LAZ_REQUIRE_EMULATOR: "1"
+        run: .venv/bin/python -m pytest -q -rs tests/python

@@ -1,0 +1,56 @@
+# The Windows host builds and its fast tests pass on a clean windows-2025 runner: the README's MSYS2 MINGW64 route
+# (gcc, make, zlib), the host's C tests, check-obinary and the clang analysis of the Windows sources, then the Python
+# tests that need no core. It cannot boot a core: the runners have no GPU and no Vulkan driver, so frames, screenshots,
+# states and timing are proven on a real PC, not here.
+name: test-windows
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  fast:
+    runs-on: windows-2025
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.10", "3.14"]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0  # v7.1.0
+        with:
+          python-version: ${{ matrix.python }}
+      - uses: msys2/setup-msys2@ec48f7c5447b3140e2b088413ae3a55687bccb6e  # v2.33.0
+        with:
+          msystem: MINGW64
+          path-type: inherit
+          update: false
+          install: >-
+            make
+            mingw-w64-x86_64-gcc
+            mingw-w64-x86_64-zlib
+            mingw-w64-x86_64-clang
+      - name: headers (libretro and Vulkan, pinned by sha256)
+        shell: msys2 {0}
+        run: sh tools/fetch.sh --headers
+      - name: check-obinary and the clang analysis of the Windows sources
+        shell: msys2 {0}
+        run: make check
+      - name: build the host
+        shell: msys2 {0}
+        run: make
+      - name: version test
+        shell: msys2 {0}
+        run: make test-version
+      - name: host C tests
+        shell: msys2 {0}
+        run: make test-host
+      - name: Python layer
+        run: python -m pip install -e . pytest numpy
+      - name: fast Python tests (no core)
+        run: python -m pytest -q -m "not slow" -rs --junitxml=fast.xml tests/python
+      - name: only the allowed skips
+        run: python -I tools/skips_check.py fast.xml --list fast

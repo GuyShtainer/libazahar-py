@@ -1,0 +1,13 @@
+# Skips the fast tier (pytest -m "not slow", no core, no emulator) may show. Read by tools/skips_check.py --list fast.
+# One rule per line: <file>::<test name, no [params]> => <regex the skip message must match>. * matches any name.
+# Anything else that skips fails the check.
+
+# every core, host or emulator fixture skip: conftest.py and the helpers start their messages with "needs_core: "
+*::* => ^needs_core:
+
+# by design on one platform (the twin test runs on the other)
+test_slots.py::test_s5_load_warning => ^no load average on Windows
+test_slots.py::test_s5_windows_has_no_load_warning => ^Windows twin of test_s5
+test_client.py::test_windows_worker_runs_below_normal => ^the Windows priority class
+test_lazpy_profile.py::test_worker_nice_floor => ^no nice values on Windows
+test_windows_cli.py::* => ^Windows only

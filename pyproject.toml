@@ -19,4 +19,4 @@ packages = ["libazahar"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests/python"]
-markers = ["slow: needs the emulator"]
+markers = ["slow: needs the emulator", "needs_core: needs the host library, a core or the emulator (its skips are allowed in the fast tier)"]

@@ -150,7 +150,7 @@ static int clear_entry(const WIN32_FIND_DATAA *fd, const char *dir, int depth, w
     if (join(p, sizeof p, dir, fd->cFileName) != AZH_OK) {
         return AZH_E_ARG;
     }
-    (void)SetFileAttributesA(p, FILE_ATTRIBUTE_NORMAL | (is_dir ? FILE_ATTRIBUTE_DIRECTORY : 0u));
+    (void)SetFileAttributesA(p, FILE_ATTRIBUTE_NORMAL);   /* NORMAL only valid alone; drops READONLY so the delete works */
     if (is_dir && !is_link) {
         int rc = clear_dir(p, depth + 1, w);
 
