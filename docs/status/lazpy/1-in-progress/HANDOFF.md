@@ -17,6 +17,9 @@ the pre-push check at f75ed0b (item 600's last notes). Guy held the push on 2026
    - Commits after f75ed0b made the build-files asset stale. Run `sh tools/mkrelease.sh v1.0.0`; the zip must stay
      ced9a362… and the test app ba106998…. If the zip changes, update tools/fetch.sh's LAZPY_CORE_SHA, commit, and
      stage again.
+   - The Mac's devkitARM moved to gcc 16.1 on 2026-11-17 02:26 (Gen3D's note), so a rebuilt build/testapp.3dsx no longer
+     hashes to ba106998…. Never clean or rebuild it before the tag. If it has changed, run mkrelease with
+     `LAZ_REL_APP=runs/release/testapp-gcc15-ba106998.3dsx` (the kept gcc 15 copy).
    - Run `LAZ_PRIVATE_NEEDLES=<private file> python3 -I tools/release_check.py runs/release/v1.0.0 --pre-push`:
      16 PASS. Make no commit between this check and the tag.
    - Then `docs/plans/phase-i.md` 8.2 with v1.0.0 (the tag line and `gh release create` in `docs/plans/phase-v1.md`
