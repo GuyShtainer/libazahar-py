@@ -60,8 +60,11 @@ COMPONENTS = {
     "vma": ("vma", ["vma/LICENSE.txt"], "MIT", [], ""),
     "vulkan-headers": ("vulkan-headers", ["vulkan-headers/LICENSE.md", "vulkan-headers/LICENSES/Apache-2.0.txt",
                                           "vulkan-headers/LICENSES/MIT.txt"], "Apache-2.0 OR MIT", [], ""),
+    "xbyak": ("xbyak", ["xbyak/COPYRIGHT"], "BSD-3-Clause", [], ""),  # win64: the x86-64 backend of dynarmic
     "xxHash": ("xxHash", ["xxHash/LICENSE"], "BSD-2-Clause", ["xxhash"], ""),
     "zstd": ("zstd", ["zstd/LICENSE"], "BSD-3-Clause", ["zstd", "zstd_seekable"], ""),
+    "zycore": (C + "zycore", [C + "zycore/LICENSE"], "MIT", ["Zycore"], ""),  # win64, with zydis
+    "zydis": (C + "zydis", [C + "zydis/LICENSE"], "MIT", ["Zydis"], ""),  # win64: dynarmic's x86-64 disassembler
 }
 OWN_LIBS = {"audio_core", "citra_common", "citra_core", "network", "video_core"}
 OPENSSL_LIBS = {"ssl", "crypto"}
@@ -118,6 +121,7 @@ def classify(paths: set[str], tree_name: str, keg: str) -> tuple[set[str], set[s
     """Return (component names, src/ files, uses OpenSSL); exit 1 on anything unknown."""
     comps: set[str] = set()
     src: set[str] = set()
+    missing: set[str] = set()
     ssl = False
     for raw in sorted(paths):
         path = raw.replace("/./", "/")
@@ -131,9 +135,12 @@ def classify(paths: set[str], tree_name: str, keg: str) -> tuple[set[str], set[s
         elif found.group(1).startswith("src/"):
             src.add(found.group(1))
         elif found.group(1).startswith("externals/"):
-            comps.add(external_name(found.group(1), raw))
+            name = external_name(found.group(1), raw)
+            (comps if name in COMPONENTS else missing).add(name)
         else:
             die(f"unclassified dependency path: {raw}")
+    if missing:
+        die(f"components missing from the table: {', '.join(sorted(missing))}")
     return comps, src, ssl
 
 
@@ -142,8 +149,6 @@ def external_name(rel: str, raw: str) -> str:
     if parts[1] == "libressl":
         die(f"externals/libressl in the dependencies: {raw}")
     name = parts[3] if parts[1] == "dynarmic" and parts[2:3] == ["externals"] and len(parts) > 3 else parts[1]
-    if name not in COMPONENTS:
-        die(f"component missing from the table: {name} ({raw})")
     return name
 
 
@@ -153,8 +158,8 @@ def link_libs(link: Path) -> set[str]:
         if word.endswith(".a"):
             libs.add(re.sub(r"^lib|\.a$", "", os.path.basename(word)))
     known = OWN_LIBS | OPENSSL_LIBS | {lib for c in COMPONENTS.values() for lib in c[3]}
-    for lib in sorted(libs - known):
-        die(f"link line holds a library missing from the table: {lib}")
+    if libs - known:
+        die(f"link line holds libraries missing from the table: {', '.join(sorted(libs - known))}")
     return libs
 
 

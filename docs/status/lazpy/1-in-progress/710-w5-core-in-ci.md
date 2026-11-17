@@ -40,6 +40,12 @@ The W5 gate in the plan. Plan: `docs/plans/phase-7.md` line 295.
   "mknotices: unclassified dependency path: .../build-core/win64-fstat.h", the two-line fstat shim build-core-win64.sh
   writes and force-includes (our own file). Fix: mknotices skips exactly that path (OWN_GENERATED); a check on the Mac
   accepts it and still refuses build-core/other.h rc 1. It is the only file the script generates. Rerun next.
+- 2026-11-17 16:50 rerun 44103759556 (main 14c2687): the shim passes; mknotices then stopped at "component missing
+  from the table: zycore". dynarmic's x86-64 backend (Windows only) uses xbyak (top-level externals/xbyak, added before
+  dynarmic), zydis and zycore. Fix: the table gains xbyak (BSD-3-Clause, xbyak/COPYRIGHT), zydis and zycore (MIT,
+  their LICENSE files; libs Zydis, Zycore); every licence file exists in the pinned source. mknotices now lists all
+  missing components and all unknown link libraries in one message (libressl still refused). Not in the W1b licence
+  delta; all three permissive (notice only). Rerun next.
 
 ## Pointers
 - Plan section: `docs/plans/phase-7.md:295`; briefs: `docs/plans/phase-7-briefs.md`
