@@ -16,7 +16,12 @@ Sonnet agent: MSYS2 make builds into build/, Python finds it, tests and skips_ch
 The W2a gate in the plan. Plan: `docs/plans/phase-7.md` line 247.
 
 ## Evidence
-- 2026-11-17 12:4x: dispatched.
+- 2026-11-17 12:43: dispatched.
+- 2026-11-17 12:58 W2a local gates PASS on the PC, committed on branch p7-w2a (55a4ff4): make -j4 OK; test-host
+  "307983 checks, 0 failed"; test-version OK; check-obinary "ok 11 open() sites"; pytest fast 251 passed, 5
+  skipped, skips_check 0 problems; skips_check --self-test 17/17; Darwin make -n guard differs only on the
+  check-obinary line. NOT RUN: `make check` (no clang on the PC), actionlint (not on the PC), pip install -e +
+  quickstart (left to W4's full run).
 
 ## Pointers
 - Plan section: `docs/plans/phase-7.md:247`; briefs: `docs/plans/phase-7-briefs.md`

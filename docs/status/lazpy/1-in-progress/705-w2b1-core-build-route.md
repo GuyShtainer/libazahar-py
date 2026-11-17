@@ -16,7 +16,7 @@ Sonnet agent: build-core-win64.sh with the OpenSSL recipe and a neutral prefix, 
 The W2b1 gate in the plan. Plan: `docs/plans/phase-7.md` line 252.
 
 ## Evidence
-- 2026-11-17 12:56 W2b1 local gates PASS, committed on branch p7-w2b1 (edfb145): `git diff v1.0.0 --
+- 2026-11-17 12:55 W2b1 local gates PASS, committed on branch p7-w2b1 (edfb145): `git diff v1.0.0 --
   tools/build-core.sh` empty; gate_f2_pe.py --plant-red on the PC with the known DLL: "all planted reds fail as
   expected", rc 0; py_compile OK; sh -n OK; shellcheck info-only (run on the Mac, read-only lint). actionlint not
   run (not on the PC). Licence actions from W1b built in (verbatim runtime licences, link map, attest job only).
