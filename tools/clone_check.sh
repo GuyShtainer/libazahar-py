@@ -150,8 +150,8 @@ if [ "$WIN" -eq 1 ]; then
   EMIT='awk -v m="<!-- docs_check: steps-win -->" '"'"'f == 0 && index($0, m) { f = 1; next } f == 1 && /^```/ { if (inb) exit; inb = 1; next } f == 1 && inb { print }'"'"' README.md'
   FILTER="grep -v -e '^pacman ' -e '^cd .*git clone'"
   if [ -n "$UNTIL" ]; then
-    FILTER="$FILTER | sed -e '/-m venv/,\$d' -e 's/ --lazpy-core//g' -e 's/ --testapp//g'"
-    note "--until host: fetch.sh runs without --lazpy-core and --testapp (the Windows pin does not exist yet); venv, quickstart and pytest do not run"
+    FILTER="$FILTER | sed -e '/-m venv/,\$d' -e 's/ --lazpy-core//g' -e 's/ --testapp//g' -e 's|^sh tools/fetch.sh *\(#.*\)\{0,1\}\$|sh tools/fetch.sh --headers|'"
+    note "--until host: fetch.sh runs as --headers, without the core and the test app (the Windows pin does not exist yet); venv, quickstart and pytest do not run"
   fi
   run_step steps "" "cd \"$CLONE\" && $EMIT | $FILTER > \"$OUT/steps.sh\" && [ -s \"$OUT/steps.sh\" ] && $CENV sh -eux \"$OUT/steps.sh\""
   note "windows mode: the devkitARM build block is skipped; the test app is the release's (fetch.sh), not a rebuild"
