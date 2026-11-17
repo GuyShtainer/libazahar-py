@@ -1,6 +1,7 @@
 # Examples
 
-Run each from the repository folder, with the Python layer installed (`.venv/bin/pip install -e .`) and
+Run each from the repository folder, with the Python layer installed (`.venv/bin/pip install -e .`; on Windows the
+venv's programs are in `.venv/Scripts/`, so `.venv/Scripts/python examples/quickstart.py`) and
 `build/testapp.3dsx` in place (see the README's Install). Each uses only the standard library and the package, prints
 `<name> ok` as its last line, and exits non-zero with one plain line when a check fails. Each reads the core from
 `LAZ_CORE`, else the library's default.

@@ -401,7 +401,8 @@ lazpy.1 header said 11.0, although its OpenSSL already needed 15). This host acc
 
 `.venv/bin/pip install pytest numpy` (the tests import numpy), then `.venv/bin/python -m pytest -q tests/python -m "not slow"` (the fast set needs no
 emulator). The full set needs our core and the test app: `LAZ_REQUIRE_EMULATOR=1 .venv/bin/python -m pytest -q
-tests/python`. `make check` runs the rest. To compare with Azahar's own core, download Azahar's libretro core for
+tests/python`. On Windows use `.venv/Scripts/` for `.venv/bin/`. `make check` runs the rest (on Windows it also
+needs `mingw-w64-x86_64-clang` from pacman). To compare with Azahar's own core, download Azahar's libretro core for
 macOS from Azahar's releases page yourself and set `LAZ_STOCK_CORE` to the file. Tests that compare the two cores skip
 without it. Build the test app with the line in the README (`make testapp` needs `DEVKITPRO` and `DEVKITARM` set and
 devkitARM first in `PATH`).
