@@ -23,4 +23,6 @@ none yet
 - Review: `docs/reviews/phase-7-review-2.md`
 
 ## Lessons and notes
-None yet; planned in phase-7 revision 2.
+- Exemption for step 3, the build-files gate (W8 audit P1, 2026-11-17 22:45): the diff from the core's build.inputs head 6345b83 to
+  HEAD is empty except core/OPENSSL.md, which changed only in prose and its two .a shas after the CI build; its
+  "- Source:" line (the only line build-core-win64.sh:92 and mkrelease read) must be identical. The gate passes on that.

@@ -175,7 +175,7 @@ top_source_md() {
   echo
   echo "## \`$WIN_ZIP\` (Windows, x64)"
   echo
-  echo "Source: \`$NEW_BUILD\`, \`$SRC_ASSET\`, \`$OSSL_ASSET\`$([ "$NO_RT" -eq 1 ] || printf ' and `%s` (the source of libstdc++, libgcc, winpthreads and the mingw-w64 C runtime, which are linked in statically)' "$RT"). The zip's own \`SOURCE.md\` and \`build.inputs\` say how it was built. Its notices are \`NOTICES-windows-x64.md\`, which is also inside the zip as \`NOTICES.md\`. Do not use the macOS \`NOTICES.md\` for this zip."
+  echo "Source: \`$NEW_BUILD\`, \`$SRC_ASSET\`, \`$OSSL_ASSET\`, \`$SNAP_ASSET\`$([ "$NO_RT" -eq 1 ] || printf ' and `%s` (the source of libstdc++, libgcc, winpthreads and the mingw-w64 C runtime, which are linked in statically)' "$RT"). The zip's own \`SOURCE.md\` and \`build.inputs\` say how it was built. Its notices are \`NOTICES-windows-x64.md\`, which is also inside the zip as \`NOTICES.md\`. Do not use the macOS \`NOTICES.md\` for this zip."
   echo
   echo "## \`testapp.3dsx\`"
   echo

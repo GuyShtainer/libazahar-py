@@ -3,6 +3,8 @@ dl/
 cores/
 vendor/
 *.dylib
+*.dll
+*.exe
 *.zip
 *.tar
 *.tar.xz

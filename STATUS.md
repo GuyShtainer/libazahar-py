@@ -46,7 +46,8 @@ Evidence, in `docs/status/lazpy/5-done/`, proves it. Nothing is listed as workin
 The native Windows build (core, host library and Python layer, no WSL) is proven on one PC only: Windows 10 Pro 22H2,
 x64, an NVIDIA GeForce RTX 3060, driver 610.88, Python 3.10.11. There, a fresh clone built from the README's Windows steps
 passes the host C tests and the full pytest with the emulator required; its only skips are the by-design ones (no
-lazpy.1 Windows core, no `LoadWarning`, no nice values, and the symlink test while Developer Mode is off).
+lazpy.1 Windows core, no `LoadWarning`, no nice values, the symlink test while Developer Mode is off, and the thread test that needs
+`build/testapp.elf`, which the release test app does not ship).
 - CI adds Windows Server 2025 for the build, the fast tests and the core load test.
 - Windows 11 and AMD and Intel GPUs are untested.
 - A GPU driver with Vulkan is required; nothing Vulkan is shipped.

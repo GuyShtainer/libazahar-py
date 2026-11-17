@@ -57,7 +57,7 @@ else REL_BASE_PREV=""; fi
 LAZPY_CORE_ZIP=azahar_lazpy_libretro-2126.2-lazpy.2-macos-arm64.zip
 LAZPY_CORE_SHA=ced9a36283ec72318b20f9686601335a2e57699ffb9278f31885697161bb609e
 TESTAPP_SHA=ba10699831f2a1c88b56de119bd2f8caab465e051eb350954b7be1cd7b027ccd
-# the Windows core zip (in the release only; no fallback). TBD until the release is staged.
+# the Windows core zip (in the release only; no fallback)
 LAZPY_CORE_ZIP_WIN=azahar_lazpy_libretro-2126.2-lazpy.2-windows-x64.zip
 LAZPY_CORE_SHA_WIN=791efc1a1cf77d65b58812ca89c509cc5442124ffa24cdcbdbcf8668339311bf
 # ------------------------------------------------------------------------------------------------------------------
