@@ -86,6 +86,8 @@ NEWLIB_SHA256 = "f3afe48e4bc6ed8466a42e9dacb6be1d8f9cbf5aac15cb8e474a5ccde8b40ef
 OWN_RE = re.compile(r"(Citra|Azahar) Emulator Project")
 FLAG_RE = re.compile(r"Copyright|SPDX-License-Identifier|Permission is hereby granted")
 SYSTEM = ("/Applications/", "/Library/", "/usr/", "/System/")
+# our own files that build-core-win64.sh writes and force-includes (GPLv3 like the rest of the repo; no third-party notice)
+OWN_GENERATED = ("/build-core/win64-fstat.h",)
 
 
 def die(msg: str) -> None:
@@ -122,7 +124,7 @@ def classify(paths: set[str], tree_name: str, keg: str) -> tuple[set[str], set[s
         found = re.search("/" + re.escape(tree_name) + "/(.*)$", path)
         if path.startswith(keg + "/"):
             ssl = True
-        elif "/build-core/build/" in path or path.startswith(SYSTEM):
+        elif "/build-core/build/" in path or path.startswith(SYSTEM) or path.endswith(OWN_GENERATED):
             continue
         elif found is None:
             die(f"unclassified dependency path: {raw}")

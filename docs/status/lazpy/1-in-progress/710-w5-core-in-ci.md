@@ -36,6 +36,10 @@ The W5 gate in the plan. Plan: `docs/plans/phase-7.md` line 295.
   105 MB); the same step then FAILED: the licence loop's glob mingw-w64_*.orig.tar.* also matched the new upstream
   signature mingw-w64_13.0.0.orig.tar.bz2.asc ("tar: This does not look like a tar archive"). Fix: the loop skips
   *.asc; tested locally on a .bz2 + .asc pair, both licence files found, rc 0. Rerun next.
+- 2026-11-17 16:26 rerun 44098242676 (main cb4db2b): the runtime-source step passes; the NOTICES step FAILED:
+  "mknotices: unclassified dependency path: .../build-core/win64-fstat.h", the two-line fstat shim build-core-win64.sh
+  writes and force-includes (our own file). Fix: mknotices skips exactly that path (OWN_GENERATED); a check on the Mac
+  accepts it and still refuses build-core/other.h rc 1. It is the only file the script generates. Rerun next.
 
 ## Pointers
 - Plan section: `docs/plans/phase-7.md:295`; briefs: `docs/plans/phase-7-briefs.md`
