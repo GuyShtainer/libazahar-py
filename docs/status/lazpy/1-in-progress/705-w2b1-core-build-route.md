@@ -16,7 +16,7 @@ Sonnet agent: build-core-win64.sh with the OpenSSL recipe and a neutral prefix, 
 The W2b1 gate in the plan. Plan: `docs/plans/phase-7.md` line 252.
 
 ## Evidence
-none yet
+- 2026-11-17 12:4x: dispatched.
 
 ## Pointers
 - Plan section: `docs/plans/phase-7.md:252`; briefs: `docs/plans/phase-7-briefs.md`

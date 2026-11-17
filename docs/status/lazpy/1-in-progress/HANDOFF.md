@@ -10,14 +10,13 @@ the next session needs to act now, and points at the rest. Goals, rules, decisio
 - Item 700: the Windows port, proven (Guy: "move forward so its windows proven"). Plan revision 2 is final
   (`docs/plans/phase-7.md`, two review loops done); briefs in `docs/plans/phase-7-briefs.md`. Steps are items
   701-714 (W1a+W1 share 702, W7+W7c share 711, Guy's publish word goes in 712).
-- Item 702: W1a (Darwin-visible preprocess + make -n diff, on the PC, main loop), then the opus diff review.
+- Items 703-707: W1b (ip-legal licence delta) and the four sonnet fix agents W2a, W2b1, W2b2, W6, from 12:4x; W1 review done (fix then merge, 1 blocker).
 - Item 600 / 420: v1.0.0 published at 11:08. I5 part 2 (fresh clone + full pytest) is folded into phase 7: the
   W10 post-publish check closes it. All 3DS work runs on the PC (flag ~/.lazpy/PC_ONLY, toolkit 2568682).
 
 ## Next steps, in order
-1. Item 702: W1a on the PC (main loop), then the opus diff review (brief W1). Worktrees: runs/p7/wt/*.
-2. Then items 704-707 (W2a, W2b1, W2b2, W6: four sonnet agents, own worktrees) with item 703 (ip-legal) in the
-   expensive slot. Then 708-714 in the plan's order (section 3). Guy allowed pushing reviewed, gated phase-7 work
+1. Items 703-707 (worktrees runs/p7/wt/*): read each agent hand-back, commit its notes; actionlint is not on the PC (install blocked; ask Guy).
+2. Then 708 (W3, opus fix check), then 709-714 in the plan's order (section 3). Guy allowed pushing reviewed, gated phase-7 work
    ("this time you can push"): main and the tag only. Publishing v1.1.0 still needs his word, asked at the end of W8.
 3. After W10 passes: close items 420, 400 and 600; delete the private history bundles (incl. ~/.lazpy-private/g8e),
    their clones and .git/filter-repo.

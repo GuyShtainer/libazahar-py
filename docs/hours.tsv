@@ -191,3 +191,4 @@ date	bet	phase	agent_id	model	role	kind	start	end	hours	source
 2026-11-17	phase 7 plan review 2 (docs/reviews/phase-7-review-2.md)	phase-7	agent	opus	agent	review	11:54	12:09	0.25	stat -L
 2026-11-17	phase 7 plan revision 2 + briefs (answers review 2)	phase-7	agent	opus	agent	plan	12:10	12:18	0.13	stat -L
 2026-11-17	phase 7 W0 (items 701-714, PC pre-flight, zip/unzip, worktrees) + W1a (Darwin-visible preprocess and make -n diffs on the PC)	phase-7	main	opus	main	execute	12:18	12:26	0.13	session clock
+2026-11-17	phase 7 W1 diff review of port-win-v1 (docs/reviews/phase-7-diff-review.md)	phase-7	agent	opus	agent	review	12:26	12:40	0.23	stat -L

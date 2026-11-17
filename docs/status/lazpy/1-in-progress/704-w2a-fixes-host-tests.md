@@ -16,7 +16,7 @@ Sonnet agent: MSYS2 make builds into build/, Python finds it, tests and skips_ch
 The W2a gate in the plan. Plan: `docs/plans/phase-7.md` line 247.
 
 ## Evidence
-none yet
+- 2026-11-17 12:4x: dispatched.
 
 ## Pointers
 - Plan section: `docs/plans/phase-7.md:247`; briefs: `docs/plans/phase-7-briefs.md`

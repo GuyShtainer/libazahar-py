@@ -16,7 +16,7 @@ Sonnet agent, edits only, on branch p7-docs: version 1.1.0, README Windows steps
 The W6 gate in the plan. Plan: `docs/plans/phase-7.md` line 263.
 
 ## Evidence
-none yet
+- 2026-11-17 12:4x: dispatched.
 
 ## Pointers
 - Plan section: `docs/plans/phase-7.md:263`; briefs: `docs/plans/phase-7-briefs.md`

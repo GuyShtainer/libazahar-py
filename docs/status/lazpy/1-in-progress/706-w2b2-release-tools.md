@@ -16,7 +16,7 @@ Sonnet agent: Windows modes for fetch, mknotices, mkrelease, release_check (--in
 The W2b2 gate in the plan. Plan: `docs/plans/phase-7.md` line 259.
 
 ## Evidence
-none yet
+- 2026-11-17 12:4x: dispatched.
 
 ## Pointers
 - Plan section: `docs/plans/phase-7.md:259`; briefs: `docs/plans/phase-7-briefs.md`

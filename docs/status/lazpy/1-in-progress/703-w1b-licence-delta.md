@@ -16,7 +16,7 @@ ip-legal agent: the licence delta of the Windows core and host (static OpenSSL, 
 The W1b gate in the plan. Plan: `docs/plans/phase-7.md` line 244.
 
 ## Evidence
-none yet
+- 2026-11-17 12:4x: dispatched.
 
 ## Pointers
 - Plan section: `docs/plans/phase-7.md:244`; briefs: `docs/plans/phase-7-briefs.md`
