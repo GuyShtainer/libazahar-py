@@ -175,3 +175,6 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   on 6f1a713, no-reply tagger) pushed; draft release v1.0.0, not prerelease, 9 assets whose GitHub digests equal
   SHA256SUMS. First CI run on push: 44045482328. Publishing the draft (G7) is Guy's.
 - 2026-11-17 10:19, V9: first CI run on push 44045482328 green (test workflow, 1m41s). The draft is ready for G7.
+- 2026-11-17 11:08, V9 G7: Guy, verbatim: "ok publish the draft." Published: https://github.com/GuyShtainer/libazahar-py/releases/tag/v1.0.0
+  (not prerelease, latest, 9 assets). I5 part 1: `gh release download` into runs/i5-v1.0.0/assets, `shasum -c SHA256SUMS`: 8/8 OK.
+  I5 part 2 (the fresh clone from GitHub, full pytest) waits for the Mac: ios garmin holds it from 10:50 (MAC_BUSY).

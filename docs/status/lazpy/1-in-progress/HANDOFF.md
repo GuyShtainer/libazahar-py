@@ -1,41 +1,44 @@
 <!-- handoff: slim v1 | current tasks only | rewritten whole from docs/status/templates/handoff.md | budget 80 lines | never append -->
 # libazahar-py handoff
 
-As of: 2026-11-17 10:19 (session 3ds-toolkit-a7, which also runs the PC worker)
+As of: 2026-11-17 11:10 (session 3ds-toolkit-eb, a7 renamed after the crash restart; it also runs the PC worker)
 
 This file lives in docs/status/lazpy/1-in-progress/, beside its item files. It holds only what
 the next session needs to act now, and points at the rest. Goals, rules, decisions and history live elsewhere.
 
 ## Running now
-Item 600, V9: pushed at 10:17. Public repo GuyShtainer/libazahar-py, main and tag v1.0.0 (on 6f1a713), draft release
-v1.0.0 with 9 assets (digests equal SHA256SUMS). The first CI run on push (44045482328) went green at 10:19.
+- Item 600 / 420: v1.0.0 published at 11:08 (Guy: "ok publish the draft."). I5 part 1 done (assets 8/8 OK). I5 part 2,
+  the fresh clone from GitHub plus the full pytest, waits for the Mac (ios garmin's heavy run since 10:50, MAC_BUSY).
+- Item 700: the Windows port, proven (Guy: "move forward so its windows proven"). README and STATUS now say
+  "work in progress, not proven". Next: rebase port-win onto main, then the phase-7 plan.
 
 ## Next steps, in order
-1. Guy publishes the draft (G7, his word or click); told at 10:19. The tag never moves without his word.
-2. After he publishes: I5 (`docs/plans/phase-i.md` section 6) against v1.0.0; close items 420, 400 and 600; delete
-   the private history bundles (incl. ~/.lazpy-private/g8e), their clones and .git/filter-repo; port-win (PC,
-   D:\lazpy\src\lazpy-win, cut on 0537394 = f93c755 now) rebases through the g8e map. Tell the PC worker.
-3. Pre-push checks need `LAZ_PRIVATE_NEEDLES=~/.lazpy-private/needles.txt` (rebuilt 2026-11-17; under --pre-push a
-   needle SKIP is a FAIL). Keep that file; it is not in the repo.
-4. No core/ edit or build-core.sh run on main (the gated build is 64026f4a…, build.inputs head 4e830e5). The Mac's
-   devkitARM is gcc 16.1 since 2026-11-17: a rebuilt test app no longer hashes to ba106998.
-5. Answer asks from Gen3D and 3DPlatinum; both use only libazahar-py.
+1. Item 700: on the PC (D:\lazpy\src\lazpy-win), add GitHub as a remote, and rebase port-win's 22 commits
+   (0537394..7471be0, 56 files) onto main as a new branch port-win-v1, keeping port-win. Main moved only 6 docs
+   commits past f93c755 (= old 0537394).
+2. Item 700: one opus agent writes docs/plans/phase-7.md (the gate: merged, fresh-clone full pytest with
+   LAZ_REQUIRE_EMULATOR=1 on the PC, Windows CI job, legal audit, a Windows asset), then two review loops, then execute.
+   Inputs: toolkit docs/pc-worker/NATIVE-PLAN-v3.md, lanes/WB.md, HANDOFF.md (lanes B5-B8).
+3. When ios garmin says its run is done: delete ~/.lazpy/MAC_BUSY, tell Gen3D, 3DP and gba-toolkit-b2; then I5
+   part 2 (`docs/plans/phase-i.md` section 6, with v1.0.0): `sh tools/clone_check.sh --repo
+   https://github.com/GuyShtainer/libazahar-py --branch main --out runs/clone-i5`, then `examples/memory_watch.py`.
+   If it passes: close items 420, 400 and 600; delete the private history bundles (incl. ~/.lazpy-private/g8e), their
+   clones and .git/filter-repo.
+4. Pre-push checks need `LAZ_PRIVATE_NEEDLES=~/.lazpy-private/needles.txt` (keep that file; it is not in the repo).
+5. No core/ edit or build-core.sh run on main (the gated build is 64026f4a…). The Mac's devkitARM is gcc 16.1 since
+   2026-11-17: a rebuilt test app no longer hashes to ba106998.
+6. Answer asks from Gen3D and 3DPlatinum; coordinate the PC (rule: free RAM >= 2 GB + 0.6 GB per copy; no caps).
 
 ## Waiting on Guy (only what blocks a step above)
-- Publishing the draft release v1.0.0 (G7), after CI is green: his word or his click.
-- The audit's R1 (core/PIN's default build route) is settled by v1.0.0 if Guy keeps the default: PIN-nokeys is the
-  default route (`docs/plans/phase-v1.md` D2). Guy may overrule any of D1-D6 there.
-- G9 (spike 2's game: default say nothing) and whether macOS 11-14 users matter (default D4: "macOS 15 or
-  later"): item 400's notes. Phase 4's Q1-Q9: `docs/plans/phase-4.md` section 7; Q1 took its default.
+- Nothing blocks. D1-D6 (`docs/plans/phase-v1.md`), G9 and D4 (item 400) keep their defaults unless Guy overrules.
 The full list is generated into `docs/status/README.md`.
 
 ## Pointers
-- Items: `docs/status/lazpy/1-in-progress/600-phase-6-v1-release.md` (V0b-V8 notes, the hold),
-  `docs/status/lazpy/5-done/660-step-m-state-restore-shader-cache.md` (the restore fix),
-  `docs/status/lazpy/1-in-progress/500-phase-5-user-asks.md` (the asks verbatim, the Linux port),
-  `docs/status/lazpy/1-in-progress/420-step-i-release.md`, `docs/status/lazpy/1-in-progress/400-phase-4-release.md`.
-- The push and I5: `docs/plans/phase-i.md` sections 6 and 8.2; `docs/plans/phase-v1.md` V9.
-- The audit: kept private in `runs/reviews/release-legal-audit-v1.0.0.md` (gitignored, G8e); maps: `docs/commit-map-g8e.tsv`, then g8d.
+- Items: `docs/status/lazpy/1-in-progress/700-phase-7-windows-proven.md`, `600-phase-6-v1-release.md`,
+  `420-step-i-release.md`, `400-phase-4-release.md`, `500-phase-5-user-asks.md` (asks verbatim, the port notes).
+- I5: `docs/plans/phase-i.md` section 6. The audit: private in `runs/reviews/` (gitignored); maps:
+  `docs/commit-map-g8e.tsv`, then g8d.
+- PC worker: toolkit docs/pc-worker/HANDOFF.md and `guy-decisions.md`.
 - Progress page: https://claude.ai/artifact/TFaGBKNbr5pDFZGDCNJUgH; republish only inside the progress command or
   when Guy asks.
 - Rules that bite every turn: `docs/map/rules.md`. Everything else: `docs/map/README.md`.

@@ -1,6 +1,6 @@
 # libazahar-py status
 
-As of 2026-11-13. v1.0.0. Each item below names the work item (`laz-NNN`) whose
+As of 2026-11-17. v1.0.0. Each item below names the work item (`laz-NNN`) whose
 Evidence, in `docs/status/lazpy/5-done/`, proves it. Nothing is listed as working that no gate ran.
 
 ## What works
@@ -35,7 +35,11 @@ Evidence, in `docs/status/lazpy/5-done/`, proves it. Nothing is listed as workin
 
 ## What does not work yet
 
-- macOS before 15, Intel Macs, Windows and Linux. The core needs macOS 15 (see Known limits).
+- macOS before 15, Intel Macs and Linux. The core needs macOS 15 (see Known limits).
+- Windows: **work in progress, not proven.** A native Windows build (core, host library and Python layer, no WSL)
+  runs internal test jobs on one developer PC. Before it counts as working it still needs: its branch merged into
+  main, a full code review and a legal check, a Windows CI job, the remaining state-restore test passing on Windows,
+  and a Windows download on a release. Until then nothing in this release runs on Windows.
 - Poll-exact movies: our core exports `lazpy_movie_play`; the host and Python do not call it; not in 1.0.
 - Guest memory and the watch list on Azahar's own core: they raise `NeedsLazpyCore`.
 - Any app that is not homebrew: no console keys, no Nintendo system files, no encrypted titles.
@@ -70,7 +74,7 @@ Evidence, in `docs/status/lazpy/5-done/`, proves it. Nothing is listed as workin
 - A scripted download of Azahar's own core: removed before the first release. Our core is the default, and comparisons take
   `LAZ_STOCK_CORE`, a file you download yourself.
 - Out of scope (PLAN section 5), one line each:
-  - Windows and Linux: macOS arm64 first.
+  - Linux: macOS arm64 first, then Windows (in progress, above).
   - Audio output: not built.
   - Any window: the tool is headless.
   - Patching HID's touch truncation: four rows move by one pixel; documented.

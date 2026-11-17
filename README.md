@@ -12,6 +12,10 @@ homebrew headless, with inputs, shots, SD files, savestates, many instances at o
 core; `STATUS.md` lists each item with the work that proved it. What does not work: macOS before 15 and Intel Macs,
 audio output, anything with a window, and anything that is not homebrew.
 
+**Windows: work in progress, not proven.** A native Windows port is being built and tested on one developer PC. It is
+not in this release, has no CI and no download, and is not supported yet. `STATUS.md` says what remains. Linux is
+not supported.
+
 ## Measured numbers
 
 | What | Value | Scene | Load | Date | Source |

@@ -102,3 +102,5 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   makes the build-files asset stale again: re-stage at the tagged commit (handoff).
 - Final staging: done at the commit that adds this line (mkrelease, then --pre-push with the private file); see
   the handoff. This item moves to 5-done after I5 (Guy publishes, the release is downloaded and checked).
+- 2026-11-17 11:09, I5 (as v1.0.0, item 600): part 1 done (published assets 8/8 match SHA256SUMS, runs/i5-v1.0.0/sums.log);
+  the fresh-clone run waits for the Mac to be free.
