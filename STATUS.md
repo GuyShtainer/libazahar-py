@@ -56,13 +56,13 @@ lazpy.1 Windows core, no `LoadWarning`, no nice values, the symlink test while D
 
 ## macOS in v1.1.0
 
-macOS uses the same core as v1.0.0. The emulator suite last passed in full on a Mac at v1.0.0. During v1.1.0 it ran on
-hosted macOS CI runners (`macos-live.yml`), last at commit 642acb5: 292 passed and 2 failed, `test_state_boot` (3.6 s
-against its 2.5 s bound) and `test_k_threads`; each earlier v1.1.0 run also had 2 failures, except one that had 1. The
-changes after that run that reach macOS are small: the host also accepts a stock core that names itself `219d743` (and
+macOS uses the same core as v1.0.0. The emulator suite last passed in full on a Mac at v1.0.0. The v1.1.0 release
+candidate ran on hosted macOS CI runners: the fast tests passed, and the emulator suite (`macos-live.yml`) had 292
+passed, 14 skipped and 1 failed, `test_state_boot` (5.3 s against its 2.5 s bound on that shared runner). Earlier v1.1.0
+runs there also failed `test_k_threads`, which now skips on macOS as on Windows, since the release test app ships no
+ELF. The v1.1.0 changes that reach macOS are small: the host also accepts a stock core that names itself `219d743` (and
 names it when it refuses a core), the version is 1.1.0, `tools/fetch.sh` has the v1.1.0 pins, and three tests changed (a
-skip when there is no test-app ELF, a longer boot wait, and the cross-system state check). They are reviewed; the host C
-tests and the full suite ran with them on Windows, not on a Mac.
+skip when there is no test-app ELF, a longer boot wait, and the cross-system state check).
 
 ## Known limits
 

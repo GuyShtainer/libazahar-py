@@ -17,6 +17,13 @@ The W9 gate in the plan. Plan: `docs/plans/phase-7.md` line 354.
 
 ## Evidence
 - 2026-11-17 23:26 started: W7c passed (item 711), Guy's word in item 712. Evidence files: runs/p7/w9/.
+- 2026-11-17 23:34 steps 1-3 PASS on 2f0853c (PC HEAD = Mac HEAD; release_check --pre-push 19 PASS rc 0, plant-red
+  rc 0; build-files gate PASS on the exemption); pushed main 6345b83..2f0853c.
+- 2026-11-17 23:37-23:59 step 4: test-windows 44181297329 success; test.yml 44181379393 success (245 passed, 6 skipped,
+  on 3.10 and 3.14). Step 5: macos-live 44181385524 fetch "fell back to v1.0.0" for the core zip and the test app; suite
+  1 failed (test_state_boot 5.30 s against 2.5 s on the hosted runner), 292 passed, 14 skipped; job continue-on-error.
+  STATUS's macOS paragraph rewritten from that run; that commit re-gated and pushed with test-windows only (it changes
+  STATUS and status files, nothing macOS runs).
 
 ## Pointers
 - Plan section: `docs/plans/phase-7.md:354`; briefs: `docs/plans/phase-7-briefs.md`
