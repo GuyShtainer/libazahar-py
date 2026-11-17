@@ -11,7 +11,7 @@ when one does not). --emit-steps prints the README's steps block (or, with --blo
 from __future__ import annotations
 
 import argparse
-import os
+import posixpath
 import re
 import shutil
 import subprocess
@@ -173,12 +173,12 @@ def check_steps(docs: dict[str, str], root: Path) -> list[str]:
 
 def check_links(docs: dict[str, str], root: Path, allow: tuple[str, ...] = ()) -> list[str]:
     files, out = repo_files(root), []
-    allowed = {os.path.normpath(a) for a in allow}
+    allowed = {posixpath.normpath(a) for a in allow}
     for name in DOCS:
         for target in re.findall(r"\[[^\]]*\]\(([^)\s]+)\)", without_fences(docs.get(name, ""))):
             if re.match(r"(https?:|mailto:|#)", target):
                 continue
-            path = os.path.normpath(os.path.join(os.path.dirname(name), target.split("#")[0]))
+            path = posixpath.normpath(posixpath.join(posixpath.dirname(name), target.split("#")[0]))
             if path not in files and path not in allowed:
                 out.append(f"{name}: link {target} does not resolve")
     return out
