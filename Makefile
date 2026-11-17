@@ -123,14 +123,16 @@ test-version: build/test-version.exe
 test-host: build/test-host.exe
 	build/test-host.exe
 
-# static analysis of the Windows sources: one clang pass per file, no .plist output
+# static analysis of the Windows sources: one clang pass per file, no .plist output. analyze_assert.h makes the CRT's
+# _assert noreturn for the analyzer, as on macOS.
 check:
 	tools/check-obinary.sh
 	@command -v clang >/dev/null || { echo "check: clang not found (pacman -S mingw-w64-x86_64-clang)"; exit 1; }
-	@for f in host/azhost_main.c $(WIN_LIB_SRC); do \
+	@rc=0; for f in host/azhost_main.c $(WIN_LIB_SRC); do \
 	    echo "analyze $$f"; \
-	    clang --analyze -Xclang -analyzer-werror -Xanalyzer -analyzer-output=text $(WIN_CFLAGS) -o /dev/null $$f || exit 1; \
-	done
+	    clang --analyze -Xclang -analyzer-werror -Xanalyzer -analyzer-output=text $(WIN_CFLAGS) \
+	        -include host/plat/analyze_assert.h -o /dev/null $$f || { echo "check: FAIL $$f"; rc=1; }; \
+	done; exit $$rc
 
 testapp:
 	$(MAKE) -C testapp
