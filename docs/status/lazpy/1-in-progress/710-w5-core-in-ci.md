@@ -65,6 +65,12 @@ The W5 gate in the plan. Plan: `docs/plans/phase-7.md` line 295.
   mknotices' whole-word read misses them: the words of mingw's linkLibs.rsp (likely quoted; macOS has no rsp). Fix:
   link words drop surrounding quotes (a quoted + unquoted fixture reads citra_core, crypto, ssl); the error prints the
   raw words naming ssl/crypto; the orphan-library check lists every case at once. Rerun next.
+- 2026-11-17 18:52 rerun 44126760281 (main e3cc3f5): the build job PASSED (NOTICES written; DLL sha256 11d010ad16a8...).
+  The leak check then failed closed without scanning: the runner's newer gh refuses to write a body with terminal escape
+  sequences (the log's colours), 6 tries, "the job log could not be fetched"; the artifact was deleted as designed and
+  the load test found no artifact. Not a leak: the main loop's needle scan of the full run log, 0 hits; the logs stay.
+  Fix: the log is fetched with curl and the token (any gh version); the same fetch on the Mac: 271119 bytes, end marker
+  and gate_f2 line present. Rerun next.
 
 ## Pointers
 - Plan section: `docs/plans/phase-7.md:295`; briefs: `docs/plans/phase-7-briefs.md`

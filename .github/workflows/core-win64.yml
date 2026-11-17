@@ -312,9 +312,11 @@ jobs:
           set -eu
           JOB="$(gh api "repos/$REPO/actions/runs/$RUN_ID/jobs" --jq '.jobs[] | select(.name == "build") | .id')"
           [ -n "$JOB" ]
-          # GitHub can answer 404 for a few seconds after a job ends: try a few times
+          # GitHub can answer 404 for a few seconds after a job ends: try a few times. curl, not gh api: newer gh refuses to
+          # write a body holding terminal escape sequences (the log's colours). curl drops the token on the redirect.
           TRY=0
-          until gh api "repos/$REPO/actions/jobs/$JOB/logs" >"$RUNNER_TEMP/build-job.log"; do
+          until curl -fsSL -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
+              -o "$RUNNER_TEMP/build-job.log" "https://api.github.com/repos/$REPO/actions/jobs/$JOB/logs"; do
             TRY=$((TRY + 1))
             [ "$TRY" -lt 6 ] || { echo "the job log could not be fetched"; exit 1; }
             sleep 10
