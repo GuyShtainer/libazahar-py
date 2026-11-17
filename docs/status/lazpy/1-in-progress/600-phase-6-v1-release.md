@@ -130,7 +130,7 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   old core, and no release fixture), 0 failed. The test app built from source under `env -i` in the clone is
   ba106998…, equal to the staged one.
 - 2026-11-13 19:12, V8 step 2: the release-legal-audit (opus, a1a4df6eeb2bdc776, 18:48-19:06) says SHIPPABLE WITH
-  CHANGES; saved as `docs/reviews/release-legal-audit-v1.0.0.md` (its admission phrase redacted, marked). M2 and the
+  CHANGES; saved privately (since G8e: `runs/reviews/release-legal-audit-v1.0.0.md`, gitignored; its admission phrase redacted, marked). M2 and the
   S and note wording are fixed at HEAD in this commit (the first audit's :43, status quotes now say "[build]", "title
   keys" gone, NOTICES' "console keys, Nintendo certificates", the Python claim, "supplied locally"). M1 is next: the
   G8d history rewrite (`docs/plans/phase-i.md` 8.1b) of the game title (9c5f959, a41f196), 1748f65's place name,
@@ -156,3 +156,14 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   runs/g8d/prepush-final.log; zip ced9a362…, test app ba106998…). Guy, verbatim: "Lets hold the push." and later
   "We will push in the future". V9 waits for his word. Commits after f75ed0b (this record, the handoff) make the
   build-files asset stale, so before the tag: `sh tools/mkrelease.sh v1.0.0` and the pre-push check again.
+- 2026-11-17 by 08:29, V9: Guy, verbatim: "Push". The private needles file was lost with an old session's scratchpad; the
+  pre-push check runs without it (its needle lines SKIP). The 77 lines added after f75ed0b were read by hand: no
+  address, path, key, game or private string. A delta release-legal-audit (opus, af29729..ed2a741) said NOT SHIPPABLE
+  for one BLOCKER: the saved v1.0.0 audit, tracked since 49c9520, narrates the scrubbed material (the same class as
+  M2), so a HEAD edit cannot fix it; and SHOULD S1: one older commit subject still used M2's wording. Its identities
+  (219 commits, no-reply only), M1/M2/S-item checks and the delta scan were clean.
+- 2026-11-17 10:11, V9 G8e: bundle `~/.lazpy-private/g8e/pre-g8e.bundle` (verified) and the audit's text kept
+  privately (there and in gitignored runs/reviews/). `git filter-repo --invert-paths` on the audit file plus one
+  `--replace-text`/`--replace-message` literal ("[build]"). After: 219 commits, identities unchanged, 0 hits of the
+  phrase in all history and messages, the file in no commit, fsck clean, no refs/replace. 17 commits rewritten:
+  `docs/commit-map-g8e.tsv` (0537394 is now f93c755; port-win and port-linux rebase through it).

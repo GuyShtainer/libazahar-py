@@ -1,0 +1,18 @@
+old	new	subject
+0537394	f93c755	v1.0.0 staged and checked; push held by Guy; handoff, progress (page version 8)
+0fef5fa	3a13472	V6: 3DPlatinum's A4 EQUAL on the same [build]; its V6 is a full pass
+49c9520	db4cdd2	V8: legal re-audit saved (SHIPPABLE WITH CHANGES); its HEAD wording fixes
+6329c2e	2ebaac3	item 500: the PC worker's native-Windows port questions, answered
+64f914b	582ae30	V7 done: full pass on the candidate, 0 failed (299 pytest, 307973 host checks, gate_f2, examples, fixture)
+7b9f792	f7a8308	V8 G8d: fourth history rewrite (the audit's M1), commit map and records
+7e7330b	6bcff67	item 500: port-win B1's device-report question answered
+9e11fe2	668d5db	V8: fetch.sh core pin for the re-staged v1.0.0 (zip ced9a362)
+af29729	4226ea2	handoff: V8 clone_check and the legal re-audit running
+b2698bb	e0f3b04	V7 prep: tools/mkfixture.py makes a release's state fixture; test_release_fixture.py loads every one
+b4bb3a3	533a650	V6 done: Gen3D's Pool 1-4 PASS on 64026f4a (both projects pass)
+cbe5da4	1376939	item 500: native-Windows phase A started (PC worker, Guy's go)
+d3f6a28	fd3426c	V8: fetch.sh pins for v1.0.0 (core zip d706fd1a, test app ba106998)
+da01e90	0e9eac0	handoff: V3 and V6 done; V7 next after Gen3D's single-instance checks
+ed2a741	b057ce5	handoff: devkitARM is gcc 16.1 now; keep the gcc 15 test app for the v1.0.0 stage
+f36b79c	3b9565f	V3: real-scene rows for 1-4 instances on 64026f4a (all checks ok); default instance cap 2 -> 4
+f75ed0b	4f48e66	V8: pre-push 16 of 16 after G8d, positive control on the old history; handoff
