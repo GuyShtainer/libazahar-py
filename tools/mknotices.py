@@ -11,7 +11,7 @@ Unifont texts out of the macOS release's NOTICES.md, which holds them verbatim, 
 --runtime-copyright adds one named text, verbatim: an Ubuntu package's copyright file, and the two files the win64
 form requires, `winpthreads-COPYING` and `COPYING.MinGW-w64-runtime.txt`, unpacked from the mingw-w64 source (D13).
 
-Reads the link line's static libraries and every compile dependency file (*.o.d) under BUILD, sorts each path into a
+Reads the link line's static libraries and every compile dependency file (*.o.d, *.obj.d on win64) under BUILD, sorts each path into a
 component (table COMPONENTS), a src/ notice (table SRC_NOTICES), OpenSSL (the Cellar path in build.inputs), generated
 or system. An unknown path, an unknown component or any externals/libressl path exits 1 naming it. Licence texts are
 copied verbatim from SRC, the OpenSSL tarball and the snapshot (tarfile, nothing extracted). Output has no dates.
@@ -106,7 +106,7 @@ def dep_paths(deps: Path) -> set[str]:
     paths: set[str] = set()
     for root, _dirs, files in os.walk(deps, followlinks=True):
         for name in files:
-            if name.endswith(".o.d"):
+            if name.endswith((".o.d", ".obj.d")):  # .obj.d: the mingw (win64) objects
                 text = (Path(root) / name).read_text(errors="replace").replace("\\\n", " ")
                 paths.update(w for w in text.split()[1:] if not w.endswith(":"))
     return paths

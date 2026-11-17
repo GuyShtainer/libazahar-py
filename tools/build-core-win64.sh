@@ -162,7 +162,7 @@ else
   say "tree up to date (stamp ok)"
 fi
 
-# stale objects of the bundled LibreSSL from earlier builds (their .o.d files name it)
+# stale objects of the bundled LibreSSL from earlier builds (their .obj.d files name it)
 rm -rf build-core/build/externals/libressl
 # win64: mingw-w64 (posix threads). The toolchain file names the compilers; the .def is made from the patched tree.
 mkdir -p build-core/toolbin
@@ -232,7 +232,7 @@ mv -f build-core/build.inputs.tmp build-core/build.inputs
 cmake --build build-core/build --target citra_libretro --config Release -j "${LAZ_CORE_JOBS:-4}"
 for D in $DROP; do
   B="$(basename "$D" | sed 's/\./\\./g')"
-  if find build-core/build -name '*.o.d' -exec grep -l "$B" {} + 2>/dev/null | grep -q .; then
+  if find build-core/build \( -name '*.o.d' -o -name '*.obj.d' \) -exec grep -l "$B" {} + 2>/dev/null | grep -q .; then
     die "an object still reads $(basename "$D") (on the drop list)"
   fi
 done

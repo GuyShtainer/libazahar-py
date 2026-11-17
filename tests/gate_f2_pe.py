@@ -139,13 +139,13 @@ def strings_findings(lines: list[str], version: str, suffix: str, prefix: str) -
 
 # ---------------------------------------------------------------- the checks of contract 1
 def deps_scan(build_dir: Path, drop: list[str]) -> tuple[int, list[str]]:
-    """(.o.d files read, findings): at least 1000 files, none naming a drop-list path or a key file or libressl."""
+    """(.o.d/.obj.d files read, findings): at least 1000 files, none naming a drop-list path or a key file or libressl."""
     names = [Path(entry).name for entry in drop] + list(KEY_FILES) + list(g.DROP_BASENAMES_EXTRA)
     count = 0
     hits: list[str] = []
     for folder, _, files in os.walk(Path(build_dir) / "build"):
         for name in files:
-            if name.endswith(".o.d"):
+            if name.endswith((".o.d", ".obj.d")):  # mingw objects are .obj, so their depfiles are .obj.d
                 count += 1
                 text = (Path(folder) / name).read_text(encoding="utf-8", errors="replace")
                 hits += [f"{name} names {n}" for n in names if n in text]
@@ -364,10 +364,10 @@ def plant_red(dll: Path) -> int:
         expect("fresh: a missing core is flagged", bool(fresh_findings(work / "none.dll", build)))
         # deps
         for i in range(1000):
-            (build / "build" / f"f{i}.cpp.o.d").write_text("f.o: /usr/include/stdio.h\n")
+            (build / "build" / f"f{i}.cpp.{'obj' if i % 2 else 'o'}.d").write_text("f.o: /usr/include/stdio.h\n")
         count, found = deps_scan(build, ["src/core/hw/default_keys.h", "externals/libressl"])
-        expect("deps: 1000 clean files pass", count == 1000 and not found)
-        (build / "build" / "evil.cpp.o.d").write_text("f.o: src/core/hw/default_keys.h\n")
+        expect("deps: 1000 clean files pass (.o.d and .obj.d both count)", count == 1000 and not found)
+        (build / "build" / "evil.cpp.obj.d").write_text("f.o: src/core/hw/default_keys.h\n")
         expect("deps: a file naming a drop-list header is flagged", any("default_keys.h" in f for f in deps_scan(build, ["src/core/hw/default_keys.h"])[1]))
         expect("deps: 0 files are flagged", any("at least 1000" in f for f in deps_scan(work / "none", [])[1]))
         # the report, written by the code and read back against contract 1

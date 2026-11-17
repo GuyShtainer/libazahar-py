@@ -17,6 +17,13 @@ The W5 gate in the plan. Plan: `docs/plans/phase-7.md` line 295.
 
 ## Evidence
 - 2026-11-17 14:35 core-win64.yml dispatched on main 49c81ed: run 44084612822 (watch log runs/p7/w5/watch.txt).
+- 2026-11-17 15:00 run 44084612822: build job FAILED at the gate_f2 step: "FAIL deps deps: 0 dependency files, want
+  at least 1000" (droplist cmake, fresh, window hits=0, pe machine, imports n=10 all PASS; core built). Cause: mingw
+  objects are .obj, so CMake's depfiles are *.obj.d; three Windows paths counted only *.o.d (gate_f2_pe deps_scan
+  loud; mknotices dep_paths and build-core-win64.sh's drop-list grep silent). Load test, leak check, attest skipped.
+- 2026-11-17 15:02 Fixed on main (the three paths take .obj.d too; the Mac-only gate_f2.py and build-core.sh untouched).
+  PC: gate_f2_pe --plant-red rc 0 "all planted reds fail as expected" (fixture now half .obj.d); mknotices dep_paths
+  reads a .obj.d. Lesson: a CMake mingw build's depfiles are *.obj.d. Rerun next.
 
 ## Pointers
 - Plan section: `docs/plans/phase-7.md:295`; briefs: `docs/plans/phase-7-briefs.md`
