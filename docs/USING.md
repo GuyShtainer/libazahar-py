@@ -363,7 +363,7 @@ The 1.0 promise holds on Windows. These are the differences from macOS; nothing 
 | Paths | any | ASCII only and under 260 characters: clone into a short path such as `C:\src` |
 | SD folder names | follows the volume | case-insensitive |
 | `runs/` behind a junction | n/a | not supported |
-| Savestates between macOS and Windows | a Windows state is refused | a macOS state is refused: `StateError`, "incompatible native format - size of long" (Azahar's boost archives store `long`, 8 bytes on macOS and 4 on Windows). Make states on the system that loads them |
+| Savestates between macOS and Windows | a Windows state is refused | a macOS state is refused: `StateError` "the core refused the state", and `host.log` gives the reason, "incompatible native format - size of long" (Azahar's boost archives store `long`, 8 bytes on macOS and 4 on Windows). Make states on the system that loads them |
 | The guest's HTTPS (CA file) | Homebrew's `openssl@3` paths | none: the compiled-in OPENSSLDIR, `/opt/lazpy/openssl-3.6.5-mingw64/C:/Program Files/Common Files/SSL`, is not a usable Windows path |
 
 Windows has no lazpy.1 core: the Windows core is lazpy.2. The limits of what was tested are in `STATUS.md`: one PC,

@@ -5,8 +5,8 @@ fixture folder the test skips; V7 of each 1.x release makes the folder before it
 
 A state does not carry across operating systems: Azahar's boost archives refuse a state whose `long` size differs
 (8 bytes on macOS, 4 on Windows), the documented limit in docs/USING.md section 15a. A fixture made on the other
-system must be refused with exactly that error. fixture.json names its system ("platform", sys.platform); fixtures
-older than the key are macOS (1.0 shipped macOS only).
+system must be refused with a StateError whose reason, in host.log, is exactly that. fixture.json names its system
+("platform", sys.platform); fixtures older than the key are macOS (1.0 shipped macOS only).
 """
 from __future__ import annotations
 
@@ -31,9 +31,11 @@ def test_release_fixture_loads(folder, workdir):
     import testapp_log
     record = json.loads((folder / "fixture.json").read_text())
     if record.get("platform", "darwin") != sys.platform:
-        with pytest.raises(StateError, match="size of long"):
+        with pytest.raises(StateError, match="the core refused the state"):
             with Emulator(folder / "testapp.3dsx", workdir / "b", state=folder / "state"):
                 pass
+        log = (workdir / "b" / "host.log").read_text(errors="replace")
+        assert "incompatible native format - size of long" in log, "the core refused the state for another reason"
         return
     with Emulator(folder / "testapp.3dsx", workdir / "b", state=folder / "state") as emu:
         assert emu.frame_total == record["frame_total"]
