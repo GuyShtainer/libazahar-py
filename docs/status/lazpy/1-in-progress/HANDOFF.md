@@ -12,7 +12,7 @@ the next session needs to act now, and points at the rest. Goals, rules, decisio
   701-714 (W1a+W1 share 702, W7+W7c share 711, Guy's publish word goes in 712).
 - Item 710: W5. Item 709 (W4) is done: main 49c81ed pushed, CI green (macos-live pytest step 2 CI-only failures,
   so STATUS takes plan section 7.6's fallback macOS sentence at W7). core-win64.yml run 44084612822 dispatched 14:35;
-  watch log runs/p7/w5/watch.txt. Item 707 (W6 docs) waits on its docs_check gate (run it on p7-docs now).
+  watch log runs/p7/w5/watch.txt. Item 707 (W6) done; p7-docs tip 9069e95 (docs_check posix fix).
 - Item 600 / 420: v1.0.0 published at 11:08. I5 part 2 (fresh clone + full pytest) is folded into phase 7: the
   W10 post-publish check closes it. All 3DS work runs on the PC (flag ~/.lazpy/PC_ONLY, toolkit 2568682).
 

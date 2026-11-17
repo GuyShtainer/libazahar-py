@@ -20,6 +20,10 @@ The W6 gate in the plan. Plan: `docs/plans/phase-7.md` line 263.
   PC", MSYS2 MINGW64, Vulkan driver required), USING Windows defaults + section 15a differences, STATUS limits,
   docs/release-notes/v1.1.0.md, version 1.1.0. Wording sentences relayed to W2b2; build assumptions to W2a.
   Gate part 2 (docs_check on the PC) runs after W4.
+- 2026-11-17 14:39 Gate part 2 on the PC (fresh p7-docs clone, venv python): docs_check first FAILED links (4 README
+  links "do not resolve": os.path.normpath gave backslashes against git's posix file list), fixed on p7-docs 9069e95
+  (posixpath), rerun "PASS links", all 8 PASS, rc 0 (runs/p7/w4/w6-docs.out). Windows wording check
+  (windows_wording_findings) on the W6 texts: 0 FAIL, 7 PEND = the W5/W7/W9 placeholders. Done.
 
 ## Pointers
 - Plan section: `docs/plans/phase-7.md:263`; briefs: `docs/plans/phase-7-briefs.md`
