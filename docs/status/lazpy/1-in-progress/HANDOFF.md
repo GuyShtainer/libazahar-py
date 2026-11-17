@@ -1,7 +1,7 @@
 <!-- handoff: slim v1 | current tasks only | rewritten whole from docs/status/templates/handoff.md | budget 80 lines | never append -->
 # libazahar-py handoff
 
-As of: 2026-11-17 13:33 (session 3ds-toolkit-eb, a7 renamed after the crash restart; it also runs the PC worker)
+As of: 2026-11-17 13:31 (session 3ds-toolkit-eb, a7 renamed after the crash restart; it also runs the PC worker)
 
 This file lives in docs/status/lazpy/1-in-progress/, beside its item files. It holds only what
 the next session needs to act now, and points at the rest. Goals, rules, decisions and history live elsewhere.
@@ -11,7 +11,7 @@ the next session needs to act now, and points at the rest. Goals, rules, decisio
   (`docs/plans/phase-7.md`, two review loops done); briefs in `docs/plans/phase-7-briefs.md`. Steps are items
   701-714 (W1a+W1 share 702, W7+W7c share 711, Guy's publish word goes in 712).
 - Item 708: W3 fix check passed (0 blockers open, review 421e55b on p7-int). A sonnet agent fixes the major and
-  minors on p7-int from 13:33 (notes runs/p7/w3f/notes.md). Item 707 (W6 docs) waits on its docs_check gate after W4.
+  minors on p7-int from 13:31 (notes runs/p7/w3f/notes.md). Item 707 (W6 docs) waits on its docs_check gate after W4.
 - Item 600 / 420: v1.0.0 published at 11:08. I5 part 2 (fresh clone + full pytest) is folded into phase 7: the
   W10 post-publish check closes it. All 3DS work runs on the PC (flag ~/.lazpy/PC_ONLY, toolkit 2568682).
 

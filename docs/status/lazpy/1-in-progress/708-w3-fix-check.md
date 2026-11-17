@@ -21,7 +21,7 @@ The W3 gate in the plan. Plan: `docs/plans/phase-7.md` line 267.
 - 2026-11-17 13:30 W3 gate PASS: docs/reviews/phase-7-fix-check.md on p7-int (421e55b), "Zero blockers not fixed: yes".
   P7-R1 17/19 fixed (R1-8 moves to W4, R1-9 fixed on p7-docs). New: 0 blockers, 1 major (placeholder scan misses USING
   and OPENSSL.md), 7 minor, 13 nits. Darwin-visible fix hunks (3, match.c and vk.c) correct on macOS. R3-8 (curl in the
-  pacman line) fixed on p7-docs (e84f670); a sonnet agent fixes R3-1..7 and 8 nits on p7-int from 13:33.
+  pacman line) fixed on p7-docs (e84f670); a sonnet agent fixes R3-1..7 and 8 nits on p7-int from 13:31.
 
 ## Pointers
 - Plan section: `docs/plans/phase-7.md:267`; briefs: `docs/plans/phase-7-briefs.md`
