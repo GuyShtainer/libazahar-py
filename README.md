@@ -78,7 +78,7 @@ Open the MSYS2 MINGW64 shell (not MSYS, UCRT64 or CLANG64). Clone into a short p
 
 <!-- docs_check: steps-win -->
 ```sh
-pacman -S --needed git make zip unzip mingw-w64-x86_64-gcc mingw-w64-x86_64-zlib   # once
+pacman -S --needed git make zip unzip curl mingw-w64-x86_64-gcc mingw-w64-x86_64-zlib   # once
 cd /c/src && git clone https://github.com/GuyShtainer/libazahar-py && cd libazahar-py
 sh tools/fetch.sh                                               # the libretro headers, the Windows core, the test app (sha256-pinned)
 make                                                            # build/libazhost.dll and build/azhost.exe
