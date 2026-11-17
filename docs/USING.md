@@ -364,7 +364,7 @@ The 1.0 promise holds on Windows. These are the differences from macOS; nothing 
 | SD folder names | follows the volume | case-insensitive |
 | `runs/` behind a junction | n/a | not supported |
 | Savestates between macOS and Windows | | `<from W7>` |
-| The guest's HTTPS (CA file) | Homebrew's `openssl@3` paths | only at the compiled-in OPENSSLDIR: `<OPENSSLDIR from build.inputs>` |
+| The guest's HTTPS (CA file) | Homebrew's `openssl@3` paths | none: the compiled-in OPENSSLDIR, `/opt/lazpy/openssl-3.6.5-mingw64/C:/Program Files/Common Files/SSL`, is not a usable Windows path |
 
 Windows has no lazpy.1 core: the Windows core is lazpy.2. The limits of what was tested are in `STATUS.md`: one PC,
 Windows 10, an NVIDIA GPU. Windows 11 and AMD and Intel GPUs are untested.

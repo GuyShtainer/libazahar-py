@@ -70,7 +70,7 @@ lazpy.1 Windows core, no `LoadWarning`, no nice values, and the symlink test whi
 - One `azh_open` per process: the Python layer runs each Emulator in its own worker process.
 - The slot cap counts only libazahar's own workers, not other emulators on the machine.
 - On macOS, the core, `libazhost.dylib` and `azhost` need macOS 15 or later (the core's OpenSSL is built for 15).
-- The guest's HTTPS finds a CA file only at OpenSSL's compiled-in paths: Homebrew's `openssl@3` on macOS, and on Windows `<OPENSSLDIR from build.inputs>`.
+- The guest's HTTPS finds a CA file only at OpenSSL's compiled-in paths: Homebrew's `openssl@3` on macOS. On Windows it finds none: the compiled-in OPENSSLDIR is `/opt/lazpy/openssl-3.6.5-mingw64/C:/Program Files/Common Files/SSL` (the cross build joined its prefix to the Windows path), which is not a usable Windows path.
   Homebrew tests do not need it.
 - `azhost` has no `--help`; an unknown first argument prints the usage and exits with 2.
 - The promise (semantic versioning from 1.0.0): until 2.0, the Python API, the C functions in `host/azhost.h`, the

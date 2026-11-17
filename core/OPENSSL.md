@@ -73,10 +73,13 @@ make install_dev
 
 - The source hash is recorded as `openssl_src_sha256` in `build.inputs`; the build refuses a tarball that does not
   match the value in this file.
-- The two archives the link used (sha256, also in `build.inputs`): `libssl.a` `TO BE FILLED from the first CI run
-  (openssl_libssl_sha256)`, `libcrypto.a` `TO BE FILLED from the first CI run (openssl_libcrypto_sha256)`.
-- The `--openssldir` path is a Windows path, the compiled-in OPENSSLDIR. The guest's HTTPS looks for its CA file only
-  there, and OpenSSL 3 may try to load its default config from there. Nothing is shipped at that path.
+- The two archives the link used (sha256, also in `build.inputs`): `libssl.a`
+  `fea821959f1eb178eea43358ae25d7163344e9acbdae696acd1953690aee686b`, `libcrypto.a`
+  `f138aeb1096e4b41704c12dae49c4f08c7512fa5d29686b9523e32f99345e27a` (core-win64 run 44138010543, the v1.1.0 core).
+  libcrypto.a is not byte-identical between CI runs; the release pins the DLL, not the archives.
+- `--openssldir` is given a Windows path, but Configure runs on Linux and does not see `C:/` as absolute, so it joins
+  the prefix: the compiled-in OPENSSLDIR is `/opt/lazpy/openssl-3.6.5-mingw64/C:/Program Files/Common Files/SSL`. That is not a usable Windows
+  path, so the guest's HTTPS finds no CA file and OpenSSL 3 loads no default config. Nothing is shipped there.
   The build records the OPENSSLDIR, ENGINESDIR and MODULESDIR strings found in the DLL in `build.inputs`.
 - Rebuilding: run the `core-win64` workflow, or follow the same steps in a mingw-w64 cross environment. Libraries
   built elsewhere link the same OpenSSL code but will not be byte-identical.
