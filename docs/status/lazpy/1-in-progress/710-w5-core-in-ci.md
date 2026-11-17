@@ -24,6 +24,14 @@ The W5 gate in the plan. Plan: `docs/plans/phase-7.md` line 295.
 - 2026-11-17 15:02 Fixed on main (the three paths take .obj.d too; the Mac-only gate_f2.py and build-core.sh untouched).
   PC: gate_f2_pe --plant-red rc 0 "all planted reds fail as expected" (fixture now half .obj.d); mknotices dep_paths
   reads a .obj.d. Lesson: a CMake mingw build's depfiles are *.obj.d. Rerun next.
+- 2026-11-17 15:30 rerun 44088845869 (main 015fe3f): the gate_f2 step now passes (the .obj.d fix held); the build job
+  FAILED one step later, "mingw-w64 runtime source": "E: Version '13.2.0-6ubuntu1' for 'gcc-13-source' was not found".
+  26.04 still ships the mingw gcc built from gcc-13 13.2.0-6ubuntu1 (Built-Using), which the archive has dropped: the
+  P7-R3-6 check failing closed as designed.
+- 2026-11-17 15:36 Fix: apt-get download stays first; else the same version's source package (gcc-13 13.2.0-6ubuntu1:
+  .dsc, .debian.tar.xz, .orig.tar.gz) from Launchpad's API, each file checked against Launchpad's size + sha256 and the
+  .dsc's Checksums-Sha256, the .dsc's Version checked; anything else exits 1. The fetch code ran on the PC: rc 0, 3
+  files; a made-up version rc 1 "launchpad has no gcc-13 13.2.0-6ubuntu99". bash -n and the python parse OK.
 
 ## Pointers
 - Plan section: `docs/plans/phase-7.md:295`; briefs: `docs/plans/phase-7-briefs.md`
