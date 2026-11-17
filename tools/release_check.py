@@ -56,6 +56,9 @@ LONG_HEX_RUN = re.compile(r"(0x[0-9a-fA-F]{1,2}[\s,]+){7}0x[0-9a-fA-F]{1,2}")
 ZIP_NAMES = ["COPYING-azahar.txt", "LICENSE", "NOTICES.md", "SOURCE.md", "azahar_lazpy_libretro.dylib", "build.inputs"]
 EXPORT_EXTRA = {"_lazpy_read_memory", "_lazpy_write_memory", "_lazpy_movie_play", "_lazpy_threads"}
 OSSL_EXPECTED = ("/opt/homebrew/etc/openssl@3", "/opt/homebrew/Cellar/openssl@3/")
+# devkitPro's newlib is built on its maintainer's machine; its assert strings (dtoa.c, mprec.c) carry that build
+# path into every devkitARM program, the test app included. A third-party toolchain path, not ours: a NOTE, not a FAIL.
+DKP_NEWLIB_RE = re.compile(r"/home/davem/projects/devkitpro/pacman-packages/devkitarm/newlib/src/newlib-[\w.]+/newlib/[\w./-]+")
 
 
 class AssetError(Exception):
@@ -307,6 +310,10 @@ def private_findings(texts: dict[str, str], needles: list[tuple[int, re.Pattern[
         if name in NOTICE_FILES:
             for address in allowed:
                 shown = shown.replace(address, "")
+        if name == "testapp strings":
+            for path in sorted(set(DKP_NEWLIB_RE.findall(shown))):
+                out.append(("NOTE", f"NOTE expected: {name} holds devkitPro's newlib build path {path}"))
+            shown = DKP_NEWLIB_RE.sub("", shown)
         for label, regex in PRIVATE_RES:
             if regex.search(shown):
                 out.append(("FAIL", f"{name} holds a {label}"))
