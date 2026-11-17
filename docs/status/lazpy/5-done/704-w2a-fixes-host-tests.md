@@ -22,6 +22,8 @@ The W2a gate in the plan. Plan: `docs/plans/phase-7.md` line 247.
   skipped, skips_check 0 problems; skips_check --self-test 17/17; Darwin make -n guard differs only on the
   check-obinary line. NOT RUN: `make check` (no clang on the PC), actionlint (not on the PC), pip install -e +
   quickstart (left to W4's full run).
+- 2026-11-17 13:12: done; merged into p7-int (9bb34ef) for the W3 fix check. Gates not run here move on: make check
+  and actionlint run in CI after the W4 push.
 
 ## Pointers
 - Plan section: `docs/plans/phase-7.md:247`; briefs: `docs/plans/phase-7-briefs.md`

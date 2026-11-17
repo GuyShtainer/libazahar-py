@@ -20,6 +20,8 @@ The W2b1 gate in the plan. Plan: `docs/plans/phase-7.md` line 252.
   tools/build-core.sh` empty; gate_f2_pe.py --plant-red on the PC with the known DLL: "all planted reds fail as
   expected", rc 0; py_compile OK; sh -n OK; shellcheck info-only (run on the Mac, read-only lint). actionlint not
   run (not on the PC). Licence actions from W1b built in (verbatim runtime licences, link map, attest job only).
+- 2026-11-17 13:12: done; merged into p7-int (9bb34ef) for the W3 fix check. Gates not run here move on: make check
+  and actionlint run in CI after the W4 push.
 
 ## Pointers
 - Plan section: `docs/plans/phase-7.md:252`; briefs: `docs/plans/phase-7-briefs.md`

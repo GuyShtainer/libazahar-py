@@ -16,7 +16,8 @@ Opus agent: every W1 finding checked against the fix diff.
 The W3 gate in the plan. Plan: `docs/plans/phase-7.md` line 267.
 
 ## Evidence
-none yet
+- 2026-11-17 13:12: inputs ready (runs/p7/w3/notes.md: p7-int 9bb34ef, Darwin-visible reruns; fix hunks 3 in match.c
+  and vk.c, make -n unchanged); opus fix check dispatched.
 
 ## Pointers
 - Plan section: `docs/plans/phase-7.md:267`; briefs: `docs/plans/phase-7-briefs.md`

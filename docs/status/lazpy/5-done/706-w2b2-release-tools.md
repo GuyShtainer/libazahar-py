@@ -24,6 +24,8 @@ The W2b2 gate in the plan. Plan: `docs/plans/phase-7.md` line 259.
   0 failed" on a scratch merge with p7-w2a + p7-docs. Fixed: MSYS shasum `*name` output; README fetch line with a
   comment. Open for W3/W5: licence markers vs the verbatim mingw-w64 files; LAZPY_CORE_SHA_WIN TBD (W7); the full
   clone_check past --until host not run.
+- 2026-11-17 13:12: done; merged into p7-int (9bb34ef) for the W3 fix check. Gates not run here move on: make check
+  and actionlint run in CI after the W4 push.
 
 ## Pointers
 - Plan section: `docs/plans/phase-7.md:259`; briefs: `docs/plans/phase-7-briefs.md`
