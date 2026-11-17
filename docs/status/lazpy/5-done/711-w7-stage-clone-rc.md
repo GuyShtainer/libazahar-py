@@ -74,6 +74,9 @@ The W7 and W7c gates in the plan. Plan: `docs/plans/phase-7.md` line 311.
   "GATE lane-pc PC PASS: host=pcn:de55a1309e fp=fb0def44 wall=42s", rc 0, 6000 frames (job bw2-b2-1794949035-7261-446).
   The route keeps no result JSON, so the deploy proof is the fp: fb0def44 is the RC folder's deploy.json fp
   (fb0def449f16; the live STAMP py fp is 4b0a90edbb15), and the RC folder got its first 15 .pyc at 22:57. Gen3D open.
+- 2026-11-17 23:26 W7c Gen3D PASS: six lane-pc jobs (owner g3d, ~23:10-23:20, 1 copy each) with LAZPY_DEPLOY=deploy-py-04f977e97f;
+  every HOST.txt shows fp=fb0def44... (the RC folder); the two s1-new jobs passed their gate, the s1-base jobs are
+  Gen3D's expected-to-fail baselines; no deploy error. W7 and W7c gates PASSED; item done.
 
 ## Pointers
 - Plan section: `docs/plans/phase-7.md:311`; briefs: `docs/plans/phase-7-briefs.md`

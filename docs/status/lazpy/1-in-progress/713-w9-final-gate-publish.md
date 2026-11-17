@@ -16,7 +16,7 @@ Main loop: push main, CI green, tag, draft, publish on Guy's word.
 The W9 gate in the plan. Plan: `docs/plans/phase-7.md` line 354.
 
 ## Evidence
-none yet
+- 2026-11-17 23:26 started: W7c passed (item 711), Guy's word in item 712. Evidence files: runs/p7/w9/.
 
 ## Pointers
 - Plan section: `docs/plans/phase-7.md:354`; briefs: `docs/plans/phase-7-briefs.md`
@@ -31,3 +31,8 @@ none yet
   changes "pass the CI build and fast tests", but test.yml last passed at 6000112 (16:01), before the host/version.c
   change. Dispatch test.yml and macos-live.yml once on the release commit; if no runner starts (cancelled after ~15 min,
   one mail), reword Variant B to what ran (no macOS CI on the last host changes) before the tag.
+- Deviation (2026-11-17 23:27): STATUS's macOS line is written before the push so that it is true whatever the hand-started macOS
+  runs do ("the emulator suite last ran on a Mac at v1.0.0 ... their host C tests ran on Windows"); neither variant
+  sentence was kept. Step 4 waits for test-windows.yml green; test.yml and macos-live.yml are dispatched once on the
+  pushed commit and waited on ~20 min: a real failure stops the tag, a run no runner picks up does not (Guy made them
+  manual-only). Step 5 (macos-live's v1.0.0 fallback) is logged if that run starts, else recorded as not run.

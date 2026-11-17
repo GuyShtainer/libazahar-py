@@ -56,9 +56,13 @@ lazpy.1 Windows core, no `LoadWarning`, no nice values, the symlink test while D
 
 ## macOS in v1.1.0
 
-<pick after W9> Keep exactly one of the two sentences below and delete the other and this line.
-- Variant A (macos-live passed): The macOS emulator suite passed in CI on v1.1.0.
-- Variant B (macos-live did not pass): macOS: the emulator suite last ran on a Mac at v1.0.0; the v1.1.0 changes visible on macOS are reviewed and pass the CI build and fast tests.
+macOS uses the same core as v1.0.0. The emulator suite last passed in full on a Mac at v1.0.0. During v1.1.0 it ran on
+hosted macOS CI runners (`macos-live.yml`), last at commit 642acb5: 292 passed and 2 failed, `test_state_boot` (3.6 s
+against its 2.5 s bound) and `test_k_threads`; each earlier v1.1.0 run also had 2 failures, except one that had 1. The
+changes after that run that reach macOS are small: the host also accepts a stock core that names itself `219d743` (and
+names it when it refuses a core), the version is 1.1.0, `tools/fetch.sh` has the v1.1.0 pins, and three tests changed (a
+skip when there is no test-app ELF, a longer boot wait, and the cross-system state check). They are reviewed; the host C
+tests and the full suite ran with them on Windows, not on a Mac.
 
 ## Known limits
 
