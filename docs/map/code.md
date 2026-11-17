@@ -18,7 +18,7 @@
 - `docs/`: status folders, maps, research, the plan (once written), `docs/hours.tsv`, the generated
   `docs/progress.html`.
 - `tools/`: the status and map scripts (see `docs/map/tools.md`).
-- `README.md` (public, honest status), `LICENSE` (GPLv3), `CLAUDE.md` (agent guide), `.gitignore`,
+- `README.md` (public, honest status), `LICENSE` (GPLv3), `CLAUDE.md` (agent guide), `.gitignore`, `.gitattributes` (LF checkouts, also on Windows),
   `pyproject.toml` (the editable install).
 - Ignored, never committed: `dl/` (the downloaded Azahar libretro core and MoltenVK), `vendor/` (libretro and Vulkan
   headers), `runs/`, `.pytest_cache/`, `.venv/` (the editable-install venv), `roms/`, `sdmc/`, `build/` (host and
