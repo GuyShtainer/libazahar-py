@@ -49,10 +49,13 @@ def varied_inputs(frames: int) -> List[Tuple[int, object]]:
     return items
 
 
+START_RE = re.compile(r"^start addr_global=0x([0-9a-f]+) addr_heap=0x([0-9a-f]+)", re.M)
+
+
 def start_addrs(emu: Emulator) -> Tuple[int, int]:
     """(addr_global, addr_heap) from the test app's ``start`` log line (testapp_log does not expose it: a regex)."""
-    text = (emu.sd / dh.LOG).read_text(errors="replace")
-    match = re.search(r"^start addr_global=0x([0-9a-f]+) addr_heap=0x([0-9a-f]+)", text, re.M)
+    log = emu.sd / dh.LOG
+    match = START_RE.search(log.read_text(errors="replace")) if log.is_file() else None
     assert match, "no start line in the app's log"
     return int(match.group(1), 16), int(match.group(2), 16)
 
@@ -98,9 +101,14 @@ def lines_by_frame(emu: Emulator) -> Dict[int, dict]:
 
 
 def boot(paths, core: Path, workdir: Path, seed, **control) -> Tuple[Emulator, int, int]:
-    """An Emulator on ``core`` after 30 frames, with the app's two record addresses."""
+    """An Emulator on ``core`` once the app's start line is in its log (30 frames, up to 300: the stock core has no
+    tick seed, and on a loaded Windows PC 30 frames once fell short), with the app's two record addresses."""
     emu = dh.boot(paths, workdir, seed(**control), core=core)
-    emu.run(30)
+    log = emu.sd / dh.LOG
+    for _ in range(10):
+        emu.run(30)
+        if log.is_file() and START_RE.search(log.read_text(errors="replace")):
+            break
     glob, heap = start_addrs(emu)
     return emu, glob, heap
 
