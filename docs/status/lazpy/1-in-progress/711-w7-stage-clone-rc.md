@@ -52,6 +52,13 @@ The W7 and W7c gates in the plan. Plan: `docs/plans/phase-7.md` line 311.
   found no start line after 30 frames: the memory test now boots up to 300 frames until the line is logged (d6b9793).
   The bound stays; run 4 needs a quiet PC. Then 20:48 the PC crashed a second time (3DP's builds running; nothing of
   ours). 20:51: all PC work held until Guy has looked at the PC; d6b9793 still needs a re-stage before run 4.
+- 2026-11-17 22:26 W7 GATE PASSED. Guy ~20:56 "Run with 2 copies" (LAZ_MAX_INSTANCES=2 in cc-pc.sh; the pool gate
+  still runs its 3 workers). Run 4 (309fd0e, PC busy): 1 failed, 298 passed: test_g1_g2_g4 kill-to-acquire 1.875 s over
+  1.0 s, load again. Run 5 in a quiet window that Gen3D, 3DP and gba-toolkit held for it (PC 8 %, no builders): 299
+  passed, 8 skipped, skips_check --list w7 0 problems (the fixture test ran and passed, by the documented cross-OS
+  refusal), clone ok 270 s (runs/p7/w7/cc5.out). release_check on staging 309fd0e (SHA256SUMS 25487e9a...): rc 0,
+  17 PASS, PEND only `<pick after W9>`, plant-red rc 0 (release_check6.out). W8's staged copy refreshed; all 13 check.
+  W7c (Gen3D and 3DP jobs on a release-candidate deploy id) is open.
 
 ## Pointers
 - Plan section: `docs/plans/phase-7.md:311`; briefs: `docs/plans/phase-7-briefs.md`

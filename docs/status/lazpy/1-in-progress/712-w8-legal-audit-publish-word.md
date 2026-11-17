@@ -16,7 +16,7 @@ release-legal-audit agent; then the main loop asks Guy for the publish word (quo
 The W8 gate in the plan; Guy's publish word quoted below. Plan: `docs/plans/phase-7.md` line 343.
 
 ## Evidence
-none yet
+- 2026-11-17 22:28 started: release-legal-audit on candidate 309fd0e with runs/p7/w8/brief.md (staged copy refreshed).
 
 ## Pointers
 - Plan section: `docs/plans/phase-7.md:343`; briefs: `docs/plans/phase-7-briefs.md`
