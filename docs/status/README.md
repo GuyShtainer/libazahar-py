@@ -25,12 +25,11 @@ publish-ready. What to do this hour: `docs/status/lazpy/1-in-progress/HANDOFF.md
 - in-progress: `docs/status/lazpy/1-in-progress/500-phase-5-user-asks.md`
 - in-progress: `docs/status/lazpy/1-in-progress/600-phase-6-v1-release.md`
 - in-progress: `docs/status/lazpy/1-in-progress/700-phase-7-windows-proven.md`
-- in-progress: `docs/status/lazpy/1-in-progress/703-w1b-licence-delta.md`
 - in-progress: `docs/status/lazpy/1-in-progress/704-w2a-fixes-host-tests.md`
 - in-progress: `docs/status/lazpy/1-in-progress/705-w2b1-core-build-route.md`
 - in-progress: `docs/status/lazpy/1-in-progress/706-w2b2-release-tools.md`
 - in-progress: `docs/status/lazpy/1-in-progress/707-w6-docs-version.md`
-- files: 0 in `3-waiting-on-guy/`, 7 in `4-not-started/`, 29 in `5-done/`, 0 in `6-parked/`
+- files: 0 in `3-waiting-on-guy/`, 7 in `4-not-started/`, 30 in `5-done/`, 0 in `6-parked/`
 <!-- generated:end -->
 
 ## How to change a status (one step)
