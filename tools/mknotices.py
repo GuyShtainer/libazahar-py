@@ -11,7 +11,7 @@ Unifont texts out of the macOS release's NOTICES.md, which holds them verbatim, 
 --runtime-copyright adds one named text, verbatim: an Ubuntu package's copyright file, and the two files the win64
 form requires, `winpthreads-COPYING` and `COPYING.MinGW-w64-runtime.txt`, unpacked from the mingw-w64 source (D13).
 
-Reads the link line's static libraries and every compile dependency file (*.o.d) under BUILD, sorts each path into a
+Reads the link line's static libraries and every compile dependency file (*.o.d, *.obj.d on win64) under BUILD, sorts each path into a
 component (table COMPONENTS), a src/ notice (table SRC_NOTICES), OpenSSL (the Cellar path in build.inputs), generated
 or system. An unknown path, an unknown component or any externals/libressl path exits 1 naming it. Licence texts are
 copied verbatim from SRC, the OpenSSL tarball and the snapshot (tarfile, nothing extracted). Output has no dates.
@@ -39,6 +39,13 @@ COMPONENTS = {
     "faad2": ("faad2", [("faad2/faad2/README", 12, 39)], "GPL-2.0-or-later", ["faad2"],
               "Code from FAAD2 is copyright (c) Nero AG, www.nero.com"),
     "fmt": ("fmt", ["fmt/LICENSE"], "MIT", ["fmt"], ""),
+    "glad": ("glad", [("glad/include/KHR/khrplatform.h", 4, 25)],  # win64: Azahar turns ENABLE_OPENGL on there
+             "Public Domain, WTFPL or CC0 (the glad 0.1.36 output); Khronos notice for khrplatform.h", ["glad"],
+             "glad is a generated OpenGL loader and ships no licence file. glad's README (tag v0.1.36, the version that "
+             "generated these files) says: \"The glad generated code itself is any of Public Domain, WTFPL or CC0, the "
+             "source files for the generated code are under various licenses from Khronos\"; for GL that is Apache "
+             "Version 2.0 (the Apache-2.0 text is in the vulkan-headers section). The Khronos header khrplatform.h carries "
+             "the notice above."),
     "glslang": ("glslang", ["glslang/LICENSE.txt"], "BSD-3-Clause and others (see text)", ["glslang", "SPIRV"], ""),
     "httplib": ("httplib", [("MIT-BODY", "httplib/httplib.h", 3, 5)], "MIT", [], ""),
     "json": ("json", [("MIT-BODY", "json/json.hpp", 6, 7)], "MIT", [], ""),
@@ -60,8 +67,11 @@ COMPONENTS = {
     "vma": ("vma", ["vma/LICENSE.txt"], "MIT", [], ""),
     "vulkan-headers": ("vulkan-headers", ["vulkan-headers/LICENSE.md", "vulkan-headers/LICENSES/Apache-2.0.txt",
                                           "vulkan-headers/LICENSES/MIT.txt"], "Apache-2.0 OR MIT", [], ""),
+    "xbyak": ("xbyak", ["xbyak/COPYRIGHT"], "BSD-3-Clause", [], ""),  # win64: the x86-64 backend of dynarmic
     "xxHash": ("xxHash", ["xxHash/LICENSE"], "BSD-2-Clause", ["xxhash"], ""),
     "zstd": ("zstd", ["zstd/LICENSE"], "BSD-3-Clause", ["zstd", "zstd_seekable"], ""),
+    "zycore": (C + "zycore", [C + "zycore/LICENSE"], "MIT", ["Zycore"], ""),  # win64, with zydis
+    "zydis": (C + "zydis", [C + "zydis/LICENSE"], "MIT", ["Zydis"], ""),  # win64: dynarmic's x86-64 disassembler
 }
 OWN_LIBS = {"audio_core", "citra_common", "citra_core", "network", "video_core"}
 OPENSSL_LIBS = {"ssl", "crypto"}
@@ -86,6 +96,8 @@ NEWLIB_SHA256 = "f3afe48e4bc6ed8466a42e9dacb6be1d8f9cbf5aac15cb8e474a5ccde8b40ef
 OWN_RE = re.compile(r"(Citra|Azahar) Emulator Project")
 FLAG_RE = re.compile(r"Copyright|SPDX-License-Identifier|Permission is hereby granted")
 SYSTEM = ("/Applications/", "/Library/", "/usr/", "/System/")
+# our own files that build-core-win64.sh writes and force-includes (GPLv3 like the rest of the repo; no third-party notice)
+OWN_GENERATED = ("/build-core/win64-fstat.h",)
 
 
 def die(msg: str) -> None:
@@ -106,7 +118,7 @@ def dep_paths(deps: Path) -> set[str]:
     paths: set[str] = set()
     for root, _dirs, files in os.walk(deps, followlinks=True):
         for name in files:
-            if name.endswith(".o.d"):
+            if name.endswith((".o.d", ".obj.d")):  # .obj.d: the mingw (win64) objects
                 text = (Path(root) / name).read_text(errors="replace").replace("\\\n", " ")
                 paths.update(w for w in text.split()[1:] if not w.endswith(":"))
     return paths
@@ -116,22 +128,26 @@ def classify(paths: set[str], tree_name: str, keg: str) -> tuple[set[str], set[s
     """Return (component names, src/ files, uses OpenSSL); exit 1 on anything unknown."""
     comps: set[str] = set()
     src: set[str] = set()
+    missing: set[str] = set()
     ssl = False
     for raw in sorted(paths):
         path = raw.replace("/./", "/")
         found = re.search("/" + re.escape(tree_name) + "/(.*)$", path)
         if path.startswith(keg + "/"):
             ssl = True
-        elif "/build-core/build/" in path or path.startswith(SYSTEM):
+        elif "/build-core/build/" in path or path.startswith(SYSTEM) or path.endswith(OWN_GENERATED):
             continue
         elif found is None:
             die(f"unclassified dependency path: {raw}")
         elif found.group(1).startswith("src/"):
             src.add(found.group(1))
         elif found.group(1).startswith("externals/"):
-            comps.add(external_name(found.group(1), raw))
+            name = external_name(found.group(1), raw)
+            (comps if name in COMPONENTS else missing).add(name)
         else:
             die(f"unclassified dependency path: {raw}")
+    if missing:
+        die(f"components missing from the table: {', '.join(sorted(missing))}")
     return comps, src, ssl
 
 
@@ -140,19 +156,27 @@ def external_name(rel: str, raw: str) -> str:
     if parts[1] == "libressl":
         die(f"externals/libressl in the dependencies: {raw}")
     name = parts[3] if parts[1] == "dynarmic" and parts[2:3] == ["externals"] and len(parts) > 3 else parts[1]
-    if name not in COMPONENTS:
-        die(f"component missing from the table: {name} ({raw})")
     return name
+
+
+# win64 link words that end in .a but are the core itself: CMake's archive of the target's own objects (mingw links
+# through it) and the import library the link writes
+OWN_LINK_WORD_RE = re.compile(r"(^|/)CMakeFiles/citra_libretro\.dir/objects\.a|-Wl,--out-implib,libazahar_libretro\.dll\.a")
+
+
+def link_words(link: Path) -> list[str]:
+    """The link line's words; a response file (mingw's linkLibs.rsp) may quote each path."""
+    return [w.strip("\"'") for w in link.read_text(errors="replace").split()]
 
 
 def link_libs(link: Path) -> set[str]:
     libs = set()
-    for word in link.read_text(errors="replace").split():
-        if word.endswith(".a"):
+    for word in link_words(link):
+        if word.endswith(".a") and not OWN_LINK_WORD_RE.fullmatch(word):
             libs.add(re.sub(r"^lib|\.a$", "", os.path.basename(word)))
     known = OWN_LIBS | OPENSSL_LIBS | {lib for c in COMPONENTS.values() for lib in c[3]}
-    for lib in sorted(libs - known):
-        die(f"link line holds a library missing from the table: {lib}")
+    if libs - known:
+        die(f"link line holds libraries missing from the table: {', '.join(sorted(libs - known))}")
     return libs
 
 
@@ -427,15 +451,22 @@ def build(args: argparse.Namespace) -> str:
     inputs = read_kv(Path(args.inputs))
     keg = inputs.get("openssl_prefix") or die("build.inputs has no openssl_prefix") or ""
     tree, src = Path(args.tree), Path(args.src)
-    comps, src_files, ssl = classify(dep_paths(Path(args.deps)), tree.resolve().name, keg)
+    deps = dep_paths(Path(args.deps))
+    comps, src_files, ssl = classify(deps, tree.resolve().name, keg)
     libs = link_libs(Path(args.link))
     if not ssl or not OPENSSL_LIBS <= libs:
-        die("OpenSSL is not both linked and included")
+        raw = [w for w in Path(args.link).read_text(errors="replace").split() if "ssl" in w.lower() or "crypto" in w.lower()]
+        die(f"OpenSSL is not both linked and included: headers under {keg}/: {'yes' if ssl else 'none'}; "
+            f"linked: {sorted(OPENSSL_LIBS & libs)} of {sorted(OPENSSL_LIBS)}; libraries read: {len(libs)}; "
+            f"raw link words naming ssl or crypto: {[repr(w) for w in raw[:6]]}")
     pin = read_kv(Path(__file__).resolve().parents[1] / "core" / "PIN")
+    orphans = []
     for lib in sorted(libs):
         owner = next((n for n, c in COMPONENTS.items() if lib in c[3]), None)
         if owner is not None and owner not in comps:
-            die(f"linked library {lib} has no dependency path for its component {owner}")
+            orphans.append(f"{lib} ({owner})")
+    if orphans:
+        die(f"linked libraries with no dependency path for their component: {', '.join(orphans)}")
     parts = [header_section(inputs, pin.get("AZAHAR_COMMIT", "?"), args.target), src_section(scan_src(tree, src_files)),
              "## Components\n"]
     for name in sorted(comps - {"open_source_archives"}):

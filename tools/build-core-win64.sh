@@ -68,6 +68,9 @@ fi
 HEAD_SHA="$(git -C "$ROOT" rev-parse HEAD)" || die "git rev-parse HEAD failed (no head to record)"
 IMAGE="${LAZ_IMAGE:-none}"
 command -v dpkg-query >/dev/null 2>&1 || die "no dpkg-query (this script builds on Debian or Ubuntu)"
+# Azahar's GenerateBuildInfo.cmake ignores the tarball's GIT-TAG when CI and GITHUB_ACTIONS are set and the push is not
+# a tag, and names the build by its commit (219d743) instead of $TAG. Configure and build never see those two variables.
+unset CI GITHUB_ACTIONS
 
 DOWNLOADED=0
 if [ ! -f "$TARBALL" ]; then
@@ -162,7 +165,7 @@ else
   say "tree up to date (stamp ok)"
 fi
 
-# stale objects of the bundled LibreSSL from earlier builds (their .o.d files name it)
+# stale objects of the bundled LibreSSL from earlier builds (their .obj.d files name it)
 rm -rf build-core/build/externals/libressl
 # win64: mingw-w64 (posix threads). The toolchain file names the compilers; the .def is made from the patched tree.
 mkdir -p build-core/toolbin
@@ -230,9 +233,12 @@ CLEAN=no
 mv -f build-core/build.inputs.tmp build-core/build.inputs
 
 cmake --build build-core/build --target citra_libretro --config Release -j "${LAZ_CORE_JOBS:-4}"
+# the host accepts only $TAG-lazpy.$REV: the generated build name must be the pinned tag
+grep -qxF "#define BUILD_FULLNAME \"$TAG\"" build-core/build/src/common/scm_rev.cpp \
+  || die "the build is not named $TAG (scm_rev.cpp: $(grep -h 'define BUILD_FULLNAME' build-core/build/src/common/scm_rev.cpp))"
 for D in $DROP; do
   B="$(basename "$D" | sed 's/\./\\./g')"
-  if find build-core/build -name '*.o.d' -exec grep -l "$B" {} + 2>/dev/null | grep -q .; then
+  if find build-core/build \( -name '*.o.d' -o -name '*.obj.d' \) -exec grep -l "$B" {} + 2>/dev/null | grep -q .; then
     die "an object still reads $(basename "$D") (on the drop list)"
   fi
 done

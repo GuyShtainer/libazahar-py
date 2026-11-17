@@ -138,6 +138,9 @@ int azh_frame_write(int32_t screens, const char *prefix)
     if (rc != AZH_OK) {
         return rc;
     }
+    if (px == NULL) { /* never on success; spelled out for clang's analyzer, which cannot see azh_fail's result */
+        return azh_fail(AZH_E_ORDER, "no frame has been delivered yet");
+    }
     if (azh_crop_rects(azh_g.fw, azh_g.fh, &top, &bottom) != 0) {
         return azh_fail(AZH_E_CORE, "unexpected frame size %ux%u (want 400f x 480f)", azh_g.fw, azh_g.fh);
     }

@@ -103,20 +103,63 @@ jobs:
           BU="$(dpkg-query -W -f='${Built-Using}' gcc-mingw-w64-x86-64-posix)"
           V="$(printf '%s\n' "$BU" | tr ',' '\n' | sed -n "s/^ *gcc-$N (= \(.*\))\$/\1/p")"
           [ -n "$V" ] || { echo "Built-Using of gcc-mingw-w64-x86-64-posix names no gcc-$N: '$BU'"; exit 1; }
-          apt-get download "gcc-$N-source=$V"
-          GOT=0
-          for DEB in gcc-"$N"-source_*.deb; do
-            [ "$(dpkg-deb -f "$DEB" Version)" = "$V" ] || { echo "$DEB is not version $V"; exit 1; }
-            GOT=$((GOT + 1))
-          done
-          [ "$GOT" = 1 ]
-          echo "runtime source: gcc-$N-source $V (the Built-Using version of the gcc that built the core)"
+          if apt-get download "gcc-$N-source=$V"; then
+            GOT=0
+            for DEB in gcc-"$N"-source_*.deb; do
+              [ "$(dpkg-deb -f "$DEB" Version)" = "$V" ] || { echo "$DEB is not version $V"; exit 1; }
+              GOT=$((GOT + 1))
+            done
+            [ "$GOT" = 1 ]
+            echo "runtime source: gcc-$N-source $V from the image's archive (the Built-Using version of the gcc that built the core)"
+          else
+            # the archive has moved past that version (26.04 still ships the mingw gcc built from gcc-13 13.2.0-6ubuntu1):
+            # take the same version's source package (gcc-$N, $V) from Launchpad, every file checked against Launchpad's size
+            # and sha256 and against the .dsc's Checksums-Sha256; anything else fails
+            python3 -I - "gcc-$N" "$V" <<'PY'
+          import hashlib, json, re, sys, urllib.parse, urllib.request
+          name, ver = sys.argv[1], sys.argv[2]
+          api = "https://api.launchpad.net/1.0/ubuntu/+archive/primary"
+          def get(url):
+              with urllib.request.urlopen(url, timeout=120) as r:
+                  return r.read()
+          q = urllib.parse.urlencode({"ws.op": "getPublishedSources", "source_name": name, "version": ver, "exact_match": "true"})
+          pubs = [e for e in json.loads(get(api + "?" + q))["entries"] if e["source_package_version"] == ver]
+          if not pubs:
+              sys.exit("launchpad has no %s %s" % (name, ver))
+          files = json.loads(get(pubs[0]["self_link"] + "?ws.op=sourceFileUrls&include_meta=true"))
+          if not files:
+              sys.exit("launchpad lists no source files for %s %s" % (name, ver))
+          got = {}
+          for f in files:
+              base = f["url"].rsplit("/", 1)[1]
+              data = get(f["url"])
+              sha = hashlib.sha256(data).hexdigest()
+              if len(data) != int(f["size"]) or sha != f["sha256"]:
+                  sys.exit("%s: size/sha256 differ from launchpad's record" % base)
+              open(base, "wb").write(data)
+              got[base] = sha
+          dscs = [b for b in got if b.endswith(".dsc")]
+          if len(dscs) != 1:
+              sys.exit("want exactly one .dsc, got %r" % dscs)
+          dsc = open(dscs[0], encoding="utf-8").read()
+          if not re.search(r"^Version: %s$" % re.escape(ver), dsc, re.M):
+              sys.exit("%s is not version %s" % (dscs[0], ver))
+          listed = dict((m.group(3), m.group(1)) for m in re.finditer(r"^ ([0-9a-f]{64}) (\d+) (\S+)$", dsc.split("Checksums-Sha256:", 1)[1], re.M))
+          for b, sha in got.items():
+              if b != dscs[0] and listed.get(b) != sha:
+                  sys.exit("%s is not the file the .dsc lists" % b)
+          if set(listed) - set(got):
+              sys.exit("the .dsc lists files launchpad did not give: %r" % sorted(set(listed) - set(got)))
+          print("runtime source: %s %s source package from launchpad (%s), files: %s" % (name, ver, pubs[0]["self_link"], " ".join(sorted(got))))
+          PY
+          fi
           ls -l
           tar -cf "$GITHUB_WORKSPACE/out/mingw-w64-runtime-source.tar" *
           ls -l "$GITHUB_WORKSPACE/out/mingw-w64-runtime-source.tar"
           # the two licence files of the mingw-w64 version that is linked, from its source in this image (not upstream master)
           mkdir -p "$RUNNER_TEMP/mingw-lic"
           for T in mingw-w64_*.orig.tar.*; do
+            case "$T" in *.asc) continue ;; esac     # the upstream signature, not an archive
             tar -xf "$T" -C "$RUNNER_TEMP/mingw-lic" --wildcards '*/mingw-w64-libraries/winpthreads/COPYING' \
               '*/COPYING.MinGW-w64-runtime/COPYING.MinGW-w64-runtime.txt'
           done
@@ -269,9 +312,11 @@ jobs:
           set -eu
           JOB="$(gh api "repos/$REPO/actions/runs/$RUN_ID/jobs" --jq '.jobs[] | select(.name == "build") | .id')"
           [ -n "$JOB" ]
-          # GitHub can answer 404 for a few seconds after a job ends: try a few times
+          # GitHub can answer 404 for a few seconds after a job ends: try a few times. curl, not gh api: newer gh refuses to
+          # write a body holding terminal escape sequences (the log's colours). curl drops the token on the redirect.
           TRY=0
-          until gh api "repos/$REPO/actions/jobs/$JOB/logs" >"$RUNNER_TEMP/build-job.log"; do
+          until curl -fsSL -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
+              -o "$RUNNER_TEMP/build-job.log" "https://api.github.com/repos/$REPO/actions/jobs/$JOB/logs"; do
             TRY=$((TRY + 1))
             [ "$TRY" -lt 6 ] || { echo "the job log could not be fetched"; exit 1; }
             sleep 10

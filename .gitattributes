@@ -1,0 +1,5 @@
+# Every text file checks out with LF line ends, also on Windows: Git for Windows defaults to core.autocrlf=true, which
+# turns the profile test cases into CRLF and fails `make test-host`.
+* text=auto eol=lf
+# test inputs that hold CRLF on purpose
+tests/data/profile-cases/*crlf*.txt -text

@@ -184,3 +184,21 @@ date	bet	phase	agent_id	model	role	kind	start	end	hours	source
 2026-11-17	V9: G8e history rewrite (saved audit out of history), map, records	phase-6	main	opus	main	process	10:07	10:11	0.07	session clock
 2026-11-17	V9: re-stage, needles rebuilt, pre-push check, repo created, main+tag pushed, draft release	phase-6	main	opus	main	process	10:12	10:18	0.10	session clock
 2026-11-17	V9 G7 publish, I5 part 1, README/STATUS Windows WIP, item 700 opened	phase-6	main	opus	main	process	10:58	11:11	0.20	session clock
+2026-11-17	phase 7: rebase dispatch, plan agent brief, PC_ONLY wrappers (toolkit 2568682), handoff	phase-7	main	opus	main	process	11:11	11:29	0.30	session clock
+2026-11-17	phase 7 plan revision 0 (docs/plans/phase-7.md)	phase-7	agent	opus	agent	plan	11:13	11:31	0.30	stat -L
+2026-11-17	phase 7 plan review 1 (docs/reviews/phase-7-review-1.md)	phase-7	agent	opus	agent	review	11:32	11:47	0.25	stat -L
+2026-11-17	phase 7 plan revision 1 (answers review 1)	phase-7	agent	opus	agent	plan	11:48	11:54	0.10	stat -L
+2026-11-17	phase 7 plan review 2 (docs/reviews/phase-7-review-2.md)	phase-7	agent	opus	agent	review	11:54	12:09	0.25	stat -L
+2026-11-17	phase 7 plan revision 2 + briefs (answers review 2)	phase-7	agent	opus	agent	plan	12:10	12:18	0.13	stat -L
+2026-11-17	phase 7 W0 (items 701-714, PC pre-flight, zip/unzip, worktrees) + W1a (Darwin-visible preprocess and make -n diffs on the PC)	phase-7	main	opus	main	execute	12:18	12:26	0.13	session clock
+2026-11-17	phase 7 W1 diff review of port-win-v1 (docs/reviews/phase-7-diff-review.md)	phase-7	agent	opus	agent	review	12:26	12:40	0.23	stat -L
+2026-11-17	phase 7 W6 docs, version 1.1.0, release notes (branch p7-docs c55a52b)	phase-7	agent	sonnet	agent	docs	12:43	12:44	0.03	stat -L
+2026-11-17	phase 7 W1b licence delta for v1.1.0 (docs/reviews/phase-7-ip-legal.md)	phase-7	agent	opus	agent	legal	12:43	12:51	0.13	stat -L
+2026-11-17	phase 7 W2b1 Windows core build route (branch p7-w2b1 edfb145)	phase-7	agent	sonnet	agent	execute	12:43	12:55	0.20	stat -L
+2026-11-17	phase 7 W2a Windows host, Python, tests and CI fixes (branch p7-w2a 55a4ff4)	phase-7	agent	sonnet	agent	execute	12:43	12:58	0.25	stat -L
+2026-11-17	phase 7 W2b2 Windows release tools: fetch, mkrelease, release_check, clone_check (branch p7-w2b2 e3d839f)	phase-7	agent	sonnet	agent	execute	12:43	13:07	0.40	stat -L
+2026-11-17	phase 7 main loop: W2 hand-backs and commits, W6 docs fix (0d7475e), p7-int merge, W3 Darwin-visible reruns on the PC	phase-7	main	opus	main	execute	12:44	13:12	0.47	session clock
+2026-11-17	phase 7 W3 opus fix check of p7-int (docs/reviews/phase-7-fix-check.md, 421e55b)	phase-7	agent	opus	agent	review	13:12	13:30	0.30	stat -L
+2026-11-17	phase 7 W3 fixes of P7-R3 findings on p7-int (e978820)	phase-7	agent	sonnet	agent	execute	13:31	13:41	0.17	stat -L
+2026-11-17	phase 7 main loop: W3 fixes landed, W4 merge to main, PC fresh-tree gates, push, three Windows CI fix rounds (analyze_assert.h, frame.c guard, .gitattributes), W5 dispatch	phase-7	main	opus	main	execute	13:41	14:36	0.92	session clock
+2026-11-17	phase 7 main loop: W5 core-in-CI rounds 3-12 (NOTICES components, link words, curl log fetch, CI build name), artifact and attestation checks on the PC, smoke boot (includes a few minutes of toolkit pc-tree side work, not separated)	phase-7	main	opus	main	execute	14:36	19:32	4.93	session clock
