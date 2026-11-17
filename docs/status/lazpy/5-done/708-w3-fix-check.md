@@ -22,6 +22,11 @@ The W3 gate in the plan. Plan: `docs/plans/phase-7.md` line 267.
   P7-R1 17/19 fixed (R1-8 moves to W4, R1-9 fixed on p7-docs). New: 0 blockers, 1 major (placeholder scan misses USING
   and OPENSSL.md), 7 minor, 13 nits. Darwin-visible fix hunks (3, match.c and vk.c) correct on macOS. R3-8 (curl in the
   pacman line) fixed on p7-docs (e84f670); a sonnet agent fixes R3-1..7 and 8 nits on p7-int from 13:31.
+- 2026-11-17 13:41 W3 fixes committed on p7-int (e978820): R3-1..7 and nits 9-12, 15, 17-19 fixed (13, 14, 16, 20,
+  21 accepted). PC gates: release_check --inherit v1.0.0 --plant-red 38 plants, 0 FAIL, rc 0 (a dead plant, the third
+  zip, found and fixed); fetch_fallback 7/7; YAML parses; bash -n on every run step. NOT RUN: actionlint; the macOS
+  plant set (needs nm/otool). Placeholder hits are PEND, FAIL under --pre-push (as for STATUS/README). p7-int merged
+  into p7-docs (772109d, D14). Done.
 
 ## Pointers
 - Plan section: `docs/plans/phase-7.md:267`; briefs: `docs/plans/phase-7-briefs.md`

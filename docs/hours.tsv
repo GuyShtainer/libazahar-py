@@ -199,3 +199,4 @@ date	bet	phase	agent_id	model	role	kind	start	end	hours	source
 2026-11-17	phase 7 W2b2 Windows release tools: fetch, mkrelease, release_check, clone_check (branch p7-w2b2 e3d839f)	phase-7	agent	sonnet	agent	execute	12:43	13:07	0.40	stat -L
 2026-11-17	phase 7 main loop: W2 hand-backs and commits, W6 docs fix (0d7475e), p7-int merge, W3 Darwin-visible reruns on the PC	phase-7	main	opus	main	execute	12:44	13:12	0.47	session clock
 2026-11-17	phase 7 W3 opus fix check of p7-int (docs/reviews/phase-7-fix-check.md, 421e55b)	phase-7	agent	opus	agent	review	13:12	13:30	0.30	stat -L
+2026-11-17	phase 7 W3 fixes of P7-R3 findings on p7-int (e978820)	phase-7	agent	sonnet	agent	execute	13:31	13:41	0.17	stat -L

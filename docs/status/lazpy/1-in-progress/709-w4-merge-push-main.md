@@ -16,7 +16,8 @@ Main loop: merge --no-ff, the full test suite on the PC, the state-restore test 
 The W4 gate in the plan. Plan: `docs/plans/phase-7.md` line 276.
 
 ## Evidence
-none yet
+- 2026-11-17 13:43: p7-int merged into local main --no-ff (361fef5); bundles of main and p7-docs on the PC
+  (D:\lazpy\p7\w4); fresh-tree build and tests started.
 
 ## Pointers
 - Plan section: `docs/plans/phase-7.md:276`; briefs: `docs/plans/phase-7-briefs.md`
