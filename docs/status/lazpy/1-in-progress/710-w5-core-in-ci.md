@@ -60,6 +60,11 @@ The W5 gate in the plan. Plan: `docs/plans/phase-7.md` line 295.
   libcrypto.a, and Azahar builds httplib with CPPHTTPLIB_OPENSSL_SUPPORT on every platform, so the dependency-side
   test is the suspect; the job log holds no dependency paths. The message now names which half failed, the libraries
   seen and four dependency paths naming ssl. Rerun for that data.
+- 2026-11-17 18:30 rerun 44121073708 (main 6000112): the data says the other half: headers under the OpenSSL prefix
+  yes, linked [] of crypto, ssl. build-core-win64.sh and gate_f2 find the library paths by substring in link.all, but
+  mknotices' whole-word read misses them: the words of mingw's linkLibs.rsp (likely quoted; macOS has no rsp). Fix:
+  link words drop surrounding quotes (a quoted + unquoted fixture reads citra_core, crypto, ssl); the error prints the
+  raw words naming ssl/crypto; the orphan-library check lists every case at once. Rerun next.
 
 ## Pointers
 - Plan section: `docs/plans/phase-7.md:295`; briefs: `docs/plans/phase-7-briefs.md`

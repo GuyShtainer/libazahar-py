@@ -164,9 +164,14 @@ def external_name(rel: str, raw: str) -> str:
 OWN_LINK_WORD_RE = re.compile(r"(^|/)CMakeFiles/citra_libretro\.dir/objects\.a|-Wl,--out-implib,libazahar_libretro\.dll\.a")
 
 
+def link_words(link: Path) -> list[str]:
+    """The link line's words; a response file (mingw's linkLibs.rsp) may quote each path."""
+    return [w.strip("\"'") for w in link.read_text(errors="replace").split()]
+
+
 def link_libs(link: Path) -> set[str]:
     libs = set()
-    for word in link.read_text(errors="replace").split():
+    for word in link_words(link):
         if word.endswith(".a") and not OWN_LINK_WORD_RE.fullmatch(word):
             libs.add(re.sub(r"^lib|\.a$", "", os.path.basename(word)))
     known = OWN_LIBS | OPENSSL_LIBS | {lib for c in COMPONENTS.values() for lib in c[3]}
@@ -450,14 +455,18 @@ def build(args: argparse.Namespace) -> str:
     comps, src_files, ssl = classify(deps, tree.resolve().name, keg)
     libs = link_libs(Path(args.link))
     if not ssl or not OPENSSL_LIBS <= libs:
-        seen = sorted(p for p in deps if "ssl" in p.lower())[:4]
+        raw = [w for w in Path(args.link).read_text(errors="replace").split() if "ssl" in w.lower() or "crypto" in w.lower()]
         die(f"OpenSSL is not both linked and included: headers under {keg}/: {'yes' if ssl else 'none'}; "
-            f"linked: {sorted(OPENSSL_LIBS & libs)} of {sorted(OPENSSL_LIBS)}; dependency paths naming ssl: {seen}")
+            f"linked: {sorted(OPENSSL_LIBS & libs)} of {sorted(OPENSSL_LIBS)}; libraries read: {len(libs)}; "
+            f"raw link words naming ssl or crypto: {[repr(w) for w in raw[:6]]}")
     pin = read_kv(Path(__file__).resolve().parents[1] / "core" / "PIN")
+    orphans = []
     for lib in sorted(libs):
         owner = next((n for n, c in COMPONENTS.items() if lib in c[3]), None)
         if owner is not None and owner not in comps:
-            die(f"linked library {lib} has no dependency path for its component {owner}")
+            orphans.append(f"{lib} ({owner})")
+    if orphans:
+        die(f"linked libraries with no dependency path for their component: {', '.join(orphans)}")
     parts = [header_section(inputs, pin.get("AZAHAR_COMMIT", "?"), args.target), src_section(scan_src(tree, src_files)),
              "## Components\n"]
     for name in sorted(comps - {"open_source_archives"}):
