@@ -201,3 +201,4 @@ date	bet	phase	agent_id	model	role	kind	start	end	hours	source
 2026-11-17	phase 7 W3 opus fix check of p7-int (docs/reviews/phase-7-fix-check.md, 421e55b)	phase-7	agent	opus	agent	review	13:12	13:30	0.30	stat -L
 2026-11-17	phase 7 W3 fixes of P7-R3 findings on p7-int (e978820)	phase-7	agent	sonnet	agent	execute	13:31	13:41	0.17	stat -L
 2026-11-17	phase 7 main loop: W3 fixes landed, W4 merge to main, PC fresh-tree gates, push, three Windows CI fix rounds (analyze_assert.h, frame.c guard, .gitattributes), W5 dispatch	phase-7	main	opus	main	execute	13:41	14:36	0.92	session clock
+2026-11-17	phase 7 main loop: W5 core-in-CI rounds 3-12 (NOTICES components, link words, curl log fetch, CI build name), artifact and attestation checks on the PC, smoke boot (includes a few minutes of toolkit pc-tree side work, not separated)	phase-7	main	opus	main	execute	14:36	19:32	4.93	session clock

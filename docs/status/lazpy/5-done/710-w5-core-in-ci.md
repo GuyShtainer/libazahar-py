@@ -76,10 +76,21 @@ The W5 gate in the plan. Plan: `docs/plans/phase-7.md` line 295.
   boot then failed: the host refused "core version 219d743-lazpy.2". Azahar's GenerateBuildInfo.cmake skips the
   tarball's GIT-TAG when CI and GITHUB_ACTIONS are set on a non-tag push, so the build is named by its commit. Fix:
   build-core-win64.sh unsets both before cmake, and fails unless scm_rev.cpp names the build $TAG. Rerun next.
+- 2026-11-17 19:59 DONE. Run 44138010543 (main 6345b83): build, leak check, load test and attest all success; the
+  scm_rev check held. DLL sha256 9f45bca5...; equal in gate_f2, the job log and on the PC. Attestation 68746211
+  verifies (rc 0, refs/heads/main 6345b83). w5_check on the PC fails=0; needle scan 13 needles, 0 hits; 2 GCC
+  idents, each with a package line. Smoke boot with the W4 host: rc 0, 600 frames, "core Azahar version
+  2126.2-lazpy.2", frame 600 shows the counter and the four corner markers. runs/p7/w5/checks.txt holds every PASS
+  line. Note: libcrypto.a's sha differs between runs 11 and 12 (be469826 vs f138aeb1; libssl.a equal): the OpenSSL
+  static build is not byte-reproducible, so the release pins the artifact's DLL, not the .a files. The macOS jobs of
+  test.yml and macos-live.yml got no GitHub runner for 15 minutes and ended failed/cancelled (no test ran); Guy
+  2026-11-17: no pushes for now.
 
 ## Pointers
 - Plan section: `docs/plans/phase-7.md:295`; briefs: `docs/plans/phase-7-briefs.md`
 - Review: `docs/reviews/phase-7-review-2.md`
 
 ## Lessons and notes
-None yet; planned in phase-7 revision 2.
+- A CMake mingw build's depfiles are *.obj.d; the libraries sit in linkLibs.rsp with quoted words.
+- Azahar names the build from GIT-TAG only outside GitHub Actions on a non-tag ref: unset CI and GITHUB_ACTIONS.
+- Each failed CI run mails Guy: reproduce on the PC, push only when the run should pass.
