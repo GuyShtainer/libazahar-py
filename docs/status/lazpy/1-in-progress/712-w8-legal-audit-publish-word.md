@@ -25,6 +25,9 @@ The W8 gate in the plan; Guy's publish word quoted below. Plan: `docs/plans/phas
   N9 .gitignore *.dll *.exe. P2: release_check's check 13 cannot run on the PC (the key-header reading copy is Mac-only
   and never copied); run on the Mac read-only, make_windows + history_bytes_findings: 1647 blobs, 0 hits. N8: the
   planted nobody.x@gmail.com is invented. P1: the W9 build-files exemption is recorded in item 713.
+- 2026-11-17 22:47 re-staged from 3543987 (runs/p7/w7/stage7.out): mkrelease rc 0, Windows zip sha unchanged (791efc1a...),
+  SHA256SUMS 01d284b81ac07689...; release_check rc 0, all PASS, PEND only `<pick after W9>`, plant-red rc 0
+  (release_check7.out). runs/p7/w8/staged/ refreshed: 12 of 12 check. Next: Guy's publish word.
 
 ## Pointers
 - Plan section: `docs/plans/phase-7.md:343`; briefs: `docs/plans/phase-7-briefs.md`
