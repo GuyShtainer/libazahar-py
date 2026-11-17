@@ -71,6 +71,11 @@ The W5 gate in the plan. Plan: `docs/plans/phase-7.md` line 295.
   the load test found no artifact. Not a leak: the main loop's needle scan of the full run log, 0 hits; the logs stay.
   Fix: the log is fetched with curl and the token (any gh version); the same fetch on the Mac: 271119 bytes, end marker
   and gate_f2 line present. Rerun next.
+- 2026-11-17 19:31 rerun 44130873582 (main 642acb5): ALL GREEN (build, leak check, load test, attest). Artifact DLL
+  sha256 00b2b299... equals the job log; attestation 68733919 verifies (rc 0); w5_check on the PC fails=0. The smoke
+  boot then failed: the host refused "core version 219d743-lazpy.2". Azahar's GenerateBuildInfo.cmake skips the
+  tarball's GIT-TAG when CI and GITHUB_ACTIONS are set on a non-tag push, so the build is named by its commit. Fix:
+  build-core-win64.sh unsets both before cmake, and fails unless scm_rev.cpp names the build $TAG. Rerun next.
 
 ## Pointers
 - Plan section: `docs/plans/phase-7.md:295`; briefs: `docs/plans/phase-7-briefs.md`
