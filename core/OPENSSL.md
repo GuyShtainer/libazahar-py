@@ -75,7 +75,8 @@ make install_dev
   match the value in this file.
 - The two archives the link used (sha256, also in `build.inputs`): `libssl.a` `TO BE FILLED from the first CI run
   (openssl_libssl_sha256)`, `libcrypto.a` `TO BE FILLED from the first CI run (openssl_libcrypto_sha256)`.
-- The `--openssldir` path is a Windows path that the core never reads: no OpenSSL config, engine or module is loaded.
+- The `--openssldir` path is a Windows path, the compiled-in OPENSSLDIR. The guest's HTTPS looks for its CA file only
+  there, and OpenSSL 3 may try to load its default config from there. Nothing is shipped at that path.
   The build records the OPENSSLDIR, ENGINESDIR and MODULESDIR strings found in the DLL in `build.inputs`.
 - Rebuilding: run the `core-win64` workflow, or follow the same steps in a mingw-w64 cross environment. Libraries
   built elsewhere link the same OpenSSL code but will not be byte-identical.

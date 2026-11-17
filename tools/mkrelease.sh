@@ -129,8 +129,8 @@ win_release() {
   [ "$NO_RT" -eq 1 ] || cp "$ART/$RT" "$OUT/$RT"
 
   # 4: the build-files asset: git archive of exactly the paths in tools/build-files.txt
-  # shellcheck disable=SC2046  # intentional split: one repo path per line, none with a space
-  git archive --format=tar.gz --prefix=libazahar-py-core-build/ -o "$OUT/$NEW_BUILD" HEAD $(cat tools/build-files.txt)
+  # shellcheck disable=SC2046  # intentional split: one repo path per line, none with a space (CR stripped: a Windows checkout may add it)
+  git archive --format=tar.gz --prefix=libazahar-py-core-build/ -o "$OUT/$NEW_BUILD" HEAD $(tr -d '\r' < tools/build-files.txt)
 
   # 5: SOURCE.md (all binaries) and SHA256SUMS
   top_source_md > "$OUT/SOURCE.md"

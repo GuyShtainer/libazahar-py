@@ -100,7 +100,7 @@ ok() { [ -f "$1" ] && [ "$(sha_of "$1")" = "$2" ]; }
 # get URL SHA FILE [FALLBACK_URL]: make FILE verified; download only if it is missing or wrong. A mismatch deletes the
 # file and exits. When the download fails and FALLBACK_URL is not empty, that one is tried once, with the same sha256.
 get() {
-  _url=$1; _sha=$2; _file=$3; _fb=${4:-}
+  _url=$1; _sha=$2; _file=$3; _fb=${4:-}; _fell=0
   if [ "$FORCE" -eq 0 ] && ok "$_file" "$_sha"; then
     echo "have   $_file (sha256 ok)"
     return 0
@@ -111,9 +111,9 @@ get() {
   if ! curl -fsSL --retry 2 -o "$_file" "$_url"; then
     rm -f "$_file"
     [ -n "$_fb" ] || die "download failed: $_url${MISSING_HINT:+ ($MISSING_HINT)}"
-    echo "fell back to $REL_TAG_PREV for $(basename "$_file")" >&2
     echo "fetch  $_fb"
     curl -fsSL --retry 2 -o "$_file" "$_fb" || { rm -f "$_file"; die "download failed: $_fb"; }
+    _fell=1
   fi
   _got=$(sha_of "$_file")
   if [ "$_got" != "$_sha" ]; then
@@ -123,6 +123,7 @@ get() {
   got      $_got
   the file was deleted; nothing was unpacked"
   fi
+  [ "$_fell" -eq 0 ] || echo "fell back to $REL_TAG_PREV for $(basename "$_file")" >&2
   echo "ok     $_file (sha256 verified)"
 }
 
@@ -205,6 +206,7 @@ if [ "$DO_CORE" -eq 1 ]; then
     # no fallback for the Windows zip: it exists only in this release
     MISSING_HINT="$REL_TAG is not published yet"
     get "$REL_BASE/$CORE_ZIP" "$CORE_SHA" "$LAZPY_DIR/$CORE_ZIP"
+    MISSING_HINT=""   # the hint belongs to this download only
   fi
   if [ ! -f "$LAZPY_DIR/$CORE_FILE" ] || [ "$(cat "$LAZPY_DIR/.unpacked-sha256" 2>/dev/null)" != "$CORE_SHA" ]; then
     verify "$LAZPY_DIR/$CORE_ZIP" "$CORE_SHA"

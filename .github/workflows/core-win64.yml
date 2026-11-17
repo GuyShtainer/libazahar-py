@@ -26,6 +26,8 @@ jobs:
     defaults:
       run:
         shell: bash
+    env:
+      DEBIAN_FRONTEND: noninteractive
     outputs:
       dll_sha256: ${{ steps.dll.outputs.sha256 }}
     steps:
@@ -43,6 +45,8 @@ jobs:
           apt-get install -y --no-install-recommends patch dpkg-dev
 
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: prepare (head, image pin, build user)
         run: |
@@ -94,7 +98,19 @@ jobs:
           apt-get source --download-only gcc-mingw-w64 mingw-w64
           N="$(dpkg-query -W -f='${Version}' gcc-mingw-w64-x86-64-posix | sed -n 's/^\([0-9][0-9]*\).*/\1/p')"
           [ -n "$N" ]
-          apt-get download "gcc-$N-source"
+          # the runtime source must be the gcc that built the core: take the exact version from the Built-Using field of the
+          # installed package, download that version, and fail if the archive no longer has it or the .deb says another
+          BU="$(dpkg-query -W -f='${Built-Using}' gcc-mingw-w64-x86-64-posix)"
+          V="$(printf '%s\n' "$BU" | tr ',' '\n' | sed -n "s/^ *gcc-$N (= \(.*\))\$/\1/p")"
+          [ -n "$V" ] || { echo "Built-Using of gcc-mingw-w64-x86-64-posix names no gcc-$N: '$BU'"; exit 1; }
+          apt-get download "gcc-$N-source=$V"
+          GOT=0
+          for DEB in gcc-"$N"-source_*.deb; do
+            [ "$(dpkg-deb -f "$DEB" Version)" = "$V" ] || { echo "$DEB is not version $V"; exit 1; }
+            GOT=$((GOT + 1))
+          done
+          [ "$GOT" = 1 ]
+          echo "runtime source: gcc-$N-source $V (the Built-Using version of the gcc that built the core)"
           ls -l
           tar -cf "$GITHUB_WORKSPACE/out/mingw-w64-runtime-source.tar" *
           ls -l "$GITHUB_WORKSPACE/out/mingw-w64-runtime-source.tar"
@@ -121,8 +137,17 @@ jobs:
           RT="$(find "$RUNNER_TEMP/mingw-lic" -name COPYING.MinGW-w64-runtime.txt)"
           ARGS=" --runtime-copyright winpthreads-COPYING=$WP --runtime-copyright COPYING.MinGW-w64-runtime.txt=$RT"
           for P in $(printf '%s\n' $PKGS | sort -u); do
-            [ -f "/usr/share/doc/$P/copyright" ] || { echo "no copyright file for package $P"; exit 1; }
-            ARGS="$ARGS --runtime-copyright $P=/usr/share/doc/$P/copyright"
+            C="/usr/share/doc/$P/copyright"
+            if [ ! -f "$C" ]; then
+              # the image may exclude /usr/share/doc: take the file from the installed version of the package itself
+              D="$RUNNER_TEMP/pkgdoc/$P"
+              mkdir -p "$D/x"
+              (cd "$D" && apt-get download "$P=$(dpkg-query -W -f='${Version}' "$P")" && dpkg-deb -x ./*.deb x)
+              C="$D/x/usr/share/doc/$P/copyright"
+              [ -f "$C" ] || { echo "no copyright file for package $P"; exit 1; }
+              echo "copyright of $P taken from the downloaded package"
+            fi
+            ARGS="$ARGS --runtime-copyright $P=$C"
           done
           python3 -I tools/mknotices.py --target win64 --link build-core/link.all --deps build-core/build \
             --tree "dl/azahar-src/build-src/$TOP" --src "dl/azahar-src/build-src/$TOP" --inputs build-core/build.inputs \
@@ -162,6 +187,8 @@ jobs:
     runs-on: windows-2025
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0  # v7.1.0
         with:
           python-version: "3.10"
@@ -227,6 +254,8 @@ jobs:
       actions: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333  # v8.0.2
         with:
           name: core-win64
@@ -240,7 +269,13 @@ jobs:
           set -eu
           JOB="$(gh api "repos/$REPO/actions/runs/$RUN_ID/jobs" --jq '.jobs[] | select(.name == "build") | .id')"
           [ -n "$JOB" ]
-          gh api "repos/$REPO/actions/jobs/$JOB/logs" >"$RUNNER_TEMP/build-job.log"
+          # GitHub can answer 404 for a few seconds after a job ends: try a few times
+          TRY=0
+          until gh api "repos/$REPO/actions/jobs/$JOB/logs" >"$RUNNER_TEMP/build-job.log"; do
+            TRY=$((TRY + 1))
+            [ "$TRY" -lt 6 ] || { echo "the job log could not be fetched"; exit 1; }
+            sleep 10
+          done
           BYTES="$(wc -c <"$RUNNER_TEMP/build-job.log" | tr -d ' ')"
           echo "build job log: $BYTES bytes"
           [ "$BYTES" -gt 10000 ]
@@ -273,12 +308,38 @@ jobs:
           import gate_f2 as g
           src = Path(os.environ["KEYSRC"])
           files = [Path(os.environ["JOBLOG"])] + sorted(p for p in Path(os.environ["ART"]).rglob("*") if p.is_file())
+          import re
+
+          def decoded(data):
+              """Text that spells bytes (0x12, 0x34 lists, long hex strings, spaced hex pairs), turned back into bytes."""
+              text = data.decode("latin-1")
+              runs = []
+              for m in re.finditer(r"(?:0[xX][0-9a-fA-F]{1,2}[^0-9A-Za-z]{0,4})+", text):
+                  runs.append(bytes(int(t, 16) for t in re.findall(r"0[xX]([0-9a-fA-F]{1,2})", m.group())))
+              for m in re.finditer(r"[0-9a-fA-F]{32,}", text):
+                  for skip in (0, 1):
+                      h = m.group()[skip:]
+                      runs.append(bytes.fromhex(h[:len(h) // 2 * 2]))
+              for m in re.finditer(r"(?:\b[0-9a-fA-F]{2}\b[ :-]?){16,}", text):
+                  runs.append(bytes.fromhex("".join(re.findall(r"[0-9a-fA-F]{2}", m.group()))))
+              return b"\0".join(runs)
+
+          # self-test: a planted log line that spells the first window of the first array both ways must be found
+          probe = g._header_bytes(src, *g.KEY_ARRAYS[0])[:16]
+          for line in (", ".join("0x%02x" % b for b in probe), probe.hex(), " ".join("%02x" % b for b in probe)):
+              if not g._window_findings(decoded(("log: " + line + "\n").encode()), src):
+                  print("the decoder missed a planted line")
+                  raise SystemExit(1)
+          print("decoder self-test ok")
           hits = 0
           closed = 0
           for path in files:
-              found = g._window_findings(path.read_bytes(), src)
+              data = path.read_bytes()
+              found = g._window_findings(data, src)
               hits += sum(1 for f in found if f.startswith("windows: the core holds window"))
               closed += sum(1 for f in found if "nothing was checked" in f)
+              if path.suffix != ".dll":  # a text view of the log and of the text artifacts
+                  hits += sum(1 for f in g._window_findings(decoded(data), src) if f.startswith("windows: the core holds window"))
               print(f"checked a file of {path.stat().st_size} bytes")
           print(f"files={len(files)} arrays={len(g.KEY_ARRAYS)} windows={8 * len(g.KEY_ARRAYS)} hits={hits} unchecked={closed}")
           if len(files) < 6 or closed or hits:

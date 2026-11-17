@@ -251,7 +251,17 @@ def keg_findings(inputs: dict[str, str], pre_push: bool) -> Items:
 PRIVATE_RES = [("/Users/", re.compile(r"/Users/")), ("@gmail.com", re.compile(r"@gmail\.com", re.I)),
                (".local address", re.compile(r"[A-Za-z0-9][\w.-]*\.local\b")),
                ("MAC address", re.compile(r"\b(?:[0-9A-Fa-f]{2}[:-]){5}[0-9A-Fa-f]{2}\b")),
-               ("private IPv4", re.compile(r"\b(?:10\.\d{1,3}|172\.(?:1[6-9]|2\d|3[01])|192\.168|169\.254)\.\d{1,3}\.\d{1,3}\b"))]
+               ("private IPv4", re.compile(r"\b(?:10\.\d{1,3}|172\.(?:1[6-9]|2\d|3[01])|192\.168|169\.254)\.\d{1,3}\.\d{1,3}\b")),
+               # index 4 above is used by private_notes: new patterns go after it
+               ("Windows profile path", re.compile(r"\b[a-z]:[\\/]+Users[\\/]+[^\s\\/\"'<>]+", re.I)),
+               ("Linux home path", re.compile(r"(?<![\w.])/home/[A-Za-z_][\w.-]*")),
+               ("MSYS2 profile path", re.compile(r"(?<!\w)/[a-z]/Users/[^\s/\"'<>]+", re.I)),
+               ("WSL profile path", re.compile(r"/mnt/[a-z]/Users/[^\s/\"'<>]+", re.I)),
+               ("GitHub runner path", re.compile(r"/home/runner\b|\b[a-z]:[\\/]+a[\\/]|\brunneradmin\b|/__w/|/github/home\b", re.I))]
+PRIVATE_PLANTS = [("Windows profile path", "C:\\Users\\x\\a"), ("Windows profile path", "d:/users/x/a"),
+                  ("Linux home path", "see /home/someone/x"), ("MSYS2 profile path", "see /c/Users/x/y"),
+                  ("WSL profile path", "see /mnt/c/Users/x/y"), ("GitHub runner path", "see /home/runner/work/r/r"),
+                  ("GitHub runner path", "D:\\a\\r\\r"), ("GitHub runner path", "C:\\Users\\runneradmin\\x")]
 IPV4_RE = re.compile(r"\b\d{1,3}(?:\.\d{1,3}){3}\b")
 EMAIL_RE = re.compile(r"[\w.+-]+@[\w-]+\.[\w.-]+")
 
@@ -750,7 +760,7 @@ WIN_PIECES = ("Windows 11 and AMD and Intel GPUs are untested.",
               "No Windows speed figures.", "Windows 10 Pro 22H2", "RTX 3060", "Python 3.10.11",
               "A GPU driver with Vulkan is required")
 WIN_REJECT = ("work in progress, not proven", "no CI and no download", "nothing in this release runs on Windows")
-PLACEHOLDERS = ("<pick after W9>", "<from W7>", "<OPENSSLDIR from build.inputs>")
+PLACEHOLDERS = ("<pick after W9>", "<from W7>", "<OPENSSLDIR from build.inputs>", "TO BE FILLED")
 WIN_NOTICE_PHRASES = ("The OpenSSL Project Authors", "SIL OPEN FONT LICENSE Version 1.1", "GNU Unifont 10.0.05", "mingw-w64",
                       "winpthreads")
 # the verbatim licence files of the linked runtime (ip-legal): one marker from each of winpthreads' COPYING and
@@ -872,6 +882,8 @@ def gate_f2_findings(text: str, dll_sha: str, inputs: dict[str, str]) -> Items:
         return out
     if lines[-1] != "END":
         out.append(("FAIL", "gate_f2.txt does not end with END"))
+    if int(counts[8][0]) < 1 or int(counts[8][1]) < 1:
+        out.append(("FAIL", f"gate_f2.txt window search read arrays={counts[8][0]} windows={counts[8][1]}: both must be at least 1"))
     if int(counts[6][0]) < 1000:
         out.append(("FAIL", f"gate_f2.txt read {counts[6][0]} .o.d files, at least 1000 are needed"))
     values = dict(line.split("=", 1) for line in lines if "=" in line and not line.startswith("PASS"))
@@ -948,7 +960,7 @@ def source_md_v11_findings(text: str, names: list[str]) -> Items:
     return [("FAIL", f"SOURCE.md does not name {name}") for name in names if name != "SHA256SUMS" and name not in text]
 
 
-def windows_notices_findings(text: str, mac_text: str) -> Items:
+def windows_notices_findings(text: str) -> Items:
     out: Items = [("FAIL", f"NOTICES-windows-x64.md lacks: {p}") for p in WIN_NOTICE_PHRASES if p not in text]
     out += [("FAIL", f"NOTICES-windows-x64.md lacks the verbatim licence text (marker: {m})") for m in WIN_LICENCE_MARKERS if m not in text]
     if len(text) < WIN_NOTICES_MIN_CHARS:
@@ -965,8 +977,9 @@ def norm_ws(text: str) -> str:
     return re.sub(r"\s+", " ", text)
 
 
-def windows_wording_findings(status: str, notes: str, readme: str) -> Items:
-    """The Windows twin of wording_findings: STATUS and the release notes hold W6's pieces, the README holds two."""
+def windows_wording_findings(status: str, notes: str, readme: str, using: str = "", openssl_md: str = "") -> Items:
+    """The Windows twin of wording_findings: STATUS and the release notes hold W6's pieces, the README holds two.
+    USING.md and core/OPENSSL.md are only scanned for placeholders (they hold some until W5 and W7 fill them)."""
     out: Items = []
     texts = {"STATUS.md": norm_ws(status), "release notes": norm_ws(notes), "README.md": norm_ws(readme)}
     for name in ("STATUS.md", "release notes"):
@@ -977,6 +990,8 @@ def windows_wording_findings(status: str, notes: str, readme: str) -> Items:
     for name, text in texts.items():
         out += [("FAIL", f"{name} holds '{bad}'") for bad in WIN_REJECT if bad in text]
         out += [("PEND", f"{name} still holds the placeholder {mark}") for mark in PLACEHOLDERS if mark in text]
+    for name, text in (("docs/USING.md", using), ("core/OPENSSL.md", openssl_md)):
+        out += [("PEND", f"{name} still holds the placeholder {mark}") for mark in PLACEHOLDERS if mark in norm_ws(text)]
     return out
 
 
@@ -1072,7 +1087,7 @@ def run_checks_v11(ctx: "Ctx", tmp: Path) -> list[tuple[str, Items]]:
     win_notices = (rel / "NOTICES-windows-x64.md").read_bytes()
     guard("8 notices", lambda: ([] if zip_member(asset(rel, "win", "zip"), "NOTICES.md") == win_notices
                                 else [("FAIL", "the Windows zip's NOTICES.md differs from NOTICES-windows-x64.md")])
-          + windows_notices_findings(win_notices.decode(errors="replace"), mac_notices)
+          + windows_notices_findings(win_notices.decode(errors="replace"))
           + ([] if sha256_file(rel / "NOTICES.md") == sha256_file(repo / "NOTICES.md")
              else [("FAIL", "NOTICES.md is not the repo's (the v1.0.0 bytes)")]))
     results.append(("9 source", source_md_v11_findings(texts["SOURCE.md"], names)))
@@ -1097,7 +1112,8 @@ def run_checks_v11(ctx: "Ctx", tmp: Path) -> list[tuple[str, Items]]:
     readme = read_text(repo / "README.md")
     results.append(("16 macos", [("NOTE", "binary parts (minos, arch of the dylibs): inherited from v1.0.0 (see 1b)")] + wording_findings(texts)
                     + ([] if "macOS 15 or later" in readme else [("FAIL" if args.pre_push else "NOTE", "README.md lacks 'macOS 15 or later'")])))
-    results.append(("16 windows", windows_wording_findings(read_text(repo / "STATUS.md"), texts.get("release notes", ""), readme)))
+    results.append(("16 windows", windows_wording_findings(read_text(repo / "STATUS.md"), texts.get("release notes", ""), readme,
+                                                                read_text(repo / "docs" / "USING.md"), ctx.openssl_md)))
     return results
 
 
@@ -1123,13 +1139,14 @@ def plant_cases_v11(ctx: "Ctx", tmp: Path) -> list[tuple[str, bool]]:
     third.mkdir()
     for path in rel.iterdir():
         link_or_copy(path, third / path.name)
-    link_or_copy(asset(rel, "win", "zip"), third / "azahar_lazpy_libretro-2126.2-lazpy.3-windows-x64.zip")
+    link_or_copy(asset(rel, "win", "zip"), third / "azahar_lazpy_libretro-extra-windows-x64.zip")
     try:
         asset(third, "win", "zip")
         third_items: Items = []
     except AssetError as error:
         third_items = [("FAIL", str(error))]
     results.append(planted("1 assets (a third zip)", third_items, "exactly one"))
+    plant_doubled_asset(ctx, tmp, results)
     sums = tmp / "sums"
     sums.write_bytes(b"0" * 64 + b"  NOTICES.md\n")
     results.append(planted("1b inherit (bad SHA256SUMS digest)", inherit_findings(sums.read_bytes(), rel, pin, repo), "pinned digest"))
@@ -1150,6 +1167,10 @@ def plant_cases_v11(ctx: "Ctx", tmp: Path) -> list[tuple[str, bool]]:
     assert not gate_f2_findings("\n".join(body) + "\n", dll_sha, gi), "the planted gate_f2 baseline must pass"
     failed = [("FAIL window arrays=3 windows=500 hits=2" if line.startswith("PASS window") else line) for line in body]
     results.append(planted("2 gate_f2 (a FAIL line)", gate_f2_findings("\n".join(failed) + "\n", dll_sha, gi), "FAIL line"))
+    empty = [("PASS window arrays=0 windows=500 hits=0" if line.startswith("PASS window") else line) for line in body]
+    results.append(planted("2 gate_f2 (arrays=0)", gate_f2_findings("\n".join(empty) + "\n", dll_sha, gi), "both must be at least 1"))
+    empty = [("PASS window arrays=3 windows=0 hits=0" if line.startswith("PASS window") else line) for line in body]
+    results.append(planted("2 gate_f2 (windows=0)", gate_f2_findings("\n".join(empty) + "\n", dll_sha, gi), "both must be at least 1"))
     results.append(planted("2 gate_f2 (core sha differs)", gate_f2_findings("\n".join(body) + "\n", "d" * 64, gi), "core_sha256"))
     swapped = body[:5] + [body[6], body[5]] + body[7:]
     results.append(planted("2 gate_f2 (lines out of order)", gate_f2_findings("\n".join(swapped) + "\n", dll_sha, gi), "out of order"))
@@ -1166,19 +1187,27 @@ def plant_cases_v11(ctx: "Ctx", tmp: Path) -> list[tuple[str, bool]]:
     results.append(planted("16 windows (rejected phrase)", windows_wording_findings(status, status + " work in progress, not proven",
                                                                                     "proven on one PC. A GPU driver with Vulkan is required"),
                            "holds 'work in progress, not proven'"))
-    results.append(planted("8 notices (Windows phrase missing)", windows_notices_findings("The OpenSSL Project Authors", ""), "lacks: mingw-w64"))
+    pages = ("proven on one PC. A GPU driver with Vulkan is required",)
+    for where, kwargs in (("docs/USING.md", {"using": "path <from W7> here"}), ("core/OPENSSL.md", {"openssl_md": "TO BE FILLED from the first CI run"}),
+                          ("docs/USING.md", {"using": "path <OPENSSLDIR from build.inputs> here"})):
+        found = windows_wording_findings(status, status, pages[0], **kwargs)  # type: ignore[arg-type]
+        results.append(planted(f"16 windows (placeholder in {where}: {kwargs[next(iter(kwargs))][:12]})", [("FAIL", m) for k, m in found if k == "PEND"],
+                               f"{where} still holds the placeholder"))
+    assert not windows_wording_findings(status, status, pages[0]), "the placeholder baseline must pass"
+    results.append(planted("8 notices (Windows phrase missing)", windows_notices_findings("The OpenSSL Project Authors"), "lacks: mingw-w64"))
     good_notices = " ".join(WIN_NOTICE_PHRASES + WIN_LICENCE_MARKERS) + " " + "x" * WIN_NOTICES_MIN_CHARS
-    assert not windows_notices_findings(good_notices, ""), "the good Windows notices stand-in must pass"
-    results.append(planted("8 notices (runtime licence text missing)", windows_notices_findings(good_notices.replace("Lockless Inc", ""), ""), "verbatim licence text"))
-    results.append(planted("8 notices (too short)", windows_notices_findings(" ".join(WIN_NOTICE_PHRASES + WIN_LICENCE_MARKERS), ""), "characters"))
-    results.append(planted("8 notices (fetch.sh Vulkan)", windows_notices_findings(good_notices + " fetch.sh fetches Vulkan", ""), "fetches Vulkan"))
-    results.append(planted("8 notices (MoltenVK)", windows_notices_findings(good_notices + " MoltenVK", ""), "mentions MoltenVK"))
+    assert not windows_notices_findings(good_notices), "the good Windows notices stand-in must pass"
+    results.append(planted("8 notices (runtime licence text missing)", windows_notices_findings(good_notices.replace("Lockless Inc", "")), "verbatim licence text"))
+    results.append(planted("8 notices (too short)", windows_notices_findings(" ".join(WIN_NOTICE_PHRASES + WIN_LICENCE_MARKERS)), "characters"))
+    results.append(planted("8 notices (fetch.sh Vulkan)", windows_notices_findings(good_notices + " fetch.sh fetches Vulkan"), "fetches Vulkan"))
+    results.append(planted("8 notices (MoltenVK)", windows_notices_findings(good_notices + " MoltenVK"), "mentions MoltenVK"))
     fetch = ctx.fetch_text
     sha_plant = re.sub(r"^LAZPY_CORE_SHA_WIN=\S+", "LAZPY_CORE_SHA_WIN=" + "0" * 64, fetch, flags=re.M)
     results.append(planted("11 pins (Windows sha)", pins_v11_findings(sha_plant, asset(rel, "win", "zip").name,
                                                                       sha256_file(asset(rel, "win", "zip")), ctx.args.inherit, False),
                            "LAZPY_CORE_SHA_WIN differs"))
     results.append(planted("7 private (/Users/)", private_findings({"SOURCE.md": "see /Users/x/y"}, [], False), "/Users/"))
+    plants_private_paths(results)
     results.append(planted("7 private (needle)", private_findings({"win core strings": "xx secretword yy"},
                                                                   [(1, re.compile("secretword"))], False), "hits needle line 1"))
     plant12 = temp_git_repo(tmp, "p12", {".github/FUNDING.yml": "x\n"})
@@ -1190,6 +1219,27 @@ def plant_cases_v11(ctx: "Ctx", tmp: Path) -> list[tuple[str, bool]]:
 
 
 # ------------------------------------------------------------------------------------------- 17 plants
+def plants_private_paths(results: list[tuple[str, bool]]) -> None:
+    """One plant per Windows, Linux, MSYS2, WSL and CI path form (R3-5); each must fail on its own label."""
+    for number, (label, text) in enumerate(PRIVATE_PLANTS, 1):
+        results.append(planted(f"7 private ({label}, {number})", private_findings({"SOURCE.md": text}, [], False), f"holds a {label}"))
+
+
+def plant_doubled_asset(ctx: "Ctx", tmp: Path, results: list[tuple[str, bool]]) -> None:
+    """A second macOS zip: building the Ctx must raise AssetError, which main turns into 'FAIL 1 assets' (R3-4)."""
+    doubled = tmp / "doubled"
+    doubled.mkdir()
+    for path in ctx.rel.iterdir():
+        link_or_copy(path, doubled / path.name)
+    link_or_copy(ctx.zip_path, doubled / "azahar_lazpy_libretro-extra-macos-arm64.zip")
+    try:
+        Ctx(argparse.Namespace(**{**vars(ctx.args), "dir": str(doubled)}))
+        items: Items = []
+    except AssetError as error:
+        items = [("FAIL", str(error))]
+    results.append(planted("1 assets (a doubled macOS zip in Ctx)", items, "exactly one"))
+
+
 def planted(name: str, items: Items, expect: str) -> tuple[str, bool]:
     """True when the check failed with the finding the plant should provoke (not just any FAIL)."""
     return name, any(kind == "FAIL" and expect in msg for kind, msg in items)
@@ -1257,6 +1307,7 @@ def plants_text(ctx: "Ctx", tmp: Path, results: list[tuple[str, bool]], array: b
     notices = (repo / "NOTICES.md").read_text(errors="replace")
     allowed = allowed_addresses(repo, notices)
     results.append(planted("7 private (/Users/)", private_findings({"SOURCE.md": "see /Users/x/y"}, [], False), "/Users/"))
+    plants_private_paths(results)
     results.append(planted("7 private (foreign gmail address)", private_findings(
         {"NOTICES.md": notices + "\ncontact: nobody.x@gmail.com\n"}, [], False, allowed), "@gmail.com"))
     results.append(planted("8 notices", notices_phrase_findings(notices.replace("SIL OPEN FONT LICENSE Version 1.1", "REMOVED")),
@@ -1284,6 +1335,7 @@ def plant_cases(ctx: "Ctx", tmp: Path) -> list[tuple[str, bool]]:
     array = gate_f2._header_bytes(ctx.repo / SRC_REL, *gate_f2.KEY_ARRAYS[1])
     results: list[tuple[str, bool]] = []
     plants_assets(ctx, tmp, results)
+    plant_doubled_asset(ctx, tmp, results)
     plants_binary(ctx, tmp, results, array)
     plants_text(ctx, tmp, results, array)
     return results
@@ -1390,12 +1442,15 @@ def main(argv: list[str]) -> int:
     if args.inherit and args.inherit != INHERIT_TAG:
         print(f"release_check: --inherit supports {INHERIT_TAG} only", file=sys.stderr)
         return 2
-    ctx = Ctx(args)
     with tempfile.TemporaryDirectory(prefix="release_check.") as name:
         tmp = Path(name)
         if args.inherit:
-            BUILD_TAG.update(mac=args.inherit, win=ctx.rel.name)
+            BUILD_TAG.update(mac=args.inherit, win=Path(args.dir).resolve().name)
         try:
+            try:
+                ctx = Ctx(args)  # the asset lookups and the testapp hash live here: a missing or doubled file is a FAIL line
+            except OSError as error:
+                raise AssetError(f"{error.filename or 'a release file'}: {error.strerror or error}") from error
             if args.plant_red:
                 if args.inherit:
                     caught = plant_cases_v11(ctx, tmp)
