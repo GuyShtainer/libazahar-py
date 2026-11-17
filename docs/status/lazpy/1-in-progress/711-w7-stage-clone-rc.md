@@ -31,6 +31,14 @@ The W7 and W7c gates in the plan. Plan: `docs/plans/phase-7.md` line 311.
   of run 44138010543. DEVIATION for W9 step 3: core/ is a build file, so `git diff 6345b83 HEAD -- build files` is
   not empty; it holds only core/OPENSSL.md prose and the two .a shas, never the "- Source:" line the build reads.
   W8's auditor and W9's gate check exactly that. Re-stage after this commit (the build-files asset is HEAD's).
+- 2026-11-17 20:07 W7 step 6 (release_check, light) on the PC over a fresh clone of main 9bf51ee, re-staged from it
+  (SHA256SUMS sha256 300384cb4aa1cb4ed9593c777864fbffdca251cbf1075e8347e10d633cc6a586): rc 0, 17 PASS, no FAIL;
+  PEND only for `<from W7>` (savestates, from the clone_check) and `<pick after W9>`. --plant-red rc 0. Fixed on
+  the way: (1) the test app (v1.0.0's bytes) holds devkitPro's newlib build path (/home/davem/..., dtoa.c and
+  mprec.c asserts): now a NOTE for that exact path in the test app only (9bf51ee); (2) the PC venv's Python cannot
+  verify GitHub's certificate: SSL_CERT_FILE=MSYS2's ca-bundle.crt for release_check; (3) the bundle clone's
+  refs/remotes/origin: `git remote remove origin`. Every commit needs a re-stage (git archive embeds HEAD's id).
+  Logs: runs/p7/w7/release_check3.out, stage3.out. Steps 3-5 (4-copy clone_check) wait for Guy's word on the PC.
 
 ## Pointers
 - Plan section: `docs/plans/phase-7.md:311`; briefs: `docs/plans/phase-7-briefs.md`
