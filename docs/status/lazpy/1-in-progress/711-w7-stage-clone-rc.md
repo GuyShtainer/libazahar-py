@@ -70,6 +70,10 @@ The W7 and W7c gates in the plan. Plan: `docs/plans/phase-7.md` line 311.
   C:\lazpy\bin\job_native.py replaced (old copy .before-rcdeploy). RC folders from clone 309fd0e (host build of
   W7 cc5) + W5 core 9f45bca5...: deploy-win-99d843c8c2, deploy-py-04f977e97f (base 6345b83, fp fb0def449f16);
   STAMP.json unchanged. Asked Gen3D and 3DP for one normal job each with LAZPY_DEPLOY.
+- 2026-11-17 23:00 W7c 3DP PASS: one Black 2 field run, 1 copy, lane-pc PC-tree route, LAZPY_DEPLOY=deploy-py-04f977e97f:
+  "GATE lane-pc PC PASS: host=pcn:de55a1309e fp=fb0def44 wall=42s", rc 0, 6000 frames (job bw2-b2-1794949035-7261-446).
+  The route keeps no result JSON, so the deploy proof is the fp: fb0def44 is the RC folder's deploy.json fp
+  (fb0def449f16; the live STAMP py fp is 4b0a90edbb15), and the RC folder got its first 15 .pyc at 22:57. Gen3D open.
 
 ## Pointers
 - Plan section: `docs/plans/phase-7.md:311`; briefs: `docs/plans/phase-7-briefs.md`
