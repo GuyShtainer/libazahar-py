@@ -1,6 +1,6 @@
 # libazahar-py status
 
-As of 2026-11-17. v1.0.0. Each item below names the work item (`laz-NNN`) whose
+As of 2026-11-17. v1.1.0. Each item below names the work item (`laz-NNN`) whose
 Evidence, in `docs/status/lazpy/5-done/`, proves it. Nothing is listed as working that no gate ran.
 
 ## What works
@@ -36,13 +36,28 @@ Evidence, in `docs/status/lazpy/5-done/`, proves it. Nothing is listed as workin
 ## What does not work yet
 
 - macOS before 15, Intel Macs and Linux. The core needs macOS 15 (see Known limits).
-- Windows: **work in progress, not proven.** A native Windows build (core, host library and Python layer, no WSL)
-  runs internal test jobs on one developer PC. Before it counts as working it still needs: its branch merged into
-  main, a full code review and a legal check, a Windows CI job, the remaining state-restore test passing on Windows,
-  and a Windows download on a release. Until then nothing in this release runs on Windows.
+- Windows 11 and AMD and Intel GPUs: untested (see Windows below).
 - Poll-exact movies: our core exports `lazpy_movie_play`; the host and Python do not call it; not in 1.0.
 - Guest memory and the watch list on Azahar's own core: they raise `NeedsLazpyCore`.
 - Any app that is not homebrew: no console keys, no Nintendo system files, no encrypted titles.
+
+## Windows (proven on one PC)
+
+The native Windows build (core, host library and Python layer, no WSL) is proven on one PC only: Windows 10 Pro 22H2,
+x64, an NVIDIA RTX 3060, driver 610.88, Python 3.10.11. There, a fresh clone built from the README's Windows steps
+passes the host C tests and the full pytest with the emulator required; its only skips are the by-design ones (no
+lazpy.1 Windows core, no `LoadWarning`, no nice values, and the symlink test while Developer Mode is off).
+- CI adds Windows Server 2025 for the build, the fast tests and the core load test.
+- Windows 11 and AMD and Intel GPUs are untested.
+- A GPU driver with Vulkan is required; nothing Vulkan is shipped.
+- No Windows speed figures. The instance cap stays 4.
+- Differences from macOS are in `docs/USING.md` section 15a.
+
+## macOS in v1.1.0
+
+<pick after W9> Keep exactly one of the two sentences below and delete the other and this line.
+- Variant A (macos-live passed): The macOS emulator suite passed in CI on v1.1.0.
+- Variant B (macos-live did not pass): macOS: the emulator suite last ran on a Mac at v1.0.0; the v1.1.0 changes visible on macOS are reviewed and pass the CI build and fast tests.
 
 ## Known limits
 
@@ -54,8 +69,8 @@ Evidence, in `docs/status/lazpy/5-done/`, proves it. Nothing is listed as workin
 - A multi-field record read from guest memory can be torn (some fields from the frame before); the watch list too.
 - One `azh_open` per process: the Python layer runs each Emulator in its own worker process.
 - The slot cap counts only libazahar's own workers, not other emulators on the machine.
-- The core, `libazhost.dylib` and `azhost` need macOS 15 or later (the core's OpenSSL is built for 15).
-- The guest's HTTPS finds a CA file only where Homebrew's `openssl@3` is installed (OpenSSL's compiled-in paths).
+- On macOS, the core, `libazhost.dylib` and `azhost` need macOS 15 or later (the core's OpenSSL is built for 15).
+- The guest's HTTPS finds a CA file only at OpenSSL's compiled-in paths: Homebrew's `openssl@3` on macOS, and on Windows `<OPENSSLDIR from build.inputs>`.
   Homebrew tests do not need it.
 - `azhost` has no `--help`; an unknown first argument prints the usage and exits with 2.
 - The promise (semantic versioning from 1.0.0): until 2.0, the Python API, the C functions in `host/azhost.h`, the
@@ -74,7 +89,7 @@ Evidence, in `docs/status/lazpy/5-done/`, proves it. Nothing is listed as workin
 - A scripted download of Azahar's own core: removed before the first release. Our core is the default, and comparisons take
   `LAZ_STOCK_CORE`, a file you download yourself.
 - Out of scope (PLAN section 5), one line each:
-  - Linux: macOS arm64 first, then Windows (in progress, above).
+  - Linux: macOS arm64 first, then Windows (done in 1.1.0, above).
   - Audio output: not built.
   - Any window: the tool is headless.
   - Patching HID's touch truncation: four rows move by one pixel; documented.
@@ -90,5 +105,5 @@ Evidence, in `docs/status/lazpy/5-done/`, proves it. Nothing is listed as workin
 
 ## Next
 
-- CI on GitHub runners: the workflow is committed (`.github/workflows/test.yml`); its first run is at the push.
+- CI on GitHub runners: `.github/workflows/test.yml` (macOS) and `test-windows.yml` (Windows).
 - Gen3D's adapter (Gen3D's own work).

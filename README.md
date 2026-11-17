@@ -1,20 +1,22 @@
 # libazahar-py
 
-A headless host for Azahar's 3DS libretro core on macOS arm64, plus a Python layer: no window, several copies at
+A headless host for Azahar's 3DS libretro core on macOS arm64 and Windows x64, plus a Python layer: no window, several copies at
 once, buttons and touch, screenshots, savestates, and guest memory on our own core. It is for automated tests of 3DS
 homebrew, and it is named after libmgba-py.
 Unofficial: not affiliated with or endorsed by the Azahar project. Report libazahar-py issues here, not to Azahar.
 
 ## Status
 
-v1.0.0, the first release, with semantic versioning from 1.0.0 (`docs/USING.md` says what is covered). It runs 3DS
+v1.1.0, with semantic versioning from 1.0.0 (`docs/USING.md` says what is covered). v1.1.0 adds Windows. It runs 3DS
 homebrew headless, with inputs, shots, SD files, savestates, many instances at once and guest memory reads on our
 core; `STATUS.md` lists each item with the work that proved it. What does not work: macOS before 15 and Intel Macs,
 audio output, anything with a window, and anything that is not homebrew.
 
-**Windows: work in progress, not proven.** A native Windows port is being built and tested on one developer PC. It is
-not in this release, has no CI and no download, and is not supported yet. `STATUS.md` says what remains. Linux is
-not supported.
+**Windows: proven on one PC.** The native Windows build (core, host library and Python layer, no WSL) was tested on
+one machine: Windows 10 Pro 22H2, x64, an NVIDIA RTX 3060 with driver 610.88, and Python 3.10.11. CI adds Windows
+Server 2025 for the build, the fast tests and a load test of the core. Windows 11 and AMD and Intel GPUs are untested.
+You build the host yourself in MSYS2; the core comes from the release. A GPU driver with Vulkan is required.
+Linux is not supported.
 
 ## Measured numbers
 
@@ -51,6 +53,10 @@ them is not a clean comparison.
 macOS 15 or later on Apple silicon; Xcode command-line tools; Python 3.10 or newer (tested on 3.14 here; CI checks 3.10 from the first push; python.org or Homebrew; macOS's
 own `python3` is 3.9); `curl`, `shasum` and `unzip` (stock). devkitARM is needed only to build the test app yourself.
 
+Windows: x64 Windows, a GPU driver with Vulkan (the host loads `vulkan-1.dll` from System32; no Vulkan is shipped),
+MSYS2 with its MINGW64 shell, and Python 3.10 or newer for Windows (python.org). The Makefile refuses the other MSYS2
+shells.
+
 ## Install
 
 1. `git clone https://github.com/GuyShtainer/libazahar-py && cd libazahar-py`
@@ -63,6 +69,24 @@ make                                                            # build/libazhos
 python3 -m venv .venv && .venv/bin/pip install -e .             # the Python layer (editable install only)
 .venv/bin/python examples/quickstart.py                         # prints "quickstart ok" (on our core, the default)
 ```
+
+### Windows
+
+Open the MSYS2 MINGW64 shell (not MSYS, UCRT64 or CLANG64). Clone into a short path with ASCII letters only, such as
+`C:\src`: paths must be under 260 characters. Install the tools once, then run the steps from the repository folder
+(Python 3.10 or newer for Windows must be first on `PATH`):
+
+<!-- docs_check: steps-win -->
+```sh
+pacman -S --needed git make zip unzip mingw-w64-x86_64-gcc mingw-w64-x86_64-zlib   # once
+cd /c/src && git clone https://github.com/GuyShtainer/libazahar-py && cd libazahar-py
+sh tools/fetch.sh                                               # the libretro headers, the Windows core, the test app (sha256-pinned)
+make                                                            # build/libazhost.dll and build/azhost.exe
+python -m venv .venv && .venv/Scripts/pip install -e .          # the Python layer (editable install only)
+.venv/Scripts/python examples/quickstart.py                     # prints "quickstart ok"
+```
+
+`USING.md` section 15 lists the Windows differences (file names, slot folder, priority, paths).
 
 Build the test app yourself, instead of `--testapp` (needs devkitPro):
 
@@ -127,8 +151,8 @@ puts our core). After building it yourself, set `LAZ_CORE=build-core/azahar_lazp
 
 ## Licence and credits
 
-libazahar-py is GPLv3 (`LICENSE`). Azahar (GPLv2 or later) is by the Azahar and Citra teams. Our patched core binary is
-distributed under GPLv3, with its complete source on the release page. MoltenVK (Apache-2.0) is downloaded by
+libazahar-py is GPLv3 (`LICENSE`). Azahar (GPLv2 or later) is by the Azahar and Citra teams. Our patched core binaries (macOS and Windows) are
+distributed under GPLv3, with their complete source on the release page. MoltenVK (Apache-2.0) is downloaded by
 `fetch.sh` from its upstream, never included; the libretro headers are MIT. `NOTICES.md` lists every component in the
 core. The idea and the name come from libmgba-py.
 

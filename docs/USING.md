@@ -16,9 +16,9 @@ unit: use both from one checkout or one release. A savestate loads in later 1.x 
 
 `python3 -m venv .venv && .venv/bin/pip install -e .` (the worker runs `python -I`, so a venv, not the user site).
 Editable install only: the package finds the repo (`build/`, `dl/`, `host/`) from its own folder; a plain install
-must set `LAZ_ROOT`. Needs macOS 15 or later on Apple silicon and Python 3.10 or newer (macOS's own `python3` is 3.9).
+must set `LAZ_ROOT`. Needs macOS 15 or later on Apple silicon, or Windows x64 (section 15a), and Python 3.10 or newer (macOS's own `python3` is 3.9).
 `make` builds the host; `sh tools/fetch.sh --moltenvk --headers --lazpy-core --testapp` fetches MoltenVK, the headers,
-our core and the test app, each sha256-pinned. The README's Install section is the full route.
+our core and the test app, each sha256-pinned. The README's Install section is the full route, with its own Windows steps.
 
 ## 2. Paths and environment
 
@@ -313,20 +313,24 @@ build variables below may change in a minor release:
 | Variable | What it does | Default | Read by |
 |---|---|---|---|
 | `LAZ_ROOT` | the repo folder | the folder the package sits in | Python |
-| `LAZ_HOST` | the host library | `<root>/build/libazhost.dylib` | Python |
-| `LAZ_CORE` | the core | `<root>/dl/lazpy-core/azahar_lazpy_libretro.dylib` | Python, `azhost` |
-| `LAZ_MVK` | MoltenVK | `<root>/dl/moltenvk/MoltenVK/MoltenVK/dynamic/dylib/macOS/libMoltenVK.dylib` | Python, host |
+| `LAZ_HOST` | the host library | macOS: `<root>/build/libazhost.dylib`; Windows: `<root>/build/libazhost.dll` | Python |
+| `LAZ_CORE` | the core | `<root>/dl/lazpy-core/azahar_lazpy_libretro.dylib` (Windows: `.dll`) | Python, `azhost` |
+| `LAZ_MVK` | the Vulkan loader: MoltenVK on macOS | macOS: `<root>/dl/moltenvk/MoltenVK/MoltenVK/dynamic/dylib/macOS/libMoltenVK.dylib`; Windows: `vulkan-1.dll` from System32 | Python, host |
 | `LAZ_PROFILE` | the option profile | `<root>/host/options-default.txt` | Python |
 | `LAZ_LAZPY_PROFILE` | the extra options on our core: a file or `none` | `<root>/core/options-lazpy.txt` when present | Python |
-| `LAZ_VK_DEVICE` | which Vulkan device the host uses: its index in the loader's list, from 0, or a part of its name (case ignored); a value of digits only is always an index (no name fallback for digits); no match is an `AZH_E_VULKAN` error at boot naming every device, never a silent fallback; the choice goes to `host.log`, and to stderr when set or when more than one device exists | unset: the first device | host |
+| `LAZ_VK_DEVICE` | which Vulkan device the host uses: its index in the loader's list, or a part of its name (see below) | unset: the first device | host |
 | `LAZ_MAX_INSTANCES` | the slot cap, 1 to 64 | 4 | Python |
-| `LAZ_SLOT_DIR` | the slot lock folder | `~/Library/Caches/libazahar-py/slots` | Python |
+| `LAZ_SLOT_DIR` | the slot lock folder | macOS: `~/Library/Caches/libazahar-py/slots`; Windows: `%LOCALAPPDATA%\libazahar-py\slots` | Python |
 | `LAZ_SLOT_TIMEOUT` | seconds to wait for a slot | 3600 | Python |
 | `LAZ_PNG_LEVEL` | PNG compression, 0 to 9 (a bad value gives 1) | 1 | host |
 | `LAZ_LOG_LEVEL` | `host.log` threshold: `debug`, `info`, `warn`, `error` (or 0 to 3) | `info` | host |
 | `LAZ_ANY_CORE` | `1` accepts any core version | unset: only the two known versions | host |
 | `MVK_CONFIG_LOG_LEVEL` | MoltenVK's log level | 1 | host |
 | `LAZ_STATE_ANY_APP` | `1` loads a state made with another build of the app | unset | host |
+
+`LAZ_VK_DEVICE`: a value of digits only is always an index from 0, with no name fallback. A name part is matched with
+the case ignored. No match is an `AZH_E_VULKAN` error at boot that names every device, never a silent fallback. The
+choice goes to `host.log`, and to stderr when the variable is set or when more than one device exists.
 
 Tests only: `LAZ_REQUIRE_EMULATOR=1` (a missing emulator fails instead of skipping) and `LAZ_STOCK_CORE` (a stock core
 you downloaded; unset, the comparison tests skip), `LAZ_CORE_OLD` (a lazpy.1 core, for the test that it still
@@ -343,6 +347,27 @@ Build and fetch time (the scripts' header comments are the reference):
 | `LAZ_CORE_LTO` | link-time optimisation | `ON` | `build-core.sh` |
 | `LAZ_CORE_JOBS` | build jobs | 4 | `build-core.sh` |
 | `LAZ_OPENSSL_PREFIX` | install prefix of the static OpenSSL | the pin's `OPENSSL_PREFIX` | `build-core.sh` |
+
+## 15a. Windows differences
+
+The 1.0 promise holds on Windows. These are the differences from macOS; nothing else in this guide changes.
+
+| | macOS | Windows (x64) |
+|---|---|---|
+| Build | `make` with Xcode tools | `make` in the MSYS2 MINGW64 shell (the Makefile refuses the other MSYS2 shells), with MINGW64 gcc and a static zlib |
+| Files | `libazhost.dylib`, `azhost`, `azahar_lazpy_libretro.dylib` | `libazhost.dll`, `azhost.exe`, `azahar_lazpy_libretro.dll` |
+| Vulkan loader (`LAZ_MVK`) | MoltenVK, fetched by `fetch.sh` | `vulkan-1.dll` from System32. A GPU driver with Vulkan is required; nothing Vulkan is shipped |
+| `LoadWarning` | can be raised | never raised |
+| Worker priority | a nice value | BELOW_NORMAL |
+| Slot folder (`LAZ_SLOT_DIR`) | `~/Library/Caches/libazahar-py/slots` | `%LOCALAPPDATA%\libazahar-py\slots`; `Slot.fd` is a HANDLE |
+| Paths | any | ASCII only and under 260 characters: clone into a short path such as `C:\src` |
+| SD folder names | follows the volume | case-insensitive |
+| `runs/` behind a junction | n/a | not supported |
+| Savestates between macOS and Windows | | `<from W7>` |
+| The guest's HTTPS (CA file) | Homebrew's `openssl@3` paths | only at the compiled-in OPENSSLDIR: `<OPENSSLDIR from build.inputs>` |
+
+Windows has no lazpy.1 core: the Windows core is lazpy.2. The limits of what was tested are in `STATUS.md`: one PC,
+Windows 10, an NVIDIA GPU. Windows 11 and AMD and Intel GPUs are untested.
 
 ## 16. The two cores
 
@@ -395,6 +420,8 @@ devkitARM first in `PATH`).
 - A `LoadWarning`: other sessions' emulators share the machine; wait, or run fewer instances.
 - `HostTimeout` in the first frames: shader compiles. Raise `boot_timeout` (default 300 s).
 - The core refuses to load on macOS older than 15.
+- Windows: a boot error naming `vulkan-1.dll` means no Vulkan driver is installed; install the GPU maker's current driver.
+  A path error at start usually means a long or non-ASCII folder: clone into `C:\src`.
 
 ## 20. API reference
 
