@@ -185,3 +185,5 @@ date	bet	phase	agent_id	model	role	kind	start	end	hours	source
 2026-11-17	V9: re-stage, needles rebuilt, pre-push check, repo created, main+tag pushed, draft release	phase-6	main	opus	main	process	10:12	10:18	0.10	session clock
 2026-11-17	V9 G7 publish, I5 part 1, README/STATUS Windows WIP, item 700 opened	phase-6	main	opus	main	process	10:58	11:11	0.20	session clock
 2026-11-17	phase 7: rebase dispatch, plan agent brief, PC_ONLY wrappers (toolkit 2568682), handoff	phase-7	main	opus	main	process	11:11	11:29	0.30	session clock
+2026-11-17	phase 7 plan revision 0 (docs/plans/phase-7.md)	phase-7	agent	opus	agent	plan	11:13	11:31	0.30	stat -L
+2026-11-17	phase 7 plan review 1 (docs/reviews/phase-7-review-1.md)	phase-7	agent	opus	agent	review	11:32	11:47	0.25	stat -L
