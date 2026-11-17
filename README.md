@@ -13,7 +13,7 @@ core; `STATUS.md` lists each item with the work that proved it. What does not wo
 audio output, anything with a window, and anything that is not homebrew.
 
 **Windows: proven on one PC.** The native Windows build (core, host library and Python layer, no WSL) was tested on
-one machine: Windows 10 Pro 22H2, x64, an NVIDIA RTX 3060 with driver 610.88, and Python 3.10.11. CI adds Windows
+one machine: Windows 10 Pro 22H2, x64, an NVIDIA GeForce RTX 3060 with driver 610.88, and Python 3.10.11. CI adds Windows
 Server 2025 for the build, the fast tests and a load test of the core. Windows 11 and AMD and Intel GPUs are untested.
 You build the host yourself in MSYS2; the core comes from the release. A GPU driver with Vulkan is required.
 Linux is not supported.
@@ -54,7 +54,7 @@ macOS 15 or later on Apple silicon; Xcode command-line tools; Python 3.10 or new
 own `python3` is 3.9); `curl`, `shasum` and `unzip` (stock). devkitARM is needed only to build the test app yourself.
 
 Windows: x64 Windows, a GPU driver with Vulkan (the host loads `vulkan-1.dll` from System32; no Vulkan is shipped),
-MSYS2 with its MINGW64 shell, and Python 3.10 or newer for Windows (python.org). The Makefile refuses the other MSYS2
+MSYS2 with its MINGW64 shell, and Python 3.10 or newer from the python.org Windows installer. The Makefile refuses the other MSYS2
 shells.
 
 ## Install
@@ -74,7 +74,7 @@ python3 -m venv .venv && .venv/bin/pip install -e .             # the Python lay
 
 Open the MSYS2 MINGW64 shell (not MSYS, UCRT64 or CLANG64). Clone into a short path with ASCII letters only, such as
 `C:\src`: paths must be under 260 characters. Install the tools once, then run the steps from the repository folder
-(Python 3.10 or newer for Windows must be first on `PATH`):
+(the python.org Python 3.10 or newer must be first on `PATH`):
 
 <!-- docs_check: steps-win -->
 ```sh
@@ -162,3 +162,6 @@ Homebrew only. This repository and its releases contain no ROMs, game data, Nint
 certificates or encrypted titles. Our core is built without Azahar's built-in key data and default HTTP client certificate, and it loads no keys.
 Nintendo 3DS is a trademark of Nintendo; this project is not affiliated with or endorsed by Nintendo or by the Azahar
 project.
+Windows is a trademark of the Microsoft group of companies. NVIDIA, GeForce and RTX are trademarks of NVIDIA
+Corporation. Vulkan is a trademark of the Khronos Group. They are named here only to say what this was tested on;
+this project is not affiliated with or endorsed by them.
