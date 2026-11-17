@@ -7,7 +7,7 @@ python3 -I tools/mkmap.py && python3 -I tools/mkprogress.py && python3 -I tools/
 
 Build and gate the host and the test app (devkitARM first in PATH for the 3DS build):
 ```
-make check && make && make test-version          # build/libazhost.dylib, build/azhost, the version test
+make check && make && make test-version          # check = tools/check-obinary.sh (O_BINARY on every host open) + clang analyze; then build/libazhost.dylib, build/azhost, the version test
 PATH=/opt/devkitpro/devkitARM/bin:/opt/devkitpro/tools/bin:$PATH make testapp   # build/testapp.3dsx
 tests/gate-a.sh build/testapp.3dsx               # step A's gate
 RUNNER=azhost tests/gate-b.sh                    # step B's gate through azhost (default runner fe2 needs LAZ_STOCK_CORE)

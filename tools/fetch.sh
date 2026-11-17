@@ -8,13 +8,23 @@
 #                    dl/lazpy-core/ (the core there is the default core path; LAZ_CORE overrides it)
 #     --testapp      the test app from the release, into dl/testapp/ and build/testapp.3dsx
 #     --force        delete and refetch what the chosen parts fetch
-#   No part flag means --moltenvk --headers. A second run downloads nothing.
+#   No part flag means --moltenvk --headers on macOS, and --headers --lazpy-core --testapp on Windows (MoltenVK is
+#   macOS only and is skipped there). A second run downloads nothing.
 #   LAZ_ROOT=<dir>          use <dir> instead of the repo root (for tests on a temp copy; LAZPY_ROOT is the old name)
 #   LAZ_RELEASE_BASE=<url>  use <url> instead of the release page (for tests, file://)
+#   LAZ_RELEASE_BASE_PREV=<url>  the page of the previous release, for the fallback below (for tests, file://); when
+#                           LAZ_RELEASE_BASE is set and this is not, there is no fallback
+#   LAZ_FETCH_OS=<name>     use <name> instead of `uname -s` (Darwin: the macOS zip; MINGW64_NT, MSYS_NT or
+#                           Windows: the Windows zip)
+#
+# The fallback: the macOS core zip and the test app have the same bytes in the previous release. When one of them
+# cannot be downloaded from the current release (any curl failure), it is fetched once from the previous release
+# and checked against the same pinned sha256, and "fell back to <tag> for <asset>" goes to stderr. A sha256 mismatch
+# never falls back. The Windows zip has no fallback: before its release is published, fetch says so.
 #
 # Downloads are untrusted data (docs/map/rules.md rule 2): each lives in its own folder under dl/, is hashed BEFORE
 # it is unpacked, and nothing from a download is ever run here. dl/ and vendor/ are git-ignored. Needs only the macOS
-# stock curl, shasum, unzip, tar, cp.
+# stock curl, shasum (or sha256sum), unzip, tar, cp.
 set -eu
 
 ROOT="${LAZ_ROOT:-${LAZPY_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}}"   # LAZPY_ROOT: the old name, kept for 1.x
@@ -38,10 +48,18 @@ VKH_URL="https://github.com/KhronosGroup/Vulkan-Headers/archive/refs/tags/v$VKH_
 VKH_SHA=5c5c6f64fcce28a24cc934143a048707af036a858e4ed11d7f71fe016006ecda
 # our release: the tag, the base URL and the two assets' sha256 (filled at release time; TBD makes the flag die)
 REL_TAG=v1.0.0
+REL_TAG_PREV=v1.0.0
 REL_BASE="${LAZ_RELEASE_BASE:-https://github.com/GuyShtainer/libazahar-py/releases/download/$REL_TAG}"
+# the previous release's page: LAZ_RELEASE_BASE_PREV, else (only when LAZ_RELEASE_BASE is not set) the GitHub page
+if [ -n "${LAZ_RELEASE_BASE_PREV:-}" ]; then REL_BASE_PREV=$LAZ_RELEASE_BASE_PREV
+elif [ -z "${LAZ_RELEASE_BASE:-}" ]; then REL_BASE_PREV="https://github.com/GuyShtainer/libazahar-py/releases/download/$REL_TAG_PREV"
+else REL_BASE_PREV=""; fi
 LAZPY_CORE_ZIP=azahar_lazpy_libretro-2126.2-lazpy.2-macos-arm64.zip
 LAZPY_CORE_SHA=ced9a36283ec72318b20f9686601335a2e57699ffb9278f31885697161bb609e
 TESTAPP_SHA=ba10699831f2a1c88b56de119bd2f8caab465e051eb350954b7be1cd7b027ccd
+# the Windows core zip (in the release only; no fallback). TBD until the release is staged.
+LAZPY_CORE_ZIP_WIN=azahar_lazpy_libretro-2126.2-lazpy.2-windows-x64.zip
+LAZPY_CORE_SHA_WIN=TBD
 # ------------------------------------------------------------------------------------------------------------------
 
 FORCE=0; DO_MVK=0; DO_HEADERS=0; DO_CORE=0; DO_APP=0
@@ -55,18 +73,34 @@ for arg in "$@"; do
     *) echo "usage: $0 [--moltenvk] [--headers] [--lazpy-core] [--testapp] [--force]" >&2; exit 2 ;;
   esac
 done
-if [ $((DO_MVK + DO_HEADERS + DO_CORE + DO_APP)) -eq 0 ]; then DO_MVK=1; DO_HEADERS=1; fi
 
+MISSING_HINT=""
 die() { echo "fetch.sh: $*" >&2; exit 1; }
 
-sha_of() { shasum -a 256 "$1" | cut -d' ' -f1; }
+if command -v shasum >/dev/null 2>&1; then
+  sha_of() { shasum -a 256 "$1" | cut -d' ' -f1; }
+else
+  sha_of() { sha256sum "$1" | cut -d' ' -f1; }
+fi
+
+case "${LAZ_FETCH_OS:-$(uname -s)}" in
+  Darwin*) OS_KIND=mac ;;
+  MINGW*|MSYS*|CYGWIN*|Windows*) OS_KIND=win ;;
+  *) OS_KIND=other ;;
+esac
+if [ $((DO_MVK + DO_HEADERS + DO_CORE + DO_APP)) -eq 0 ]; then
+  # no part flag: macOS gets MoltenVK and the headers; Windows gets the headers, our core and the test app
+  if [ "$OS_KIND" = win ]; then DO_HEADERS=1; DO_CORE=1; DO_APP=1; else DO_MVK=1; DO_HEADERS=1; fi
+fi
+if [ "$OS_KIND" = win ] && [ "$DO_MVK" -eq 1 ]; then echo "skip   MoltenVK (macOS only)"; DO_MVK=0; fi
 
 # ok FILE SHA: true when FILE exists and has that sha256
 ok() { [ -f "$1" ] && [ "$(sha_of "$1")" = "$2" ]; }
 
-# get URL SHA FILE: make FILE verified; download only if it is missing or wrong. A mismatch deletes the file and exits.
+# get URL SHA FILE [FALLBACK_URL]: make FILE verified; download only if it is missing or wrong. A mismatch deletes the
+# file and exits. When the download fails and FALLBACK_URL is not empty, that one is tried once, with the same sha256.
 get() {
-  _url=$1; _sha=$2; _file=$3
+  _url=$1; _sha=$2; _file=$3; _fb=${4:-}; _fell=0
   if [ "$FORCE" -eq 0 ] && ok "$_file" "$_sha"; then
     echo "have   $_file (sha256 ok)"
     return 0
@@ -74,7 +108,13 @@ get() {
   mkdir -p "$(dirname "$_file")"
   rm -f "$_file"
   echo "fetch  $_url"
-  curl -fsSL --retry 2 -o "$_file" "$_url" || { rm -f "$_file"; die "download failed: $_url"; }
+  if ! curl -fsSL --retry 2 -o "$_file" "$_url"; then
+    rm -f "$_file"
+    [ -n "$_fb" ] || die "download failed: $_url${MISSING_HINT:+ ($MISSING_HINT)}"
+    echo "fetch  $_fb"
+    curl -fsSL --retry 2 -o "$_file" "$_fb" || { rm -f "$_file"; die "download failed: $_fb"; }
+    _fell=1
+  fi
   _got=$(sha_of "$_file")
   if [ "$_got" != "$_sha" ]; then
     rm -f "$_file"
@@ -83,6 +123,7 @@ get() {
   got      $_got
   the file was deleted; nothing was unpacked"
   fi
+  [ "$_fell" -eq 0 ] || echo "fell back to $REL_TAG_PREV for $(basename "$_file")" >&2
   echo "ok     $_file (sha256 verified)"
 }
 
@@ -150,22 +191,37 @@ fi
 # ---- our core (release asset) ------------------------------------------------------------------------------------
 LAZPY_DIR="$DL/lazpy-core"
 if [ "$DO_CORE" -eq 1 ]; then
-  pin_set "$LAZPY_CORE_SHA" --lazpy-core
-  [ "$FORCE" -eq 0 ] || rm -f "$LAZPY_DIR/azahar_lazpy_libretro.dylib" "$LAZPY_DIR/NOTICES.md" "$LAZPY_DIR/SOURCE.md"
-  get "$REL_BASE/$LAZPY_CORE_ZIP" "$LAZPY_CORE_SHA" "$LAZPY_DIR/$LAZPY_CORE_ZIP"
-  if [ ! -f "$LAZPY_DIR/azahar_lazpy_libretro.dylib" ] || [ "$(cat "$LAZPY_DIR/.unpacked-sha256" 2>/dev/null)" != "$LAZPY_CORE_SHA" ]; then
-    verify "$LAZPY_DIR/$LAZPY_CORE_ZIP" "$LAZPY_CORE_SHA"
-    unzip -q -o "$LAZPY_DIR/$LAZPY_CORE_ZIP" azahar_lazpy_libretro.dylib NOTICES.md SOURCE.md -d "$LAZPY_DIR"
-    [ -f "$LAZPY_DIR/azahar_lazpy_libretro.dylib" ] || die "zip did not contain azahar_lazpy_libretro.dylib"
-    echo "$LAZPY_CORE_SHA" > "$LAZPY_DIR/.unpacked-sha256"
-    echo "unpack $LAZPY_DIR/{azahar_lazpy_libretro.dylib,NOTICES.md,SOURCE.md}"
+  case "$OS_KIND" in
+    mac) CORE_ZIP=$LAZPY_CORE_ZIP; CORE_SHA=$LAZPY_CORE_SHA; CORE_FILE=azahar_lazpy_libretro.dylib ;;
+    win) CORE_ZIP=$LAZPY_CORE_ZIP_WIN; CORE_SHA=$LAZPY_CORE_SHA_WIN; CORE_FILE=azahar_lazpy_libretro.dll ;;
+    *) die "no core is released for this OS (macOS arm64 and Windows x64 only)" ;;
+  esac
+  pin_set "$CORE_SHA" --lazpy-core
+  [ "$FORCE" -eq 0 ] || rm -f "$LAZPY_DIR/$CORE_FILE" "$LAZPY_DIR/NOTICES.md" "$LAZPY_DIR/SOURCE.md"
+  if [ "$OS_KIND" = mac ]; then
+    # the macOS zip has the same bytes in the previous release: fall back to it when the current page lacks it
+    _fb=""; [ -z "$REL_BASE_PREV" ] || _fb="$REL_BASE_PREV/$CORE_ZIP"
+    get "$REL_BASE/$CORE_ZIP" "$CORE_SHA" "$LAZPY_DIR/$CORE_ZIP" "$_fb"
+  else
+    # no fallback for the Windows zip: it exists only in this release
+    MISSING_HINT="$REL_TAG is not published yet"
+    get "$REL_BASE/$CORE_ZIP" "$CORE_SHA" "$LAZPY_DIR/$CORE_ZIP"
+    MISSING_HINT=""   # the hint belongs to this download only
+  fi
+  if [ ! -f "$LAZPY_DIR/$CORE_FILE" ] || [ "$(cat "$LAZPY_DIR/.unpacked-sha256" 2>/dev/null)" != "$CORE_SHA" ]; then
+    verify "$LAZPY_DIR/$CORE_ZIP" "$CORE_SHA"
+    unzip -q -o "$LAZPY_DIR/$CORE_ZIP" "$CORE_FILE" NOTICES.md SOURCE.md -d "$LAZPY_DIR"
+    [ -f "$LAZPY_DIR/$CORE_FILE" ] || die "zip did not contain $CORE_FILE"
+    echo "$CORE_SHA" > "$LAZPY_DIR/.unpacked-sha256"
+    echo "unpack $LAZPY_DIR/{$CORE_FILE,NOTICES.md,SOURCE.md}"
   fi
 fi
 
 # ---- the test app (release asset) --------------------------------------------------------------------------------
 if [ "$DO_APP" -eq 1 ]; then
   pin_set "$TESTAPP_SHA" --testapp
-  get "$REL_BASE/testapp.3dsx" "$TESTAPP_SHA" "$DL/testapp/testapp.3dsx"
+  _fb=""; [ -z "$REL_BASE_PREV" ] || _fb="$REL_BASE_PREV/testapp.3dsx"
+  get "$REL_BASE/testapp.3dsx" "$TESTAPP_SHA" "$DL/testapp/testapp.3dsx" "$_fb"
   mkdir -p "$ROOT/build"
   if ! ok "$ROOT/build/testapp.3dsx" "$TESTAPP_SHA"; then
     verify "$DL/testapp/testapp.3dsx" "$TESTAPP_SHA"
@@ -184,7 +240,7 @@ if [ "$DO_HEADERS" -eq 1 ]; then
   echo "  headers     $VENDOR/libretro.h  $VENDOR/libretro_vulkan.h  $VENDOR/include/{vulkan,vk_video}  (Vulkan-Headers $VKH_VER)"
 fi
 if [ "$DO_CORE" -eq 1 ]; then
-  echo "  core        our core is at dl/lazpy-core/azahar_lazpy_libretro.dylib, the default core path (LAZ_CORE overrides it)"
+  echo "  core        our core is at dl/lazpy-core/$CORE_FILE, the default core path (LAZ_CORE overrides it)"
 fi
 if [ "$DO_APP" -eq 1 ]; then
   echo "  test app    $ROOT/build/testapp.3dsx"

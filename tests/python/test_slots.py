@@ -1,6 +1,5 @@
 """The machine-wide slot cap, the slot-holding worker spawn and tools/hold_slot.py (no emulator)."""
 import os
-import signal
 import subprocess
 import sys
 import time
@@ -11,11 +10,12 @@ import pytest
 
 from libazahar import LoadWarning, SlotTimeout, _slots
 from libazahar.errors import HostTimeout
+from proc_helpers import WIN, hard_kill, popen_holding, sleeper
 from test_client import make
 
 REPO = Path(__file__).resolve().parents[2]
 HOLD = REPO / "tools" / "hold_slot.py"
-SLEEPER = [sys.executable, "-I", "-c", "import time; time.sleep(60)"]
+SLEEPER = sleeper()
 
 
 @pytest.fixture
@@ -50,13 +50,13 @@ def test_s2_kill_frees_the_slot(tmp_path, monkeypatch):
     monkeypatch.setenv("LAZ_SLOT_DIR", str(tmp_path / "slots"))
     monkeypatch.setenv("LAZ_MAX_INSTANCES", "1")
     slot = _slots.acquire()
-    child = subprocess.Popen(SLEEPER, pass_fds=(slot.fd,))
+    child = popen_holding(SLEEPER, slot.fd)
     try:
         slot.release()
         with pytest.raises(SlotTimeout):
             _slots.acquire(timeout=0.3)
         begin = time.monotonic()
-        os.kill(child.pid, signal.SIGKILL)
+        hard_kill(child.pid)
         child.wait()
         again = _slots.acquire(timeout=2)
         took = time.monotonic() - begin
@@ -84,17 +84,26 @@ def test_s3_cap_from_the_environment(monkeypatch):
 
 def test_s4_modes(slots_env):
     slot = _slots.acquire()
-    assert (slots_env.stat().st_mode & 0o777) == 0o700
-    assert (slot.path.stat().st_mode & 0o777) == 0o600
+    if not WIN:                                         # Windows has no POSIX modes
+        assert (slots_env.stat().st_mode & 0o777) == 0o700
+        assert (slot.path.stat().st_mode & 0o777) == 0o600
     assert slot.path.stat().st_size == 0                # the lock is the state; nothing is written into it
     slot.release()
 
 
+@pytest.mark.skipif(WIN, reason="no load average on Windows; test_s5_windows_has_no_load_warning")
 def test_s5_load_warning(slots_env, monkeypatch):
     monkeypatch.setattr(os, "getloadavg", lambda: (1000.0, 0.0, 0.0))
     with pytest.warns(LoadWarning, match="above 2 x"):
         _slots.acquire().release()
     monkeypatch.setattr(os, "getloadavg", lambda: (0.0, 0.0, 0.0))
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        _slots.acquire().release()
+
+
+@pytest.mark.skipif(not WIN, reason="Windows twin of test_s5")
+def test_s5_windows_has_no_load_warning(slots_env):
     with warnings.catch_warnings():
         warnings.simplefilter("error")
         _slots.acquire().release()
@@ -132,7 +141,7 @@ def _with_slot(work):
 
 def test_s7_hold_slot_tool(tmp_path):
     env = dict(os.environ, LAZ_SLOT_DIR=str(tmp_path / "slots"), LAZ_MAX_INSTANCES="1")
-    held = subprocess.Popen([sys.executable, "-I", str(HOLD), "--", *SLEEPER], env=env, stderr=subprocess.PIPE)
+    held = subprocess.Popen([SLEEPER[0], "-I", str(HOLD), "--", *SLEEPER], env=env, stderr=subprocess.PIPE)
     try:
         lines = []
         for _ in range(6):                                      # a LoadWarning (2 lines) may come first
@@ -144,7 +153,7 @@ def test_s7_hold_slot_tool(tmp_path):
         try:
             with pytest.raises(SlotTimeout):
                 _slots.acquire(timeout=0.3)
-            os.kill(held.pid, signal.SIGKILL)
+            hard_kill(held.pid)
             held.wait()
             _slots.acquire(timeout=2).release()
         finally:
@@ -154,7 +163,7 @@ def test_s7_hold_slot_tool(tmp_path):
             held.kill()
             held.wait()
         held.stderr.close()
-    bare = subprocess.run([sys.executable, "-I", str(HOLD), "--"], env=env, capture_output=True)
+    bare = subprocess.run([SLEEPER[0], "-I", str(HOLD), "--"], env=env, capture_output=True)
     assert bare.returncode == 2 and b"usage" in bare.stderr
 
 
@@ -190,3 +199,24 @@ def test_s7_pipe_failure_releases_the_slot(tmp_path, monkeypatch):
     with pytest.raises(OSError, match="too many open files"):
         client.spawn(10.0)
     _slots.acquire(timeout=0.3).release()                # the only slot is free again
+
+
+def test_w8_hard_killed_worker_gives_the_slot_back(tmp_path, monkeypatch):
+    """A worker killed hard (TerminateProcess on Windows, SIGKILL elsewhere) frees its slot, and the parent never held
+    the lock after the spawn: a second acquire fails while the worker lives and succeeds right after the kill."""
+    monkeypatch.setenv("LAZ_SLOT_DIR", str(tmp_path / "slots"))
+    monkeypatch.setenv("LAZ_MAX_INSTANCES", "1")
+    client = _with_slot(tmp_path / "w")
+    client.spawn(10.0)
+    try:
+        with pytest.raises(SlotTimeout):
+            _slots.acquire(timeout=0.3)
+        begin = time.monotonic()
+        client.kill_own_worker()
+        client.proc.wait(timeout=5)
+        again = _slots.acquire(timeout=2)
+        print(f"\nW8: slot back {time.monotonic() - begin:.3f} s after the kill", file=sys.stderr)
+        assert time.monotonic() - begin < 1.0
+        again.release()
+    finally:
+        client.close()

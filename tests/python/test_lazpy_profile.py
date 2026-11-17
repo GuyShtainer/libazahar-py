@@ -1,6 +1,7 @@
 """Our core's option profile: the plan order, where the file is found, and that the two files never share a key."""
 from __future__ import annotations
 
+import sys
 from pathlib import Path
 
 import pytest
@@ -54,6 +55,8 @@ def test_no_key_is_in_both_profile_files(repo_root):
     assert len(lazpy) == 6 and not set(lazpy) & set(default)
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="no nice values on Windows: the worker starts BELOW_NORMAL "
+                    "(test_client.test_windows_worker_runs_below_normal)")
 @pytest.mark.parametrize("start, want", [(5, 10), (10, 10), (15, 15), (20, 20)])
 def test_worker_nice_floor(start: int, want: int) -> None:
     """raise_nice_floor raises a nicer process to 10 and never lowers one; at nice 20 it must not fail

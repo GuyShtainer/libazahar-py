@@ -8,10 +8,17 @@
 #include <sys/stat.h>
 
 #include "azh_internal.h"
+#ifdef _WIN32
+#include "plat/win_compat.h"
+#endif
 
 #define DEFAULT_PROFILE "host/options-default.txt"
 #define DEFAULT_LAZPY_PROFILE "core/options-lazpy.txt"
+#ifdef _WIN32
+#define DEFAULT_CORE "dl/lazpy-core/azahar_lazpy_libretro.dll"
+#else
 #define DEFAULT_CORE "dl/lazpy-core/azahar_lazpy_libretro.dylib"
+#endif
 #define MAX_OPTS 64
 #define LINE_MAX_LEN 512
 #define MAX_BATCHES 16
@@ -701,6 +708,9 @@ int main(int argc, char **argv)
     int rc;
     int code;
 
+#ifdef _WIN32
+    azh_win_early_init();   /* SetErrorMode first: no dialog can hang a headless run */
+#endif
     if (argc == 2 && strcmp(argv[1], "layout") == 0) {
         return print_layout();
     }

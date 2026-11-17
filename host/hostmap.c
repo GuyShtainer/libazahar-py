@@ -3,10 +3,15 @@
 #include <fcntl.h>
 #include <stdint.h>
 #include <string.h>
-#include <sys/mman.h>
 #include <unistd.h>
+#ifndef _WIN32
+#include <sys/mman.h>
+#endif
 
 #include "azh_internal.h"
+#ifdef _WIN32
+#include "plat/win_compat.h"
+#endif
 
 #if !defined(__BYTE_ORDER__) || __BYTE_ORDER__ != __ORDER_LITTLE_ENDIAN__
 #error "host.map is little-endian and written with plain stores"
@@ -31,11 +36,20 @@ static void store64(uint32_t off, int64_t v)
 
 int azh_map_create(const char *path)
 {
+#ifdef _WIN32
+    void *p;
+
+    assert(path != NULL && map == NULL);
+    p = azh_win_map_create(path, AZH_MAP_SIZE);
+    if (p == NULL) {
+        return -1;
+    }
+#else
     int fd;
     void *p;
 
     assert(path != NULL && map == NULL);
-    fd = open(path, O_RDWR | O_CREAT | O_TRUNC, 0644);
+    fd = open(path, O_RDWR | O_CREAT | O_TRUNC | O_BINARY, 0644);
     if (fd < 0) {
         return -1;
     }
@@ -48,6 +62,7 @@ int azh_map_create(const char *path)
     if (p == MAP_FAILED) {
         return -1;
     }
+#endif
     map = p;
     heartbeat = 0u;
     memset(map, 0, AZH_MAP_PX_END);      /* the watch area stays untouched: zero pages take no memory until written */
@@ -66,7 +81,11 @@ int azh_map_create(const char *path)
 void azh_map_close(void)
 {
     if (map != NULL) {
+#ifdef _WIN32
+        azh_win_map_close(map);
+#else
         (void)munmap(map, AZH_MAP_SIZE);     /* teardown: nothing to do on failure */
+#endif
         map = NULL;
     }
 }
@@ -123,7 +142,11 @@ void azh_map_set_exit_code(int32_t code)
 void azh_map_sync(void)
 {
     if (map != NULL) {
+#ifdef _WIN32
+        azh_win_map_flush(map, AZH_MAP_SIZE);
+#else
         (void)msync(map, AZH_MAP_SIZE, MS_SYNC);     /* best effort: the process is about to exit */
+#endif
     }
 }
 

@@ -4,15 +4,28 @@
 Usage: python3 -I tools/release_check.py runs/release/<tag> (for example runs/release/v1.0.0) [--skip-pins] [--pre-push] [--plant-red]
            [--nm-output F] [--otool-output F] [--strings-output F] [--link F] [--inputs F] [--fetch F]
            [--pyproject F] [--repo DIR]
+       $LAZ_WIN_PY -I tools/release_check.py <dir> --inherit v1.0.0 --gate-f2 FILE [--inherit-sums FILE]
+           [--no-runtime-source] [--skip-pins] [--pre-push] [--plant-red] [--fetch F] [--repo DIR]
+
+--inherit v1.0.0 checks a v1.1.0 release staged by `mkrelease.sh --inherit` (the PC, the Windows Python, MSYS2): the
+macOS side is the v1.0.0 bytes, checked against the pinned digest of v1.0.0's SHA256SUMS (downloaded from the v1.0.0
+page, or --inherit-sums FILE; either way it must match the pin); the Windows zip is checked from --gate-f2 (the CI
+artifact's gate_f2.txt: shared contract 1) instead of the live tree. --plant-red exits 0 when every plant failed on
+its own reason, 2 when one did not.
 
 Prints one line per check: PASS, FAIL, SKIP or PEND, plus NOTE lines for the audit. Any FAIL exits 1; under
 --pre-push every SKIP and PEND is a FAIL. --plant-red plants one fault per check in a temp folder outside the repo
 and passes only if each check fails on its plant. Key material is never printed or written: windows of the key and
 certificate arrays are made in memory from the reading copy of Azahar's source at run time (tests/gate_f2.py).
-LAZ_PRIVATE_NEEDLES, when it names a file, adds private-string needles; a hit prints only a file name and a line
-number, never the needle.
+LAZ_PRIVATE_NEEDLES, when it names a file, adds private-string needles; the value - (or stdin) reads them from
+standard input instead, so they never touch a disk. A hit prints only a file name and a line number, never the needle.
 """
 from __future__ import annotations
+
+import sys
+
+if sys.version_info < (3, 10):  # the PC's default python is 3.7: use LAZ_WIN_PY (the venv's python.exe)
+    raise SystemExit("release_check.py: Python 3.10 or newer is needed; run it with the interpreter in LAZ_WIN_PY")
 
 import argparse
 import hashlib
@@ -23,9 +36,9 @@ import os
 import re
 import shutil
 import subprocess
-import sys
 import tarfile
 import tempfile
+import urllib.request
 import zipfile
 from pathlib import Path
 
@@ -43,6 +56,26 @@ LONG_HEX_RUN = re.compile(r"(0x[0-9a-fA-F]{1,2}[\s,]+){7}0x[0-9a-fA-F]{1,2}")
 ZIP_NAMES = ["COPYING-azahar.txt", "LICENSE", "NOTICES.md", "SOURCE.md", "azahar_lazpy_libretro.dylib", "build.inputs"]
 EXPORT_EXTRA = {"_lazpy_read_memory", "_lazpy_write_memory", "_lazpy_movie_play", "_lazpy_threads"}
 OSSL_EXPECTED = ("/opt/homebrew/etc/openssl@3", "/opt/homebrew/Cellar/openssl@3/")
+
+
+class AssetError(Exception):
+    """An asset the checks need is missing, or more than one file matches it."""
+
+
+# the build-files asset's tag per platform: "*" until main() knows the release tag (and, with --inherit, v1.0.0's)
+BUILD_TAG = {"mac": "*", "win": "*"}
+
+
+def asset(rel: Path, platform: str, kind: str) -> Path:
+    """The one file for (platform, kind) in a staged release; AssetError when zero or several files match."""
+    patterns = {("mac", "zip"): "azahar_lazpy_libretro-*-macos-arm64.zip", ("win", "zip"): "azahar_lazpy_libretro-*-windows-x64.zip",
+                ("mac", "build"): f"libazahar-py-core-build-{BUILD_TAG['mac']}.tar.gz",
+                ("win", "build"): f"libazahar-py-core-build-{BUILD_TAG['win']}.tar.gz"}
+    pattern = patterns[(platform, kind)]
+    found = sorted(rel.glob(pattern))
+    if len(found) != 1:
+        raise AssetError(f"{len(found)} files match {pattern} in {rel.name}; exactly one is needed")
+    return found[0]
 
 
 def sha256_bytes(data: bytes) -> str:
@@ -99,7 +132,7 @@ def assets_findings(rel: Path, names: list[str]) -> Items:
     listed = {line.partition("  ")[2] for line in (rel / "SHA256SUMS").read_text().splitlines()}
     if listed != set(names) - {"SHA256SUMS"}:
         out.append(("FAIL", "SHA256SUMS lists a different file set"))
-    out += zip_findings(next(rel.glob("azahar_lazpy_libretro-*.zip")))
+    out += zip_findings(asset(rel, "mac", "zip"))
     return out
 
 
@@ -125,7 +158,7 @@ def keyblob_check(rel: Path, repo: Path, inputs: Path) -> Items:
     sys.path.insert(0, str(repo / "tests"))
     import gate_f2
     core = repo / "build-core" / "azahar_lazpy_libretro.dylib"
-    zipped = zip_member(next(rel.glob("azahar_lazpy_libretro-*.zip")), "azahar_lazpy_libretro.dylib")
+    zipped = zip_member(asset(rel, "mac", "zip"), "azahar_lazpy_libretro.dylib")
     out: Items = []
     if sha256_bytes(zipped) != sha256_file(core):
         out.append(("FAIL", "the zip's dylib is not the gated core (sha256 differs from build-core/)"))
@@ -218,16 +251,30 @@ def keg_findings(inputs: dict[str, str], pre_push: bool) -> Items:
 PRIVATE_RES = [("/Users/", re.compile(r"/Users/")), ("@gmail.com", re.compile(r"@gmail\.com", re.I)),
                (".local address", re.compile(r"[A-Za-z0-9][\w.-]*\.local\b")),
                ("MAC address", re.compile(r"\b(?:[0-9A-Fa-f]{2}[:-]){5}[0-9A-Fa-f]{2}\b")),
-               ("private IPv4", re.compile(r"\b(?:10\.\d{1,3}|172\.(?:1[6-9]|2\d|3[01])|192\.168|169\.254)\.\d{1,3}\.\d{1,3}\b"))]
+               ("private IPv4", re.compile(r"\b(?:10\.\d{1,3}|172\.(?:1[6-9]|2\d|3[01])|192\.168|169\.254)\.\d{1,3}\.\d{1,3}\b")),
+               # index 4 above is used by private_notes: new patterns go after it
+               ("Windows profile path", re.compile(r"\b[a-z]:[\\/]+Users[\\/]+[^\s\\/\"'<>]+", re.I)),
+               ("Linux home path", re.compile(r"(?<![\w.])/home/[A-Za-z_][\w.-]*")),
+               ("MSYS2 profile path", re.compile(r"(?<!\w)/[a-z]/Users/[^\s/\"'<>]+", re.I)),
+               ("WSL profile path", re.compile(r"/mnt/[a-z]/Users/[^\s/\"'<>]+", re.I)),
+               ("GitHub runner path", re.compile(r"/home/runner\b|\b[a-z]:[\\/]+a[\\/]|\brunneradmin\b|/__w/|/github/home\b", re.I))]
+PRIVATE_PLANTS = [("Windows profile path", "C:\\Users\\x\\a"), ("Windows profile path", "d:/users/x/a"),
+                  ("Linux home path", "see /home/someone/x"), ("MSYS2 profile path", "see /c/Users/x/y"),
+                  ("WSL profile path", "see /mnt/c/Users/x/y"), ("GitHub runner path", "see /home/runner/work/r/r"),
+                  ("GitHub runner path", "D:\\a\\r\\r"), ("GitHub runner path", "C:\\Users\\runneradmin\\x")]
 IPV4_RE = re.compile(r"\b\d{1,3}(?:\.\d{1,3}){3}\b")
 EMAIL_RE = re.compile(r"[\w.+-]+@[\w-]+\.[\w.-]+")
 
 
 def load_needles(path: str | None) -> list[tuple[int, re.Pattern[str]]]:
-    if not path or not Path(path).is_file():
+    if path in ("-", "stdin", "/dev/stdin"):  # the needles come on standard input: they never touch a disk
+        text = sys.stdin.read()
+    elif path and Path(path).is_file():
+        text = Path(path).read_text(errors="replace")
+    else:
         return []
     out = []
-    for number, raw in enumerate(Path(path).read_text(errors="replace").splitlines(), 1):
+    for number, raw in enumerate(text.splitlines(), 1):
         left = raw.partition("==>")[0].strip()
         if left and not left.startswith("#"):
             if left.startswith("regex:"):
@@ -238,7 +285,7 @@ def load_needles(path: str | None) -> list[tuple[int, re.Pattern[str]]]:
     return out
 
 
-NOTICE_FILES = ("NOTICES.md", "zip:NOTICES.md")
+NOTICE_FILES = ("NOTICES.md", "zip:NOTICES.md", "NOTICES-windows-x64.md", "zip-mac:NOTICES.md", "zip-win:NOTICES.md")
 
 
 def allowed_addresses(repo: Path, notices: str) -> frozenset[str]:
@@ -294,13 +341,13 @@ def strings_of(data: bytes, tmp: Path, label: str) -> str:
 
 
 def private_texts(rel: Path, repo: Path, tmp: Path, core_strings: str) -> dict[str, str]:
-    zip_path = next(rel.glob("azahar_lazpy_libretro-*.zip"))
+    zip_path = asset(rel, "mac", "zip")
     texts = {"core strings": core_strings}
     with zipfile.ZipFile(zip_path) as archive:
         for name in ZIP_NAMES:
             if name != "azahar_lazpy_libretro.dylib":
                 texts[f"zip:{name}"] = archive.read(name).decode(errors="replace")
-    with tarfile.open(next(rel.glob("libazahar-py-core-build-*.tar.gz"))) as build:
+    with tarfile.open(asset(rel, "mac", "build")) as build:
         for member in build.getmembers():
             if member.isfile():
                 texts[f"build-files:{member.name}"] = build.extractfile(member).read().decode(errors="replace")  # type: ignore[union-attr]
@@ -342,7 +389,7 @@ def notices_check(rel: Path, repo: Path, pre_push: bool, link: Path, inputs: Pat
     out: Items = []
     if made.stdout != work:
         out.append(("FAIL", "mknotices.py output differs from NOTICES.md"))
-    if zip_member(next(rel.glob("azahar_lazpy_libretro-*.zip")), "NOTICES.md") != work or (rel / "NOTICES.md").read_bytes() != work:
+    if zip_member(asset(rel, "mac", "zip"), "NOTICES.md") != work or (rel / "NOTICES.md").read_bytes() != work:
         out.append(("FAIL", "the zip's or the staged NOTICES.md differs from the working tree's"))
     if pre_push and run(["git", "-C", str(repo), "show", "HEAD:NOTICES.md"]).stdout != work:
         out.append(("FAIL", "the working tree's NOTICES.md differs from HEAD's"))
@@ -444,11 +491,11 @@ def snapshot_findings(rel: Path, repo: Path) -> Items:
 
 # ------------------------------------------------------------------------------------------- 10 build-files
 def build_files_check(rel: Path, repo: Path) -> Items:
-    asset = next(rel.glob("libazahar-py-core-build-*.tar.gz"))
+    built = asset(rel, "mac", "build")
     fresh = run(["git", "-C", str(repo), "archive", "--format=tar.gz", "--prefix=libazahar-py-core-build/", "HEAD", "core",
                  "tools/build-core.sh", "tools/untar_checked.py"]).stdout
     out: Items = []
-    if fresh != asset.read_bytes():
+    if fresh != built.read_bytes():
         out.append(("FAIL", "the build-files asset differs from a fresh git archive of HEAD"))
     dirty = git(repo, "status", "--porcelain", "--", "core", "tools/build-core.sh", "tools/untar_checked.py").splitlines()
     if dirty:
@@ -694,7 +741,505 @@ def macos_check(core: Path, repo: Path, texts: dict[str, str], pre_push: bool) -
     return out
 
 
+# ------------------------------------------------------------------------------------------- v1.1.0 (--inherit)
+# A release staged by `mkrelease.sh --inherit v1.0.0`: the macOS side is v1.0.0's bytes (checked against the pinned
+# digest of v1.0.0's SHA256SUMS), the Windows side is checked from gate_f2.txt (shared contract 1) and the staged files.
+INHERIT_TAG = "v1.0.0"
+V1_0_0_SHA256SUMS = "288c2a257948498bb5c0f4e56a582ee311fd6654aa523b51fc85876e5ce19bec"
+INHERIT_BASE = "https://github.com/GuyShtainer/libazahar-py/releases/download/{tag}"
+ZIP_NAMES_WIN = ["COPYING-azahar.txt", "LICENSE", "NOTICES.md", "SOURCE.md", "azahar_lazpy_libretro.dll", "build.inputs"]
+RT_ASSET = "mingw-w64-runtime-source.tar"
+BUILD_FILES_REQUIRED = {"core", "tools/build-core-win64.sh", "tools/toolchain-win64.cmake", "tools/untar_checked.py",
+                        ".github/workflows/core-win64.yml", "tools/build-files.txt"}
+GATE_F2_LINES = [r"gate_f2 1 target=win64", r"head=[0-9a-f]{40}", r"image=ubuntu:26\.04@sha256:[0-9a-f]{64}",
+                 r"core=azahar_lazpy_libretro\.dll", r"core_sha256=[0-9a-f]{64}", r"PASS droplist cmake",
+                 r"PASS deps files=(\d+)", r"PASS fresh", r"PASS window arrays=(\d+) windows=(\d+) hits=0",
+                 r"PASS pe machine=x86-64", r"PASS imports n=(\d+)", r"END"]
+WIN_PIECES = ("Windows 11 and AMD and Intel GPUs are untested.",
+              "CI adds Windows Server 2025 for the build, the fast tests and the core load test.",
+              "No Windows speed figures.", "Windows 10 Pro 22H2", "RTX 3060", "Python 3.10.11",
+              "A GPU driver with Vulkan is required")
+WIN_REJECT = ("work in progress, not proven", "no CI and no download", "nothing in this release runs on Windows")
+PLACEHOLDERS = ("<pick after W9>", "<from W7>", "<OPENSSLDIR from build.inputs>", "TO BE FILLED")
+WIN_NOTICE_PHRASES = ("The OpenSSL Project Authors", "SIL OPEN FONT LICENSE Version 1.1", "GNU Unifont 10.0.05", "mingw-w64",
+                      "winpthreads")
+# the verbatim licence files of the linked runtime (ip-legal): one marker from each of winpthreads' COPYING and
+# COPYING.MinGW-w64-runtime.txt, plus a floor on the length. W2b1's mknotices writes both texts whole.
+WIN_LICENCE_MARKERS = ("Lockless Inc", "MinGW-w64 runtime licensing", "Redistributions in binary form must reproduce")
+WIN_NOTICES_MIN_CHARS = 20000
+WIN_NOTICE_REJECT = ("MoltenVK",)
+WIN_NOTICE_FETCH_RE = re.compile(r"fetch\.sh[^\n]{0,80}Vulkan|Vulkan[^\n]{0,80}fetch\.sh", re.I)
+
+
+def inherited_names(pin: dict[str, str]) -> list[str]:
+    """The seven assets re-uploaded byte for byte from v1.0.0."""
+    return [f"azahar_lazpy_libretro-{pin['AZAHAR_TAG']}-lazpy.{pin['LAZPY_REV']}-macos-arm64.zip", "NOTICES.md",
+            f"azahar-unified-source-{pin['AZAHAR_TAG']}-lazpy-nokeys.tar.xz", f"openssl-{pin['OPENSSL_VERSION']}.tar.gz",
+            "citra_system_archives-f470e0c.tar.gz", "testapp.3dsx", f"libazahar-py-core-build-{INHERIT_TAG}.tar.gz"]
+
+
+def expected_assets_v11(pin: dict[str, str], tag: str, runtime: bool) -> list[str]:
+    names = inherited_names(pin) + [f"azahar_lazpy_libretro-{pin['AZAHAR_TAG']}-lazpy.{pin['LAZPY_REV']}-windows-x64.zip",
+                                    "NOTICES-windows-x64.md", f"libazahar-py-core-build-{tag}.tar.gz", "SOURCE.md", "SHA256SUMS"]
+    return sorted(names + ([RT_ASSET] if runtime else []))
+
+
+def load_inherit_sums(args: argparse.Namespace) -> bytes:
+    """v1.0.0's SHA256SUMS: --inherit-sums FILE, else the v1.0.0 page (LAZ_INHERIT_BASE replaces its URL)."""
+    if args.inherit_sums:
+        return Path(args.inherit_sums).read_bytes()
+    base = os.environ.get("LAZ_INHERIT_BASE") or INHERIT_BASE.format(tag=args.inherit)
+    with urllib.request.urlopen(f"{base}/SHA256SUMS", timeout=60) as handle:  # noqa: S310 (checked against the pin below)
+        return handle.read()
+
+
+def parse_sums(text: str) -> dict[str, str]:
+    out: dict[str, str] = {}
+    for line in text.splitlines():
+        digest, _sep, name = line.partition("  ")
+        if re.fullmatch(r"[0-9a-f]{64}", digest) and name:
+            out[name] = digest
+    return out
+
+
+def inherit_findings(sums: bytes, rel: Path, pin: dict[str, str], repo: Path) -> Items:
+    """The seven inherited assets are v1.0.0's bytes: SHA256SUMS against the pin, each asset against its line, five of
+    them against the pins this repo already holds."""
+    if sha256_bytes(sums) != V1_0_0_SHA256SUMS:
+        return [("FAIL", "v1.0.0's SHA256SUMS does not match the pinned digest V1_0_0_SHA256SUMS")]
+    lines = parse_sums(sums.decode(errors="replace"))
+    out: Items = []
+    for name in inherited_names(pin):
+        if name not in lines:
+            out.append(("FAIL", f"v1.0.0's SHA256SUMS has no line for {name}"))
+        elif not (rel / name).is_file() or sha256_file(rel / name) != lines[name]:
+            out.append(("FAIL", f"{name} differs from v1.0.0's SHA256SUMS line (not the v1.0.0 bytes)"))
+    nokeys = read_kv(repo / "core" / "PIN-nokeys")
+    names = inherited_names(pin)
+    pins = [(names[2], nokeys.get("SRC_SHA256", ""), "core/PIN-nokeys"), (names[3], md_sha(read_text(repo / "core" / "OPENSSL.md")), "core/OPENSSL.md"),
+            (names[4], mkrelease_pin(repo, "SNAP_SHA"), "mkrelease.sh SNAP_SHA"),
+            (names[1], sha256_file(repo / "NOTICES.md") if (repo / "NOTICES.md").is_file() else "", "the repo's NOTICES.md")]
+    fetch = read_text(repo / "tools" / "fetch.sh")
+    values = dict(re.findall(r"^([A-Z_]+)=(\S+)$", fetch, re.M))
+    pins += [(names[0], values.get("LAZPY_CORE_SHA", ""), "fetch.sh LAZPY_CORE_SHA"), (names[5], values.get("TESTAPP_SHA", ""), "fetch.sh TESTAPP_SHA")]
+    for name, want, label in pins:
+        if not (rel / name).is_file() or not want or sha256_file(rel / name) != want:
+            out.append(("FAIL", f"{name} does not match {label}"))
+    return out
+
+
+def read_text(path: Path) -> str:
+    return path.read_text(errors="replace") if path.is_file() else ""
+
+
+def mkrelease_pin(repo: Path, name: str) -> str:
+    found = re.search(rf"^{name}=([0-9a-f]{{64}})", read_text(repo / "tools" / "mkrelease.sh"), re.M)
+    return found.group(1) if found else ""
+
+
+def assets_findings_v11(rel: Path, names: list[str], pin: dict[str, str]) -> Items:
+    have = sorted(p.name for p in rel.iterdir())
+    if have != names:
+        return [("FAIL", f"asset set differs: extra {sorted(set(have) - set(names))}, missing {sorted(set(names) - set(have))}")]
+    out: Items = []
+    sums = parse_sums((rel / "SHA256SUMS").read_text())
+    if set(sums) != set(names) - {"SHA256SUMS"}:
+        out.append(("FAIL", "SHA256SUMS lists a different file set"))
+    for name, digest in sums.items():
+        if not (rel / name).is_file() or sha256_file(rel / name) != digest:
+            out.append(("FAIL", f"SHA256SUMS does not match {name}"))
+    out += zip_findings(asset(rel, "mac", "zip"))
+    with zipfile.ZipFile(asset(rel, "win", "zip")) as archive:
+        members = sorted(archive.namelist())
+        licence = archive.read("LICENSE").decode(errors="replace").splitlines()[:2] if "LICENSE" in members else []
+    if members != ZIP_NAMES_WIN:
+        out.append(("FAIL", f"Windows zip members are {members}"))
+    if not licence or "GNU GENERAL PUBLIC LICENSE" not in licence[0] or "Version 3" not in licence[1]:
+        out.append(("FAIL", "the Windows zip's LICENSE is not the GPLv3 text"))
+    return out
+
+
+def gate_f2_findings(text: str, dll_sha: str, inputs: dict[str, str]) -> Items:
+    """Shared contract 1: every line once and in order, no FAIL line, END last, and the three bindings."""
+    out: Items = []
+    if "\r" in text or not text.endswith("\n"):
+        out.append(("FAIL", "gate_f2.txt must be LF text ending in a newline"))
+    lines = text.rstrip("\n").split("\n")
+    for line in lines:
+        if line.startswith("FAIL "):
+            out.append(("FAIL", f"gate_f2.txt has a FAIL line: {line[:100]}"))
+    if out:
+        return out
+    if len(lines) != len(GATE_F2_LINES):
+        return [("FAIL", f"gate_f2.txt has {len(lines)} lines, expected {len(GATE_F2_LINES)}")]
+    counts: list[tuple[str, ...]] = []
+    for number, (line, pattern) in enumerate(zip(lines, GATE_F2_LINES), 1):
+        found = re.fullmatch(pattern, line)
+        if not found:
+            out.append(("FAIL", f"gate_f2.txt line {number} is not '{pattern}' (out of order, missing or repeated)"))
+        counts.append(found.groups() if found else ())
+    if out:
+        return out
+    if lines[-1] != "END":
+        out.append(("FAIL", "gate_f2.txt does not end with END"))
+    if int(counts[8][0]) < 1 or int(counts[8][1]) < 1:
+        out.append(("FAIL", f"gate_f2.txt window search read arrays={counts[8][0]} windows={counts[8][1]}: both must be at least 1"))
+    if int(counts[6][0]) < 1000:
+        out.append(("FAIL", f"gate_f2.txt read {counts[6][0]} .o.d files, at least 1000 are needed"))
+    values = dict(line.split("=", 1) for line in lines if "=" in line and not line.startswith("PASS"))
+    if values.get("core_sha256") != dll_sha:
+        out.append(("FAIL", "gate_f2.txt core_sha256 is not the sha256 of the DLL in the Windows zip"))
+    if values.get("head") != inputs.get("head"):
+        out.append(("FAIL", "gate_f2.txt head differs from build.inputs head="))
+    if values.get("image") != inputs.get("image"):
+        out.append(("FAIL", "gate_f2.txt image differs from build.inputs image="))
+    return out
+
+
+def windows_openssl_findings(inputs: dict[str, str], md_text: str, inherited: Path) -> Items:
+    got = inputs.get("openssl_src_sha256", "")
+    out: Items = []
+    if not got:
+        return [("FAIL", "build.inputs has no openssl_src_sha256=")]
+    if got != md_sha(md_text):
+        out.append(("FAIL", "build.inputs openssl_src_sha256 differs from core/OPENSSL.md's"))
+    if not inherited.is_file() or got != sha256_file(inherited):
+        out.append(("FAIL", "build.inputs openssl_src_sha256 differs from the inherited openssl tarball's"))
+    return out
+
+
+def openssl_v11_findings(staged: Path, md_text: str, version: str, md_version: str) -> Items:
+    out: Items = []
+    if md_sha(md_text) != sha256_file(staged):
+        out.append(("FAIL", "the staged OpenSSL asset differs from core/OPENSSL.md's sha256"))
+    if not (staged.name == f"openssl-{version}.tar.gz" and f"Version: {version}" in md_text and md_version == version):
+        out.append(("FAIL", "the OpenSSL pin, the tarball name and core/OPENSSL.md disagree"))
+    return out
+
+
+def build_member_findings(members: list[str], listed: list[str]) -> Items:
+    """The build-files tar's member list against tools/build-files.txt (shared contract 2)."""
+    names = {m.rstrip("/") for m in members}
+    names.discard("libazahar-py-core-build")
+    names = {n[len("libazahar-py-core-build/"):] if n.startswith("libazahar-py-core-build/") else n for n in names}
+    out: Items = []
+    if listed != sorted(listed) or len(set(listed)) != len(listed) or "" in listed:
+        out.append(("FAIL", "tools/build-files.txt is not sorted, unique and free of blank lines"))
+    missing = sorted(BUILD_FILES_REQUIRED - set(listed))
+    if missing:
+        out.append(("FAIL", f"tools/build-files.txt lacks {missing}"))
+    for path in listed:
+        if not any(n == path or n.startswith(path + "/") for n in names):
+            out.append(("FAIL", f"the build-files asset lacks {path} (tools/build-files.txt lists it)"))
+    parents = {"/".join(p.split("/")[:i]) for p in listed for i in range(1, len(p.split("/")))}
+    for name in sorted(names):
+        if name and not any(name == p or name.startswith(p + "/") for p in listed) and name not in parents:
+            out.append(("FAIL", f"the build-files asset holds {name}, which tools/build-files.txt does not list"))
+    return out
+
+
+def build_files_v11_check(rel: Path, repo: Path) -> Items:
+    raw = read_text(repo / "tools" / "build-files.txt")
+    if not raw or "" in raw.rstrip("\n").split("\n"):
+        return [("FAIL", "tools/build-files.txt is missing, empty or has a blank line")]
+    listed = raw.rstrip("\n").split("\n")
+    win = asset(rel, "win", "build")
+    with tarfile.open(win) as archive:
+        members = archive.getnames()
+    out = build_member_findings(members, listed)
+    fresh = run(["git", "-C", str(repo), "archive", "--format=tar.gz", "--prefix=libazahar-py-core-build/", "HEAD", *listed]).stdout
+    if fresh != win.read_bytes():
+        out.append(("FAIL", "the build-files asset differs from a fresh git archive of HEAD over tools/build-files.txt"))
+    dirty = git(repo, "status", "--porcelain", "--", *listed).splitlines()
+    if dirty:
+        out.append(("PEND", "not committed yet: " + ", ".join(line[3:] for line in dirty)))
+    return out
+
+
+def source_md_v11_findings(text: str, names: list[str]) -> Items:
+    return [("FAIL", f"SOURCE.md does not name {name}") for name in names if name != "SHA256SUMS" and name not in text]
+
+
+def windows_notices_findings(text: str) -> Items:
+    out: Items = [("FAIL", f"NOTICES-windows-x64.md lacks: {p}") for p in WIN_NOTICE_PHRASES if p not in text]
+    out += [("FAIL", f"NOTICES-windows-x64.md lacks the verbatim licence text (marker: {m})") for m in WIN_LICENCE_MARKERS if m not in text]
+    if len(text) < WIN_NOTICES_MIN_CHARS:
+        out.append(("FAIL", f"NOTICES-windows-x64.md is only {len(text)} characters: the two runtime licence files are not in it whole"))
+    out += [("FAIL", f"NOTICES-windows-x64.md mentions {w}: the Windows build neither ships nor fetches it") for w in WIN_NOTICE_REJECT if w in text]
+    if WIN_NOTICE_FETCH_RE.search(text):
+        out.append(("FAIL", "NOTICES-windows-x64.md says fetch.sh fetches Vulkan: it does not on Windows"))
+    if "Nintendo's" in text:
+        out.append(("FAIL", "NOTICES-windows-x64.md says \"Nintendo's\""))
+    return out
+
+
+def norm_ws(text: str) -> str:
+    return re.sub(r"\s+", " ", text)
+
+
+def windows_wording_findings(status: str, notes: str, readme: str, using: str = "", openssl_md: str = "") -> Items:
+    """The Windows twin of wording_findings: STATUS and the release notes hold W6's pieces, the README holds two.
+    USING.md and core/OPENSSL.md are only scanned for placeholders (they hold some until W5 and W7 fill them)."""
+    out: Items = []
+    texts = {"STATUS.md": norm_ws(status), "release notes": norm_ws(notes), "README.md": norm_ws(readme)}
+    for name in ("STATUS.md", "release notes"):
+        out += [("FAIL", f"{name} lacks '{piece}'") for piece in WIN_PIECES if piece not in texts[name]]
+    for piece in ("proven on one PC", "A GPU driver with Vulkan is required"):
+        if piece not in texts["README.md"]:
+            out.append(("FAIL", f"README.md lacks '{piece}'"))
+    for name, text in texts.items():
+        out += [("FAIL", f"{name} holds '{bad}'") for bad in WIN_REJECT if bad in text]
+        out += [("PEND", f"{name} still holds the placeholder {mark}") for mark in PLACEHOLDERS if mark in text]
+    for name, text in (("docs/USING.md", using), ("core/OPENSSL.md", openssl_md)):
+        out += [("PEND", f"{name} still holds the placeholder {mark}") for mark in PLACEHOLDERS if mark in norm_ws(text)]
+    return out
+
+
+def strings_py(data: bytes) -> str:
+    """The printable ASCII and UTF-16LE strings of a binary (there is no strings tool on the PC)."""
+    ascii_runs = re.findall(rb"[\x20-\x7e]{4,}", data)
+    wide_runs = re.findall(rb"(?:[\x20-\x7e]\x00){4,}", data)
+    return "\n".join(r.decode("ascii") for r in ascii_runs) + "\n" + "\n".join(r.decode("utf-16le") for r in wide_runs)
+
+
+def private_texts_v11(rel: Path, repo: Path, pin: dict[str, str]) -> dict[str, str]:
+    texts: dict[str, str] = {}
+    for platform, dll in (("mac", "azahar_lazpy_libretro.dylib"), ("win", "azahar_lazpy_libretro.dll")):
+        with zipfile.ZipFile(asset(rel, platform, "zip")) as archive:
+            for name in archive.namelist():
+                data = archive.read(name)
+                texts[f"zip-{platform}:{name}" if name != dll else f"{platform} core strings"] = (
+                    strings_py(data) if name == dll else data.decode(errors="replace"))
+    for platform in ("mac", "win"):
+        with tarfile.open(asset(rel, platform, "build")) as build:
+            for member in build.getmembers():
+                if member.isfile():
+                    texts[f"build-files-{platform}:{member.name}"] = build.extractfile(member).read().decode(errors="replace")  # type: ignore[union-attr]
+    texts["testapp strings"] = strings_py((rel / "testapp.3dsx").read_bytes())
+    for name in ("NOTICES.md", "NOTICES-windows-x64.md", "SOURCE.md"):
+        texts[name] = (rel / name).read_text(errors="replace")
+    for name in ("release notes",):
+        notes = repo / "docs" / "release-notes" / f"{rel.name}.md"
+        if notes.is_file():
+            texts[name] = notes.read_text(errors="replace")
+    return texts
+
+
+def pins_v11_findings(fetch_text: str, win_zip: str, win_sha: str, inherit: str, skip_pins: bool) -> Items:
+    values = dict(re.findall(r"^([A-Z_]+)=(\S+)$", fetch_text, re.M))
+    out: Items = []
+    if values.get("REL_TAG_PREV") != inherit:
+        out.append(("FAIL", f"fetch.sh REL_TAG_PREV is {values.get('REL_TAG_PREV')}, expected {inherit}"))
+    if values.get("LAZPY_CORE_ZIP_WIN") != win_zip:
+        out.append(("FAIL", "fetch.sh LAZPY_CORE_ZIP_WIN names another zip"))
+    if skip_pins:
+        return out + [("SKIP", "Windows pin: --skip-pins")]
+    if values.get("LAZPY_CORE_SHA_WIN", "TBD").startswith("TBD"):
+        out.append(("PEND", "fetch.sh LAZPY_CORE_SHA_WIN is TBD (the main loop sets it in W7)"))
+    elif values.get("LAZPY_CORE_SHA_WIN") != win_sha:
+        out.append(("FAIL", "fetch.sh LAZPY_CORE_SHA_WIN differs from the staged Windows zip"))
+    return out
+
+
+def run_checks_v11(ctx: "Ctx", tmp: Path) -> list[tuple[str, Items]]:
+    """Every check of a v1.1.0 release, each guarded so a missing or doubled asset is a FAIL of that check."""
+    args, repo, rel, pin = ctx.args, ctx.repo, ctx.rel, ctx.pin
+    runtime = not args.no_runtime_source
+    results: list[tuple[str, Items]] = []
+
+    def guard(name: str, fn) -> None:  # type: ignore[no-untyped-def]
+        try:
+            results.append((name, fn()))
+        except AssetError as error:
+            results.append((name, [("FAIL", str(error))]))
+
+    win_zip = asset(rel, "win", "zip")
+    with zipfile.ZipFile(win_zip) as archive:
+        win_inputs_text = archive.read("build.inputs").decode(errors="replace")
+        win_dll = archive.read("azahar_lazpy_libretro.dll")
+    inputs_path = tmp / "win-build.inputs"
+    inputs_path.write_text(win_inputs_text)
+    inputs = read_kv(inputs_path)
+    texts = private_texts_v11(rel, repo, pin)
+    needles = load_needles(os.environ.get("LAZ_PRIVATE_NEEDLES"))
+    mac_notices = texts["NOTICES.md"]
+    allowed = frozenset(a for a in EMAIL_RE.findall(mac_notices) if a.lower().endswith("@gmail.com"))
+    names = expected_assets_v11(pin, rel.name, runtime)
+
+    guard("1 assets", lambda: assets_findings_v11(rel, names, pin))
+    try:
+        sums = load_inherit_sums(args)
+        guard("1b inherit", lambda: inherit_findings(sums, rel, pin, repo))
+    except OSError as error:
+        results.append(("1b inherit", [("SKIP", f"v1.0.0's SHA256SUMS could not be read: {error}")]))
+    if args.gate_f2:
+        guard("2 gate_f2", lambda: gate_f2_findings(Path(args.gate_f2).read_text(), sha256_bytes(win_dll), inputs))
+    else:
+        results.append(("2 gate_f2", [("SKIP", "--gate-f2 FILE not given: the Windows keyblob check did not run")]))
+    results.append(("2 keyblob (macOS)", [("NOTE", "inherited from v1.0.0: the macOS core is the v1.0.0 bytes (see 1b)")]))
+    dll_strings = texts["win core strings"]
+    results.append(("3-5 binary", ([("NOTE", "macOS exports, version and linkage: inherited from v1.0.0 (see 1b)")]
+                                   + version_findings(dll_strings))))
+    guard("6 openssl", lambda: openssl_v11_findings(rel / f"openssl-{pin['OPENSSL_VERSION']}.tar.gz", ctx.openssl_md,
+                                                    pin["OPENSSL_VERSION"], pin["OPENSSL_VERSION"])
+          + windows_openssl_findings(inputs, ctx.openssl_md, rel / f"openssl-{pin['OPENSSL_VERSION']}.tar.gz"))
+    results.append(("7 private", private_findings(texts, needles, True, allowed)))
+    win_notices = (rel / "NOTICES-windows-x64.md").read_bytes()
+    guard("8 notices", lambda: ([] if zip_member(asset(rel, "win", "zip"), "NOTICES.md") == win_notices
+                                else [("FAIL", "the Windows zip's NOTICES.md differs from NOTICES-windows-x64.md")])
+          + windows_notices_findings(win_notices.decode(errors="replace"))
+          + ([] if sha256_file(rel / "NOTICES.md") == sha256_file(repo / "NOTICES.md")
+             else [("FAIL", "NOTICES.md is not the repo's (the v1.0.0 bytes)")]))
+    results.append(("9 source", source_md_v11_findings(texts["SOURCE.md"], names)))
+    guard("10 build-files", lambda: build_files_v11_check(rel, repo))
+    fetch = ctx.fetch_text
+    zip_name = asset(rel, "mac", "zip").name
+    results.append(("11 pins", pins_findings(fetch, zip_name, sha256_file(asset(rel, "mac", "zip")), sha256_file(rel / "testapp.3dsx"),
+                                             rel.name, args.skip_pins)
+                    + pins_v11_findings(fetch, win_zip.name, sha256_file(win_zip), args.inherit, args.skip_pins)))
+    results.append(("12 repo", repo_paths_findings(repo) + repo_content_findings(repo) + repo_identity_findings(repo)
+                    + needle_history_findings(repo, needles)))
+    if (repo / SRC_REL).is_dir():
+        windows, bad = make_windows(repo)
+        results.append(("13 history-bytes", bad + ([] if bad else history_bytes_findings(repo, windows))))
+    else:
+        results.append(("13 history-bytes", [("NOTE", "not run here: the reading copy of Azahar's key headers is not on this machine; "
+                                                       "v1.0.0's history was checked at v1.0.0 and the CI leak check covers the artifacts")]))
+    pyproject = Path(args.pyproject) if args.pyproject else repo / "pyproject.toml"
+    results.append(("14 versions", versions_findings(pyproject.read_text(), (repo / "python/libazahar/__init__.py").read_text(), rel.name)))
+    if args.pre_push:
+        results.append(("15 pre-push", pre_push_findings(repo, texts.get("release notes", ""))))
+    readme = read_text(repo / "README.md")
+    results.append(("16 macos", [("NOTE", "binary parts (minos, arch of the dylibs): inherited from v1.0.0 (see 1b)")] + wording_findings(texts)
+                    + ([] if "macOS 15 or later" in readme else [("FAIL" if args.pre_push else "NOTE", "README.md lacks 'macOS 15 or later'")])))
+    results.append(("16 windows", windows_wording_findings(read_text(repo / "STATUS.md"), texts.get("release notes", ""), readme,
+                                                                read_text(repo / "docs" / "USING.md"), ctx.openssl_md)))
+    return results
+
+
+def link_or_copy(src: Path, dst: Path) -> None:
+    try:
+        os.link(src, dst)
+    except OSError:
+        shutil.copy2(src, dst)
+
+
+def plant_cases_v11(ctx: "Ctx", tmp: Path) -> list[tuple[str, bool]]:
+    """One plant per new v1.1.0 check; each must fail on its own reason."""
+    rel, repo, pin = ctx.rel, ctx.repo, ctx.pin
+    results: list[tuple[str, bool]] = []
+    names = expected_assets_v11(pin, rel.name, not ctx.args.no_runtime_source)
+    shadow = tmp / "shadow"
+    shadow.mkdir()
+    for path in rel.iterdir():
+        link_or_copy(path, shadow / path.name)
+    (shadow / "STRAY.bin").write_bytes(b"x")
+    results.append(planted("1 assets (stray file)", assets_findings_v11(shadow, names, pin), "asset set differs"))
+    third = tmp / "third"
+    third.mkdir()
+    for path in rel.iterdir():
+        link_or_copy(path, third / path.name)
+    link_or_copy(asset(rel, "win", "zip"), third / "azahar_lazpy_libretro-extra-windows-x64.zip")
+    try:
+        asset(third, "win", "zip")
+        third_items: Items = []
+    except AssetError as error:
+        third_items = [("FAIL", str(error))]
+    results.append(planted("1 assets (a third zip)", third_items, "exactly one"))
+    plant_doubled_asset(ctx, tmp, results)
+    sums = tmp / "sums"
+    sums.write_bytes(b"0" * 64 + b"  NOTICES.md\n")
+    results.append(planted("1b inherit (bad SHA256SUMS digest)", inherit_findings(sums.read_bytes(), rel, pin, repo), "pinned digest"))
+    listed = [line for line in read_text(repo / "tools" / "build-files.txt").split("\n") if line]
+    with tarfile.open(asset(rel, "win", "build")) as archive:
+        members = [m for m in archive.getnames() if not m.endswith(".github/workflows/core-win64.yml")]
+    results.append(planted("10 build-files (no workflow)", build_member_findings(members, listed),
+                           "lacks .github/workflows/core-win64.yml"))
+    with tarfile.open(asset(rel, "win", "build")) as archive:
+        extra = archive.getnames() + ["libazahar-py-core-build/tools/stray.sh"]
+    results.append(planted("10 build-files (unlisted member)", build_member_findings(extra, listed), "does not list"))
+    good_head, good_image = "a" * 40, "ubuntu:26.04@sha256:" + "b" * 64
+    dll_sha = "c" * 64
+    body = ["gate_f2 1 target=win64", f"head={good_head}", f"image={good_image}", "core=azahar_lazpy_libretro.dll",
+            f"core_sha256={dll_sha}", "PASS droplist cmake", "PASS deps files=1200", "PASS fresh",
+            "PASS window arrays=3 windows=500 hits=0", "PASS pe machine=x86-64", "PASS imports n=10", "END"]
+    gi = {"head": good_head, "image": good_image}
+    assert not gate_f2_findings("\n".join(body) + "\n", dll_sha, gi), "the planted gate_f2 baseline must pass"
+    failed = [("FAIL window arrays=3 windows=500 hits=2" if line.startswith("PASS window") else line) for line in body]
+    results.append(planted("2 gate_f2 (a FAIL line)", gate_f2_findings("\n".join(failed) + "\n", dll_sha, gi), "FAIL line"))
+    empty = [("PASS window arrays=0 windows=500 hits=0" if line.startswith("PASS window") else line) for line in body]
+    results.append(planted("2 gate_f2 (arrays=0)", gate_f2_findings("\n".join(empty) + "\n", dll_sha, gi), "both must be at least 1"))
+    empty = [("PASS window arrays=3 windows=0 hits=0" if line.startswith("PASS window") else line) for line in body]
+    results.append(planted("2 gate_f2 (windows=0)", gate_f2_findings("\n".join(empty) + "\n", dll_sha, gi), "both must be at least 1"))
+    results.append(planted("2 gate_f2 (core sha differs)", gate_f2_findings("\n".join(body) + "\n", "d" * 64, gi), "core_sha256"))
+    swapped = body[:5] + [body[6], body[5]] + body[7:]
+    results.append(planted("2 gate_f2 (lines out of order)", gate_f2_findings("\n".join(swapped) + "\n", dll_sha, gi), "out of order"))
+    results.append(planted("2 gate_f2 (head differs)", gate_f2_findings("\n".join(body) + "\n", dll_sha, {**gi, "head": "e" * 40}), "head differs"))
+    good_sha = md_sha(ctx.openssl_md)
+    results.append(planted("6 openssl (src sha differs)", windows_openssl_findings({"openssl_src_sha256": "0" * 64}, ctx.openssl_md,
+                                                                                    rel / f"openssl-{pin['OPENSSL_VERSION']}.tar.gz"),
+                           "openssl_src_sha256 differs from core/OPENSSL.md"))
+    results.append(planted("6 openssl (no src sha)", windows_openssl_findings({}, ctx.openssl_md, rel / "x"), "no openssl_src_sha256"))
+    assert good_sha, "core/OPENSSL.md has no source sha"
+    status = "\n".join(WIN_PIECES)
+    results.append(planted("16 windows (a piece missing)", windows_wording_findings(status.replace("RTX 3060", ""), status, "proven on one PC. A GPU driver with Vulkan is required"),
+                           "lacks 'RTX 3060'"))
+    results.append(planted("16 windows (rejected phrase)", windows_wording_findings(status, status + " work in progress, not proven",
+                                                                                    "proven on one PC. A GPU driver with Vulkan is required"),
+                           "holds 'work in progress, not proven'"))
+    pages = ("proven on one PC. A GPU driver with Vulkan is required",)
+    for where, kwargs in (("docs/USING.md", {"using": "path <from W7> here"}), ("core/OPENSSL.md", {"openssl_md": "TO BE FILLED from the first CI run"}),
+                          ("docs/USING.md", {"using": "path <OPENSSLDIR from build.inputs> here"})):
+        found = windows_wording_findings(status, status, pages[0], **kwargs)  # type: ignore[arg-type]
+        results.append(planted(f"16 windows (placeholder in {where}: {kwargs[next(iter(kwargs))][:12]})", [("FAIL", m) for k, m in found if k == "PEND"],
+                               f"{where} still holds the placeholder"))
+    assert not windows_wording_findings(status, status, pages[0]), "the placeholder baseline must pass"
+    results.append(planted("8 notices (Windows phrase missing)", windows_notices_findings("The OpenSSL Project Authors"), "lacks: mingw-w64"))
+    good_notices = " ".join(WIN_NOTICE_PHRASES + WIN_LICENCE_MARKERS) + " " + "x" * WIN_NOTICES_MIN_CHARS
+    assert not windows_notices_findings(good_notices), "the good Windows notices stand-in must pass"
+    results.append(planted("8 notices (runtime licence text missing)", windows_notices_findings(good_notices.replace("Lockless Inc", "")), "verbatim licence text"))
+    results.append(planted("8 notices (too short)", windows_notices_findings(" ".join(WIN_NOTICE_PHRASES + WIN_LICENCE_MARKERS)), "characters"))
+    results.append(planted("8 notices (fetch.sh Vulkan)", windows_notices_findings(good_notices + " fetch.sh fetches Vulkan"), "fetches Vulkan"))
+    results.append(planted("8 notices (MoltenVK)", windows_notices_findings(good_notices + " MoltenVK"), "mentions MoltenVK"))
+    fetch = ctx.fetch_text
+    sha_plant = re.sub(r"^LAZPY_CORE_SHA_WIN=\S+", "LAZPY_CORE_SHA_WIN=" + "0" * 64, fetch, flags=re.M)
+    results.append(planted("11 pins (Windows sha)", pins_v11_findings(sha_plant, asset(rel, "win", "zip").name,
+                                                                      sha256_file(asset(rel, "win", "zip")), ctx.args.inherit, False),
+                           "LAZPY_CORE_SHA_WIN differs"))
+    results.append(planted("7 private (/Users/)", private_findings({"SOURCE.md": "see /Users/x/y"}, [], False), "/Users/"))
+    plants_private_paths(results)
+    results.append(planted("7 private (needle)", private_findings({"win core strings": "xx secretword yy"},
+                                                                  [(1, re.compile("secretword"))], False), "hits needle line 1"))
+    plant12 = temp_git_repo(tmp, "p12", {".github/FUNDING.yml": "x\n"})
+    results.append(planted("12 repo (FUNDING.yml)", repo_paths_findings(plant12), "FUNDING.yml"))
+    results.append(planted("14 versions", versions_findings('version = "0.1.0.dev0"', '__version__ = "0.1.0.dev0"', rel.name), "pyproject version"))
+    results.append(planted("16 macos (wording)", wording_findings({"release notes": "ok", "SOURCE.md": "no wording here"}),
+                           "lacks 'macOS 15 or later'"))
+    return results
+
+
 # ------------------------------------------------------------------------------------------- 17 plants
+def plants_private_paths(results: list[tuple[str, bool]]) -> None:
+    """One plant per Windows, Linux, MSYS2, WSL and CI path form (R3-5); each must fail on its own label."""
+    for number, (label, text) in enumerate(PRIVATE_PLANTS, 1):
+        results.append(planted(f"7 private ({label}, {number})", private_findings({"SOURCE.md": text}, [], False), f"holds a {label}"))
+
+
+def plant_doubled_asset(ctx: "Ctx", tmp: Path, results: list[tuple[str, bool]]) -> None:
+    """A second macOS zip: building the Ctx must raise AssetError, which main turns into 'FAIL 1 assets' (R3-4)."""
+    doubled = tmp / "doubled"
+    doubled.mkdir()
+    for path in ctx.rel.iterdir():
+        link_or_copy(path, doubled / path.name)
+    link_or_copy(ctx.zip_path, doubled / "azahar_lazpy_libretro-extra-macos-arm64.zip")
+    try:
+        Ctx(argparse.Namespace(**{**vars(ctx.args), "dir": str(doubled)}))
+        items: Items = []
+    except AssetError as error:
+        items = [("FAIL", str(error))]
+    results.append(planted("1 assets (a doubled macOS zip in Ctx)", items, "exactly one"))
+
+
 def planted(name: str, items: Items, expect: str) -> tuple[str, bool]:
     """True when the check failed with the finding the plant should provoke (not just any FAIL)."""
     return name, any(kind == "FAIL" and expect in msg for kind, msg in items)
@@ -762,6 +1307,7 @@ def plants_text(ctx: "Ctx", tmp: Path, results: list[tuple[str, bool]], array: b
     notices = (repo / "NOTICES.md").read_text(errors="replace")
     allowed = allowed_addresses(repo, notices)
     results.append(planted("7 private (/Users/)", private_findings({"SOURCE.md": "see /Users/x/y"}, [], False), "/Users/"))
+    plants_private_paths(results)
     results.append(planted("7 private (foreign gmail address)", private_findings(
         {"NOTICES.md": notices + "\ncontact: nobody.x@gmail.com\n"}, [], False, allowed), "@gmail.com"))
     results.append(planted("8 notices", notices_phrase_findings(notices.replace("SIL OPEN FONT LICENSE Version 1.1", "REMOVED")),
@@ -789,6 +1335,7 @@ def plant_cases(ctx: "Ctx", tmp: Path) -> list[tuple[str, bool]]:
     array = gate_f2._header_bytes(ctx.repo / SRC_REL, *gate_f2.KEY_ARRAYS[1])
     results: list[tuple[str, bool]] = []
     plants_assets(ctx, tmp, results)
+    plant_doubled_asset(ctx, tmp, results)
     plants_binary(ctx, tmp, results, array)
     plants_text(ctx, tmp, results, array)
     return results
@@ -804,8 +1351,8 @@ class Ctx:
         self.repo = Path(args.repo).resolve() if args.repo else Path(__file__).resolve().parents[1]
         self.pin = read_kv(self.repo / "core" / "PIN")
         self.inputs_path = Path(args.inputs) if args.inputs else self.repo / "build-core" / "build.inputs"
-        self.inputs = read_kv(self.inputs_path)
-        self.zip_path = next(self.rel.glob("azahar_lazpy_libretro-*.zip"))
+        self.inputs = read_kv(self.inputs_path) if self.inputs_path.is_file() else {}
+        self.zip_path = asset(self.rel, "mac", "zip")
         self.zip_name = self.zip_path.name
         self.zip_sha = sha256_file(self.zip_path)
         self.app_sha = sha256_file(self.rel / "testapp.3dsx")
@@ -887,20 +1434,37 @@ def main(argv: list[str]) -> int:
     ap.add_argument("--skip-pins", action="store_true")
     ap.add_argument("--pre-push", action="store_true")
     ap.add_argument("--plant-red", action="store_true")
-    for flag in ("nm-output", "otool-output", "strings-output", "link", "inputs", "fetch", "pyproject", "repo"):
+    ap.add_argument("--no-runtime-source", action="store_true")
+    for flag in ("nm-output", "otool-output", "strings-output", "link", "inputs", "fetch", "pyproject", "repo", "inherit", "gate-f2",
+                 "inherit-sums"):
         ap.add_argument("--" + flag)
     args = ap.parse_args(argv)
-    ctx = Ctx(args)
+    if args.inherit and args.inherit != INHERIT_TAG:
+        print(f"release_check: --inherit supports {INHERIT_TAG} only", file=sys.stderr)
+        return 2
     with tempfile.TemporaryDirectory(prefix="release_check.") as name:
         tmp = Path(name)
-        if args.plant_red:
-            prepare_binary(ctx, tmp)
-            caught = plant_cases(ctx, tmp)
-            for check, ok in caught:
-                print(f"{'PASS' if ok else 'FAIL'} plant {check}: {'failed on its plant' if ok else 'did NOT fail on its plant'}")
-            print("not planted: 10 build-files and 15 pre-push (they read this repo's git state)")
-            return 1 if all(ok for _c, ok in caught) else 2  # as docs_check.py: 1 = every plant failed its check
-        return report(run_checks(ctx, tmp), args.pre_push)
+        if args.inherit:
+            BUILD_TAG.update(mac=args.inherit, win=Path(args.dir).resolve().name)
+        try:
+            try:
+                ctx = Ctx(args)  # the asset lookups and the testapp hash live here: a missing or doubled file is a FAIL line
+            except OSError as error:
+                raise AssetError(f"{error.filename or 'a release file'}: {error.strerror or error}") from error
+            if args.plant_red:
+                if args.inherit:
+                    caught = plant_cases_v11(ctx, tmp)
+                else:
+                    prepare_binary(ctx, tmp)
+                    caught = plant_cases(ctx, tmp)
+                for check, ok in caught:
+                    print(f"{'PASS' if ok else 'FAIL'} plant {check}: {'failed on its plant' if ok else 'did NOT fail on its plant'}")
+                print("not planted: 10 build-files (fresh archive part) and 15 pre-push (they read this repo's git state)")
+                return 0 if all(ok for _c, ok in caught) else 2  # 0 = every plant failed on its own reason
+            return report(run_checks_v11(ctx, tmp) if args.inherit else run_checks(ctx, tmp), args.pre_push)
+        except AssetError as error:
+            print(f"FAIL 1 assets: {error}")
+            return 1
 
 
 if __name__ == "__main__":

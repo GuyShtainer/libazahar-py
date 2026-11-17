@@ -5,7 +5,9 @@ through the C one. The azhost cases run the real program: the input-script ones 
 need the emulator (slow tier)."""
 from __future__ import annotations
 
+import contextlib
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -39,10 +41,11 @@ def test_profile_case(name: str):
 
 
 def azhost(*args: str, cwd: Path = REPO, timeout: int = 300) -> subprocess.CompletedProcess:
-    exe = REPO / "build" / "azhost"
+    exe = REPO / "build" / ("azhost.exe" if sys.platform == "win32" else "azhost")
     if not exe.is_file():
-        pytest.skip("build/azhost is missing (run make)")
-    return subprocess.run(["nice", "-n", "10", str(exe), *args], cwd=cwd, capture_output=True, text=True,
+        pytest.skip(f"needs_core: build/{exe.name} is missing (run make)")
+    prefix = [] if sys.platform == "win32" else ["nice", "-n", "10"]
+    return subprocess.run([*prefix, str(exe), *args], cwd=cwd, capture_output=True, text=True,
                           timeout=timeout)
 
 
@@ -168,15 +171,30 @@ def test_cli_missing_seed_folder_exits_2(tmp_path: Path):
     assert "UsageError" in res.stderr, res.stderr
 
 
+@contextlib.contextmanager
+def _unreadable(path: Path):
+    """No reader can open ``path`` while inside: mode 0 on POSIX, an exclusive (share 0) handle on Windows."""
+    if sys.platform != "win32":
+        path.chmod(0)
+        try:
+            yield
+        finally:
+            path.chmod(0o600)
+        return
+    import _winapi
+    handle = _winapi.CreateFile(str(path), _winapi.GENERIC_READ, 0, 0, 3, 0x80, 0)     # OPEN_EXISTING, share 0
+    try:
+        yield
+    finally:
+        _winapi.CloseHandle(handle)
+
+
 def test_cli_seed_copy_failure_exits_6(tmp_path: Path):
     seed = tmp_path / "seed"
     seed.mkdir()
     (seed / "f").write_text("x")
-    (seed / "f").chmod(0)
-    try:
+    with _unreadable(seed / "f"):
         res = azhost(*run_args(tmp_path, "--sd-seed", str(seed)))
-    finally:
-        (seed / "f").chmod(0o600)
     assert res.returncode == 6, res.stderr
     assert "IOError" in res.stderr, res.stderr
 

@@ -9,7 +9,7 @@ from libazahar import _paths
 
 def test_default_core_is_ours(monkeypatch):
     monkeypatch.delenv("LAZ_CORE", raising=False)
-    assert str(_paths.core_path()).endswith("dl/lazpy-core/azahar_lazpy_libretro.dylib")
+    assert _paths.core_path().parts[-3:] == ("dl", "lazpy-core", f"azahar_lazpy_libretro{_paths.SUFFIX}")
 
 
 def test_laz_core_wins(monkeypatch, tmp_path):

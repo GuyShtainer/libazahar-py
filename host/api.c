@@ -1,17 +1,21 @@
 /* api.c: the azh_* functions: call-order checks, parameter checks, error text, setup and teardown. */
 #include <assert.h>
-#include <dlfcn.h>
 #include <pthread.h>
 #include <stdarg.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/resource.h>
 #include <sys/stat.h>
 #include <time.h>
 
 #include "azh_internal.h"
+#ifdef _WIN32
+#include "plat/win_compat.h"
+#else
+#include <dlfcn.h>
+#include <sys/resource.h>
+#endif
 
 azh_state azh_g;                    /* the one state struct */
 static char err_text[512];
@@ -626,7 +630,13 @@ int azh_set_input(const int32_t rec[AZH_INPUT_INTS])
 
 int azh_stats(struct azh_stats *out)
 {
+#ifdef _WIN32
+    double win_user = 0.0;
+    double win_sys = 0.0;
+    int64_t win_peak = 0;
+#else
     struct rusage ru;
+#endif
 
     assert(azh_g.abs_frames >= 0);
     if (azh_g.phase == AZH_PH_NONE) {
@@ -636,6 +646,16 @@ int azh_stats(struct azh_stats *out)
         return azh_fail(AZH_E_ARG, "azh_stats: out is NULL");
     }
     memset(out, 0, sizeof *out);
+#ifdef _WIN32
+    if (azh_win_proc_times(&win_user, &win_sys, &win_peak) != 0) {
+        return azh_fail(AZH_E_IO, "GetProcessTimes failed");
+    }
+    out->frames = azh_g.abs_frames;
+    out->wall_s = (azh_g.t_boot > 0.0) ? mono_s() - azh_g.t_boot : 0.0;
+    out->user_s = win_user;
+    out->sys_s = win_sys;
+    out->peak_rss = win_peak;
+#else
     if (getrusage(RUSAGE_SELF, &ru) != 0) {
         return azh_fail(AZH_E_IO, "getrusage failed");
     }
@@ -644,6 +664,7 @@ int azh_stats(struct azh_stats *out)
     out->user_s = (double)ru.ru_utime.tv_sec + (double)ru.ru_utime.tv_usec * 1e-6;
     out->sys_s = (double)ru.ru_stime.tv_sec + (double)ru.ru_stime.tv_usec * 1e-6;
     out->peak_rss = (int64_t)ru.ru_maxrss;       /* bytes on macOS */
+#endif
     snprintf(out->core_name, sizeof out->core_name, "%s", azh_g.core_name);
     snprintf(out->core_version, sizeof out->core_version, "%s", azh_g.core_version);
     out->is_lazpy_core = azh_g.is_lazpy;

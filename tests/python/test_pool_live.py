@@ -7,7 +7,6 @@ from __future__ import annotations
 import os
 import re
 import shutil
-import signal
 import subprocess
 import sys
 import threading
@@ -19,6 +18,7 @@ import pytest
 import d_helpers as dh
 import testapp_log as tl
 from libazahar import Emulator, Pool, _slots
+from proc_helpers import WIN, hard_kill
 
 pytestmark = pytest.mark.slow
 
@@ -33,7 +33,7 @@ def info(text: str) -> None:
 
 
 def load() -> str:
-    return f"load {os.getloadavg()[0]:.1f}"
+    return "load n/a (Windows)" if WIN else f"load {os.getloadavg()[0]:.1f}"
 
 
 @pytest.fixture
@@ -63,6 +63,17 @@ def gate_slots(monkeypatch, repo_root):
 
 
 def worker_nice(pid: int) -> int:
+    """The worker's nice value; on Windows 10 for the BELOW_NORMAL priority class the parent starts it in, else 0."""
+    if WIN:
+        import ctypes
+        kernel32 = ctypes.WinDLL("kernel32")
+        kernel32.OpenProcess.restype = ctypes.c_void_p
+        kernel32.GetPriorityClass.argtypes = [ctypes.c_void_p]
+        handle = kernel32.OpenProcess(0x1000, False, pid)        # PROCESS_QUERY_LIMITED_INFORMATION
+        try:
+            return 10 if kernel32.GetPriorityClass(handle) == 0x4000 else 0
+        finally:
+            kernel32.CloseHandle(ctypes.c_void_p(handle))
     done = subprocess.run(["ps", "-o", "nice=", "-p", str(pid)], capture_output=True, text=True, check=True)
     return int(done.stdout.strip())
 
@@ -100,7 +111,7 @@ def test_g1_g2_g4_cap_kill_and_nice(host_paths, workdir, seed, gate_slots):
         assert not (waiting / "slot.txt").exists() and not (waiting / "host.map").exists()
         killed = slot_txt(workdir / "i1")["slot"]
         t_kill = time.time()
-        os.kill(emus[1].pid, signal.SIGKILL)
+        hard_kill(emus[1].pid)
         thread.join(timeout=emus[0].boot_timeout + RUN_FRAMES)
         assert not thread.is_alive(), "the 4th never finished"
         assert "error" not in fourth, fourth.get("error")

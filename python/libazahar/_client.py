@@ -7,7 +7,6 @@ from __future__ import annotations
 
 import multiprocessing
 import os
-import signal
 import subprocess
 import sys
 import time
@@ -21,6 +20,7 @@ from .errors import GuestError, HostCrashed, HostError, HostTimeout, from_code
 
 __all__ = ["Wait", "WorkerClient", "worker_argv", "tail_lines"]
 
+_WIN = sys.platform == "win32"
 POLL_S = 0.1
 MAX_POLLS = 10 ** 9
 REAP_S = 5.0
@@ -39,9 +39,17 @@ class Wait:
     first_heartbeat: Optional[float] = None
 
 
+def worker_python() -> str:
+    """The interpreter a worker runs on. On Windows always the BASE python.exe (``sys._base_executable``), so a venv's
+    launcher stub never sits between the parent and the worker (one process, ``proc.pid`` is the worker's pid)."""
+    return getattr(sys, "_base_executable", None) or sys.executable if _WIN else sys.executable
+
+
 def worker_argv(child_fd: int, pkg_parent: Path) -> List[str]:
-    """argv of the real worker: ``python -I -c`` with an explicit package root (docs/plans/phase-2.md P3)."""
-    return [sys.executable, "-I", "-c", _WORKER_SNIPPET, str(child_fd), str(pkg_parent)]
+    """argv of the real worker: ``python -I -c`` with an explicit package root (docs/plans/phase-2.md P3). On Windows
+    ``-X utf8`` comes first, and ``child_fd`` is the pipe's HANDLE number."""
+    head = [worker_python(), "-X", "utf8"] if _WIN else [sys.executable]
+    return [*head, "-I", "-c", _WORKER_SNIPPET, str(child_fd), str(pkg_parent)]
 
 
 def tail_lines(path: Path, count: int = TAIL_LINES) -> str:
@@ -157,15 +165,37 @@ class WorkerClient:
             argv = [*argv, str(slot.fd)]
             fds = (child_fd, slot.fd)
         with open(self.err_path, "ab") as err_file:
+            if _WIN:
+                return self._popen_windows(argv, fds, err_file)
             return subprocess.Popen(argv, pass_fds=fds, stdin=subprocess.DEVNULL, stdout=err_file,
                                     stderr=err_file, env=self._env, cwd=self.workdir)
+
+    def _popen_windows(self, argv: List[str], handles: Tuple[int, ...], err_file: Any) -> subprocess.Popen:
+        """Windows spawn: the pipe and slot HANDLEs are made inheritable only now and reach the child through
+        ``PROC_THREAD_ATTRIBUTE_HANDLE_LIST`` alone (never ``bInheritHandles`` for everything). The caller closes its
+        copies right after (``spawn``)."""
+        for handle in handles:
+            os.set_handle_inheritable(handle, True)
+        info = subprocess.STARTUPINFO(lpAttributeList={"handle_list": list(handles)})
+        flags = subprocess.CREATE_NO_WINDOW | subprocess.BELOW_NORMAL_PRIORITY_CLASS
+        try:
+            return subprocess.Popen(argv, close_fds=True, startupinfo=info, creationflags=flags,
+                                    stdin=subprocess.DEVNULL, stdout=err_file, stderr=err_file, env=self._env,
+                                    cwd=self.workdir)
+        finally:
+            for handle in handles:
+                try:
+                    os.set_handle_inheritable(handle, False)
+                except OSError:
+                    pass
 
     def _write_slot_txt(self, slot: "_slots.Slot") -> None:
         """``slot.txt`` in the workdir: which slot the worker holds (written after Popen)."""
         assert self._proc is not None
         text = (f"slot={slot.index} pid={self._proc.pid} acquired={slot.acquired:.6f} "
                 f"waited_s={slot.waited_s:.3f}\n")
-        (self.workdir / "slot.txt").write_text(text)
+        with open(self.workdir / "slot.txt", "w", encoding="utf-8", newline="\n") as handle:
+            handle.write(text)
 
     # ---- request ----
     def request(self, op: str, args: Sequence[Any], wait: Wait, frame_before: int = 0) -> Tuple[str, Any]:
@@ -271,7 +301,7 @@ class WorkerClient:
             raise HostError(f"the guest exited during {op}: {message or 'no message'}")
         if code == _abi.AZH_EXIT_GUEST_ERROR:
             raise GuestError(message or "the guest stopped with a fatal error")
-        number = -code if code < 0 else None
+        number = -code if code < 0 else None        # Windows: always None (the code is unsigned, e.g. 0xC0000005)
         raise HostCrashed(code, number, message, tail_lines(self.log_path), tail_lines(self.err_path))
 
     # ---- close ----
@@ -295,10 +325,14 @@ class WorkerClient:
             self._map = None
         self._map_closed = True
 
-    def kill_own_worker(self, sig: int = signal.SIGKILL) -> None:
-        """Send a signal to our own worker (tests use it; never anything else's process)."""
+    def kill_own_worker(self, sig: Optional[int] = None) -> None:
+        """Kill our own worker (tests use it; never anything else's process). ``sig`` None is the hard kill: SIGKILL
+        on POSIX, TerminateProcess on Windows (``proc.kill()``); another signal number is POSIX only."""
         if self._proc is not None and self._proc.poll() is None:
-            os.kill(self._proc.pid, sig)
+            if sig is None:
+                self._proc.kill()
+            else:
+                os.kill(self._proc.pid, sig)
 
 
 def reap_process(proc: Optional[subprocess.Popen]) -> None:

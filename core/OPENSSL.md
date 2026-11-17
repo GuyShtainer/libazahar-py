@@ -54,3 +54,29 @@ make && make install_sw
 Then `LAZ_OPENSSL_PREFIX=<dir>` and `LAZ_CORE_PIN=core/PIN-nokeys tools/build-core.sh --build`. A core built that way
 links OpenSSL's code from the same source, but its `libssl.a` and `libcrypto.a` will not be byte-identical to the
 ones above.
+
+## Windows (x64) build
+
+The Windows core `azahar_lazpy_libretro.dll` links its own static OpenSSL 3.6.5, built from the same source tarball
+(`openssl-3.6.5.tar.gz`, sha256 `a2157c2830efdec3788939b00c9b0638306d3f0bbb76dc4832ee503bb397df98`, no patches).
+`tools/build-core-win64.sh` builds it, in CI, inside the pinned container named in `build.inputs` (`image=`).
+
+- Compiler: Ubuntu 26.04's mingw-w64 GCC with posix threads (`x86_64-w64-mingw32-gcc-posix`). The exact package
+  versions are the `mingw_pkg` lines in the release's `build.inputs`.
+- Configure line (also recorded as `openssl_configure` in `build.inputs`):
+
+```sh
+CC=gcc-posix ./Configure mingw64 no-shared no-tests no-ssl3 no-ssl3-method no-zlib --cross-compile-prefix=x86_64-w64-mingw32- --prefix=/opt/lazpy/openssl-3.6.5-mingw64 --openssldir="C:/Program Files/Common Files/SSL" --libdir=lib
+make -j build_libs
+make install_dev
+```
+
+- The source hash is recorded as `openssl_src_sha256` in `build.inputs`; the build refuses a tarball that does not
+  match the value in this file.
+- The two archives the link used (sha256, also in `build.inputs`): `libssl.a` `TO BE FILLED from the first CI run
+  (openssl_libssl_sha256)`, `libcrypto.a` `TO BE FILLED from the first CI run (openssl_libcrypto_sha256)`.
+- The `--openssldir` path is a Windows path, the compiled-in OPENSSLDIR. The guest's HTTPS looks for its CA file only
+  there, and OpenSSL 3 may try to load its default config from there. Nothing is shipped at that path.
+  The build records the OPENSSLDIR, ENGINESDIR and MODULESDIR strings found in the DLL in `build.inputs`.
+- Rebuilding: run the `core-win64` workflow, or follow the same steps in a mingw-w64 cross environment. Libraries
+  built elsewhere link the same OpenSSL code but will not be byte-identical.

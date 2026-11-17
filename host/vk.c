@@ -4,13 +4,23 @@
  * Sync rule for the readback (the core passes no semaphores): lock the queue mutex, wait for the queue to go idle,
  * barrier the image to TRANSFER_SRC, copy to the host buffer, barrier back, submit, wait idle, unlock. */
 #include <assert.h>
+#ifdef _WIN32
+#include "plat/win_compat.h"
+#else
 #include <dlfcn.h>
+#endif
+#include <errno.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "azh_internal.h"
 
+#ifdef _WIN32
+#define MVK_DEFAULT_PATH "vulkan-1.dll"
+#else
 #define MVK_DEFAULT_PATH "dl/moltenvk/MoltenVK/MoltenVK/dynamic/dylib/macOS/libMoltenVK.dylib"
+#endif
 #define MAX_GPUS 8u
 
 /* ---------- the proc tables, filled once, every entry checked ---------- */
@@ -200,7 +210,11 @@ static int open_loader(azh_vk *v)
     if (path == NULL || *path == '\0') {
         path = MVK_DEFAULT_PATH;
     }
+#ifdef _WIN32
+    v->dl = azh_win_dlopen(path, 1);                 /* the loader comes from system32 only */
+#else
     v->dl = dlopen(path, RTLD_NOW | RTLD_LOCAL);
+#endif
     if (v->dl == NULL) {
         const char *e = dlerror();
 
@@ -274,12 +288,136 @@ static int make_instance(azh_state *s)
     return load_instance_procs(v);
 }
 
+/* ---------- LAZ_VK_DEVICE: which physical device the core gets ---------- */
+
+#define DEV_NAME_MAX 256u      /* VK_MAX_PHYSICAL_DEVICE_NAME_SIZE */
+
+/* case-insensitive substring: 1 when needle is inside hay */
+static int contains_nocase(const char *hay, const char *needle)
+{
+    size_t hn;
+    size_t nn;
+    size_t i;
+    size_t j;
+
+    assert(hay != NULL && needle != NULL);
+    hn = strnlen(hay, DEV_NAME_MAX);
+    nn = strnlen(needle, DEV_NAME_MAX);
+    if (nn == 0u || nn > hn) {
+        return 0;
+    }
+    for (i = 0u; i + nn <= hn; i++) {
+        for (j = 0u; j < nn; j++) {
+            char a = hay[i + j];
+            char b = needle[j];
+
+            a = (a >= 'A' && a <= 'Z') ? (char)(a + ('a' - 'A')) : a;
+            b = (b >= 'A' && b <= 'Z') ? (char)(b + ('a' - 'A')) : b;
+            if (a != b) {
+                break;
+            }
+        }
+        if (j == nn) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+/* every device's name and type, by index; names stay empty when the proc is missing */
+static void read_device_props(azh_vk *v, const VkPhysicalDevice *gpus, uint32_t count, char names[][DEV_NAME_MAX],
+                              int *types)
+{
+    PFN_vkGetPhysicalDeviceProperties props_fn =
+        (PFN_vkGetPhysicalDeviceProperties)v->gipa(v->inst, "vkGetPhysicalDeviceProperties");
+    VkPhysicalDeviceProperties props;
+    uint32_t i;
+
+    assert(v != NULL && gpus != NULL && count <= MAX_GPUS);
+    for (i = 0u; i < count; i++) {
+        names[i][0] = '\0';
+        types[i] = -1;
+        if (props_fn != NULL) {
+            memset(&props, 0, sizeof props);
+            props_fn(gpus[i], &props);
+            (void)snprintf(names[i], DEV_NAME_MAX, "%s", props.deviceName);
+            types[i] = (int)props.deviceType;
+        }
+    }
+}
+
+/* 1 when s is one or more decimal digits and nothing else */
+static int digits_only(const char *s)
+{
+    assert(s != NULL);
+    if (*s == '\0') {
+        return 0;
+    }
+    for (; *s != '\0'; s++) {
+        if (*s < '0' || *s > '9') {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+/* "LAZ_VK_DEVICE=<index or name part>": the index into *dev, or an AZH_E_VULKAN error naming every device */
+static int pick_device(const char *want, uint32_t count, char names[][DEV_NAME_MAX], uint32_t *dev)
+{
+    char list[MAX_GPUS * (DEV_NAME_MAX + 8u)];
+    size_t used = 0u;
+    uint32_t i;
+
+    assert(want != NULL && dev != NULL && count >= 1u && count <= MAX_GPUS);
+    if (digits_only(want)) {                    /* one rule: digits only is always an index, never a name */
+        char *end = NULL;
+        unsigned long pick;
+
+        errno = 0;
+        pick = strtoul(want, &end, 10);
+        if (*end == '\0' && errno == 0 && pick < (unsigned long)count) {
+            *dev = (uint32_t)pick;
+            return AZH_OK;
+        }
+    } else {
+        for (i = 0u; i < count; i++) {
+            if (contains_nocase(names[i], want)) {
+                *dev = i;
+                return AZH_OK;
+            }
+        }
+    }
+    list[0] = '\0';
+    for (i = 0u; i < count && used < sizeof list - 1u; i++) {
+        int n = snprintf(list + used, sizeof list - used, "%s[%u] %s", i == 0u ? "" : ", ", (unsigned)i, names[i]);
+
+        used = (n > 0 && (size_t)n < sizeof list - used) ? used + (size_t)n : sizeof list - 1u;
+    }
+    return azh_fail(AZH_E_VULKAN, "LAZ_VK_DEVICE=%s matches no Vulkan device (%u found: %s)", want, (unsigned)count, list);
+}
+
+/* the choice, logged to host.log always and to stderr when LAZ_VK_DEVICE decided it or, with it unset, when more than
+   one device exists (the default gpus[0] may then be an iGPU) */
+static void report_device(uint32_t dev, uint32_t count, const char *name, int type, int explicit_pick)
+{
+    azh_log(AZH_LOG_INFO, "vulkan device: index=%u of %u name=\"%s\" type=%d%s", (unsigned)dev, (unsigned)count, name,
+            type, explicit_pick != 0 ? " (LAZ_VK_DEVICE)" : "");
+    if (explicit_pick != 0 || count > 1u) {
+        (void)fprintf(stderr, "vulkan device: index=%u of %u name=\"%s\"\n", (unsigned)dev, (unsigned)count, name);
+    }
+}
+
 static int make_device(azh_state *s)
 {
     azh_vk *v = &s->vk;
     const struct retro_hw_render_context_negotiation_interface_vulkan *n = &s->neg;
     VkPhysicalDevice gpus[MAX_GPUS];
+    char names[MAX_GPUS][DEV_NAME_MAX];
+    int types[MAX_GPUS];
     uint32_t count = MAX_GPUS;
+    uint32_t dev = 0u;                         /* unset: gpus[0], as before */
+    const char *want = getenv("LAZ_VK_DEVICE");
+    int explicit_pick = (want != NULL && *want != '\0') ? 1 : 0;
     bool ok = false;
 
     assert(v->inst != VK_NULL_HANDLE && v->fn.EnumeratePhysicalDevices != NULL);
@@ -287,11 +425,17 @@ static int make_device(azh_state *s)
     if (v->fn.EnumeratePhysicalDevices(v->inst, &count, gpus) < 0 || count == 0u) {
         return azh_fail(AZH_E_VULKAN, "no Vulkan physical device");
     }
+    memset(names, 0, sizeof names);            /* every byte defined: contains_nocase reads names[i][0..255] */
+    read_device_props(v, gpus, count, names, types);
+    if (explicit_pick != 0 && pick_device(want, count, names, &dev) != AZH_OK) {
+        return AZH_E_VULKAN;                   /* azh_fail already set the text; never a silent fallback */
+    }
+    report_device(dev, count, names[dev], types[dev], explicit_pick);
     memset(&v->ctx, 0, sizeof v->ctx);
     if (s->have_neg != 0 && n->interface_version >= 2u && n->create_device2 != NULL) {
-        ok = n->create_device2(&v->ctx, v->inst, gpus[0], VK_NULL_HANDLE, v->gipa, wrap_create_device, s);
+        ok = n->create_device2(&v->ctx, v->inst, gpus[dev], VK_NULL_HANDLE, v->gipa, wrap_create_device, s);
     } else if (s->have_neg != 0 && n->create_device != NULL) {
-        ok = n->create_device(&v->ctx, v->inst, gpus[0], VK_NULL_HANDLE, v->gipa, NULL, 0, NULL, 0, NULL);
+        ok = n->create_device(&v->ctx, v->inst, gpus[dev], VK_NULL_HANDLE, v->gipa, NULL, 0, NULL, 0, NULL);
     }
     if (!ok || v->ctx.device == VK_NULL_HANDLE || v->ctx.queue == VK_NULL_HANDLE) {
         return azh_fail(AZH_E_VULKAN, "the core's create_device failed or none was offered");

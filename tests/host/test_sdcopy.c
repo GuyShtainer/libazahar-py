@@ -1,5 +1,7 @@
 /* test_sdcopy.c: copy and clear of a folder tree. */
+#ifndef _WIN32
 #include <fts.h>
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -7,6 +9,7 @@
 #include <unistd.h>
 
 #include "azh_internal.h"
+#include "plat_test.h"
 #include "test_main.h"
 
 static char root[512];
@@ -55,6 +58,12 @@ static int same(const char *a, const char *b)
     return ok;
 }
 
+#ifdef _WIN32
+static void rm_all(void)
+{
+    (void)azh__clear_tree(root);       /* the folder itself is removed by the caller */
+}
+#else
 static void rm_all(void)
 {
     char *const roots[2] = { root, NULL };
@@ -73,6 +82,7 @@ static void rm_all(void)
     }
     (void)fts_close(fts);
 }
+#endif
 
 void test_sdcopy(void)
 {
@@ -80,8 +90,12 @@ void test_sdcopy(void)
     char src[600], dst[600], p[700], q[700], link[700];
     struct stat st;
 
-    (void)snprintf(root, sizeof root, "%s/azh-sdcopy-XXXXXX", tmp != NULL ? tmp : "/tmp");
+    (void)snprintf(root, sizeof root, "%s/azh-sdcopy-XXXXXX", AZH_TEST_TMPDIR(tmp));
+#ifdef _WIN32
+    check(azh_test_mkdtemp(root, sizeof root) != NULL, "mkdtemp");
+#else
     check(mkdtemp(root) != NULL, "mkdtemp");
+#endif
     path(src, sizeof src, root, "seed");
     path(dst, sizeof dst, root, "out");
     check(mkdir(src, 0755) == 0, "mkdir seed");
@@ -102,9 +116,20 @@ void test_sdcopy(void)
     check(same(p, q), "top file matches byte for byte");
     check(azh__copy_tree(src, dst) == AZH_E_ARG, "an existing destination is refused");
     path(link, sizeof link, src, "link");
+#ifdef _WIN32       /* a file symlink needs Developer Mode (or admin): without it the case is skipped, with the reason */
+    if (azh_test_symlink("top.bin", link) != 0) {
+        printf("SKIP a symlink is refused: CreateSymbolicLinkA failed (Windows error %lu; Developer Mode is off)\n",
+               (unsigned long)GetLastError());
+        (void)unlink(link);
+    } else {
+        path(dst, sizeof dst, root, "out2");
+        check(azh__copy_tree(src, dst) == AZH_E_ARG, "a symlink is refused");
+    }
+#else
     check(symlink("top.bin", link) == 0, "symlink");
     path(dst, sizeof dst, root, "out2");
     check(azh__copy_tree(src, dst) == AZH_E_ARG, "a symlink is refused");
+#endif
     path(dst, sizeof dst, root, "out");
     check(azh__clear_tree(dst) == AZH_OK, "clear_tree");
     check(stat(dst, &st) == 0 && S_ISDIR(st.st_mode), "clear_tree keeps the folder");

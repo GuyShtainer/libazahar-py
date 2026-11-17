@@ -9,6 +9,7 @@
 #include <stdint.h>
 
 #include "azhost.h"
+#include "plat/azh_plat.h"
 
 /* version.c: 1 when v is the pinned stock version, the stock version plus one of AZH_LAZPY_SUFFIXES exactly, or any_core. */
 int azh_version_ok(const char *v, int any_core);
@@ -48,6 +49,7 @@ typedef struct { char text[256]; size_t len; char carry[255]; size_t carry_len; 
 int azh__match_init(azh_matcher *m, const char *text, int64_t start_offset);
 int azh__match_feed(azh_matcher *m, const char *buf, size_t n);      /* 1 found, 0 not */
 void azh__match_restart(azh_matcher *m);
+int64_t azh__file_size_fresh(const char *path, int64_t from_stat);   /* the size now; see match.c */
 int azh__match_poll_file(azh_matcher *m, const char *path);          /* 1 found, 0 not, <0 AZH_E_IO */
 /* msg.c */
 enum { AZH_MSG_OTHER = -1 };

@@ -208,7 +208,7 @@ static int script_token(const char **pp, int32_t *out)
     char *end = NULL;
     int neg = 0;
     int base = 10;
-    long v;
+    long long v;      /* long is 32 bits on Windows: INT32_MIN and 0x80000000 must reach the range check */
 
     assert(pp != NULL && out != NULL);
     if (*p == '-') {
@@ -225,7 +225,7 @@ static int script_token(const char **pp, int32_t *out)
         return -1;                      /* 0x0x10: strtol would skip a second prefix */
     }
     errno = 0;
-    v = strtol(p, &end, base);
+    v = strtoll(p, &end, base);
     if (end == p || errno == ERANGE || (*end != '\0' && strchr(" ,\t\r\n", *end) == NULL)) {
         return -1;
     }

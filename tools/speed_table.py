@@ -66,8 +66,48 @@ def cap_rule(rows, cpu_count):
     return cap_now, reasons
 
 
+def load_now():
+    """The 1-minute load average; on Windows (no load average) the busy cores right now: the total CPU percentage
+    from ``typeperf`` (one sample) times the core count, so the ``load >= 2 x cores`` rule reads the same."""
+    if sys.platform != "win32":
+        return os.getloadavg()[0]
+    done = subprocess.run(["typeperf", r"\Processor(_Total)\% Processor Time", "-sc", "1"], capture_output=True,
+                          text=True, check=False)
+    for line in done.stdout.splitlines():
+        parts = line.strip().split(",")
+        if len(parts) == 2 and parts[1].strip('"').replace(".", "", 1).isdigit():
+            return float(parts[1].strip('"')) / 100.0 * (os.cpu_count() or 1)
+    return 0.0
+
+
+def vram_used_mb():
+    """Used GPU memory in MB from ``nvidia-smi`` (``nvidia-smi.exe`` on Windows), or None when there is no such tool."""
+    if sys.platform == "darwin":                        # no nvidia-smi on a Mac
+        return None
+    exe = "nvidia-smi.exe" if sys.platform == "win32" else "nvidia-smi"
+    try:
+        done = subprocess.run([exe, "--query-gpu=memory.used", "--format=csv,noheader,nounits"], capture_output=True,
+                              text=True, check=False, timeout=10)
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    text = done.stdout.strip().splitlines()
+    return int(text[0]) if text and text[0].strip().isdigit() else None
+
+
 def nice_of(pid):
-    """The worker's nice value, or None."""
+    """The worker's nice value, or None (Windows: 10 for the BELOW_NORMAL priority class, else 0)."""
+    if sys.platform == "win32":
+        import ctypes
+        kernel32 = ctypes.WinDLL("kernel32")
+        kernel32.OpenProcess.restype = ctypes.c_void_p
+        kernel32.GetPriorityClass.argtypes = [ctypes.c_void_p]
+        handle = kernel32.OpenProcess(0x1000, False, pid)
+        if not handle:
+            return None
+        try:
+            return 10 if kernel32.GetPriorityClass(handle) == 0x4000 else 0
+        finally:
+            kernel32.CloseHandle(ctypes.c_void_p(handle))
     done = subprocess.run(["ps", "-o", "nice=", "-p", str(pid)], capture_output=True, text=True, check=False)
     text = done.stdout.strip()
     return int(text) if text.lstrip("-").isdigit() else None
@@ -112,7 +152,7 @@ def make_seed(folder):
 
 def measure(emu, workdir, seconds):
     """One instance's measured batch: the numbers of section 7 step 2-3 plus its guest-time check."""
-    load0 = os.getloadavg()[0]
+    load0 = load_now()
     s0_stats = emu.stats()
     f0, t0 = last_frame_line(emu)
     result = emu.run(10_000_000, wall_limit=seconds)
@@ -130,7 +170,7 @@ def measure(emu, workdir, seconds):
     return {"frames": result.frames, "wall_s": wall, "stopped_by": result.stopped_by, "host_fps": host_fps,
             "app_fps": (f1 - f0) / wall, "x_real": x_real, "ticks_per_vblank": ticks_per_vblank,
             "cpu_ms": cpu_s * 1000.0 / result.frames, "wall_ms": wall * 1000.0 / result.frames,
-            "peak_rss": s1_stats.peak_rss, "nice": nice, "load_start": load0, "load_end": os.getloadavg()[0],
+            "peak_rss": s1_stats.peak_rss, "nice": nice, "load_start": load0, "load_end": load_now(), "vram_mb": vram_used_mb(),
             "host_share": (timing["host_ms"] / timing["wall_ms"]) if timing else None, "timing": timing,
             "check_ok": bool(tick_ok and x_ok and result.stopped_by == "wall_limit"),
             "tick_ok": tick_ok, "x_ok": x_ok, "pid": emu.pid, "core_version": s1_stats.core_version}
@@ -167,13 +207,13 @@ def run_row(args, core, n):
     barrier = threading.Barrier(n, timeout=1800 + BOOT_TIMEOUT)
     out = [None] * n
     threads = [threading.Thread(target=instance, args=(args, core, base / f"i{k}", barrier, out, k)) for k in range(n)]
-    load_start = os.getloadavg()[0]
+    load_start = load_now()
     for thread in threads:
         thread.start()
     for thread in threads:
         thread.join()
     good = [o for o in out if o and "error" not in o]
-    row = {"core": str(core), "n": n, "instances": out, "load_start": load_start, "load_end": os.getloadavg()[0],
+    row = {"core": str(core), "n": n, "instances": out, "load_start": load_start, "load_end": load_now(),
            "date": datetime.datetime.now().isoformat(timespec="seconds"),
            "check_ok": len(good) == n and all(o["check_ok"] for o in good),
            "total_host_fps": sum(o["host_fps"] for o in good), "total_app_fps": sum(o["app_fps"] for o in good)}
