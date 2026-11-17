@@ -19,7 +19,7 @@ int azh_version_ok(const char *v, int any_core)
     if (v == NULL) {
         return 0;
     }
-    if (strcmp(v, AZH_STOCK_VERSION) == 0) {
+    if (strcmp(v, AZH_STOCK_VERSION) == 0 || strcmp(v, AZH_STOCK_COMMIT) == 0) {
         return 1;
     }
     if (strncmp(v, AZH_STOCK_VERSION, n) != 0) {

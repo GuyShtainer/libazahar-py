@@ -5,8 +5,8 @@ section 1, "States"; checked by tests/python/test_release_fixture.py).
     nice -n 10 python3 -I tools/mkfixture.py <tag>        # writes runs/release-fixtures/<tag>/ (outside git)
 
 The folder holds the state (plus its .sd/ and .meta), a copy of the test app it was made with, and fixture.json
-(the tag, the core's version and sha256, the app's sha256, frame_total and the test app's last log line). It refuses
-to overwrite an existing fixture.
+(the tag, the system it was made on, the core's version and sha256, the app's sha256, frame_total and the test app's
+last log line). It refuses to overwrite an existing fixture.
 """
 import hashlib
 import json
@@ -47,7 +47,7 @@ def main(argv):
         info = emu.save_state(out / "state")
         version = emu.stats().core_version
     frames = testapp_log.parse_log(Path(f"{out / 'state'}.sd") / LOG)[0]
-    record = {"tag": argv[0], "core_version": version, "core_sha256": sha(core), "app_sha256": sha(app),
+    record = {"tag": argv[0], "platform": sys.platform, "core_version": version, "core_sha256": sha(core), "app_sha256": sha(app),
               "frame_total": info.frame_total, "k": info.k, "last_v": frames[-1]["v"]}
     (out / "fixture.json").write_text(json.dumps(record, indent=1) + "\n")
     print(json.dumps(record))

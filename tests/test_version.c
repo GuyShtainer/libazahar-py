@@ -23,6 +23,10 @@ int main(void)
     expect("2126.3-lazpy.2", 0, 0);
     expect("2126.2-lazpy", 0, 0);
     expect("2126.2-lazpy.12", 0, 0);
+    expect("219d743", 0, 1);
+    expect("219d743-lazpy.2", 0, 0);
+    expect("219d74", 0, 0);
+    expect("219d743a", 0, 0);
     expect("x", 0, 0);
     expect("x", 1, 1);
     if (failures != 0) {

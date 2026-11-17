@@ -75,8 +75,9 @@ static int check_version(void)
              si.library_version != NULL ? si.library_version : "(null)");
     azh_log(AZH_LOG_INFO, "core %s version %s", azh_g.core_name, azh_g.core_version);
     if (azh_version_ok(si.library_version, any_core) == 0) {
-        return azh_fail(AZH_E_CORE, "core version %s refused (accepted: %s, or %s plus %s; LAZ_ANY_CORE=1 overrides)",
-                        azh_g.core_version, AZH_STOCK_VERSION, AZH_STOCK_VERSION, AZH_LAZPY_SUFFIX_TEXT);
+        return azh_fail(AZH_E_CORE, "core version %s refused (accepted: %s or %s, or %s plus %s; LAZ_ANY_CORE=1 overrides)",
+                        azh_g.core_version, AZH_STOCK_VERSION, AZH_STOCK_COMMIT, AZH_STOCK_VERSION,
+                        AZH_LAZPY_SUFFIX_TEXT);
     }
     return AZH_OK;
 }

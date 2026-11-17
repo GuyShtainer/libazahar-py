@@ -324,7 +324,7 @@ build variables below may change in a minor release:
 | `LAZ_SLOT_TIMEOUT` | seconds to wait for a slot | 3600 | Python |
 | `LAZ_PNG_LEVEL` | PNG compression, 0 to 9 (a bad value gives 1) | 1 | host |
 | `LAZ_LOG_LEVEL` | `host.log` threshold: `debug`, `info`, `warn`, `error` (or 0 to 3) | `info` | host |
-| `LAZ_ANY_CORE` | `1` accepts any core version | unset: only the two known versions | host |
+| `LAZ_ANY_CORE` | `1` accepts any core version | unset: only the stock core (`2126.2`, or `219d743` as Azahar's Windows build names it) and our core (`2126.2-lazpy.1`, `2126.2-lazpy.2`) | host |
 | `MVK_CONFIG_LOG_LEVEL` | MoltenVK's log level | 1 | host |
 | `LAZ_STATE_ANY_APP` | `1` loads a state made with another build of the app | unset | host |
 
@@ -363,7 +363,7 @@ The 1.0 promise holds on Windows. These are the differences from macOS; nothing 
 | Paths | any | ASCII only and under 260 characters: clone into a short path such as `C:\src` |
 | SD folder names | follows the volume | case-insensitive |
 | `runs/` behind a junction | n/a | not supported |
-| Savestates between macOS and Windows | | `<from W7>` |
+| Savestates between macOS and Windows | a Windows state is refused | a macOS state is refused: `StateError`, "incompatible native format - size of long" (Azahar's boost archives store `long`, 8 bytes on macOS and 4 on Windows). Make states on the system that loads them |
 | The guest's HTTPS (CA file) | Homebrew's `openssl@3` paths | none: the compiled-in OPENSSLDIR, `/opt/lazpy/openssl-3.6.5-mingw64/C:/Program Files/Common Files/SSL`, is not a usable Windows path |
 
 Windows has no lazpy.1 core: the Windows core is lazpy.2. The limits of what was tested are in `STATUS.md`: one PC,

@@ -7,6 +7,9 @@
 test_threads_live.py::test_k_threads_lazpy1_core => ^set LAZ_CORE_OLD to a lazpy.1 core
 test_threads_live.py::test_k_states_both_ways => ^set LAZ_CORE_OLD to a lazpy.1 core
 
+# a clone fetches the release test app, which ships no ELF for the symbol and .text lookups
+test_threads_live.py::test_k_threads => ^no build/testapp.elf
+
 # by design on Windows (the twin test runs in its place)
 test_slots.py::test_s5_load_warning => ^no load average on Windows
 test_lazpy_profile.py::test_worker_nice_floor => ^no nice values on Windows

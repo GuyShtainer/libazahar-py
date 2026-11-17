@@ -159,6 +159,8 @@ def text_range() -> Tuple[int, int]:
 
 def test_k_threads(host_paths, lazpy_core, workdir):
     needs_rev2(lazpy_core)
+    if not ELF.is_file():
+        pytest.skip("no build/testapp.elf: the release test app (fetch.sh --testapp) ships no ELF; build it to run this")
     syms = elf_symbols()
     lo, hi = text_range()
     with dh.boot(host_paths, workdir / "a", core=lazpy_core) as emu:
