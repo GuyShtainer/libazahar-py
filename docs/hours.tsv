@@ -227,3 +227,5 @@ date	bet	phase	agent_id	model	role	kind	start	end	hours	source
 2026-11-19	phase 8 B0 lane rel: release check 13 SKIP/PEND, --self-test	phase-8b	a90dbd8c586f1a2e5	sonnet	agent	build	01:28	01:29	0.03	agent usage duration
 2026-11-19	phase 8 B4/B6/B7 lane live: re-press, window test, pool at two	phase-8b	a2047f4299d422ff4	sonnet	agent	build	01:28	01:32	0.07	agent usage duration
 2026-11-19	phase 8 B1/B3 lane images: determinism, compare, verdict example	phase-8b	ae62996f2f25b2210	sonnet	agent	build	01:28	01:34	0.10	agent usage duration
+2026-11-19	phase 8 B2/B5 lane life: error evidence, parent death	phase-8b	a6b0fe70c10ad86e4	sonnet	agent	build	01:28	01:34	0.11	agent usage duration
+2026-11-19	phase 8 B main loop: lane reviews, wording fixes, merges	phase-8b	main	opus	main	merge	01:29	01:36	0.12	session clock
