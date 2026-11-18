@@ -99,6 +99,38 @@ def test_hang_times_out_and_reaps(tmp_path):
     assert not alive(pid)
 
 
+def test_hang_error_carries_the_evidence(tmp_path):
+    (tmp_path / "shots").mkdir()
+    (tmp_path / "shots" / "last.png").write_bytes(b"x")
+    client = started(tmp_path, "hang")
+    with pytest.raises(HostTimeout) as caught:
+        client.request("run", (), Wait(heartbeat=1.0, first_heartbeat=1.0))
+    assert caught.value.workdir == tmp_path and caught.value.log_path == tmp_path / "host.log"
+    assert "host.log" in str(caught.value) and "last.png" in str(caught.value)
+
+
+def test_crash_error_carries_the_evidence(tmp_path):
+    client = started(tmp_path, "segv")
+    with pytest.raises(HostCrashed) as caught:
+        client.request("run", (), RUN)
+    assert caught.value.workdir == tmp_path and caught.value.log_path == tmp_path / "host.log"
+    assert "no shot taken" in str(caught.value)
+
+
+def test_error_before_hello_and_after_close_carry_the_evidence(tmp_path):
+    client = make(tmp_path, "die_at_start")
+    with pytest.raises(HostCrashed) as caught:
+        client.spawn(10.0)
+    assert caught.value.log_path == tmp_path / "host.log"
+    again = tmp_path / "again"
+    again.mkdir()
+    ok = started(again, "ok")
+    ok.close()
+    with pytest.raises(HostError) as closed:
+        ok.request("echo", (), Wait(total=1.0))
+    assert closed.value.workdir == again
+
+
 def test_die_at_start(tmp_path):
     client = make(tmp_path, "die_at_start")
     with pytest.raises(HostCrashed) as caught:

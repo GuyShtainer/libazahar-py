@@ -161,6 +161,19 @@ crash report each run. On the stock core a guest-exit result has `wall_s` 0.0 an
 | `memory` calls | `GuestMemoryError`, `NeedsLazpyCore`, `ArgumentError`, or `TypeError` for data that is not bytes |
 | any call after `close()` | `HostError` |
 
+**Evidence.** Every error a live instance raises (`BootError`, `GuestError`, `HostTimeout`, `HostCrashed`,
+`StateError`, `HostError`, `GuestMemoryError`) has `.workdir` and `.log_path` (the folder and its `host.log`), and its
+text ends with a line naming `host.log` and the newest PNG under `shots/`, or saying no shot was taken. That shot is
+the newest one taken, not the frame at the failure. The two fields survive pickling. Other errors have both as `None`.
+
+**When the caller dies.** On Windows and macOS a worker ends when its caller dies, however the caller dies, and its
+slot is free again. On Windows each worker is put in one Job object with kill-on-close (made at the first spawn), so even a worker inside a
+long batch ends with its caller; if the job cannot be made, one `RuntimeWarning` says so and the worker then ends only
+when the caller dies between batches. On macOS the worker watches its caller's process through `kqueue` and exits at
+once, mid-batch too. On Linux a worker ends only between batches (when the pipe closes); a caller that may be killed
+mid-batch should end the worker itself first (`close()`). The macOS path is covered by unit tests with a stand-in
+`kqueue`; its live check has not been run yet.
+
 A missing `sd_seed` folder is an `ArgumentError`; a `workdir` that cannot be made is a `HostError` naming the path; an
 unreadable option profile is a `HostError`; a profile line that
 breaks the format (section 14) is an `ArgumentError` naming the file and the line. `SlotTimeout` and `LoadWarning`
@@ -456,9 +469,29 @@ devkitARM first in `PATH`).
   `LAZ_MAX_INSTANCES` if the machine can take it.
 - A `LoadWarning`: other sessions' emulators share the machine; wait, or run fewer instances.
 - `HostTimeout` in the first frames: shader compiles. Raise `boot_timeout` (default 300 s).
+- A hang inside one frame never reaches `wall_limit` (it is checked between frames) and the heartbeat is the only
+  watch, so a script that must not hang wraps the whole call in an outer timeout (for `azhost`, the `timeout` command
+  or the caller's own limit).
 - The core refuses to load on macOS older than 15.
 - Windows: a boot error naming `vulkan-1.dll` means no Vulkan driver is installed; install the GPU maker's current driver.
   A path error at start usually means a long or non-ASCII folder: clone into `C:\src`.
+
+Errors by their opening text. Each line is the start of `str(error)`; every live-instance error ends with the
+`host.log` and newest-shot line (section 8), so look at the log first.
+
+| The error starts with | Class | Meaning and next step |
+|---|---|---|
+| `cannot load core` | `BootError` | No core at that path: fetch our core or set `LAZ_CORE`. |
+| `core ... is missing` | `BootError` | The same, found before the worker started. |
+| `<call> timed out after N s (last guest message: ...)` | `HostTimeout` | No new frame for N s; the worker was killed. In the first frames raise `boot_timeout`. |
+| `no libazahar slot free after` | `SlotTimeout` | Other instances hold every slot (`LAZ_SLOT_DIR`, `LAZ_MAX_INSTANCES`). |
+| `the worker died (signal N)` or `(exit code N)` | `HostCrashed` | Read the `host.log` and `worker.err` tails in the text. |
+| `the guest stopped with a fatal error` or the guest's own message | `GuestError` | A guest crash; `.result` holds the batch while the Emulator is open. |
+| `the guest exited during <call>` | `HostError` | A guest exit outside `run`. |
+| `the emulator is closed` | `HostError` | A call after `close()`, a dead worker or a guest exit. |
+| `cannot load the host` | `HostError` | The host library is missing or its ABI differs: run `make`, check `LAZ_HOST`. |
+| `guest memory 0x...: a page is unmapped` | `GuestMemoryError` | An unmapped guest page; the write changed nothing. |
+| a savestate message | `StateError` | The state could not be saved, read or restored (section 10). |
 
 ## 20. API reference
 
@@ -492,3 +525,6 @@ One line per name in `libazahar.__all__`. Units: seconds in Python, frames are g
   - `images.digest((top, bottom))`: a SHA-256 hex string of the two screens from `screens()` (arrays or `bytes`); it needs no numpy.
   - `images.compare(a, b, *, max_delta=0, max_pixels=0)`: each side is a `(H, W, 4)` uint8 array or the path of a PNG the host wrote. Returns a `CompareResult`: `max_delta` (largest single-channel difference), `pixels` (pixels that differ at all), `over` (pixels with a channel off by more than the `max_delta` limit), `within` (`over <= max_pixels`). `result.write_diff(path)` saves a PNG of the same size, white for every differing pixel and black elsewhere. Needs numpy (`pip install 'libazahar-py[numpy]'`), else an `ImportError` names the extra.
   - The PNG reader takes only the host's own files (8-bit RGBA, filter 0 on every row, one IDAT) and raises `ArgumentError` for any other PNG, a bad CRC or a different picture size.
+
+Evidence on failure and parent death:
+- `.workdir`, `.log_path` on `BootError`, `GuestError`, `HostTimeout`, `HostCrashed`, `StateError`, `HostError` and `GuestMemoryError`: the instance's folder and its `host.log`, both `None` on any other error; the error text names `host.log` and the newest PNG under `shots/` (section 8).

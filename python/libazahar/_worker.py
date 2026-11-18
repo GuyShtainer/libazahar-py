@@ -7,10 +7,12 @@ from __future__ import annotations
 import ctypes
 import faulthandler
 import os
+import select
 import sys
+import threading
 from multiprocessing.connection import Connection
 from pathlib import Path
-from typing import Any, Dict, List, Sequence, Tuple
+from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
 
 from . import _abi, _host
 from .errors import HostCallError, LibAzaharError
@@ -123,13 +125,21 @@ _OPS = {"start": _op_start, "run": _op_run, "set_input": _op_set_input, "shot": 
         "threads": _op_threads, "stats": _op_stats, "close": _op_close}
 
 
+def _leave(code: int = 0) -> int:
+    """End on the parent's death (EOF or a broken pipe). Windows: ``hard_exit``, as after ``close``, because the DLL
+    detach of the core and the GPU driver can hang; elsewhere return so ``main`` ends normally."""
+    if _WIN:
+        hard_exit(code)
+    return code
+
+
 def _serve(conn: Connection, lib: ctypes.CDLL) -> int:
     """The bounded request loop; ends on ``close`` or on EOF."""
     for _ in range(MAX_REQUESTS):
         try:
             op, args = conn.recv()
-        except EOFError:
-            return 0
+        except (EOFError, OSError):
+            return _leave()
         handler = _OPS.get(op)
         if handler is None:
             conn.send(("err", _abi.AZH_E_ARG, f"unknown op {op!r}"))
@@ -140,12 +150,51 @@ def _serve(conn: Connection, lib: ctypes.CDLL) -> int:
             reply = ["err", exc.code, exc.text]
         except (ctypes.ArgumentError, TypeError, ValueError) as exc:
             reply = ["err", _abi.AZH_E_ARG, f"{op}: {exc}"]
-        conn.send(tuple(reply))
+        try:
+            conn.send(tuple(reply))
+        except (BrokenPipeError, OSError):
+            return _leave()
         if op == "close":
             if _WIN:
                 hard_exit()             # only now: azh_close has run and its reply is in the pipe
             return 0
     return 1
+
+
+def wait_for_parent(parent: int, exit_now: Callable[[int], Any] = os._exit, sel: Any = select) -> bool:
+    """macOS and the BSDs: block until process ``parent`` exits (``kqueue``, ``EVFILT_PROC`` with ``NOTE_EXIT``), then
+    call ``exit_now(0)``. The parent is rechecked with ``getppid`` after the registration, so an exit between the start
+    and the registration is not missed. Returns False at once, without waiting, where there is no ``kqueue``."""
+    if not hasattr(sel, "kqueue"):
+        return False
+    if parent <= 1:                             # the parent died before the worker started: it was reparented
+        exit_now(0)
+        return True
+    queue = sel.kqueue()
+    event = sel.kevent(parent, filter=sel.KQ_FILTER_PROC, flags=sel.KQ_EV_ADD | sel.KQ_EV_ONESHOT,
+                       fflags=sel.KQ_NOTE_EXIT)
+    try:
+        queue.control([event], 0, 0)            # register only
+    except ProcessLookupError:                  # the parent is already gone
+        exit_now(0)
+        return True
+    if os.getppid() != parent:
+        exit_now(0)
+        return True
+    queue.control(None, 1, None)                # blocks until the exit (the GIL is free while it waits)
+    exit_now(0)
+    return True
+
+
+def start_parent_watch(parent: int, exit_now: Callable[[int], Any] = os._exit,
+                       sel: Any = select) -> Optional[threading.Thread]:
+    """Start the daemon thread that runs ``wait_for_parent``; None where there is no ``kqueue``. ctypes releases the
+    GIL during a batch, so the thread fires mid-batch."""
+    if not hasattr(sel, "kqueue"):
+        return None
+    thread = threading.Thread(target=wait_for_parent, args=(parent, exit_now, sel), name="parent-watch", daemon=True)
+    thread.start()
+    return thread
 
 
 def hard_exit(code: int = 0) -> None:
@@ -182,6 +231,8 @@ def main(fd: int) -> int:
     if _WIN:
         set_error_mode()
     faulthandler.enable()
+    if not _WIN:
+        start_parent_watch(os.getppid())
     if len(sys.argv) > 3:               # the slot's lock fd (argv[3]): keep it here, never hand it to a child
         if _WIN:
             os.set_handle_inheritable(int(sys.argv[3]), False)

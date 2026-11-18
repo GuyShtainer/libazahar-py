@@ -191,8 +191,9 @@ class Emulator:
         self._finalizer: Optional[weakref.finalize] = None
         try:
             self._boot(core, options, sd_seed, state)
-        except BaseException:
+        except BaseException as exc:
             self.close()
+            self._client.annotate(exc)
             raise
 
     def _boot(self, core: Union[str, Path, None], options: Options, sd_seed: Union[str, Path, None],
@@ -262,7 +263,7 @@ class Emulator:
 
     def _live(self) -> None:
         if self._client.closed:
-            raise HostError("the emulator is closed")
+            raise self._client.annotate(HostError("the emulator is closed"))
 
     # ---- running ----
     def run(self, frames: int, *, inputs: Iterable[Tuple[int, Item]] = (), shots: Iterable[int] = (),
@@ -310,7 +311,7 @@ class Emulator:
         result = self._result(_abi.Result.from_buffer_copy(payload), shot_frames, before, watch_sizes)
         self._held = held_after(records, result.frames, prev)
         if result.stopped_by == "guest_error":
-            raise GuestError(result.message or "the guest stopped with a fatal error", result)
+            raise self._client.annotate(GuestError(result.message or "the guest stopped with a fatal error", result))
         if result.stopped_by == "guest_exited":      # one rule on both cores: after a guest exit the Emulator is closed
             self._close(min(self.timeout, 5.0))      # a stalled retro_unload_game costs 5 s, not 30
         return result
@@ -393,7 +394,7 @@ class Emulator:
             return ()
         hostmap = self._client.host_map()
         if hostmap is None:
-            raise HostError("the map is gone: the watch rows cannot be read")
+            raise self._client.annotate(HostError("the map is gone: the watch rows cannot be read"))
         rows: List[WatchRow] = []
         for frame, status, blob in hostmap.watch_copy(count):
             parts, at = [], 0
@@ -461,7 +462,7 @@ class Emulator:
         self._client.request("shot", (_abi.AZH_SCREEN_BOTH, _abi.AZH_FMT_RAW, None), Wait(total=self.timeout))
         hostmap = self._client.host_map()
         if hostmap is None or hostmap.px_frame() != hostmap.frame_total():
-            raise HostError("the map's pixel frame does not match frame_total after a raw shot")
+            raise self._client.annotate(HostError("the map's pixel frame does not match frame_total after a raw shot"))
         top, bottom = hostmap.pixels(_abi.AZH_SCREEN_TOP), hostmap.pixels(_abi.AZH_SCREEN_BOTTOM)
         try:
             import numpy

@@ -71,3 +71,46 @@ def test_app_and_workdir_are_read_only(tmp_path):
         emu.app = tmp_path                            # type: ignore[misc]
     with pytest.raises(AttributeError):
         emu.workdir = tmp_path                        # type: ignore[misc]
+
+
+# ---- evidence on failure (B2) ----
+LIVE_ERRORS = [lambda: errors.BootError("b"), lambda: errors.GuestError("g", 7), lambda: errors.HostTimeout("run", 2.0, "m"),
+               lambda: errors.HostCrashed(-11, 11, "m", "log", "err"), lambda: errors.StateError("s"),
+               lambda: errors.HostError("h"), lambda: errors.GuestMemoryError("u", 4, 8)]
+
+
+@pytest.mark.parametrize("make", LIVE_ERRORS)
+def test_evidence_names_the_log_and_the_newest_shot_and_survives_pickling(make, tmp_path):
+    import pickle
+    shots = tmp_path / "shots"
+    shots.mkdir()
+    (shots / "a_top.png").write_bytes(b"x")
+    newest = shots / "z_top.png"
+    newest.write_bytes(b"y")
+    import os
+    os.utime(shots / "a_top.png", (1, 1))
+    exc = make()
+    assert exc.workdir is None and exc.log_path is None            # a fresh error carries nothing yet
+    errors.attach_evidence(exc, tmp_path, tmp_path / "host.log")
+    assert exc.workdir == tmp_path and exc.log_path == tmp_path / "host.log"
+    text = str(exc)
+    assert "host.log" in text and "z_top.png" in text and "a_top.png" not in text
+    back = pickle.loads(pickle.dumps(exc))
+    assert type(back) is type(exc) and str(back) == text
+    assert back.workdir == tmp_path and back.log_path == tmp_path / "host.log"
+
+
+def test_evidence_without_a_shot_and_for_other_errors(tmp_path):
+    exc = errors.attach_evidence(errors.HostError("h"), tmp_path, tmp_path / "host.log")
+    assert "no shot taken" in str(exc)
+    arg = errors.attach_evidence(errors.ArgumentError("a"), tmp_path, tmp_path / "host.log")
+    assert arg.log_path is None and "evidence" not in str(arg)
+    assert errors.attach_evidence(exc, tmp_path / "other", tmp_path / "other.log").log_path == tmp_path / "host.log"
+
+
+def test_pickled_errors_without_evidence_still_round_trip():
+    import pickle
+    for make in LIVE_ERRORS:
+        exc = make()
+        back = pickle.loads(pickle.dumps(exc))
+        assert str(back) == str(exc) and back.log_path is None

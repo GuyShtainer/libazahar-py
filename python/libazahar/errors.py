@@ -12,7 +12,50 @@ __all__ = ["LibAzaharError", "ArgumentError", "BootError", "GuestError", "HostTi
 
 
 class LibAzaharError(Exception):
-    """Base class of every error this package raises on purpose."""
+    """Base class of every error this package raises on purpose.
+
+    An error raised by a live instance (BootError, GuestError, HostTimeout, HostCrashed, StateError, HostError,
+    GuestMemoryError) also carries ``workdir`` and ``log_path`` (both None on the others); its text then names
+    ``host.log`` and the newest PNG under ``shots/``, if any."""
+
+    workdir: Optional[Path] = None
+    log_path: Optional[Path] = None
+    _shot_name: Optional[str] = None
+
+    def __str__(self) -> str:
+        text = super().__str__()
+        if self.log_path is not None:
+            text += f"\n(evidence: {self.log_path}"
+            text += f"; newest shot taken: {self._shot_name})" if self._shot_name else "; no shot taken)"
+        return text
+
+
+EVIDENCE_TYPES: tuple = ()      # filled below, after the classes exist
+
+
+def _state(exc: LibAzaharError) -> dict:
+    """The evidence fields, so a pickled error keeps them (a custom ``__reduce__`` would drop ``__dict__``)."""
+    return {k: v for k, v in exc.__dict__.items() if k in ("workdir", "log_path", "_shot_name")}
+
+
+def newest_shot(workdir: Path) -> Optional[Path]:
+    """The newest PNG under ``<workdir>/shots/`` (by modification time, then name), or None."""
+    try:
+        shots = [p for p in (Path(workdir) / "shots").rglob("*.png") if p.is_file()]
+        return max(shots, key=lambda p: (p.stat().st_mtime_ns, p.name)) if shots else None
+    except OSError:
+        return None
+
+
+def attach_evidence(exc: BaseException, workdir: Path, log_path: Path) -> BaseException:
+    """Give a live-instance error its ``workdir`` and ``log_path`` and the newest shot's name. Other errors, and an
+    error already marked, pass through unchanged. Returns ``exc``."""
+    if isinstance(exc, EVIDENCE_TYPES) and exc.log_path is None:
+        exc.workdir = Path(workdir)
+        exc.log_path = Path(log_path)
+        shot = newest_shot(workdir)
+        exc._shot_name = str(shot.relative_to(workdir)) if shot is not None else None
+    return exc
 
 
 class ArgumentError(LibAzaharError, ValueError):
@@ -31,7 +74,7 @@ class GuestError(LibAzaharError):
         self.result = result
 
     def __reduce__(self):  # type: ignore[no-untyped-def]
-        return (GuestError, (self.args[0] if self.args else "", self.result))
+        return (GuestError, (self.args[0] if self.args else "", self.result), _state(self))
 
 
 class HostTimeout(LibAzaharError):
@@ -47,7 +90,7 @@ class HostTimeout(LibAzaharError):
         self.message = message
 
     def __reduce__(self):  # type: ignore[no-untyped-def]
-        return (HostTimeout, (self.op, self.seconds, self.message))
+        return (HostTimeout, (self.op, self.seconds, self.message), _state(self))
 
 
 class HostCrashed(LibAzaharError):
@@ -71,7 +114,7 @@ class HostCrashed(LibAzaharError):
         self.err_tail = err_tail
 
     def __reduce__(self):  # type: ignore[no-untyped-def]
-        return (HostCrashed, (self.returncode, self.signal, self.message, self.log_tail, self.err_tail))
+        return (HostCrashed, (self.returncode, self.signal, self.message, self.log_tail, self.err_tail), _state(self))
 
     @staticmethod
     def signal_name(number: Optional[int]) -> str:
@@ -102,7 +145,7 @@ class GuestMemoryError(LibAzaharError):
         self.length = length
 
     def __reduce__(self):  # type: ignore[no-untyped-def]
-        return (GuestMemoryError, (self.args[0] if self.args else "", self.addr, self.length))
+        return (GuestMemoryError, (self.args[0] if self.args else "", self.addr, self.length), _state(self))
 
 
 class HostError(LibAzaharError):
@@ -124,6 +167,9 @@ class SlotTimeout(HostTimeout):
 
     def __str__(self) -> str:
         return f"no libazahar slot free after {self.seconds:g} s: all {self.slots} are held; see {self.folder}"
+
+
+EVIDENCE_TYPES = (BootError, GuestError, HostTimeout, HostCrashed, StateError, HostError, GuestMemoryError)
 
 
 class LoadWarning(UserWarning):

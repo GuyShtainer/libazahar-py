@@ -15,8 +15,8 @@ from multiprocessing.connection import Connection
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
 
-from . import _abi, _map, _slots
-from .errors import GuestError, HostCrashed, HostError, HostTimeout, from_code
+from . import _abi, _job, _map, _slots
+from .errors import GuestError, HostCrashed, HostError, HostTimeout, LibAzaharError, attach_evidence, from_code
 
 __all__ = ["Wait", "WorkerClient", "worker_argv", "tail_lines"]
 
@@ -123,8 +123,18 @@ class WorkerClient:
         return (hostmap.message() or None) if hostmap is not None else None
 
     # ---- spawn ----
+    def annotate(self, exc: BaseException) -> BaseException:
+        """Give a live-instance error its ``workdir``, ``log_path`` and shot hint (see errors.attach_evidence)."""
+        return attach_evidence(exc, self.workdir, self.log_path)
+
     def spawn(self, boot_timeout: float) -> None:
         """Start the worker and wait for its hello. Raises HostError (the worker's fatal text) or HostCrashed."""
+        try:
+            self._spawn(boot_timeout)
+        except LibAzaharError as exc:
+            raise self.annotate(exc)
+
+    def _spawn(self, boot_timeout: float) -> None:
         assert self._proc is None, "spawn once"
         self.workdir.mkdir(parents=True, exist_ok=True)
         try:
@@ -179,9 +189,11 @@ class WorkerClient:
         info = subprocess.STARTUPINFO(lpAttributeList={"handle_list": list(handles)})
         flags = subprocess.CREATE_NO_WINDOW | subprocess.BELOW_NORMAL_PRIORITY_CLASS
         try:
-            return subprocess.Popen(argv, close_fds=True, startupinfo=info, creationflags=flags,
+            proc = subprocess.Popen(argv, close_fds=True, startupinfo=info, creationflags=flags,
                                     stdin=subprocess.DEVNULL, stdout=err_file, stderr=err_file, env=self._env,
                                     cwd=self.workdir)
+            _job.assign(proc)           # the kill-on-close job (one warning if it fails); the worker starts no children
+            return proc
         finally:
             for handle in handles:
                 try:
@@ -199,7 +211,14 @@ class WorkerClient:
 
     # ---- request ----
     def request(self, op: str, args: Sequence[Any], wait: Wait, frame_before: int = 0) -> Tuple[str, Any]:
-        """Send one request and wait for its reply under ``wait`` (see the module doc for the outcomes)."""
+        """Send one request and wait for its reply under ``wait`` (see the module doc for the outcomes). Errors carry
+        ``workdir`` and ``log_path``."""
+        try:
+            return self._request(op, args, wait, frame_before)
+        except LibAzaharError as exc:
+            raise self.annotate(exc)
+
+    def _request(self, op: str, args: Sequence[Any], wait: Wait, frame_before: int) -> Tuple[str, Any]:
         if self.closed or self._proc is None or self._conn is None:
             raise HostError("the emulator is closed")
         try:
