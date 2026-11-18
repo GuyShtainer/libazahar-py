@@ -89,3 +89,18 @@ python3 -I tools/release_check.py runs/release/v1.0.0        # the release check
 python3 -I tools/mknotices.py --link <link.txt> --deps build-core/build --tree <build-src tree> --src <unpacked tree> --inputs build-core/build.inputs --openssl dl/openssl-src/openssl-3.6.5.tar.gz --sysarch dl/sysarch-src/citra_system_archives-f470e0c.tar.gz --ofl dl/font-licences/Montserrat-v4.001-OFL.txt --unifont dl/font-licences/unifont-10.0.05-notice.txt --newlib dl/newlib-licence/COPYING.NEWLIB-4.6.0 > NOTICES.md
 LAZ_STOCK_CORE=<Azahar's own core> .venv/bin/python -m pytest -q tests/python   # adds the core-comparison tests; unset, they skip
 ```
+
+## On the Windows PC (phase 7 on; every 3DS build, test and emulator run since the Mac went Garmin-only)
+
+The PC is shared with other projects. Before each emulator start: free RAM >= 2 GB + 0.6 GB per copy, at most two
+copies, one job of ours at a time. Access, toolchains and the shared runners: the toolkit's docs/pc-worker/HANDOFF.md.
+- MSYS2 lives at D:\lazpy\tools\msys64. A lane's clone gets a `cenv.sh` wrapper that starts every command with a
+  clean environment: Python 3.10 first in PATH, then MINGW64, and `LAZ_STOCK_CORE` set.
+- Phase 8 lanes live under D:\lazpy\p8\<step>\. The helper `runs/p8/bin/pc <dir> <step> <script>` is outside git. It
+  uploads a folder with tar over ssh and runs its script in MSYS2 bash -l.
+- In a lane: `make check && make && make test-version && make test-host` (llvm-mingw host cc). For the test app, use
+  devkitARM r67.1 at C:\devkitPro-r67.1, never D:\devkitPro (r68). Then
+  `sh <lane>/cenv.sh .venv/Scripts/python.exe -m pytest -q -rs tests/python` with `LAZ_REQUIRE_EMULATOR=1`.
+- Our Windows core: dl/lazpy-core/azahar_lazpy_libretro.dll, from `tools/fetch.sh --lazpy-core`. Its exports:
+  lazpy_libretro, lazpy_movie_play, lazpy_read_memory, lazpy_threads, lazpy_write_memory.
+- CI: test-windows.yml runs on push. test.yml, macos-live.yml and core-win64.yml run only on manual dispatch.
