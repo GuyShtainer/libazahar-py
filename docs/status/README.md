@@ -19,9 +19,17 @@ publish-ready. What to do this hour: `docs/status/lazpy/1-in-progress/HANDOFF.md
 <!-- generated:begin (python3 -I tools/mkprogress.py; do not edit by hand) -->
 ### libazahar-py (`docs/status/lazpy/`)
 - in-progress: `docs/status/lazpy/1-in-progress/500-phase-5-user-asks.md`
-- in-progress: `docs/status/lazpy/1-in-progress/810-phase-a-measure.md`
-- in-progress: `docs/status/lazpy/1-in-progress/812-a2-soak.md`
-- files: 0 in `3-waiting-on-guy/`, 6 in `4-not-started/`, 51 in `5-done/`, 0 in `6-parked/`
+- in-progress: `docs/status/lazpy/1-in-progress/820-phase-b-must-gaps.md`
+- in-progress: `docs/status/lazpy/1-in-progress/821-b0-check13-skip.md`
+- in-progress: `docs/status/lazpy/1-in-progress/822-b1-determinism.md`
+- in-progress: `docs/status/lazpy/1-in-progress/823-b2-error-evidence.md`
+- in-progress: `docs/status/lazpy/1-in-progress/824-b3-compare-verdict.md`
+- in-progress: `docs/status/lazpy/1-in-progress/825-b4-repress.md`
+- in-progress: `docs/status/lazpy/1-in-progress/826-b5-parent-death.md`
+- in-progress: `docs/status/lazpy/1-in-progress/827-b6-window-test.md`
+- in-progress: `docs/status/lazpy/1-in-progress/828-b7-pool-two.md`
+- in-progress: `docs/status/lazpy/1-in-progress/829-b9-load-handle-leak.md`
+- files: 0 in `3-waiting-on-guy/`, 2 in `4-not-started/`, 56 in `5-done/`, 0 in `6-parked/`
 <!-- generated:end -->
 
 ## How to change a status (one step)

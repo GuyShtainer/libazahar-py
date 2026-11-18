@@ -16,7 +16,9 @@ Unpack MSYS2's pinned Mesa package (lavapipe) into its own folder and run two em
 Both tests pass or not, in runs/p8/a5/; the D3 decision.
 
 ## Evidence
-none yet
+2026-11-19 01:22: inconclusive. The pinned packages unpack and load, but the tests ran on the RTX: the elevated ssh session makes the
+Vulkan loader ignore the driver override. S10 stays missing; D3 goes to its own CI round with a registry entry on the
+runner (runs/p8/a/decisions.md, outside git).
 
 ## Pointers
 - Plan section: `docs/plans/phase-8.md:152`

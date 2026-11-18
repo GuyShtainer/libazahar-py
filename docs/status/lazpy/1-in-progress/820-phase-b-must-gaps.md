@@ -27,3 +27,7 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
 - Guy, 2026-11-18 ~21:00, verbatim: "you have my green light. go". Q1-Q5 not answered: the plan's recommended
 answers are in force (Q1 yes, Q3 yes, Q4 yes to D after v1.2.0 / two releases / the hosted bound / the MSYS2 Mesa
 download, Q5 probe now) until Guy says otherwise.
+- From A2 (laz-812, 2026-11-19): add step B9, the handle leak per state load. On Windows, worker handles rise by about 2
+  per load_state (415 to 1023 over 300 loads); RSS stays flat. Find whether the host or the core holds them; check
+  macOS for a matching fd leak (its default limit of 256 would fail after about 120 loads); fix it; add a test that
+  200 loads keep the count within 5 %. Plan rule (A2 row): growth over 10 % opens a fix step in B.

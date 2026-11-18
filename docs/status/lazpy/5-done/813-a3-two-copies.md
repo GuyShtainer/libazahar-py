@@ -16,7 +16,8 @@ GPU memory, peak RSS and guest fps for one and two copies of the test app's 3D s
 Numbers in runs/p8/a3/ and the cap decision.
 
 ## Evidence
-none yet
+2026-11-19 01:15: one copy, then two, of the 3D scene ran with no memory trouble, about 1 GB RSS and 117 MB GPU memory per copy,
+two copies at x1.88 the total fps; the cap stays 4 (runs/p8/a/decisions.md, outside git).
 
 ## Pointers
 - Plan section: `docs/plans/phase-8.md:150`

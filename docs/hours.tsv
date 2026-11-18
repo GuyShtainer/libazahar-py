@@ -220,3 +220,7 @@ date	bet	phase	agent_id	model	role	kind	start	end	hours	source
 2026-11-18	phase 8 laz-804: plan revision rev 1 with hour-saving pass	phase-8	a2ebb8c329f4474d9	opus	agent	revision	20:42	20:57	0.25	agent usage duration
 2026-11-18	phase 8 main loop: items, six research dispatches, plan/review/revision dispatches, checks, commits	phase-8	main	opus	main	plan	20:08	20:59	0.85	session clock
 2026-11-18	phase 8 A main loop: items 810-840, PC preflight, runners map PC section, soak script and trials	phase-8a	main	opus	main	measure	22:49	22:56	0.12	session clock
+2026-11-18	phase 8 laz-814 A4: audio probe prep (scratch patch, tone app, made-up component file, runner)	phase-8a	aae25e0361ce9a776	sonnet	agent	probe-prep	22:58	23:01	0.05	agent usage duration
+2026-11-18	phase 8 A main loop: soak waiting (PC crash), wrap of the first block	phase-8a	main	opus	main	measure	22:56	23:03	0.12	session clock
+2026-11-19	phase 8 A main loop: soak loads rerun, two copies, audio probe, software Vulkan trial, decisions	phase-8a	main	opus	main	measure	01:06	01:22	0.27	session clock
+2026-11-19	phase 8 B main loop: lane briefs, worktrees, five builder dispatches	phase-8b	main	opus	main	briefs	01:22	01:29	0.12	session clock

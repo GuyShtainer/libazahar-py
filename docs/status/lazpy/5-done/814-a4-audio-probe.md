@@ -16,7 +16,8 @@ A scratch host patch (never merged) counts audio samples; checks whether our own
 Numbers in runs/p8/a4/ and the C2 decision.
 
 ## Evidence
-none yet
+2026-11-19 01:16: with our own made-up DSP file, the tone app's sound reaches the host (547 stereo frames per guest frame,
+99.8 % non-zero, from frame 62); without it, none. C2 is built, gated on the tone app (runs/p8/a/decisions.md, outside git).
 
 ## Pointers
 - Plan section: `docs/plans/phase-8.md:151`
