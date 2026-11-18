@@ -13,6 +13,8 @@ page, or --inherit-sums FILE; either way it must match the pin); the Windows zip
 artifact's gate_f2.txt: shared contract 1) instead of the live tree. --plant-red exits 0 when every plant failed on
 its own reason, 2 when one did not.
 
+python3 -I tools/release_check.py --self-test checks check 13 with the reading copy absent (SKIP, PEND under --pre-push).
+
 Prints one line per check: PASS, FAIL, SKIP or PEND, plus NOTE lines for the audit. Any FAIL exits 1; under
 --pre-push every SKIP and PEND is a FAIL. --plant-red plants one fault per check in a temp folder outside the repo
 and passes only if each check fails on its plant. Key material is never printed or written: windows of the key and
@@ -632,6 +634,16 @@ def make_windows(repo: Path) -> tuple[set[bytes], Items]:
     return windows, out
 
 
+def history_bytes_check(repo: Path, pre_push: bool) -> Items:
+    """Check 13. Without the reading copy there are no windows to search for: SKIP (PEND under --pre-push), never a PASS."""
+    if not (repo / SRC_REL).is_dir():  # only whether the path exists is looked at here
+        kind = "PEND" if pre_push else "SKIP"
+        return [(kind, "the reading copy of Azahar's key headers is not on this machine; v1.0.0's history was checked at "
+                       "v1.0.0 and the CI leak check covers the artifacts")]
+    windows, bad = make_windows(repo)
+    return bad + ([] if bad else history_bytes_findings(repo, windows))
+
+
 TOKEN_RUN = re.compile(r"(?:(?:0x[0-9a-fA-F]{1,2}|\b[0-9a-fA-F]{2}\b)[\s,]+){5,}(?:0x[0-9a-fA-F]{1,2}|\b[0-9a-fA-F]{2}\b)")
 HEX_STRING = re.compile(r"\b[0-9a-fA-F]{12,}\b")
 
@@ -1106,12 +1118,7 @@ def run_checks_v11(ctx: "Ctx", tmp: Path) -> list[tuple[str, Items]]:
                     + pins_v11_findings(fetch, win_zip.name, sha256_file(win_zip), args.inherit, args.skip_pins)))
     results.append(("12 repo", repo_paths_findings(repo) + repo_content_findings(repo) + repo_identity_findings(repo)
                     + needle_history_findings(repo, needles)))
-    if (repo / SRC_REL).is_dir():
-        windows, bad = make_windows(repo)
-        results.append(("13 history-bytes", bad + ([] if bad else history_bytes_findings(repo, windows))))
-    else:
-        results.append(("13 history-bytes", [("NOTE", "not run here: the reading copy of Azahar's key headers is not on this machine; "
-                                                       "v1.0.0's history was checked at v1.0.0 and the CI leak check covers the artifacts")]))
+    results.append(("13 history-bytes", history_bytes_check(repo, args.pre_push)))
     pyproject = Path(args.pyproject) if args.pyproject else repo / "pyproject.toml"
     results.append(("14 versions", versions_findings(pyproject.read_text(), (repo / "python/libazahar/__init__.py").read_text(), rel.name)))
     if args.pre_push:
@@ -1404,8 +1411,7 @@ def run_checks(ctx: Ctx, tmp: Path) -> list[tuple[str, Items]]:
         ("12 repo", repo_paths_findings(repo) + repo_content_findings(repo) + repo_identity_findings(repo)
          + needle_history_findings(repo, needles)),
     ]
-    windows, bad = make_windows(repo)
-    results.append(("13 history-bytes", bad + ([] if bad else history_bytes_findings(repo, windows))))
+    results.append(("13 history-bytes", history_bytes_check(repo, args.pre_push)))
     pyproject = Path(args.pyproject) if args.pyproject else repo / "pyproject.toml"
     results.append(("14 versions", versions_findings(pyproject.read_text(), (repo / "python/libazahar/__init__.py").read_text(), rel.name)))
     if args.pre_push:
@@ -1435,7 +1441,31 @@ def report(results: list[tuple[str, Items]], pre_push: bool) -> int:
     return 1 if failed else 0
 
 
+def self_test() -> int:
+    """Check 13 with the reading copy absent must report SKIP (PEND under --pre-push), with no NOTE and no PASS."""
+    import contextlib
+    failed = 0
+    with tempfile.TemporaryDirectory(prefix="release_check.self.") as name:
+        empty = Path(name)  # a repo folder without SRC_REL
+        for pre_push, want in ((False, "SKIP"), (True, "PEND")):
+            items = history_bytes_check(empty, pre_push)
+            out = io.StringIO()
+            with contextlib.redirect_stdout(out):
+                code = report([("13 history-bytes", items)], pre_push)
+            lines = out.getvalue().splitlines()
+            ok = (len(items) == 1 and items[0][0] == want and len(lines) == 1
+                  and lines[0].startswith(("FAIL " if pre_push else want + " ") + "13 history-bytes")
+                  and "NOTE" not in out.getvalue() and "PASS" not in out.getvalue() and code == (1 if pre_push else 0))
+            print(f"{'ok  ' if ok else 'FAIL'} 13 history-bytes, reading copy absent{' (--pre-push)' if pre_push else ''}: "
+                  f"{want} item, exit {code}")
+            failed += not ok
+    print(f"release_check self-test: {2 - failed} of 2 cases passed")
+    return 1 if failed else 0
+
+
 def main(argv: list[str]) -> int:
+    if "--self-test" in argv:
+        return self_test()
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("dir")
     ap.add_argument("--skip-pins", action="store_true")
