@@ -14,5 +14,9 @@ venv's programs are in `.venv/Scripts/`, so `.venv/Scripts/python examples/quick
 - `memory_watch.py`: reads the test app's 32-byte record with the watch list and `emu.memory`. Our core only; on
   Azahar's own core it prints `needs our core: see README, Two cores` and exits 3.
   `.venv/bin/python examples/memory_watch.py`
+- `verdict.py`: runs the test app with `run_until` on a line it writes (`booted f=`) and exits by the table in USING
+  section 3: 0 pass, 1 the test failed, 3 boot failure, 12 timed out, 13 crashed. The test app writes no PASS or FAIL
+  line, so the example waits for that log line; point `RESULT_FILE` and `PASS_TEXT` at your own app's result file.
+  `.venv/bin/python examples/verdict.py`
 
 Run `nice -n 10` on a shared machine. Each example makes its folder under `runs/`, which git ignores.

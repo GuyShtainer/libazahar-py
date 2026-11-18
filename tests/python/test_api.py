@@ -128,3 +128,8 @@ def test_submodule_exports_are_trimmed():
     assert "HostCallError" not in errors.__all__ and "from_code" not in errors.__all__
     assert errors.SlotTimeout is libazahar.SlotTimeout and errors.LoadWarning is libazahar.LoadWarning
     assert libazahar.SlotTimeout.__module__ == "libazahar.errors" == libazahar.LoadWarning.__module__
+
+
+def test_images_module_exports():
+    from libazahar import images
+    assert sorted(images.__all__) == ["CompareResult", "compare", "digest"]
