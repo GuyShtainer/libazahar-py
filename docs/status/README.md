@@ -19,7 +19,9 @@ publish-ready. What to do this hour: `docs/status/lazpy/1-in-progress/HANDOFF.md
 <!-- generated:begin (python3 -I tools/mkprogress.py; do not edit by hand) -->
 ### libazahar-py (`docs/status/lazpy/`)
 - in-progress: `docs/status/lazpy/1-in-progress/500-phase-5-user-asks.md`
-- files: 0 in `3-waiting-on-guy/`, 0 in `4-not-started/`, 45 in `5-done/`, 0 in `6-parked/`
+- in-progress: `docs/status/lazpy/1-in-progress/800-what-must-work.md`
+- in-progress: `docs/status/lazpy/1-in-progress/801-research.md`
+- files: 0 in `3-waiting-on-guy/`, 3 in `4-not-started/`, 45 in `5-done/`, 0 in `6-parked/`
 <!-- generated:end -->
 
 ## How to change a status (one step)

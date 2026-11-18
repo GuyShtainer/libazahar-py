@@ -1,22 +1,23 @@
 <!-- handoff: slim v1 | current tasks only | rewritten whole from docs/status/templates/handoff.md | budget 80 lines | never append -->
 # libazahar-py handoff
 
-As of: 2026-11-18 20:04 (session 3ds-toolkit-eb). SLOWSTOP DONE 11:48
+As of: 2026-11-18 20:14 (session 3ds-toolkit-eb)
 
 This file lives in docs/status/lazpy/1-in-progress/, beside its item files. It holds only what
 the next session needs to act now, and points at the rest. Goals, rules, decisions and history live elsewhere.
 
 ## Running now
-- Nothing runs: no agents, no PC jobs, no wake-ups. Phase 7 is done: v1.1.0 (Windows x64 proven) was published
-  2026-11-18 00:07 and passed its post-publish checks at 01:52 (items 713, 714 and 700 are in 5-done).
-- Guy's 2026-11-18 answers are carried out: the private pre-rewrite backups and CI run 44130873582's superseded
-  artifact are deleted, and the status commits are pushed.
-- Item 500: asks from Gen3D and 3DPlatinum. On Guy's word (2026-11-18), the peer sessions were told to stop
-  messaging this session. Take a new ask only when Guy restarts the work.
+- laz-801 (phase 8 research, Guy 2026-11-18 20:08): six sonnet agents, launched 20:13, each writing one file in
+  docs/research/p8/: 01 Python emulator libraries (a397b3032b6ab7a33), 02 emulator scripting and TAS
+  (a0e485c06937da7fb), 03 testing and CI (a68c4910985270ec0), 04 RL and agent harnesses (ae303a0ab9257b1e0),
+  05 packaging and robustness (a6aeb701c3172189f), 06 what we have (a5b8b5181342af2f6). Web reading only.
+- Phase 7 is done: v1.1.0 (Windows x64 proven) published 2026-11-18 00:07; status commits pushed (e0addc0, CI green).
+- Item 500: asks from Gen3D and 3DPlatinum; the peers were told to stop messaging this session (Guy, 2026-11-18).
 
 ## Next steps, in order
-1. A new phase starts only on Guy's word: an opus plan with two review loops first. Guy's private side work for
-   this project is in the memory index (index-lazpy), never in this repo.
+1. When the six research files land: commit them, move laz-801 to 5-done, then one opus agent writes the plan
+   (laz-802, docs/plans/phase-8.md), one opus review (laz-803), one opus revision with an hour-saving pass (laz-804).
+   Guy asked for a single revision. Plan only: after laz-804, stop and report; no execution without his go.
 2. Deferred to the next core rebuild (from the release audit):
    - the Windows zip's own SOURCE.md snapshot entry;
    - the OpenSSL ENGINESDIR/MODULESDIR prefix;
