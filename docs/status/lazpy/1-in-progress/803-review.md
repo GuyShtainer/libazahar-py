@@ -1,21 +1,21 @@
 ---
-id: laz-802
+id: laz-803
 title: lazpy
-order: 802
+order: 803
 kind: step
 parent: laz-800
-page: Plan: the checklist of what must work, and the phases to get there
+page: Plan review (one round)
 hours: -
 ---
-# Plan: what must work, and how we get there
+# Plan review
 
 ## What it is
 Guy, 2026-11-18 20:08, verbatim: "research what must work on this kind of product, and plan (with single revision)
 on how we get there".
-One opus plan: the acceptance checklist, the gap against what we have, phases with gates and hours.
+One opus review of the plan, written to docs/reviews/phase-8-plan-review.md.
 
 ## Exit gate
-docs/plans/phase-8.md written, with the checklist, gaps, phases, gates and hours.
+The review file exists with a verdict and its numbered findings.
 
 ## Evidence
 none yet
@@ -23,7 +23,7 @@ none yet
 ## Pointers
 - Research: `docs/research/p8/`
 - Briefs: `docs/plans/phase-8-briefs.md`
-- Plan: docs/plans/phase-8.md (written by laz-802)
+- Plan: `docs/plans/phase-8.md`
 - Review: docs/reviews/phase-8-plan-review.md (written by laz-803)
 
 ## Lessons and notes

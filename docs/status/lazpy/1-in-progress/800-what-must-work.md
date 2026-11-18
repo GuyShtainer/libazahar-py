@@ -23,7 +23,7 @@ none yet
 ## Pointers
 - Research: `docs/research/p8/`
 - Briefs: `docs/plans/phase-8-briefs.md`
-- Plan: docs/plans/phase-8.md (written by laz-802)
+- Plan: `docs/plans/phase-8.md`
 - Review: docs/reviews/phase-8-plan-review.md (written by laz-803)
 
 ## Lessons and notes
