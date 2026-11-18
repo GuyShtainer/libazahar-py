@@ -224,3 +224,4 @@ date	bet	phase	agent_id	model	role	kind	start	end	hours	source
 2026-11-18	phase 8 A main loop: soak waiting (PC crash), wrap of the first block	phase-8a	main	opus	main	measure	22:56	23:03	0.12	session clock
 2026-11-19	phase 8 A main loop: soak loads rerun, two copies, audio probe, software Vulkan trial, decisions	phase-8a	main	opus	main	measure	01:06	01:22	0.27	session clock
 2026-11-19	phase 8 B main loop: lane briefs, worktrees, five builder dispatches	phase-8b	main	opus	main	briefs	01:22	01:29	0.12	session clock
+2026-11-19	phase 8 B0 lane rel: release check 13 SKIP/PEND, --self-test	phase-8b	a90dbd8c586f1a2e5	sonnet	agent	build	01:28	01:29	0.03	agent usage duration
