@@ -80,7 +80,13 @@ one frame fold into one. `set_input` and `set_keys(raw=...)` set held state for 
 Measured offsets (step C, test app on our host): a change made at batch frame f shows in the guest's log line of host
 frame f + m, or sometimes f + m + 1. Buttons (A and others): m = 0 (counts 0: 1, 1: 29 over 30 changes; the first
 one lands on f, the rest on f + 1); ZL/ZR (irrst path): m = 1 (6 of 6); circle pad: m = 1 (5 of 5); touch: m = 2
-(40 of 40). Plan checks with a tolerance of one frame. Poll-exact movies: our core exports it; the host and Python do not call it.
+(40 of 40). Plan checks with a tolerance of one frame.
+
+Pressing again: a release of one frame between two presses reaches the guest as two presses. Checked with the test app
+on Windows, for A, for ZL and ZR (the other service) and for a touch lift and re-tap, with gaps of 1, 2 and 3 frames:
+the log shows two presses each time, so one frame is enough. Write the release and the second press as two items, for
+example `(f, Buttons.A), (f + 6, Buttons(0)), (f + 7, Buttons.A)`. Two items for one button on the same frame fold into
+one, so a press-release-press needs separate frames. Poll-exact movies: our core exports it; the host and Python do not call it.
 
 ## 4a. The input script (`azhost --inputs FILE`)
 
@@ -365,6 +371,11 @@ The 1.0 promise holds on Windows. These are the differences from macOS; nothing 
 | `runs/` behind a junction | n/a | not supported |
 | Savestates between macOS and Windows | a Windows state is refused (expected; not run) | a macOS state is refused (checked on Windows): `StateError` "the core refused the state", and `host.log` gives the reason, "incompatible native format - size of long" (Azahar's boost archives store `long`, 8 bytes on macOS and 4 on Windows). Make states on the system that loads them |
 | The guest's HTTPS (CA file) | Homebrew's `openssl@3` paths | none: the compiled-in OPENSSLDIR, `/opt/lazpy/openssl-3.6.5-mingw64/C:/Program Files/Common Files/SSL`, is not a usable Windows path |
+
+No windows: the worker and `azhost.exe` create no top-level window, hidden ones included. A live test on Windows lists
+every top-level window of the desktop during a run and finds none that belongs to the worker. The test first makes a
+hidden window of its own and requires the list to hold it, so an empty list cannot pass. Whether a run can take the
+focus is not yet checked: that test needs a logged-in desktop, and over SSH it skips.
 
 Windows has no lazpy.1 core: the Windows core is lazpy.2. The limits of what was tested are in `STATUS.md`: one PC,
 Windows 10, an NVIDIA GPU. Windows 11 and AMD and Intel GPUs are untested.
