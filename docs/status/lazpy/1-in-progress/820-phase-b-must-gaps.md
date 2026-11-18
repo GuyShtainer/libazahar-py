@@ -18,7 +18,6 @@ The full PC gate passes with only the known skips; test-windows.yml green on the
 2026-11-19 01:50: the full PC gate on merged main (2777af1 + handoff commits), fast + live, the two 3-copy pool tests
 excluded (PC rule: 2 copies): 357 passed, 11 skipped (each with its reason), 1 xfailed (the core's handle leak,
 laz-829) in 6 min 16 s. The review runs.
-none yet
 
 ## Pointers
 - Plan section: `docs/plans/phase-8.md:158`
