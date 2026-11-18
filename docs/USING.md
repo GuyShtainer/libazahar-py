@@ -64,7 +64,12 @@ The `azhost` exit codes:
 | 9 | A savestate could not be loaded (`--state`), or `--save` could not drain or serialize the state (a write failure is 6). |
 | 10 | The guest exited. Our core: the batch's summary line (`stop=guest_exited`) comes first. Stock core: the process exits from inside the run, with no summary for that batch. |
 | 11 | A guest error ended the run. Our core: summary first (`stop=guest_error`). Stock core: none. |
-| 128+n | Killed by signal n (shown by the shell; azhost never returns it itself). Codes 1 and 12-127 are reserved. |
+| 128+n | Killed by signal n (shown by the shell; azhost never returns it itself). |
+
+Codes 1, 12 and 13 are the verdict codes of scripts built on the package; `azhost` itself does not return them.
+`examples/verdict.py` exits by this one table: 1 the test failed (the app reported a failure, or never reported a
+pass), 12 timed out and the worker was killed (`HostTimeout`), 13 the worker or host crashed (`HostCrashed`), and
+2, 3, 10 and 11 as above for a bad argument, a boot failure, a guest exit and a guest error. Codes 14 to 127 are reserved.
 
 Summary-line keys are frozen: `frames wall fps shots stop first last vblanks wall_ms_mean batch msg`. Units: `wall` is
 in seconds, `wall_ms_mean` in milliseconds, `batch` counts from 1. New keys are inserted before `msg`, which is always
@@ -178,6 +183,26 @@ leaves the instance unusable (later calls raise HostError); close it and boot ag
 app path, so a shared state carries it. An I/O failure while saving is a HostError, not a StateError.
 
 `SaveInfo.path` is a `pathlib.Path` (resolved, absolute).
+
+## 10a. What repeats
+
+A run is repeatable when every input in this table is fixed. Same app, same options, same inputs and a fresh working
+folder give the same screens and the same guest-visible state, measured on the test app at frames 300 and 600 with
+`libazahar.images.digest` and the app's log (`tests/python/test_determinism.py`). Two inputs are not fixed, and each is
+named here so a test does not lean on it.
+
+| Input | Fixed? | What reaches it |
+|---|---|---|
+| Tick seed and clock base (`core/options-lazpy.txt`: fixed ticks, fixed start time) | Fixed on our core. `citra_init_ticks_override` picks the seed (section 14); two seeds give a different tick count, and the guest's clock shifts with it | `svcGetSystemTick`, `osGetTime`, `time()` |
+| Asynchronous file and service timing (deterministic async operations, async file system off) | Fixed on our core. The stock core ignores some of these options, so the profile in force is itself an input: compare runs only under one core and one profile | any call that waits on the file system or a service |
+| Random bytes from the process and SSL services | Not fixed. They come from the host's own randomness; fixing them needs a core change | `PS_GenerateRandomBytes`, `SSLC_GenerateRandomData` |
+| Console ID and Wi-Fi MAC | A fresh working folder draws them at random, so they are not fixed there. A reused folder keeps the ones it drew | the services that return the console's unique ID and MAC |
+| Working folder reuse (SD, NAND, config, shader cache) | Fixed only if the folder is the same. Use a new folder for each run you want to repeat (`fresh_sd=True` clears just the SD) | every file the app reads or writes |
+| Held input across `load_state` | Kept: `load_state` does not change the held buttons, touch or circle pad. A new `Emulator(state=...)` starts with nothing held | `run` inputs, `set_input` |
+
+Held input in practice: input is held "across batches" (section 4). Holding A, saving, loading the state and running
+on leaves A down; booting a second instance from that state leaves A up. Release everything with `set_input` before a
+reset so the next run starts clean.
 
 ## 11. Stock core and our core
 
@@ -452,3 +477,7 @@ One line per name in `libazahar.__all__`. Units: seconds in Python, frames are g
 - `StateError`: a savestate could not be saved, read or restored. `NeedsLazpyCore`: the call needs our core. `GuestMemoryError`: an unmapped guest address; `.addr`, `.length`. `HostError`: wrong call order, I/O, memory, an unsupported call, an ABI mismatch or a missing host.
 - `LoadWarning`: the machine's load average is above twice its core count.
 - `__version__`: the package version string.
+- `libazahar.images` (import it with `from libazahar import images`; it is not in `__all__`):
+  - `images.digest((top, bottom))`: a SHA-256 hex string of the two screens from `screens()` (arrays or `bytes`); it needs no numpy.
+  - `images.compare(a, b, *, max_delta=0, max_pixels=0)`: each side is a `(H, W, 4)` uint8 array or the path of a PNG the host wrote. Returns a `CompareResult`: `max_delta` (largest single-channel difference), `pixels` (pixels that differ at all), `over` (pixels with a channel off by more than the `max_delta` limit), `within` (`over <= max_pixels`). `result.write_diff(path)` saves a PNG of the same size, white for every differing pixel and black elsewhere. Needs numpy (`pip install 'libazahar-py[numpy]'`), else an `ImportError` names the extra.
+  - The PNG reader takes only the host's own files (8-bit RGBA, filter 0 on every row, one IDAT) and raises `ArgumentError` for any other PNG, a bad CRC or a different picture size.
