@@ -16,7 +16,7 @@ Every step's gate passes (each step file names its PLAN.md line). Before any ste
 (`docs/plans/`), opus review 1, revision, opus review 2, revision (Guy's rule: two loops per phase).
 
 ## Evidence
-none yet
+- 2026-11-18 01:52 done: its last step, 420, is done (the release shipped as v1.0.0, item 600).
 
 ## Pointers
 - Plan section: `docs/PLAN.md` section 3

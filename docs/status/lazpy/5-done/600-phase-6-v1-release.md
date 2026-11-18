@@ -18,7 +18,8 @@ place of the never-published v0.1.0.
 `docs/plans/phase-v1.md` section 3, steps V0-V8 each at its gate; V9 waits on Guy.
 
 ## Evidence
-none yet
+- 2026-11-18 01:52 done: v1.0.0 published 2026-11-17 11:08 on Guy's word; its assets checked (runs/i5-v1.0.0/sums.log);
+  the fresh-clone check ran after v1.1.0 from GitHub (item 714), whose release carries v1.0.0's inherited assets.
 
 ## Pointers
 - Plan: `docs/plans/phase-v1.md`
@@ -162,7 +163,7 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
   for one BLOCKER: the saved v1.0.0 audit, tracked since 49c9520, narrates the scrubbed material (the same class as
   M2), so a HEAD edit cannot fix it; and SHOULD S1: one older commit subject still used M2's wording. Its identities
   (219 commits, no-reply only), M1/M2/S-item checks and the delta scan were clean.
-- 2026-11-17 10:11, V9 G8e: bundle `~/.lazpy-private/g8e/pre-g8e.bundle` (verified) and the audit's text kept
+- 2026-11-17 10:11, V9 G8e: bundle ~/.lazpy-private/g8e/pre-g8e.bundle (verified; deleted 2026-11-18 on Guy's OK) and the audit's text kept
   privately (there and in gitignored runs/reviews/). `git filter-repo --invert-paths` on the audit file plus one
   `--replace-text`/`--replace-message` literal ("[build]"). After: 219 commits, identities unchanged, 0 hits of the
   phrase in all history and messages, the file in no commit, fsck clean, no refs/replace. 17 commits rewritten:

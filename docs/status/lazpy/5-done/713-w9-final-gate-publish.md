@@ -24,6 +24,14 @@ The W9 gate in the plan. Plan: `docs/plans/phase-7.md` line 354.
   1 failed (test_state_boot 5.30 s against 2.5 s on the hosted runner), 292 passed, 14 skipped; job continue-on-error.
   STATUS's macOS paragraph rewritten from that run; that commit re-gated and pushed with test-windows only (it changes
   STATUS and status files, nothing macOS runs).
+- 2026-11-18 00:00-00:05 re-gate on cec470d: steps 1-3 PASS (19 PASS rc 0; SHA256SUMS be70491b...); pushed
+  2f0853c..cec470d; test-windows 44186031386 success 00:05.
+- 2026-11-18 00:05 step 6: annotated tag v1.1.0 (tagger no-reply) on cec470d, pushed (tag only).
+- 2026-11-18 00:06 step 7: draft release with 13 assets from runs/p7/w9/staged/ (copied from the PC, not hashed here).
+- 2026-11-18 00:06 step 8 PASS: 13 asset digests from gh api equal SHA256SUMS; SHA256SUMS's own digest equals the
+  logged re-stage sha (runs/p7/w9/step8.txt).
+- 2026-11-18 00:07 step 9: published, `gh release view v1.1.0` isDraft=false, Latest (runs/p7/w9/step9.txt); title
+  set to "libazahar-py 1.1.0" to match v1.0.0's.
 
 ## Pointers
 - Plan section: `docs/plans/phase-7.md:354`; briefs: `docs/plans/phase-7-briefs.md`

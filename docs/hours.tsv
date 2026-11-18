@@ -205,3 +205,7 @@ date	bet	phase	agent_id	model	role	kind	start	end	hours	source
 2026-11-17	phase 7 main loop: W7 staging, release_check fixes, clone_check runs 1-3 and their fixes (stock commit name, cross-OS state limit, no-ELF skip, memory boot wait), PC crash hold	phase-7	main	opus	main	execute	19:32	20:51	1.32	session clock
 2026-11-17	phase 7 main loop: W7 runs 4-5 (gate passed 22:26), W8 audit dispatch, W7c per-job deploy opt-in check, fix and PC deploy, RC deploy folders built, peer asks	phase-7	main	opus	main	execute	20:51	22:42	1.85	session clock
 2026-11-17	phase 7 main loop: W8 audit returned (shippable), fixes, check 13 on the Mac, re-stage and release_check on the PC, Guy publish word, macOS workflows manual-only	phase-7	main	opus	main	execute	22:42	22:53	0.18	session clock
+2026-11-17	phase 7 main loop: W9 STATUS macOS section, re-stages and pre-push gates (2), pushes, CI watch, tag, draft, digest check, publish; W10 prep	phase-7	main	opus	main	execute	22:53	00:09	1.27	session clock
+2026-11-18	phase 7 main loop: W10 wait for the PC, post-publish checks (assets from GitHub, clone_check from GitHub), close 714/700/600/420/400, peer relays	phase-7	main	opus	main	execute	00:09	01:53	1.73	session clock
+2026-11-18	Guy ask: a private side test, details kept outside the repo	phase-5	main	opus	main	execute	01:55	03:10	1.25	session clock and file times
+2026-11-18	SlowStop wrap-up: peers told to stop messaging, learn, handoff, progress	phase-5	main	opus	main	execute	11:40	11:55	0.25	session clock

@@ -35,6 +35,8 @@ The gate in `docs/PLAN.md` line 323 ("Phase I"), run headless on this Mac with a
   ended "clone ok: 114 s wall" (rc 0): the README steps, quickstart on our core at the default path, the build block,
   quickstart on the built host, the full pytest with LAZ_REQUIRE_EMULATOR=1: 136 passed, 3 skipped (two need
   LAZ_STOCK_CORE, one needs a process not already nice). Log: runs/clone-i2/ (ignored). I2 done; I3 next.
+- 2026-11-18 01:52 done: I5 part 1 (v1.0.0 assets 8/8 match) and part 2 (fresh clone from GitHub, item 714:
+  299 passed, 8 skipped, rc 0).
 
 ## Pointers
 - Plan section: `docs/PLAN.md:323`

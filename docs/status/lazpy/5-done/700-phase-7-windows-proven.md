@@ -20,7 +20,9 @@ test suite with `LAZ_REQUIRE_EMULATOR=1` passes on the PC from a fresh clone; a 
 release-legal audit is clean; a release with a Windows asset is published on Guy's word.
 
 ## Evidence
-none yet
+- 2026-11-18 01:52 done: v1.1.0 with the Windows x64 core published 2026-11-18 00:07 on Guy's word ("Yes, publish
+  after the jobs"); fresh clone from GitHub passes the full suite on the PC (item 714); test-windows green on cec470d;
+  release-legal audit shippable (item 712). Steps 701-714 in 5-done.
 
 ## Pointers
 - The port so far: toolkit docs/pc-worker/NATIVE-PLAN-v3.md, docs/pc-worker/lanes/WB.md, docs/pc-worker/HANDOFF.md

@@ -1,5 +1,5 @@
 ---
-asof: 2026-11-13 19:53
+asof: 2026-11-18 20:04
 ---
 # libazahar-py status: read this first
 
@@ -7,26 +7,19 @@ A headless, scriptable host for the Azahar 3DS emulator's libretro core, plus a 
 publish-ready. What to do this hour: `docs/status/lazpy/1-in-progress/HANDOFF.md`.
 
 ## Now
-- v1.0.0 is staged and checked, ready to publish. Gen3D and 3DPlatinum both passed their own tests on the final
-  core; the state-restore crash they found is fixed. A real 3D scene runs at about 9x real time, four copies at
-  once. The full test pass had 0 failures. The legal re-audit's changes are done, including a fourth history
-  rewrite, and the pre-push check passes 16 of 16.
-- Guy held the push (2026-11-13: "We will push in the future"). Nothing is pushed.
+- v1.1.0 (Windows x64 proven) was published 2026-11-18 00:07. Its assets matched their checksums when downloaded
+  back from GitHub, and a fresh clone from GitHub passed the full emulator suite on Windows. Phase 7 is done.
+- Nothing runs. Guy approved deleting the private pre-rewrite backups and the superseded CI artifact (done
+  2026-11-18), and pushing the status commits.
 
 ## Next
-- On Guy's word: stage once more (later commits make the build-files asset stale), the pre-push check, then the
-  repo, the push, the tag and the draft release, and the check of the published release.
+- A new phase only on Guy's word: an opus plan and two review loops first.
 
 ## Where each item is
 <!-- generated:begin (python3 -I tools/mkprogress.py; do not edit by hand) -->
 ### libazahar-py (`docs/status/lazpy/`)
-- in-progress: `docs/status/lazpy/1-in-progress/400-phase-4-release.md`
-- in-progress: `docs/status/lazpy/1-in-progress/420-step-i-release.md`
 - in-progress: `docs/status/lazpy/1-in-progress/500-phase-5-user-asks.md`
-- in-progress: `docs/status/lazpy/1-in-progress/600-phase-6-v1-release.md`
-- in-progress: `docs/status/lazpy/1-in-progress/700-phase-7-windows-proven.md`
-- in-progress: `docs/status/lazpy/1-in-progress/713-w9-final-gate-publish.md`
-- files: 0 in `3-waiting-on-guy/`, 1 in `4-not-started/`, 39 in `5-done/`, 0 in `6-parked/`
+- files: 0 in `3-waiting-on-guy/`, 0 in `4-not-started/`, 45 in `5-done/`, 0 in `6-parked/`
 <!-- generated:end -->
 
 ## How to change a status (one step)
