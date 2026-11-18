@@ -9,7 +9,6 @@ the next session needs to act now, and points at the rest. Goals, rules, decisio
 ## Running now
 | What | Where | Agent id | It stops when |
 |---|---|---|---|
-| laz-822 + laz-824: determinism, image compare, verdict example | runs/p8/wt/images (p8-images) | ae62996f2f25b2210 | its final message |
 | laz-823 + laz-826: error evidence, parent death | runs/p8/wt/life (p8-life) | a6b0fe70c10ad86e4 | its final message |
 | laz-829: handle leak per state load | runs/p8/wt/leak (p8-leak) | ac78fd5236d372d02 | its final message |
 
@@ -18,13 +17,13 @@ plan's recommended answers apply (laz-810 notes). Phase A is done: runs/p8/a/dec
 through runs/p8/bin/pclane under one shared PC lock (one job of ours at a time since the 2026-11-18 PC crash).
 
 ## Next steps, in order
-1. Lanes rel and live (laz-821, 825, 827, 828) are merged. As each other lane ends: check its diff and its PC test lines, commit it on its branch, move its items to 5-done with
+1. Lanes rel, live and images (laz-821, 822, 824, 825, 827, 828) are merged. As each other lane ends: check its diff and its PC test lines, commit it on its branch, move its items to 5-done with
    Evidence (laz-829: copy LEAK-NOTES.md's finding into the item, then delete that file).
 2. With all five merged: the full PC gate (fast + live tests) through pclane.
 3. The opus as-built review, docs/reviews/phase-8b-as-built.md (brief at the end of docs/plans/phase-8b-briefs.md);
    sonnet fixes; laz-820 to 5-done.
-4. test-windows.yml on the merge needs a push: ask Guy. docs_check fails link checks on the PC only
-   (README links; it passes on the Mac): look before CI runs it on Windows. Then phase C (laz-830).
+4. test-windows.yml on the merge needs a push: ask Guy.
+   docs_check's links check fails on the PC lane only (no .git there); it runs on the Mac. Then phase C (laz-830).
 
 ## Waiting on Guy (only what blocks a step above)
 - Pushes: each one needs his word. Local main is ahead of origin, and phase 8 commits stay local until he says so.
