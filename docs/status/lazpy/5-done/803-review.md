@@ -18,13 +18,17 @@ One opus review of the plan, written to docs/reviews/phase-8-plan-review.md.
 The review file exists with a verdict and its numbered findings.
 
 ## Evidence
-none yet
+2026-11-18 20:28-20:41, opus agent afbf4388c34327e2d: docs/reviews/phase-8-plan-review.md (357 lines). Verdict: not
+ready as written, fixable in one revision. 1 blocker (no working key-bytes history scan off the Mac; check 13 prints
+PASS when not run), 10 major (incl. hours re-estimated to about 15 h for A-C, held input across state load missing,
+determinism sources incomplete, exit-code tables clash, PC gate breaks the 2-copy rule), 11 minor; 11 hour-saving
+ideas. Privacy scan 0 hits.
 
 ## Pointers
 - Research: `docs/research/p8/`
 - Briefs: `docs/plans/phase-8-briefs.md`
 - Plan: `docs/plans/phase-8.md`
-- Review: docs/reviews/phase-8-plan-review.md (written by laz-803)
+- Review: `docs/reviews/phase-8-plan-review.md`
 
 ## Lessons and notes
 Read this part only when you work on this item. Blockers, numbers and Guy's words go here verbatim.

@@ -24,7 +24,7 @@ none yet
 - Research: `docs/research/p8/`
 - Briefs: `docs/plans/phase-8-briefs.md`
 - Plan: `docs/plans/phase-8.md`
-- Review: docs/reviews/phase-8-plan-review.md (written by laz-803)
+- Review: `docs/reviews/phase-8-plan-review.md`
 
 ## Lessons and notes
 Read this part only when you work on this item. Blockers, numbers and Guy's words go here verbatim.

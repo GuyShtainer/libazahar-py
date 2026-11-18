@@ -216,3 +216,4 @@ date	bet	phase	agent_id	model	role	kind	start	end	hours	source
 2026-11-18	phase 8 laz-801: research 05 packaging and robustness	phase-8	a6aeb701c3172189f	sonnet	agent	research	20:12	20:16	0.06	agent usage duration
 2026-11-18	phase 8 laz-801: research 06 inventory of what we have	phase-8	a5b8b5181342af2f6	sonnet	agent	research	20:12	20:13	0.02	agent usage duration
 2026-11-18	phase 8 laz-802: the plan (docs/plans/phase-8.md, rev 0)	phase-8	a3968f9109b2b677b	opus	agent	plan	20:17	20:28	0.19	agent usage duration
+2026-11-18	phase 8 laz-803: plan review (docs/reviews/phase-8-plan-review.md)	phase-8	afbf4388c34327e2d	opus	agent	review	20:28	20:41	0.22	agent usage duration
