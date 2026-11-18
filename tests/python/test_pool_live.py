@@ -36,8 +36,7 @@ def load() -> str:
     return "load n/a (Windows)" if WIN else f"load {os.getloadavg()[0]:.1f}"
 
 
-@pytest.fixture
-def gate_slots(monkeypatch, repo_root):
+def hold_real_then_private(monkeypatch, repo_root, private_cap: int):
     """Rule 1: hold the real machine-wide slots (real folder, default cap) while the gate runs; rule 2: then a
     private folder with cap 3 for the Emulators under test. Order matters: the real ones are taken first.
 
@@ -54,12 +53,24 @@ def gate_slots(monkeypatch, repo_root):
         private = repo_root / "runs" / "e-pytest" / "slots"
         shutil.rmtree(private, ignore_errors=True)
         monkeypatch.setenv("LAZ_SLOT_DIR", str(private))
-        monkeypatch.setenv("LAZ_MAX_INSTANCES", "3")
+        monkeypatch.setenv("LAZ_MAX_INSTANCES", str(private_cap))
         yield private
     finally:
         for slot in held:
             slot.release()
         info(f"end: {load()}")
+
+
+@pytest.fixture
+def gate_slots(monkeypatch, repo_root):
+    """The private folder with cap 3 (see hold_real_then_private)."""
+    yield from hold_real_then_private(monkeypatch, repo_root, 3)
+
+
+@pytest.fixture
+def gate_slots_two(monkeypatch, repo_root):
+    """The private folder with cap 2: the B7 run, with two live copies and a third waiting."""
+    yield from hold_real_then_private(monkeypatch, repo_root, 2)
 
 
 def worker_nice(pid: int) -> int:
@@ -84,19 +95,30 @@ def slot_txt(workdir: Path) -> dict:
 
 def test_g1_g2_g4_cap_kill_and_nice(host_paths, workdir, seed, gate_slots):
     """g1: three boot, a fourth waits; g2: a kill frees its slot within 1 s; g4: every worker's nice is 10 or more."""
+    check_cap_kill_and_nice(host_paths, workdir, seed, 3)
+
+
+def test_b7_two_live_copies_third_waits(host_paths, workdir, seed, gate_slots_two):
+    """B7: the same g1, g2 and g4 checks at the smallest pool: two copies boot under a private cap of 2, a third
+    waits, a kill frees its slot within 1 s, and every worker's nice is 10 or more. Run with ``pclane --copies 2``."""
+    check_cap_kill_and_nice(host_paths, workdir, seed, 2)
+
+
+def check_cap_kill_and_nice(host_paths, workdir, seed, cap: int) -> None:
+    """Boot ``cap`` copies, check a job beyond the cap waits (g1), a kill frees its slot in time (g2) and the nice (g4)."""
     info(f"start: {load()}")
     emus = []
     fourth = {}
 
     def boot_fourth():
         try:
-            fourth["emu"] = Emulator(host_paths.app, workdir / "i3", sd_seed=seed(ready_at=400))
+            fourth["emu"] = Emulator(host_paths.app, workdir / "waiter", sd_seed=seed(ready_at=400))
             fourth["result"] = fourth["emu"].run(RUN_FRAMES)
         except BaseException as error:  # noqa: BLE001  (stored, then asserted on in the main thread)
             fourth["error"] = error
 
     try:
-        for k in range(3):
+        for k in range(cap):
             emu = Emulator(host_paths.app, workdir / f"i{k}", sd_seed=seed(ready_at=100 * (k + 1)))
             emus.append(emu)
             assert emu.run(RUN_FRAMES).frames == RUN_FRAMES
@@ -106,12 +128,13 @@ def test_g1_g2_g4_cap_kill_and_nice(host_paths, workdir, seed, gate_slots):
         thread = threading.Thread(target=boot_fourth)
         thread.start()
         time.sleep(STARTS_WAIT_S)
-        waiting = workdir / "i3"
+        waiting = workdir / "waiter"
         assert thread.is_alive(), f"the 4th should wait for a slot: {fourth}"
         assert not (waiting / "slot.txt").exists() and not (waiting / "host.map").exists()
-        killed = slot_txt(workdir / "i1")["slot"]
+        victim = 1 if cap > 1 else 0
+        killed = slot_txt(workdir / f"i{victim}")["slot"]
         t_kill = time.time()
-        hard_kill(emus[1].pid)
+        hard_kill(emus[victim].pid)
         thread.join(timeout=emus[0].boot_timeout + RUN_FRAMES)
         assert not thread.is_alive(), "the 4th never finished"
         assert "error" not in fourth, fourth.get("error")
