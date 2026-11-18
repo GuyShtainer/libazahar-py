@@ -16,7 +16,8 @@ Phase B: test that pressing the same button twice registers twice.
 The plan row's gate, run on the PC through runs/p8/bin/pclane; the lane merged on main; the phase B review passed.
 
 ## Evidence
-none yet
+2026-11-19 01:32: lane live merged on main; test_repress.py on the PC: 12 passed (A, ZL, ZR, touch; gaps 1-3 frames).
+Waits on the phase B review.
 
 ## Pointers
 - Plan row: `docs/plans/phase-8.md:169`
@@ -24,3 +25,5 @@ none yet
 
 ## Lessons and notes
 Read this part only when you work on this item.
+
+- One frame of release is enough for every input; USING section 4 says so.
