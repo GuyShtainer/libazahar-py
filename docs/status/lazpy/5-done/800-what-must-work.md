@@ -18,7 +18,8 @@ then one plan, one review and one revision on closing the gaps.
 Steps 801-804 done; the revised plan is on disk and Guy has it.
 
 ## Evidence
-none yet
+2026-11-18 20:59: research (801), plan (802), review (803) and the single revision (804) done; the revised plan
+docs/plans/phase-8.md rev 1 went to Guy with its five questions. Execution waits for his go (plan only).
 
 ## Pointers
 - Research: `docs/research/p8/`

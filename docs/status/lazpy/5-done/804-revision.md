@@ -18,7 +18,10 @@ One opus revision answering every review finding, plus the hour-saving pass.
 phase-8.md revised; each finding answered; the hour-saving pass priced per idea.
 
 ## Evidence
-none yet
+2026-11-18 20:42-20:57, opus agent a2ebb8c329f4474d9: docs/plans/phase-8.md rev 1 (342 lines). All 22 review
+findings fixed (closing table, section 9); hour-saving pass with web search (biggest find: MSYS2's pinned Mesa package
+ships a software Vulkan for Windows CI). Hours: A 2.1, B 4.0, C 8.1 (A-C 14.2, range 10.6-20.2), optional Windows
+core rebuild +1.5, D 10.9; all 25.1 (18.6-35.2). Five questions for Guy (Q1-Q5). Privacy scan 0 hits.
 
 ## Pointers
 - Research: `docs/research/p8/`
