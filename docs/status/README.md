@@ -20,8 +20,8 @@ publish-ready. What to do this hour: `docs/status/lazpy/1-in-progress/HANDOFF.md
 ### libazahar-py (`docs/status/lazpy/`)
 - in-progress: `docs/status/lazpy/1-in-progress/500-phase-5-user-asks.md`
 - in-progress: `docs/status/lazpy/1-in-progress/800-what-must-work.md`
-- in-progress: `docs/status/lazpy/1-in-progress/801-research.md`
-- files: 0 in `3-waiting-on-guy/`, 3 in `4-not-started/`, 45 in `5-done/`, 0 in `6-parked/`
+- in-progress: `docs/status/lazpy/1-in-progress/802-plan.md`
+- files: 0 in `3-waiting-on-guy/`, 2 in `4-not-started/`, 46 in `5-done/`, 0 in `6-parked/`
 <!-- generated:end -->
 
 ## How to change a status (one step)

@@ -21,7 +21,8 @@ The review file exists with a verdict and its numbered findings.
 none yet
 
 ## Pointers
-- Research: docs/research/p8/ (written by laz-801)
+- Research: `docs/research/p8/`
+- Briefs: `docs/plans/phase-8-briefs.md`
 - Plan: docs/plans/phase-8.md (written by laz-802)
 - Review: docs/reviews/phase-8-plan-review.md (written by laz-803)
 

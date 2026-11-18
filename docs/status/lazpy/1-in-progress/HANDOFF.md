@@ -1,22 +1,20 @@
 <!-- handoff: slim v1 | current tasks only | rewritten whole from docs/status/templates/handoff.md | budget 80 lines | never append -->
 # libazahar-py handoff
 
-As of: 2026-11-18 20:14 (session 3ds-toolkit-eb)
+As of: 2026-11-18 20:18 (session 3ds-toolkit-eb)
 
 This file lives in docs/status/lazpy/1-in-progress/, beside its item files. It holds only what
 the next session needs to act now, and points at the rest. Goals, rules, decisions and history live elsewhere.
 
 ## Running now
-- laz-801 (phase 8 research, Guy 2026-11-18 20:08): six sonnet agents, launched 20:13, each writing one file in
-  docs/research/p8/: 01 Python emulator libraries (a397b3032b6ab7a33), 02 emulator scripting and TAS
-  (a0e485c06937da7fb), 03 testing and CI (a68c4910985270ec0), 04 RL and agent harnesses (ae303a0ab9257b1e0),
-  05 packaging and robustness (a6aeb701c3172189f), 06 what we have (a5b8b5181342af2f6). Web reading only.
+- laz-802 (phase 8 plan, Guy 2026-11-18 20:08): one opus agent a3968f9109b2b677b, launched 20:18, writing
+  docs/plans/phase-8.md from the research in docs/research/p8/ (laz-801 done) and docs/plans/phase-8-briefs.md.
 - Phase 7 is done: v1.1.0 (Windows x64 proven) published 2026-11-18 00:07; status commits pushed (e0addc0, CI green).
 - Item 500: asks from Gen3D and 3DPlatinum; the peers were told to stop messaging this session (Guy, 2026-11-18).
 
 ## Next steps, in order
-1. When the six research files land: commit them, move laz-801 to 5-done, then one opus agent writes the plan
-   (laz-802, docs/plans/phase-8.md), one opus review (laz-803), one opus revision with an hour-saving pass (laz-804).
+1. When the plan lands: commit it, move laz-802 to 5-done, then one opus review (laz-803), then one opus revision
+   with an hour-saving pass (laz-804), each from docs/plans/phase-8-briefs.md.
    Guy asked for a single revision. Plan only: after laz-804, stop and report; no execution without his go.
 2. Deferred to the next core rebuild (from the release audit):
    - the Windows zip's own SOURCE.md snapshot entry;

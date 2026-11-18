@@ -18,10 +18,13 @@ Cheap agents survey comparable tools and their issue trackers, one topic each, p
 Every topic file exists under docs/research/p8/ with sources, a must/should/nice list and the reported failure modes.
 
 ## Evidence
-none yet
+2026-11-18 20:12-20:16, six sonnet agents (ids in docs/hours.tsv): docs/research/p8/01 to 06 written (146, 83, 84,
+171, 100 and 177 lines); scanned for personal paths, emails and game titles: 0 hits. Gaps the agents named: GitHub
+search rate limits thinned the issue sampling (01, 04); some licences from memory (02, 05); no public reports found
+on orphaned processes or 3DS-specific CI firmware problems (03, 05).
 
 ## Pointers
-- Research: docs/research/p8/ (written by laz-801)
+- Research: `docs/research/p8/`
 - Plan: docs/plans/phase-8.md (written by laz-802)
 - Review: docs/reviews/phase-8-plan-review.md (written by laz-803)
 

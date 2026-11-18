@@ -21,7 +21,8 @@ Steps 801-804 done; the revised plan is on disk and Guy has it.
 none yet
 
 ## Pointers
-- Research: docs/research/p8/ (written by laz-801)
+- Research: `docs/research/p8/`
+- Briefs: `docs/plans/phase-8-briefs.md`
 - Plan: docs/plans/phase-8.md (written by laz-802)
 - Review: docs/reviews/phase-8-plan-review.md (written by laz-803)
 
