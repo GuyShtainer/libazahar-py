@@ -1,5 +1,5 @@
 """B9 (item 829): the worker's open handles (Windows) or file descriptors (macOS, Linux) stay flat over many state
-loads. Phase A measured about 2 extra Windows handles per load; the probe in LEAK-NOTES.md traced them to the core
+loads. Phase A measured about 2 extra Windows handles per load; the probe in item 829's notes traced them to the core
 (Semaphore objects made while it restores a state), so the Windows test is an expected failure until a core patch."""
 from __future__ import annotations
 
@@ -50,7 +50,7 @@ def open_handles(pid: int) -> int:
 
 @pytest.mark.skipif(sys.platform != "win32", reason="the leak was measured on Windows; macOS runs the test below")
 @pytest.mark.xfail(strict=True, reason="item 829: the core leaves about 2 Semaphore handles per state load "
-                                       "(LEAK-NOTES.md); fixed only by a core patch, rebuilt in C6a")
+                                       "(item 829 notes); fixed only by a core patch, rebuilt in C6a")
 def test_handles_flat_over_loads_windows(host_paths, workdir):
     check_flat(host_paths, workdir)
 

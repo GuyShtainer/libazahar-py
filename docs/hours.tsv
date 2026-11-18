@@ -230,3 +230,4 @@ date	bet	phase	agent_id	model	role	kind	start	end	hours	source
 2026-11-19	phase 8 B2/B5 lane life: error evidence, parent death	phase-8b	a6b0fe70c10ad86e4	sonnet	agent	build	01:28	01:34	0.11	agent usage duration
 2026-11-19	phase 8 B main loop: lane reviews, wording fixes, merges	phase-8b	main	opus	main	merge	01:29	01:36	0.12	session clock
 2026-11-19	phase 8 B9 lane leak: handle leak traced to the core, guard test	phase-8b	ac78fd5236d372d02	sonnet	agent	investigate	01:28	01:42	0.24	agent usage duration
+2026-11-19	phase 8 B main loop: leak merge, full PC gate, review dispatch	phase-8b	main	opus	main	gate	01:42	01:51	0.15	session clock

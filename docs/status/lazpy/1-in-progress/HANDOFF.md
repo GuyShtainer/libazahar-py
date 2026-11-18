@@ -9,7 +9,6 @@ the next session needs to act now, and points at the rest. Goals, rules, decisio
 ## Running now
 | What | Where | Agent id | It stops when |
 |---|---|---|---|
-| laz-820 full PC gate on merged main (fast + live, 3-copy pool tests excluded) | PC lane gate | main (bg brdinisl3) | runs/p8/b/gate.out ends with "local rc=" |
 | laz-820 as-built review of phase B (docs/reviews/phase-8b-as-built.md) | main, read-only | ad2c4bb0a14bb3ef6 | its final message |
 
 Phase 8 is under way: Guy, 2026-11-18 ~21:00, "you have my green light. go". He did not answer Q1-Q5, so the
@@ -18,7 +17,7 @@ through runs/p8/bin/pclane under one shared PC lock (one job of ours at a time s
 
 ## Next steps, in order
 1. All five lanes are merged (laz-821 to 829, Evidence written; each waits on the review).
-2. Read runs/p8/b/gate.out; fix any red. The two 3-copy pool tests run in CI or on the Mac, not on the PC.
+2. The full PC gate passed (laz-820 Evidence). The two 3-copy pool tests run in CI or on the Mac, not on the PC.
 3. When the review lands: sonnet fixes for its findings, then laz-820 and 821-829 to 5-done.
 4. test-windows.yml on the merge needs a push: ask Guy.
    docs_check's links check fails on the PC lane only (no .git there); it runs on the Mac. Then phase C (laz-830).
