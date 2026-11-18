@@ -136,3 +136,18 @@ rows and USING. Check:
 - that the docs claim no more than the tests prove.
 
 Give numbered findings with a severity and a fix. No code edits.
+
+## The fixes (sonnet), after the review
+
+`docs/reviews/phase-8b-as-built.md`, findings 1-25. Three lanes, each with its own files; the same rules as above.
+Main-loop decisions on finding 17: the measured field becomes `largest_delta`; `write_diff(path, *, over_only=False)`
+(by default every differing pixel, as the plan says; `over_only=True` marks only the pixels over the limit);
+`_differs` is `field(init=False, repr=False, compare=False)` set by a private factory; `read_png` becomes `_read_png`.
+
+| Lane | Findings | Files |
+|---|---|---|
+| `fimg` | 1, 4, 12, 17, 19, 23, 24 (the 10a part), 25 (verdict.py, images.py) | images.py, examples/verdict.py, examples/README.md, test_images.py, test_determinism.py, test_c_checks.py, USING 3, 10a and the images block of 20 |
+| `flife` | 2, 6-11, 13-16, 18 (all of it, images too), 20, 21, 24 (the section 8 part), 25 (errors.py, _job.py, _worker.py) | errors.py, _job.py, _client.py, _worker.py, emulator.py, fakeworker.py, test_errors.py, test_client.py, test_live_errors.py, test_parent_death.py, test_api.py, USING 8, 19 and the evidence block of 20 |
+| `fmisc` | 3, 5, 22, 25 (test_pool_live.py) | test_handles_live.py, test_windows_windows.py, test_pool_live.py, .github/workflows/test.yml, USING 15a |
+
+A finding a lane cannot fix honestly (it needs the Mac, or a run the PC rule forbids) is reported, not papered over.

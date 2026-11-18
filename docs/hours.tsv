@@ -231,3 +231,4 @@ date	bet	phase	agent_id	model	role	kind	start	end	hours	source
 2026-11-19	phase 8 B main loop: lane reviews, wording fixes, merges	phase-8b	main	opus	main	merge	01:29	01:36	0.12	session clock
 2026-11-19	phase 8 B9 lane leak: handle leak traced to the core, guard test	phase-8b	ac78fd5236d372d02	sonnet	agent	investigate	01:28	01:42	0.24	agent usage duration
 2026-11-19	phase 8 B main loop: leak merge, full PC gate, review dispatch	phase-8b	main	opus	main	gate	01:42	01:51	0.15	session clock
+2026-11-19	phase 8 B8 as-built review	phase-8b	ad2c4bb0a14bb3ef6	opus	agent	review	01:44	01:54	0.18	agent usage duration

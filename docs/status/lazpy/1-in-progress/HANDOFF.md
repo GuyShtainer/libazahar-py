@@ -1,7 +1,7 @@
 <!-- handoff: slim v1 | current tasks only | rewritten whole from docs/status/templates/handoff.md | budget 80 lines | never append -->
 # libazahar-py handoff
 
-As of: 2026-11-19 01:44 (session 3ds-toolkit-eb)
+As of: 2026-11-19 01:56 (session 3ds-toolkit-eb)
 
 This file lives in docs/status/lazpy/1-in-progress/, beside its item files. It holds only what
 the next session needs to act now, and points at the rest. Goals, rules, decisions and history live elsewhere.
@@ -9,7 +9,9 @@ the next session needs to act now, and points at the rest. Goals, rules, decisio
 ## Running now
 | What | Where | Agent id | It stops when |
 |---|---|---|---|
-| laz-820 as-built review of phase B (docs/reviews/phase-8b-as-built.md) | main, read-only | ad2c4bb0a14bb3ef6 | its final message |
+| laz-820 review fixes: images, verdict, determinism (findings 1, 4, 12, 17, 19, 23-25) | runs/p8/wt/fimg (p8-fimg) | ac7dccfb948ffcf0c | its final message |
+| laz-820 review fixes: evidence, parent death, API freeze (2, 6-11, 13-16, 18, 20, 21, 24, 25) | runs/p8/wt/flife (p8-flife) | acb8353bc38f3613a | its final message |
+| laz-820 review fixes: leak xfail, azhost window run, CI self-test (3, 5, 22, 25) | runs/p8/wt/fmisc (p8-fmisc) | a5e9bb6d38a2022b0 | its final message |
 
 Phase 8 is under way: Guy, 2026-11-18 ~21:00, "you have my green light. go". He did not answer Q1-Q5, so the
 plan's recommended answers apply (laz-810 notes). Phase A is done: runs/p8/a/decisions.md. All lane PC jobs go
@@ -18,7 +20,9 @@ through runs/p8/bin/pclane under one shared PC lock (one job of ours at a time s
 ## Next steps, in order
 1. All five lanes are merged (laz-821 to 829, Evidence written; each waits on the review).
 2. The full PC gate passed (laz-820 Evidence). The two 3-copy pool tests run in CI or on the Mac, not on the PC.
-3. When the review lands: sonnet fixes for its findings, then laz-820 and 821-829 to 5-done.
+3. The review (docs/reviews/phase-8b-as-built.md: ready with changes) is being fixed in three lanes (briefs: the
+   last section of docs/plans/phase-8b-briefs.md). Merge fimg before flife (flife's freeze uses fimg's names), then
+   the full PC gate again, then laz-820 and 821-829 to 5-done (829 stays open for the core fix in C6a).
 4. test-windows.yml on the merge needs a push: ask Guy.
    docs_check's links check fails on the PC lane only (no .git there); it runs on the Mac. Then phase C (laz-830).
 
