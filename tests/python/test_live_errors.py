@@ -43,6 +43,22 @@ def test_sigsegv_raises_host_crashed_fast(host_paths, workdir):
         assert delay < 1.0 and emu.closed
 
 
+def test_crash_error_names_the_log_and_the_newest_shot(host_paths, workdir):
+    with dh.boot(host_paths, workdir) as emu:
+        emu.run(120)
+        taken = emu.shot(emu.workdir / "shots" / "evidence")
+        killer = threading.Timer(1.5, lambda: hard_kill(emu.pid))
+        killer.start()
+        try:
+            with pytest.raises(HostCrashed) as caught:
+                emu.run(10_000_000)
+        finally:
+            killer.cancel()
+        error = caught.value
+        assert error.workdir == emu.workdir and error.log_path == emu.workdir / "host.log"
+        assert "host.log" in str(error) and taken[0].name in str(error)
+
+
 def test_sigstop_raises_host_timeout(host_paths, workdir):
     with dh.boot(host_paths, workdir) as emu:
         emu.run(300)

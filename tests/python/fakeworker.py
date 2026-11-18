@@ -22,6 +22,11 @@ else:
 
 from libazahar import _map  # noqa: E402
 
+if sys.platform == "darwin":        # like the real worker: end when the parent dies, even inside a batch
+    from libazahar import _worker  # noqa: E402
+
+    _worker.start_parent_watch(os.getppid())
+
 
 def open_map():
     """Create a full-size map with the magic; returns the writable mmap."""
