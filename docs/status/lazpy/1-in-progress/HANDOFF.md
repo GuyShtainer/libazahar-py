@@ -1,7 +1,7 @@
 <!-- handoff: slim v1 | current tasks only | rewritten whole from docs/status/templates/handoff.md | budget 80 lines | never append -->
 # libazahar-py handoff
 
-As of: 2026-11-19 07:14 (session 3ds-toolkit-eb)
+As of: 2026-11-19 07:15 (session 3ds-toolkit-eb)
 
 This file lives in docs/status/lazpy/1-in-progress/, beside its item files. It holds only what
 the next session needs to act now, and points at the rest. Goals, rules, decisions and history live elsewhere.
@@ -25,8 +25,9 @@ through runs/p8/bin/pclane under one shared PC lock (one job of ours at a time s
    lists lacked phase 8's new Windows skips, and the macOS Makefile guard did not allow host/audio.c. Both fixed
    locally and proven on the PC (fast tier + skips_check; the w7 rules on the real junit). C6a's prefix fix is
    written (tools/build-core-win64.sh: the three OpenSSL folders on the make line, the build fails if any is not
-   under C:/Program Files/; mkrelease's zip SOURCE.md names the snapshot). The next push asks Guy first (red rule),
-   then test-windows, test and core-win64 (C6a's one round); then fetch.sh's new Windows pin and the docs.
+   under C:/Program Files/; mkrelease's zip SOURCE.md names the snapshot), committed locally as 587c171.
+   Guy, 07:15: HOLD the push (asked after the red round). Nothing is pushed until he says so; then test-windows,
+   test and core-win64 (C6a's one round), then fetch.sh's new Windows pin and the docs.
    The release audit must also read commit 44ad3c5's text (review finding 2).
 3. Not run anywhere yet: make check (clang analyze) on the new C; CI's macOS job runs it after a push.
    docs_check's links check fails on the PC lane only (no .git there); it runs on the Mac.
