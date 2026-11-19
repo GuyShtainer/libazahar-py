@@ -44,7 +44,7 @@ Why it cannot work with the core as it is:
   repeats, offsets m = 0, 1, 1, 2) cannot pass.
 
 Fix needed (new core patch, lane C6a): make `Movie::Play` take the next record of its own type (type skipping), or keep
-one cursor per record type. Then add `exact_inputs` to `Emulator` and `tests/python/test_exact_inputs_live.py`.
+one cursor per record type. Then add `exact_inputs` to `Emulator` and a live test, test_exact_inputs_live.py (still to write).
 
 State in the tree: the host call `azh_movie_play` and the worker's optional movie argument (`args[8]` of `_op_start`)
 are in ABI 5. They compile but have never run live, and `Emulator` does not reach them. No `exact_inputs` option and no

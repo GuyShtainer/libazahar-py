@@ -8,6 +8,8 @@
   test, `make testapp` delegates to `testapp/`.
 - `testapp/`: the 3DS test app (libctru, GPLv3): corner markers, per-frame log, `control.txt` events, 2D/3D, busy
   boot; builds `build/testapp.3dsx`; `testapp/README.md`.
+- `testapp-tone/`: a second 3DS test app (GPLv3): a 440 Hz tone from frame 60, for the audio capture test; `make
+  testapp-tone` builds `build/testapp-tone.3dsx`; `testapp-tone/README.md`.
 - `core/`: our patched Azahar libretro core: `core/PIN` (the pinned 2126.2 source), `core/patches/` 0000-0006
   (notices, memory exports, repeatable-run options, retro_run returns on error, log filter, version suffix,
   movie play), `core/options-lazpy.txt`, `core/README.md`.
