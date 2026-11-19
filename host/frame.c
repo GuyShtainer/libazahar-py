@@ -76,6 +76,7 @@ void azh_audio_sample_cb(int16_t l, int16_t r)
 {
     int16_t lr[2];
 
+    assert(azh__in_run_thread() != 0);
     lr[0] = l;
     lr[1] = r;
     azh__audio_push(lr, 1u);
@@ -83,6 +84,8 @@ void azh_audio_sample_cb(int16_t l, int16_t r)
 
 size_t azh_audio_batch_cb(const int16_t *data, size_t frames)
 {
+    assert(azh__in_run_thread() != 0);
+    assert(data != NULL || frames == 0u);
     azh__audio_push(data, frames);
     return frames;
 }

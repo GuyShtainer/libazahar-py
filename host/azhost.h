@@ -6,7 +6,7 @@
 
 #include <stdint.h>
 
-#define AZH_ABI_VERSION 5                       /* 5: audio capture, movie playback; 4: azh_threads (core lazpy.2) */
+#define AZH_ABI_VERSION 5                       /* 5: audio capture; 4: azh_threads (core lazpy.2) */
 #define AZH_STATE_META_ABI 3                    /* the abi= of a state's meta file: states did not change in 4 or 5 */
 
 enum { AZH_OK = 0, AZH_E_ARG = -1, AZH_E_ORDER = -2 /* call order */, AZH_E_CORE = -3, AZH_E_BOOT = -4,
@@ -107,8 +107,6 @@ int azh_audio_capture(const char *path_or_null);
 int azh_audio_info(int64_t *frames_out, int32_t *rate_out);
         /* ABI 5. After azh_boot: stereo frames written since the last azh_audio_capture(path) and the core's sample
            rate in Hz; flushes the file. AZH_E_IO if a write failed. */
-int azh_movie_play(const char *path_or_null);
-        /* ABI 5. After azh_open, before azh_boot, our core only: play this .ctm movie from boot. NULL or "" clears it. */
 int azh_stats(struct azh_stats *out);
 int azh_abi_layout(azh_layout *out);
 const char *azh_error(void);

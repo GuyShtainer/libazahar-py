@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Tone test app: a 440 Hz sine through libctru ndsp, started at frame 60. Logs once a second to
+// Tone test app: a stereo sine through libctru ndsp, started at frame 60: 440 Hz at amplitude 12000 on the left,
+// 660 Hz at amplitude 6000 on the right, so a swapped or duplicated channel is visible. Logs once a second to
 // sdmc:/tone/log.txt. Never exits on its own: the host stops it by frame count.
 #include <3ds.h>
 #include <math.h>
@@ -16,22 +17,27 @@ enum {
 
 static ndspWaveBuf g_wb[NBUF];
 static s16 *g_pcm;
-static double g_phase;
+static double g_phase_l;
+static double g_phase_r;
 static unsigned g_queued;
 static unsigned g_done;
 
 static void fill(int i)
 {
     s16 *p = g_pcm + (size_t)i * BUF_SAMPLES * 2;
-    const double step = 2.0 * M_PI * 440.0 / (double)RATE;
+    const double step_l = 2.0 * M_PI * 440.0 / (double)RATE;
+    const double step_r = 2.0 * M_PI * 660.0 / (double)RATE;
     for (int n = 0; n < BUF_SAMPLES; n++) {
-        s16 v = (s16)(sin(g_phase) * 12000.0);
-        g_phase += step;
-        if (g_phase > 2.0 * M_PI) {
-            g_phase -= 2.0 * M_PI;
+        p[2 * n] = (s16)(sin(g_phase_l) * 12000.0);
+        p[2 * n + 1] = (s16)(sin(g_phase_r) * 6000.0);
+        g_phase_l += step_l;
+        g_phase_r += step_r;
+        if (g_phase_l > 2.0 * M_PI) {
+            g_phase_l -= 2.0 * M_PI;
         }
-        p[2 * n] = v;
-        p[2 * n + 1] = v;
+        if (g_phase_r > 2.0 * M_PI) {
+            g_phase_r -= 2.0 * M_PI;
+        }
     }
     DSP_FlushDataCache(p, BUF_SAMPLES * 2 * sizeof(s16));
 }

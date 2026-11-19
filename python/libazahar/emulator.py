@@ -149,17 +149,23 @@ def _clear_sd(sd: Path) -> None:
         shutil.rmtree(sd)
 
 
-def _take(path: Path, frames: int) -> bytes:
-    """The captured audio file's bytes (and the file removed); ``frames`` is the host's count of stereo frames."""
+def _take(path: Path, frames: int) -> Any:
+    """The captured audio file as samples (see :func:`_samples`) and the file removed; ``frames`` is the host's count of
+    stereo frames, and a file of any other size is a HostError."""
     try:
-        data = path.read_bytes()
+        size = path.stat().st_size
+        if size != 4 * frames:
+            raise HostError(f"the audio file holds {size} bytes, the host counted {frames} stereo frames")
+        try:
+            import numpy
+        except ImportError:
+            return _samples(path.read_bytes())
+        # numpy reads the file straight into the array: no second copy of a long capture
+        return numpy.fromfile(str(path), dtype="<i2").reshape(-1, 2).astype("=i2", copy=False)
     except OSError as exc:
         raise HostError(f"cannot read the audio file {path}: {exc.strerror or exc}") from exc
     finally:
         _drop(path)
-    if len(data) != 4 * frames:
-        raise HostError(f"the audio file holds {len(data)} bytes, the host counted {frames} stereo frames")
-    return data
 
 
 def _drop(path: Optional[Path]) -> None:
@@ -322,7 +328,8 @@ class Emulator:
         fit and says the largest frame count that does. The guest may be part-way into a frame at each read.
         ``audio=True`` keeps the batch's audio in ``result.audio`` (int16 stereo; a numpy array of shape ``(n, 2)`` when
         numpy is present, else an ``array.array('h')`` of interleaved left, right values) and its rate in
-        ``result.audio_rate``; without it nothing is captured and nothing is paid. After a guest exit the audio is empty.
+        ``result.audio_rate``; without it nothing is captured and nothing is paid. After a guest exit the audio may be empty with
+        ``audio_rate`` 0 (always on the stock core).
         ``timeout`` replaces the heartbeat timeout for this call: seconds with no new frame, not the batch's wall
         time, so a long batch needs no big value (``wall_limit`` bounds the wall time). Returns a RunResult;
         a guest exit gives ``stopped_by == "guest_exited"`` and a closed Emulator on both cores (on our core the
@@ -342,6 +349,15 @@ class Emulator:
         before = self.frame_total
         wait = Wait(heartbeat=self.timeout if timeout is None else _seconds(timeout, "timeout"), first_heartbeat=self.boot_timeout)
         request = (records.tobytes(), bytes(batch)) + ((str(audio_file),) if audio_file is not None else ())
+        try:
+            return self._run_reply(request, wait, before, audio_file, records, prev, shot_frames, watch_sizes)
+        except BaseException:
+            _drop(audio_file)       # a refused or lost batch must not leave its capture in the workdir
+            raise
+
+    def _run_reply(self, request: Tuple[Any, ...], wait: Wait, before: int, audio_file: Optional[Path], records: Any,
+                   prev: Any, shot_frames: List[int], watch_sizes: List[int]) -> RunResult:
+        """Send one batch and build its RunResult (the second half of :meth:`run`)."""
         kind, payload = self._client.request("run", request, wait, frame_before=before)
         if kind == "exited":
             self._held = held_after(records, payload["frames"], prev)
@@ -354,7 +370,7 @@ class Emulator:
             return result
         if audio_file is not None:
             payload, count, rate = payload
-            samples, rate = _samples(_take(audio_file, count)), rate
+            samples = _take(audio_file, count)
         else:
             samples, rate = None, 0
         result = self._result(_abi.Result.from_buffer_copy(payload), shot_frames, before, watch_sizes, samples, rate)

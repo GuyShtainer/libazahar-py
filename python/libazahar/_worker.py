@@ -39,12 +39,9 @@ def option_plan(is_lazpy: bool, lazpy_options: Sequence[Tuple[str, str]],
 
 def _op_start(lib: ctypes.CDLL, args: Tuple[Any, ...]) -> Any:
     core, sysdir, log, mapfile, options, app, state, lazpy_options = args[:8]
-    movie = args[8] if len(args) > 8 else None
     _host.call(lib, "azh_open", _c_str(core), _c_str(sysdir), _c_str(log), _c_str(mapfile))
     for key, value in option_plan(_stats(lib)["is_lazpy_core"], lazpy_options, options):
         _host.call(lib, "azh_set_option", _c_str(key), _c_str(value))
-    if movie:
-        _host.call(lib, "azh_movie_play", _c_str(movie))
     _host.call(lib, "azh_boot", _c_str(app), _c_str(state) if state else None)
     return _stats(lib)
 
