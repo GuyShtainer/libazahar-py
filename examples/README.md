@@ -15,7 +15,8 @@ venv's programs are in `.venv/Scripts/`, so `.venv/Scripts/python examples/quick
   Azahar's own core it prints `needs our core: see README, Two cores` and exits 3.
   `.venv/bin/python examples/memory_watch.py`
 - `verdict.py`: runs the test app with `run_until` on a line it writes (`booted f=`) and exits by the table in USING
-  section 3: 0 pass, 1 the test failed, 3 boot failure, 12 timed out, 13 crashed. The test app writes no PASS or FAIL
+  section 3: 0 pass, 1 the test failed, 2 bad argument, 3 boot failure, 10 the guest exited, 11 a guest error, 12 timed
+  out, 13 the worker or host crashed (or could not run). The test app writes no PASS or FAIL
   line, so the example waits for that log line; point `RESULT_FILE` and `PASS_TEXT` at your own app's result file.
   `.venv/bin/python examples/verdict.py`
 

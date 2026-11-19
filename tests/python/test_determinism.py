@@ -13,7 +13,7 @@ from test_threads_live import needs_rev2
 pytestmark = pytest.mark.slow
 
 INPUTS = [(40, Buttons.A), (90, Buttons(0)), (150, Buttons.X | Buttons.L), (200, Buttons(0))]
-SAME = ("v", "s", "k", "tx", "ty", "td", "cx", "cy")        # every record field but t, the app's own clock reading
+SAME = ("v", "s", "k", "t", "tx", "ty", "td", "cx", "cy")   # every record field; t is the app's osGetTime reading
 CHECKPOINTS = (300, 600)
 
 
@@ -21,6 +21,10 @@ def record_rows(emu: Emulator) -> List[tuple]:
     """The log's frame rows as tuples of the fields that must repeat."""
     frames, _ = dh.log_of(emu)
     return [tuple(row[key] for key in SAME) for row in frames]
+
+
+def field_index(name: str) -> int:
+    return SAME.index(name)
 
 
 def one_run(paths, core, folder: Path, ticks: str) -> Tuple[Dict[int, str], Dict[int, tuple], List[tuple]]:
@@ -46,6 +50,7 @@ def test_same_inputs_same_run(host_paths, lazpy_core, workdir):
     assert first[2] == second[2], "the whole log differs"
     assert len(set(first[0].values())) == 2, "the screen should change between frames 300 and 600"
     assert first[1][300][1] == second[1][300][1]            # the tick field (s) itself
+    assert first[1][300][field_index("t")] == second[1][300][field_index("t")]      # and the clock reading (t)
 
 
 def test_two_tick_seeds_differ(host_paths, lazpy_core, workdir):
@@ -55,6 +60,11 @@ def test_two_tick_seeds_differ(host_paths, lazpy_core, workdir):
     for stop in CHECKPOINTS:
         assert zero[1][stop][1] != big[1][stop][1], f"tick field s is equal at frame {stop}"
     assert big[1][300][1] - zero[1][300][1] == 1000000
+    t = field_index("t")
+    shift = big[1][300][t] - zero[1][300][t]
+    assert 3 <= shift <= 4, f"1000000 ticks should move the clock by about 3.7 ms, t moved by {shift}"
+    for stop in CHECKPOINTS:
+        assert big[1][stop][t] - zero[1][stop][t] == shift, f"the clock shift is not steady at frame {stop}"
     again = one_run(host_paths, lazpy_core, workdir / "again", "1000000")
     assert again[1] == big[1] and again[0] == big[0]
 
@@ -65,19 +75,22 @@ def last_keys(emu: Emulator) -> int:
 
 
 def test_held_input_across_load_state(host_paths, workdir):
+    """Save with nothing held, press A, load: A must stay down (kept, not restored from the state)."""
     state = workdir / "st" / "state"
+    a_down = int(Buttons.A)
     with dh.boot(host_paths, workdir / "a") as emu:
-        emu.run(100, inputs=[(10, Buttons.A)])
-        assert last_keys(emu) & 1
+        emu.run(100)
+        assert not last_keys(emu) & a_down
         emu.save_state(state)
-        emu.run(20)                                          # A stays down across batches
-        assert last_keys(emu) & 1
+        emu.set_input(buttons=Buttons.A)
+        emu.run(20)
+        assert last_keys(emu) & a_down
         emu.load_state(state)
         emu.run(20)
-        assert last_keys(emu) & 1, "A should still be held after load_state"
+        assert last_keys(emu) & a_down, "A should still be held after load_state"
         emu.set_input(buttons=Buttons(0))
         emu.run(10)
-        assert not last_keys(emu) & 1
+        assert not last_keys(emu) & a_down
     with Emulator(host_paths.app, workdir / "b", state=state) as emu:
         emu.run(20)
-        assert not last_keys(emu) & 1, "a booted state starts with nothing held"
+        assert not last_keys(emu) & a_down, "a booted state starts with nothing held"

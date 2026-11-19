@@ -73,11 +73,11 @@ def test_compare_equal_and_limits():
     a = pic(10)
     b = a.copy()
     result = images.compare(a, b)
-    assert (result.max_delta, result.pixels, result.over, result.within) == (0, 0, 0, True)
+    assert (result.largest_delta, result.pixels, result.over, result.within) == (0, 0, 0, True)
     b[0, 0, 1] = 15
     b[1, 1, 2] = 12
     result = images.compare(a, b)
-    assert (result.max_delta, result.pixels, result.over, result.within) == (5, 2, 2, False)
+    assert (result.largest_delta, result.pixels, result.over, result.within) == (5, 2, 2, False)
     assert images.compare(a, b, max_pixels=2).within
     assert not images.compare(a, b, max_pixels=1).within
     result = images.compare(a, b, max_delta=4)
@@ -90,7 +90,7 @@ def test_compare_alpha_and_extremes():
     a, b = pic(0), pic(255)
     b[..., 3] = 0
     result = images.compare(a, b)
-    assert result.max_delta == 255 and result.pixels == a.shape[0] * a.shape[1]
+    assert result.largest_delta == 255 and result.pixels == a.shape[0] * a.shape[1]
 
 
 def test_compare_size_and_argument_errors():
@@ -110,15 +110,45 @@ def test_compare_png_paths_and_write_diff(tmp_path):
     b[2, 3, :3] = (1, 2, 3)
     pa, pb = write(tmp_path, "a.png", png_bytes(a)), write(tmp_path, "b.png", png_bytes(b))
     result = images.compare(pa, pb)
-    assert (result.max_delta, result.pixels) == (39, 1)
+    assert (result.largest_delta, result.pixels) == (39, 1)
     assert images.compare(str(pa), b).pixels == 1                    # a path and an array mix
     out = result.write_diff(tmp_path / "diff.png")
-    diff = images.read_png(out)
+    diff = images._read_png(out)
     assert diff.shape == a.shape
     assert tuple(diff[2, 3]) == (255, 255, 255, 255)
     assert (diff[..., :3].sum(axis=2) > 0).sum() == 1
     assert (diff[..., 3] == 255).all()
     assert images.compare(out, out).within
+
+
+def test_write_diff_over_only_and_hand_built(tmp_path):
+    a, b = pic(10), pic(10)
+    b[0, 0, 0] += 9                                                  # over a limit of 4
+    b[1, 1, 0] += 2                                                  # differs, but within the limit
+    result = images.compare(a, b, max_delta=4)
+    every = images._read_png(result.write_diff(tmp_path / "all.png"))
+    over = images._read_png(result.write_diff(tmp_path / "over.png", over_only=True))
+    assert (every[..., 0] == 255).sum() == 2 and (over[..., 0] == 255).sum() == 1
+    assert tuple(over[0, 0, :3]) == (255, 255, 255) and tuple(over[1, 1, :3]) == (0, 0, 0)
+    with pytest.raises(ArgumentError, match="not made by compare"):
+        images.CompareResult(1, 1, 1, False).write_diff(tmp_path / "x.png")
+    with pytest.raises(TypeError):
+        images.CompareResult(1, 1, 1, False, None)                   # type: ignore[call-arg]
+
+
+def test_png_reader_bounds_the_inflate(tmp_path):
+    """A pixel stream far longer than the header says is refused as the wrong size, not inflated in full."""
+    a = pic(0, 8, 4)
+    raw = b"".join(b"\x00" + a[y].tobytes() for y in range(4)) + bytes(10_000_000)
+    body = zlib.compress(raw, 9)
+
+    def chunk(kind: bytes, data: bytes) -> bytes:
+        return struct.pack(">I", len(data)) + kind + data + struct.pack(">I", zlib.crc32(kind + data))
+
+    header = struct.pack(">IIBBBBB", 8, 4, 8, 6, 0, 0, 0)
+    data = b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", header) + chunk(b"IDAT", body) + chunk(b"IEND", b"")
+    with pytest.raises(ArgumentError, match="wrong size"):
+        images.compare(write(tmp_path, "big.png", data), a)
 
 
 def test_png_reader_refuses_other_formats(tmp_path):

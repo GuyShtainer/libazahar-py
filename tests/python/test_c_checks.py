@@ -9,7 +9,7 @@ import checks_c as cc
 import d_helpers as dh
 import gate_c
 import testapp_log as tl
-from libazahar import Buttons, Circle, NeedsLazpyCore, Touch
+from libazahar import Buttons, Circle, NeedsLazpyCore, Touch, images
 
 pytestmark = pytest.mark.slow
 
@@ -153,6 +153,9 @@ def test_d_counters_and_raw_screens(host_paths, workdir):
         png_top = tl.read_png(first.shots[300].top)
         png_bottom = tl.read_png(first.shots[300].bottom)
         assert top.tobytes() == png_top[2] and bottom.tobytes() == png_bottom[2]
+        # the images reader takes the host's own PNGs, and a shot equals the screens() array of the same frame
+        assert images.compare(first.shots[300].top, top).within
+        assert images.compare(first.shots[300].bottom, bottom).within
         assert emu._client.host_map().px_frame() == 300 == emu.frame_total
         assert emu._client.host_map().pixels(1).readonly
         assert top.shape == (240, 400, 4) and bottom.shape == (240, 320, 4)
