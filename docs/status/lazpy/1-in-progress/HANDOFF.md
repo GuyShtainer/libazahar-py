@@ -10,7 +10,6 @@ the next session needs to act now, and points at the rest. Goals, rules, decisio
 | What | Where | Agent id | It stops when |
 |---|---|---|---|
 | laz-820 review fixes: images, verdict, determinism (findings 1, 4, 12, 17, 19, 23-25) | runs/p8/wt/fimg (p8-fimg) | ac7dccfb948ffcf0c | its final message |
-| laz-820 review fixes: evidence, parent death, API freeze (2, 6-11, 13-16, 18, 20, 21, 24, 25) | runs/p8/wt/flife (p8-flife) | acb8353bc38f3613a | its final message |
 
 Phase 8 is under way: Guy, 2026-11-18 ~21:00, "you have my green light. go". He did not answer Q1-Q5, so the
 plan's recommended answers apply (laz-810 notes). Phase A is done: runs/p8/a/decisions.md. All lane PC jobs go
@@ -19,7 +18,7 @@ through runs/p8/bin/pclane under one shared PC lock (one job of ours at a time s
 ## Next steps, in order
 1. All five lanes are merged (laz-821 to 829, Evidence written; each waits on the review).
 2. The full PC gate passed (laz-820 Evidence). The two 3-copy pool tests run in CI or on the Mac, not on the PC.
-3. The review (docs/reviews/phase-8b-as-built.md: ready with changes) is being fixed in three lanes (fmisc merged; briefs: the
+3. The review (docs/reviews/phase-8b-as-built.md: ready with changes) is being fixed in three lanes (fmisc merged; flife committed on p8-flife, merge after fimg; briefs: the
    last section of docs/plans/phase-8b-briefs.md). Merge fimg before flife (flife's freeze uses fimg's names), then
    the full PC gate again, then laz-820 and 821-829 to 5-done (829 stays open for the core fix in C6a).
 4. test-windows.yml on the merge needs a push: ask Guy.
