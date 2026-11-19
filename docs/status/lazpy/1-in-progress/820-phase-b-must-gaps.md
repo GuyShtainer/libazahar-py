@@ -18,6 +18,7 @@ The full PC gate passes with only the known skips; test-windows.yml green on the
 2026-11-19 01:50: the full PC gate on merged main (2777af1 + handoff commits), fast + live, the two 3-copy pool tests
 excluded (PC rule: 2 copies): 357 passed, 11 skipped (each with its reason), 1 xfailed (the core's handle leak,
 laz-829) in 6 min 16 s. The review runs.
+2026-11-19 02:16: second full PC gate after the review fixes: 379 passed, 11 skipped, 1 xfailed, 1 failed (a load flake in test_m5_stock_core_refuses, 3 of 3 alone; retry doubled). Steps 821-829 done. Still open: test-windows.yml and test.yml on a pushed commit (the push waits on Guy), and the two 3-copy pool tests (CI or the Mac).
 
 ## Pointers
 - Plan section: `docs/plans/phase-8.md:158`

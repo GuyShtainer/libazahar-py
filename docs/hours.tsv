@@ -237,3 +237,5 @@ date	bet	phase	agent_id	model	role	kind	start	end	hours	source
 2026-11-19	phase 8 B8 fix lane fimg: review findings 1, 4, 12, 17, 19, 23-25	phase-8b	ac7dccfb948ffcf0c	sonnet	agent	fix	01:55	02:08	0.22	agent usage duration
 2026-11-19	phase 8 B main loop: review intake, fix briefs, fix merges, second gate	phase-8b	main	opus	main	merge	01:51	02:10	0.32	session clock
 2026-11-19	phase 8 C main loop: phase C briefs, items 831-833, two dispatches	phase-8c	main	opus	main	briefs	02:10	02:17	0.12	session clock
+2026-11-19	phase 8 C1 lane cli: python -m libazahar doctor and run	phase-8c	a6db1bb0928aaba55	sonnet	agent	build	02:12	02:16	0.07	agent usage duration
+2026-11-19	phase 8 B main loop: second gate read, the m5 flake rerun, phase B close	phase-8b	main	opus	main	merge	02:17	02:20	0.05	session clock

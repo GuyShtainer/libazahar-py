@@ -101,11 +101,12 @@ def lines_by_frame(emu: Emulator) -> Dict[int, dict]:
 
 
 def boot(paths, core: Path, workdir: Path, seed, **control) -> Tuple[Emulator, int, int]:
-    """An Emulator on ``core`` once the app's start line is in its log (30 frames, up to 300: the stock core has no
-    tick seed, and on a loaded Windows PC 30 frames once fell short), with the app's two record addresses."""
+    """An Emulator on ``core`` once the app's start line is in its log (30 frames, up to 600: the stock core has no
+    tick seed, and on a loaded Windows PC 30 frames once fell short, and
+    300 once in a full gate), with the app's two record addresses."""
     emu = dh.boot(paths, workdir, seed(**control), core=core)
     log = emu.sd / dh.LOG
-    for _ in range(10):
+    for _ in range(20):
         emu.run(30)
         if log.is_file() and START_RE.search(log.read_text(errors="replace")):
             break

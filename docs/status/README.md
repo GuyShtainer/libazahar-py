@@ -20,20 +20,11 @@ publish-ready. What to do this hour: `docs/status/lazpy/1-in-progress/HANDOFF.md
 ### libazahar-py (`docs/status/lazpy/`)
 - in-progress: `docs/status/lazpy/1-in-progress/500-phase-5-user-asks.md`
 - in-progress: `docs/status/lazpy/1-in-progress/820-phase-b-must-gaps.md`
-- in-progress: `docs/status/lazpy/1-in-progress/821-b0-check13-skip.md`
-- in-progress: `docs/status/lazpy/1-in-progress/822-b1-determinism.md`
-- in-progress: `docs/status/lazpy/1-in-progress/823-b2-error-evidence.md`
-- in-progress: `docs/status/lazpy/1-in-progress/824-b3-compare-verdict.md`
-- in-progress: `docs/status/lazpy/1-in-progress/825-b4-repress.md`
-- in-progress: `docs/status/lazpy/1-in-progress/826-b5-parent-death.md`
-- in-progress: `docs/status/lazpy/1-in-progress/827-b6-window-test.md`
-- in-progress: `docs/status/lazpy/1-in-progress/828-b7-pool-two.md`
-- in-progress: `docs/status/lazpy/1-in-progress/829-b9-load-handle-leak.md`
 - in-progress: `docs/status/lazpy/1-in-progress/830-phase-c-v1-2-0.md`
 - in-progress: `docs/status/lazpy/1-in-progress/831-c1-command-line.md`
 - in-progress: `docs/status/lazpy/1-in-progress/832-c2-audio.md`
 - in-progress: `docs/status/lazpy/1-in-progress/833-c3-exact-inputs.md`
-- files: 0 in `3-waiting-on-guy/`, 1 in `4-not-started/`, 56 in `5-done/`, 0 in `6-parked/`
+- files: 0 in `3-waiting-on-guy/`, 1 in `4-not-started/`, 65 in `5-done/`, 0 in `6-parked/`
 <!-- generated:end -->
 
 ## How to change a status (one step)

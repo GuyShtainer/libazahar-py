@@ -27,3 +27,6 @@ Read this part only when you work on this item. Blockers, numbers and Guy's word
 - Guy, 2026-11-18 ~21:00, verbatim: "you have my green light. go". Q1-Q5 not answered: the plan's recommended
 answers are in force (Q1 yes, Q3 yes, Q4 yes to D after v1.2.0 / two releases / the hosted bound / the MSYS2 Mesa
 download, Q5 probe now) until Guy says otherwise.
+- From laz-829 (2026-11-19): C6a's core rebuild must also fix the unserialize step's leak of about 2.2 Semaphore
+handles per load_state (a winpthreads condvar shape; needs a traced core build). Then flip test_handles_live.py's
+strict xfail to a pass.
