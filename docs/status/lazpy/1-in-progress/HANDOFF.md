@@ -1,7 +1,7 @@
 <!-- handoff: slim v1 | current tasks only | rewritten whole from docs/status/templates/handoff.md | budget 80 lines | never append -->
 # libazahar-py handoff
 
-As of: 2026-11-19 07:15 (session 3ds-toolkit-eb)
+As of: 2026-11-19 07:21 (session 3ds-toolkit-eb)
 
 This file lives in docs/status/lazpy/1-in-progress/, beside its item files. It holds only what
 the next session needs to act now, and points at the rest. Goals, rules, decisions and history live elsewhere.
@@ -9,7 +9,6 @@ the next session needs to act now, and points at the rest. Goals, rules, decisio
 ## Running now
 | What | Where | Agent id | It stops when |
 |---|---|---|---|
-| laz-830: the macOS live tests on the pushed main | GitHub CI | run 44462572191 | the run ends (best effort; read the pytest step) |
 
 Phase 8 is under way: Guy, 2026-11-18 ~21:00, "you have my green light. go". He did not answer Q1-Q5, so the
 plan's recommended answers apply (laz-810 notes). Phase A is done: runs/p8/a/decisions.md. All lane PC jobs go
@@ -28,6 +27,10 @@ through runs/p8/bin/pclane under one shared PC lock (one job of ours at a time s
    under C:/Program Files/; mkrelease's zip SOURCE.md names the snapshot), committed locally as 587c171.
    Guy, 07:15: HOLD the push (asked after the red round). Nothing is pushed until he says so; then test-windows,
    test and core-win64 (C6a's one round), then fetch.sh's new Windows pin and the docs.
+   macOS live run 44462572191 (the hosted runner, the v1.0.0 macOS core): 427 passed, 2 failed. (a) test_state: state
+   boot 3.16 s over the 2.5 s bound: the hosted-runner case Q4 makes record-only in phase D. (b) NEW, not seen on the
+   PC: test_determinism two_tick_seeds_differ, the clock field t moved 0 ms for a 1000000-tick seed (3-4 wanted).
+   To find out before the release: the macOS core's osGetTime ignores the tick seed, or the test assumes too much.
    The release audit must also read commit 44ad3c5's text (review finding 2).
 3. Not run anywhere yet: make check (clang analyze) on the new C; CI's macOS job runs it after a push.
    docs_check's links check fails on the PC lane only (no .git there); it runs on the Mac.

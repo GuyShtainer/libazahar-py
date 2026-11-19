@@ -23,6 +23,8 @@ verdict, audio and CLI tests: 37 passed. C3 waits on a core patch (laz-833, park
 C3 parked; C4 dropped. Next: C6 (release v1.2.0), with C6a; test-windows.yml and the macOS jobs need a push.
 2026-11-19 07:13: main pushed (Guy, 07:03). CI round 1 red on two guards (the skip lists, the macOS Makefile guard and
 host/audio.c), fixed and proven on the PC; C6a's OpenSSL folder fix and the zip SOURCE.md entry written, not yet built.
+2026-11-19 07:21: macos-live run 44462572191 on pushed main: 427 passed, 2 failed: test_state's 2.5 s state boot bound (3.16 s,
+hosted runner; phase D's record-only case) and test_determinism two_tick_seeds_differ (t moved 0 ms on the macOS core; open).
 
 ## Pointers
 - Plan section: `docs/plans/phase-8.md:180`
