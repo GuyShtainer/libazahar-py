@@ -16,7 +16,7 @@ Phase C: exact-frame inputs from boot through the core movie hook.
 The plan row's gate, run on the PC through runs/p8/bin/pclane; the lane merged on main; the phase C review passed.
 
 ## Evidence
-2026-11-19 02:26: stopped by lane hostav: the core's movie playback needs a patch first (notes). The host call azh_movie_play and the worker's movie argument are in ABI 5 but never ran live; no exact_inputs option yet. Moves with the core rebuild into C6a.
+2026-11-19 02:26: stopped by lane hostav: the core's movie playback needs a patch first (notes). The host call azh_movie_play and the worker's movie argument are in ABI 5 but never ran live; no exact_inputs option yet. Parked for the next core phase (after phase 8): the plan keeps C6a to one CI rebuild of the same patches.
 
 ## Pointers
 - Plan row: `docs/plans/phase-8.md:188`
@@ -43,7 +43,7 @@ Why it cannot work with the core as it is:
   know. The test app uses ZL/ZR, so the planned live test (buttons, ZL/ZR, circle pad, touch; 30 changes each, 3
   repeats, offsets m = 0, 1, 1, 2) cannot pass.
 
-Fix needed (new core patch, lane C6a): make `Movie::Play` take the next record of its own type (type skipping), or keep
+Fix needed (a new core patch, in the next core phase after phase 8; the plan keeps C6a to one CI rebuild): make `Movie::Play` take the next record of its own type (type skipping), or keep
 one cursor per record type. Then add `exact_inputs` to `Emulator` and a live test, test_exact_inputs_live.py (still to write).
 
 State in the tree: the host call `azh_movie_play` and the worker's optional movie argument (`args[8]` of `_op_start`)

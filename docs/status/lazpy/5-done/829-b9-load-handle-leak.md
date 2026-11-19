@@ -20,7 +20,7 @@ The plan row's gate, run on the PC through runs/p8/bin/pclane; the lane merged o
 handles per load_state (20 loads: 65 -> 109), every other type flat; save_state and run leak nothing.
 test_handles_live.py on the PC: 1 xfailed (Windows, strict), 1 skipped (the macOS/Linux variant). Waits on the core
 fix in C6a and the phase B review.
-2026-11-19 02:16: the review (docs/reviews/phase-8b-as-built.md, ready with changes) and its fixes merged (lanes fimg, flife, fmisc). Second full PC gate: 379 passed, 11 skipped, 1 xfailed (laz-829), 1 failed: test_m5_stock_core_refuses, a load flake (3 of 3 alone at 02:16; its boot retry doubled to 600 frames). Done here: the guard (strict xfail) is in place; the core fix moves to C6a (laz-830 notes).
+2026-11-19 02:16: the review (docs/reviews/phase-8b-as-built.md, ready with changes) and its fixes merged (lanes fimg, flife, fmisc). Second full PC gate: 379 passed, 11 skipped, 1 xfailed (laz-829), 1 failed: test_m5_stock_core_refuses, a load flake (3 of 3 alone at 02:16; its boot retry doubled to 600 frames). Done here: the guard (strict xfail) is in place; the core fix moves to the next core phase (laz-830 notes).
 
 ## Pointers
 - From A2: runs/p8/a/decisions.md (outside git); item 820's notes
@@ -70,3 +70,5 @@ process, so it is not a practical limit before the process is closed.
 ### Test
 tests/python/test_handles_live.py: 200 loads, handle count within 5 % (Windows, xfail strict with this reason);
 the same check counts descriptors on macOS/Linux (/proc or lsof) and is not run here.
+- 2026-11-19 02:34, main loop: the core fix is not C6a after all. The plan keeps C6a to one CI rebuild of the same
+patches; a traced build and a new patch belong to the next core phase (after phase 8, not planned yet), with C3's movie patch.

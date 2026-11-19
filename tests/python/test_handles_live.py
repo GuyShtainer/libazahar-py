@@ -51,7 +51,7 @@ def open_handles(pid: int) -> int:
 @pytest.mark.skipif(sys.platform != "win32", reason="the leak was measured on Windows; macOS runs the test below")
 @pytest.mark.xfail(strict=True, raises=AssertionError,
                    reason="item 829: the core leaves about 2 Semaphore handles per state load (item 829 notes); "
-                          "fixed only by a core patch, rebuilt in C6a")
+                          "fixed only by a core patch, in the next core phase")
 def test_handles_flat_over_loads_windows(host_paths, workdir):
     check_flat(host_paths, workdir)
 

@@ -17,9 +17,9 @@ through runs/p8/bin/pclane under one shared PC lock (one job of ours at a time s
 
 ## Next steps, in order
 1. Phase B is done (laz-821 to 829 in 5-done). laz-820 stays open for test-windows.yml and test.yml on a pushed
-   commit (the push waits on Guy) and the two 3-copy pool tests (CI or the Mac). The core leak fix is in C6a.
-2. Phase C (laz-830): lanes cli (laz-831) and hostav (laz-832) are merged; C3 exact inputs (laz-833, in 2-next) needs
-   a core patch first, so it moves into C6a with the leak fix (notes in 833 and 830). The PC gate is green (laz-830 Evidence). Next: the opus
+   commit (the push waits on Guy) and the two 3-copy pool tests (CI or the Mac). The core leak fix waits for the next core phase.
+2. Phase C (laz-830): lanes cli (laz-831) and hostav (laz-832) are merged; C3 exact inputs (laz-833, parked) needs
+   a core patch first: parked for the next core phase with the leak fix (notes in 833 and 830). The PC gate is green (laz-830 Evidence). Next: the opus
    review (brief at the end of docs/plans/phase-8c-briefs.md), its fix lanes, then C6 release v1.2.0.
 3. Not run anywhere yet: make check (clang analyze) on the new C; CI's macOS job runs it after a push.
    docs_check's links check fails on the PC lane only (no .git there); it runs on the Mac.
