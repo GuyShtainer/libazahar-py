@@ -143,6 +143,7 @@ per frame grows `host.log` by about a line per frame.
 
 ## 8. Errors and timeouts
 
+The macOS check that a worker ends when its caller dies has not been run live yet (see "When the caller dies" below).
 `LibAzaharError` is the base. `BootError`: core, Vulkan or the app failed to start. `GuestError`: section 7.
 `HostTimeout`: the heartbeat stopped for `timeout` seconds (Emulator-wide default 30, or per call); the worker is
 killed and reaped. `SlotTimeout` is a `HostTimeout` (`.op == "slot"`, `.seconds`) raised when no machine-wide slot
@@ -161,13 +162,16 @@ crash report each run. On the stock core a guest-exit result has `wall_s` 0.0 an
 | `memory` calls | `GuestMemoryError`, `NeedsLazpyCore`, `ArgumentError`, or `TypeError` for data that is not bytes |
 | any call after `close()` | `HostError` |
 
-**Evidence.** Every error a live instance raises (`BootError`, `GuestError`, `HostTimeout`, `HostCrashed`,
+**Evidence.** Every error raised once the worker has started (`BootError`, `GuestError`, `HostTimeout`, `HostCrashed`,
 `StateError`, `HostError`, `GuestMemoryError`) has `.workdir` and `.log_path` (the folder and its `host.log`), and its
-text ends with a line naming `host.log` and the newest PNG under `shots/`, or saying no shot was taken. That shot is
-the newest one taken, not the frame at the failure. The two fields survive pickling. Other errors have both as `None`.
+text ends with a line naming `host.log` and the newest shot under `shots/` (both PNGs of the pair, so it does not
+matter which one the file system stamps later), or saying no shot was taken. The shot folder is read when the text is first asked for. That shot is
+the newest one taken, not the frame at the failure. The two fields survive pickling. Other errors have both as `None`. So do errors raised before the worker exists: `SlotTimeout`, a missing host library, a
+working folder that cannot be made, an unreadable option profile, and a missing core. The core error cannot name a
+`host.log` that was never written.
 
-**When the caller dies.** On Windows and macOS a worker ends when its caller dies, however the caller dies, and its
-slot is free again. On Windows each worker is put in one Job object with kill-on-close (made at the first spawn), so even a worker inside a
+**When the caller dies.** On Windows (live check run) and macOS (live check not yet run) a worker ends when its caller
+dies, however the caller dies, and its slot is free again. On Windows each worker is put in one Job object with kill-on-close (made at the first spawn), so even a worker inside a
 long batch ends with its caller; if the job cannot be made, one `RuntimeWarning` says so and the worker then ends only
 when the caller dies between batches. On macOS the worker watches its caller's process through `kqueue` and exits at
 once, mid-batch too. On Linux a worker ends only between batches (when the pipe closes); a caller that may be killed
@@ -470,13 +474,15 @@ devkitARM first in `PATH`).
 - A `LoadWarning`: other sessions' emulators share the machine; wait, or run fewer instances.
 - `HostTimeout` in the first frames: shader compiles. Raise `boot_timeout` (default 300 s).
 - A hang inside one frame never reaches `wall_limit` (it is checked between frames) and the heartbeat is the only
-  watch, so a script that must not hang wraps the whole call in an outer timeout (for `azhost`, the `timeout` command
-  or the caller's own limit).
+  watch, so a script that must not hang inside one frame relies on the heartbeat `timeout`, which does catch it. An
+  `azhost` run needs an outer limit of your own: `timeout` (coreutils; `gtimeout` on macOS with Homebrew coreutils), a
+  `subprocess.run(..., timeout=)` wrapper, or PowerShell `Wait-Process -Timeout` on Windows. (Windows' own `timeout`
+  command only waits.)
 - The core refuses to load on macOS older than 15.
 - Windows: a boot error naming `vulkan-1.dll` means no Vulkan driver is installed; install the GPU maker's current driver.
   A path error at start usually means a long or non-ASCII folder: clone into `C:\src`.
 
-Errors by their opening text. Each line is the start of `str(error)`; every live-instance error ends with the
+Errors by their opening text. Each line is the start of `str(error)`; every error raised once the worker has started ends with the
 `host.log` and newest-shot line (section 8), so look at the log first.
 
 | The error starts with | Class | Meaning and next step |
@@ -491,6 +497,11 @@ Errors by their opening text. Each line is the start of `str(error)`; every live
 | `the emulator is closed` | `HostError` | A call after `close()`, a dead worker or a guest exit. |
 | `cannot load the host` | `HostError` | The host library is missing or its ABI differs: run `make`, check `LAZ_HOST`. |
 | `guest memory 0x...: a page is unmapped` | `GuestMemoryError` | An unmapped guest page; the write changed nothing. |
+| `host library ... not found` | `HostError` | Raised in the caller before any worker: run `make`, check `LAZ_ROOT` and `LAZ_HOST`. |
+| `cannot make the working folder` | `HostError` | The `workdir` could not be created: check the path and its rights. |
+| `cannot read the option profile` | `HostError` | `LAZ_PROFILE` or the profile file is unreadable (section 14). |
+| a bad argument, such as a frame outside the range or an address | `ArgumentError` | Also a `ValueError`. Fix the call; a profile line that breaks the format names its file and line. |
+| `... needs the libazahar core (this core is stock)` | `NeedsLazpyCore` | The call needs our core: section 17, or set `LAZ_CORE`. |
 | a savestate message | `StateError` | The state could not be saved, read or restored (section 10). |
 
 ## 20. API reference
@@ -527,4 +538,4 @@ One line per name in `libazahar.__all__`. Units: seconds in Python, frames are g
   - The PNG reader takes only the host's own files (8-bit RGBA, filter 0 on every row, one IDAT) and raises `ArgumentError` for any other PNG, a bad CRC or a different picture size.
 
 Evidence on failure and parent death:
-- `.workdir`, `.log_path` on `BootError`, `GuestError`, `HostTimeout`, `HostCrashed`, `StateError`, `HostError` and `GuestMemoryError`: the instance's folder and its `host.log`, both `None` on any other error; the error text names `host.log` and the newest PNG under `shots/` (section 8).
+- `.workdir`, `.log_path` on `BootError`, `GuestError`, `HostTimeout`, `HostCrashed`, `StateError`, `HostError` and `GuestMemoryError` once the worker has started: the instance's folder and its `host.log`, both `None` on any other error (`SlotTimeout` too) and on errors raised before the worker exists; the error text names `host.log` and the newest shot (its top and bottom PNG) under `shots/`, read when the text is first asked for (section 8).

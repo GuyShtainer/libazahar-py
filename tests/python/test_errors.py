@@ -82,22 +82,55 @@ LIVE_ERRORS = [lambda: errors.BootError("b"), lambda: errors.GuestError("g", 7),
 @pytest.mark.parametrize("make", LIVE_ERRORS)
 def test_evidence_names_the_log_and_the_newest_shot_and_survives_pickling(make, tmp_path):
     import pickle
+    import os
     shots = tmp_path / "shots"
     shots.mkdir()
-    (shots / "a_top.png").write_bytes(b"x")
-    newest = shots / "z_top.png"
-    newest.write_bytes(b"y")
-    import os
-    os.utime(shots / "a_top.png", (1, 1))
+    # the older shot has the LATER name, so a pick by name (or by name as a tie-break) would choose z_ and fail
+    (shots / "z_top.png").write_bytes(b"x")
+    (shots / "a_top.png").write_bytes(b"y")
+    os.utime(shots / "z_top.png", (1, 1))
+    os.utime(shots / "a_top.png", (5, 5))
     exc = make()
     assert exc.workdir is None and exc.log_path is None            # a fresh error carries nothing yet
     errors.attach_evidence(exc, tmp_path, tmp_path / "host.log")
     assert exc.workdir == tmp_path and exc.log_path == tmp_path / "host.log"
     text = str(exc)
-    assert "host.log" in text and "z_top.png" in text and "a_top.png" not in text
+    assert "host.log" in text and "a_top.png" in text and "z_top.png" not in text
     back = pickle.loads(pickle.dumps(exc))
     assert type(back) is type(exc) and str(back) == text
     assert back.workdir == tmp_path and back.log_path == tmp_path / "host.log"
+
+
+@pytest.mark.parametrize("top_time,bottom_time", [(5, 5), (5, 6), (6, 5)])
+def test_the_newest_shot_is_the_pair_whatever_order_the_file_system_stamps_it(tmp_path, top_time, bottom_time):
+    """The host writes top then bottom; a fine-grained file system stamps the bottom later, NTFS may tie."""
+    import os
+    shots = tmp_path / "shots"
+    shots.mkdir()
+    for name in ("old_top.png", "old_bottom.png"):
+        (shots / name).write_bytes(b"o")
+        os.utime(shots / name, (1, 1))
+    for name, stamp in (("e_top.png", top_time), ("e_bottom.png", bottom_time)):
+        (shots / name).write_bytes(b"n")
+        os.utime(shots / name, (stamp, stamp))
+    assert [p.name for p in errors.newest_shots(tmp_path)] == ["e_bottom.png", "e_top.png"]
+    exc = errors.attach_evidence(errors.HostError("h"), tmp_path, tmp_path / "host.log")
+    assert "e_top.png" in str(exc) and "e_bottom.png" in str(exc) and "old_" not in str(exc)
+
+
+def test_the_shot_folder_is_read_only_when_the_text_is_asked_for(tmp_path):
+    shots = tmp_path / "shots"
+    shots.mkdir()
+    exc = errors.attach_evidence(errors.HostError("h"), tmp_path, tmp_path / "host.log")
+    (shots / "late_top.png").write_bytes(b"x")          # taken after the error was made, before its text is read
+    assert "late_top.png" in str(exc)
+    (shots / "later_top.png").write_bytes(b"x")
+    assert "later_top.png" not in str(exc)              # answered once, then cached
+
+
+def test_a_slot_timeout_gets_no_evidence(tmp_path):
+    exc = errors.attach_evidence(errors.SlotTimeout(1.0, 2, tmp_path), tmp_path, tmp_path / "host.log")
+    assert exc.log_path is None and "evidence" not in str(exc)
 
 
 def test_evidence_without_a_shot_and_for_other_errors(tmp_path):

@@ -23,7 +23,7 @@ PROCESS_TERMINATE = 0x0001
 
 _lock = threading.Lock()
 _job: Optional[int] = None          # the job's HANDLE, kept open for the life of this process
-_failed = False                     # one warning only
+_warned = False                     # True after the one warning was given
 
 
 class _Basic(ctypes.Structure):
@@ -43,6 +43,9 @@ class _Extended(ctypes.Structure):
     _fields_ = [("BasicLimitInformation", _Basic), ("IoInfo", _IoCounters), ("ProcessMemoryLimit", ctypes.c_size_t),
                 ("JobMemoryLimit", ctypes.c_size_t), ("PeakProcessMemoryUsed", ctypes.c_size_t),
                 ("PeakJobMemoryUsed", ctypes.c_size_t)]
+
+
+assert ctypes.sizeof(_Extended) == (144 if ctypes.sizeof(ctypes.c_void_p) == 8 else 112)
 
 
 def _kernel32() -> ctypes.WinDLL:
@@ -72,9 +75,9 @@ def _make_job(kernel32: "ctypes.WinDLL") -> int:
 
 
 def _warn(reason: str) -> None:
-    global _failed
-    if not _failed:
-        _failed = True
+    global _warned
+    if not _warned:
+        _warned = True
         warnings.warn(f"libazahar: cannot put the worker in a kill-on-close job ({reason}); if this process is killed "
                       "mid-batch the worker may keep running until the batch ends", RuntimeWarning, stacklevel=3)
 
@@ -99,7 +102,7 @@ def assign(proc: subprocess.Popen) -> bool:
                 raise OSError(ctypes.get_last_error(), "AssignProcessToJobObject failed")
         finally:
             kernel32.CloseHandle(process)
-    except OSError as exc:
+    except (OSError, ctypes.ArgumentError, AttributeError) as exc:       # any failure: warn once, keep today's way
         _warn(str(exc))
         return False
     return True

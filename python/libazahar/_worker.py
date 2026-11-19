@@ -161,27 +161,44 @@ def _serve(conn: Connection, lib: ctypes.CDLL) -> int:
     return 1
 
 
+def _say(text: str) -> None:
+    """One line to stderr (it lands in ``worker.err``)."""
+    try:
+        print(f"libazahar worker: {text}", file=sys.stderr, flush=True)
+    except (OSError, ValueError):
+        pass
+
+
 def wait_for_parent(parent: int, exit_now: Callable[[int], Any] = os._exit, sel: Any = select) -> bool:
     """macOS and the BSDs: block until process ``parent`` exits (``kqueue``, ``EVFILT_PROC`` with ``NOTE_EXIT``), then
     call ``exit_now(0)``. The parent is rechecked with ``getppid`` after the registration, so an exit between the start
-    and the registration is not missed. Returns False at once, without waiting, where there is no ``kqueue``."""
+    and the registration is not missed. Returns False at once, without waiting, where there is no ``kqueue``, or when
+    the queue cannot be made (said on stderr; the worker then ends on the pipe's EOF between batches only)."""
     if not hasattr(sel, "kqueue"):
         return False
     if parent <= 1:                             # the parent died before the worker started: it was reparented
+        _say(f"parent {parent} gone: exiting")
         exit_now(0)
         return True
-    queue = sel.kqueue()
+    try:
+        queue = sel.kqueue()
+    except OSError as exc:                      # for example EMFILE
+        _say(f"no parent watch ({exc}); the worker will end on EOF between batches only")
+        return False
     event = sel.kevent(parent, filter=sel.KQ_FILTER_PROC, flags=sel.KQ_EV_ADD | sel.KQ_EV_ONESHOT,
                        fflags=sel.KQ_NOTE_EXIT)
     try:
         queue.control([event], 0, 0)            # register only
     except ProcessLookupError:                  # the parent is already gone
+        _say(f"parent {parent} gone: exiting")
         exit_now(0)
         return True
     if os.getppid() != parent:
+        _say(f"parent {parent} gone: exiting")
         exit_now(0)
         return True
     queue.control(None, 1, None)                # blocks until the exit (the GIL is free while it waits)
+    _say(f"parent {parent} gone: exiting")
     exit_now(0)
     return True
 

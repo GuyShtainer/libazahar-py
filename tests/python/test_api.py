@@ -45,8 +45,9 @@ def test_closed_emulator_raises(host_paths, workdir):
     emu = dh.boot(host_paths, workdir)
     emu.close()
     emu.close()
-    with pytest.raises(HostError):
+    with pytest.raises(HostError) as caught:
         emu.run(1)
+    assert caught.value.workdir == emu.workdir and caught.value.log_path == emu.workdir / "host.log"     # Emulator's own annotate
 
 
 @pytest.mark.slow
@@ -133,3 +134,23 @@ def test_submodule_exports_are_trimmed():
 def test_images_module_exports():
     from libazahar import images
     assert sorted(images.__all__) == ["CompareResult", "compare", "digest"]
+
+
+def test_images_names_are_frozen():
+    """The v1.2.0 promise for ``images``: compare's keyword-only limits, and the CompareResult fields (lane fimg renames the measured one)."""
+    import dataclasses
+    import inspect
+    from libazahar import images
+    params = inspect.signature(images.compare).parameters
+    for name in ("max_delta", "max_pixels"):
+        assert params[name].kind is inspect.Parameter.KEYWORD_ONLY and params[name].default == 0, name
+    assert [f.name for f in dataclasses.fields(images.CompareResult)] == ["largest_delta", "pixels", "over", "within",
+                                                                           "_differs"]
+
+
+def test_error_evidence_names_are_frozen():
+    from libazahar import errors
+    assert len(errors.EVIDENCE_TYPES) == 7
+    for cls in errors.EVIDENCE_TYPES:
+        assert hasattr(cls, "workdir") and hasattr(cls, "log_path"), cls
+    assert errors.SlotTimeout.log_path is None and errors.ArgumentError.workdir is None
