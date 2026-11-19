@@ -68,7 +68,7 @@ def _chunks(data: bytes) -> list:
     return chunks
 
 
-def read_png(path: Union[str, Path]) -> Any:
+def _read_png(path: Union[str, Path]) -> Any:
     """Read a PNG written by the host as an ``(H, W, 4)`` uint8 array. Any other PNG raises ``ArgumentError``."""
     numpy = _numpy()
     try:
@@ -90,7 +90,7 @@ def read_png(path: Union[str, Path]) -> Any:
         raise ArgumentError(f"{path}: empty picture")
     row = width * 4 + 1
     try:
-        raw = zlib.decompress(chunks[1][1])
+        raw = zlib.decompressobj().decompress(chunks[1][1], row * height + 1)     # bounded: a hostile file cannot grow
     except zlib.error as exc:
         raise ArgumentError(f"{path}: damaged pixel data ({exc})") from exc
     if len(raw) != row * height:
@@ -116,7 +116,7 @@ def _write_png(path: Path, pixels: Any) -> None:
 def _picture(item: Picture, name: str) -> Any:
     numpy = _numpy()
     if isinstance(item, (str, Path)):
-        return read_png(item)
+        return _read_png(item)
     array = numpy.asarray(item)
     if array.dtype != numpy.uint8 or array.ndim != 3 or array.shape[2] != 4:
         raise ArgumentError(f"{name} must be a PNG path or an (H, W, 4) uint8 array, not {array.dtype} {array.shape}")
@@ -125,29 +125,44 @@ def _picture(item: Picture, name: str) -> Any:
 
 @dataclass(frozen=True)
 class CompareResult:
-    """What ``compare`` found. ``max_delta``: the largest difference in any one channel (0 to 255). ``pixels``: how
-    many pixels differ at all. ``over``: how many pixels have a channel off by more than the ``max_delta`` limit given
-    to ``compare``. ``within``: ``over <= max_pixels``. ``write_diff(path)`` saves the difference picture."""
+    """What ``compare`` found. ``largest_delta``: the largest difference in any one channel (0 to 255). ``pixels``:
+    how many pixels differ at all. ``over``: how many pixels have a channel off by more than the ``max_delta`` limit
+    given to ``compare``. ``within``: ``over <= max_pixels``. ``write_diff(path)`` saves the difference picture.
+    Build one with ``compare``; a result made by hand has no picture to write."""
 
-    max_delta: int
+    largest_delta: int
     pixels: int
     over: int
     within: bool
-    _differs: Any = field(repr=False, compare=False, default=None)
+    _differs: Any = field(init=False, repr=False, compare=False, default=None)
+    _over_mask: Any = field(init=False, repr=False, compare=False, default=None)
 
-    def write_diff(self, path: Union[str, Path]) -> Path:
+    def write_diff(self, path: Union[str, Path], *, over_only: bool = False) -> Path:
         """Write a PNG of the compared size: white (full brightness) for every differing pixel, black elsewhere.
-        Returns the path. Raises ``ArgumentError`` when the folder is missing."""
+        With ``over_only=True`` only the pixels over the ``max_delta`` limit are white. Returns the path. Raises
+        ``ArgumentError`` when the folder is missing, or when the result was not made by ``compare``."""
         numpy = _numpy()
+        mask = self._over_mask if over_only else self._differs
+        if mask is None:
+            raise ArgumentError("this CompareResult was not made by compare(), so it has no picture to write")
         out = Path(path)
-        pixels = numpy.zeros(self._differs.shape + (4,), dtype=numpy.uint8)
+        pixels = numpy.zeros(mask.shape + (4,), dtype=numpy.uint8)
         pixels[..., 3] = 255
-        pixels[self._differs, :3] = 255
+        pixels[mask, :3] = 255
         try:
             _write_png(out, pixels)
         except OSError as exc:
             raise ArgumentError(f"cannot write {out}: {exc.strerror or exc}") from exc
         return out
+
+
+def _make_result(largest_delta: int, pixels: int, over: int, within: bool, differs: Any,
+                 over_mask: Any) -> CompareResult:
+    """The one place a ``CompareResult`` gets its private masks (the class is frozen, so set them past the guard)."""
+    result = CompareResult(largest_delta, pixels, over, within)
+    object.__setattr__(result, "_differs", differs)
+    object.__setattr__(result, "_over_mask", over_mask)
+    return result
 
 
 def compare(a: Picture, b: Picture, *, max_delta: int = 0, max_pixels: int = 0) -> CompareResult:
@@ -168,6 +183,6 @@ def compare(a: Picture, b: Picture, *, max_delta: int = 0, max_pixels: int = 0) 
         raise ArgumentError(f"the pictures differ in size: {first.shape[1]}x{first.shape[0]} and "
                             f"{second.shape[1]}x{second.shape[0]}")
     delta = numpy.abs(first.astype(numpy.int16) - second.astype(numpy.int16)).max(axis=2)
-    over = int((delta > max_delta).sum())
-    return CompareResult(max_delta=int(delta.max()), pixels=int((delta > 0).sum()), over=over,
-                         within=over <= max_pixels, _differs=delta > 0)
+    over_mask = delta > max_delta
+    over = int(over_mask.sum())
+    return _make_result(int(delta.max()), int((delta > 0).sum()), over, over <= max_pixels, delta > 0, over_mask)

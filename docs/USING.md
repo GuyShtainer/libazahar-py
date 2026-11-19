@@ -68,8 +68,10 @@ The `azhost` exit codes:
 
 Codes 1, 12 and 13 are the verdict codes of scripts built on the package; `azhost` itself does not return them.
 `examples/verdict.py` exits by this one table: 1 the test failed (the app reported a failure, or never reported a
-pass), 12 timed out and the worker was killed (`HostTimeout`), 13 the worker or host crashed (`HostCrashed`), and
-2, 3, 10 and 11 as above for a bad argument, a boot failure, a guest exit and a guest error. Codes 14 to 127 are reserved.
+pass), 12 timed out and the worker was killed (`HostTimeout`), 13 the worker or host crashed (`HostCrashed`), or the
+host could not run at all (`HostError`, `StateError`, or no instance slot free), and 2, 3, 10 and 11 as above for a bad
+argument, a boot failure, a guest exit and a guest error. An uncaught Python exception in your own script also exits 1,
+so a bug in the script reads as a failed test; catch what you can tell apart. Codes 14 to 127 are reserved.
 
 Summary-line keys are frozen: `frames wall fps shots stop first last vblanks wall_ms_mean batch msg`. Units: `wall` is
 in seconds, `wall_ms_mean` in milliseconds, `batch` counts from 1. New keys are inserted before `msg`, which is always
@@ -208,16 +210,21 @@ app path, so a shared state carries it. An I/O failure while saving is a HostErr
 A run is repeatable when every input in this table is fixed. Same app, same options, same inputs and a fresh working
 folder give the same screens and the same guest-visible state, measured on the test app at frames 300 and 600 with
 `libazahar.images.digest` and the app's log (`tests/python/test_determinism.py`). Two inputs are not fixed, and each is
-named here so a test does not lean on it.
+named here so a test does not lean on it. The last column of the table says, for each row, whether the test measures it
+(measured) or the row is read from the option profile and the code (from the code).
 
-| Input | Fixed? | What reaches it |
-|---|---|---|
-| Tick seed and clock base (`core/options-lazpy.txt`: fixed ticks, fixed start time) | Fixed on our core. `citra_init_ticks_override` picks the seed (section 14); two seeds give a different tick count, and the guest's clock shifts with it | `svcGetSystemTick`, `osGetTime`, `time()` |
-| Asynchronous file and service timing (deterministic async operations, async file system off) | Fixed on our core. The stock core ignores some of these options, so the profile in force is itself an input: compare runs only under one core and one profile | any call that waits on the file system or a service |
-| Random bytes from the process and SSL services | Not fixed. They come from the host's own randomness; fixing them needs a core change | `PS_GenerateRandomBytes`, `SSLC_GenerateRandomData` |
-| Console ID and Wi-Fi MAC | A fresh working folder draws them at random, so they are not fixed there. A reused folder keeps the ones it drew | the services that return the console's unique ID and MAC |
-| Working folder reuse (SD, NAND, config, shader cache) | Fixed only if the folder is the same. Use a new folder for each run you want to repeat (`fresh_sd=True` clears just the SD) | every file the app reads or writes |
-| Held input across `load_state` | Kept: `load_state` does not change the held buttons, touch or circle pad. A new `Emulator(state=...)` starts with nothing held | `run` inputs, `set_input` |
+| Input | Fixed? | What reaches it | Basis |
+|---|---|---|---|
+| Tick seed and clock base (`core/options-lazpy.txt`: fixed ticks, fixed start time) | Fixed on our core. `citra_init_ticks_override` picks the seed (section 14); two seeds give a different tick count, and the guest's clock reading shifts with it (a seed of 1000000 ticks moves `osGetTime` by about 3 to 4 ms) | `svcGetSystemTick`, `osGetTime`, `time()` | measured (tick count and `osGetTime` reading; `time()` from the code) |
+| Asynchronous file and service timing (deterministic async operations, async file system off) | Fixed on our core. The stock core ignores some of these options, so the profile in force is itself an input: compare runs only under one core and one profile | any call that waits on the file system or a service | from the code |
+| Random bytes from the process and SSL services | Not fixed. They come from the host's own randomness; fixing them needs a core change | `PS_GenerateRandomBytes`, `SSLC_GenerateRandomData` | from the code |
+| Console ID and Wi-Fi MAC | A fresh working folder draws them at random, so they are not fixed there. A reused folder keeps the ones it drew | the services that return the console's unique ID and MAC | from the code |
+| Working folder reuse (SD, NAND, config, shader cache) | Fixed only if the folder is the same. Use a new folder for each run you want to repeat (`fresh_sd=True` clears just the SD) | every file the app reads or writes | measured (fresh folders repeat); the rest from the code |
+| Held input across `load_state` | Kept: `load_state` does not change the held buttons, touch or circle pad, and does not restore the ones in the state. A new `Emulator(state=...)` starts with nothing held | `run` inputs, `set_input` | measured |
+
+For an app that reads the console ID or MAC: a fresh folder gives a different ID each run, so keep one folder and reset
+only the SD. Run the first time in that folder to draw the ID, then boot each repeat in the same folder with
+`fresh_sd=True` (it clears the SD and keeps the config, so the ID stays). Do not use a new folder per run for such an app.
 
 Held input in practice: input is held "across batches" (section 4). Holding A, saving, loading the state and running
 on leaves A down; booting a second instance from that state leaves A up. Release everything with `set_input` before a
@@ -523,7 +530,7 @@ One line per name in `libazahar.__all__`. Units: seconds in Python, frames are g
 - `__version__`: the package version string.
 - `libazahar.images` (import it with `from libazahar import images`; it is not in `__all__`):
   - `images.digest((top, bottom))`: a SHA-256 hex string of the two screens from `screens()` (arrays or `bytes`); it needs no numpy.
-  - `images.compare(a, b, *, max_delta=0, max_pixels=0)`: each side is a `(H, W, 4)` uint8 array or the path of a PNG the host wrote. Returns a `CompareResult`: `max_delta` (largest single-channel difference), `pixels` (pixels that differ at all), `over` (pixels with a channel off by more than the `max_delta` limit), `within` (`over <= max_pixels`). `result.write_diff(path)` saves a PNG of the same size, white for every differing pixel and black elsewhere. Needs numpy (`pip install 'libazahar-py[numpy]'`), else an `ImportError` names the extra.
+  - `images.compare(a, b, *, max_delta=0, max_pixels=0)`: each side is a `(H, W, 4)` uint8 array or the path of a PNG the host wrote. Returns a `CompareResult`: `largest_delta` (the measured largest single-channel difference; the `max_delta` argument is the limit), `pixels` (pixels that differ at all), `over` (pixels with a channel off by more than the `max_delta` limit), `within` (`over <= max_pixels`). `result.write_diff(path, *, over_only=False)` saves a PNG of the same size, white for every differing pixel and black elsewhere; with `over_only=True` only the pixels over the limit are white. A `CompareResult` is made by `compare`; one built by hand has no picture, and `write_diff` raises `ArgumentError`. Needs numpy (`pip install 'libazahar-py[numpy]'`), else an `ImportError` names the extra.
   - The PNG reader takes only the host's own files (8-bit RGBA, filter 0 on every row, one IDAT) and raises `ArgumentError` for any other PNG, a bad CRC or a different picture size.
 
 Evidence on failure and parent death:
