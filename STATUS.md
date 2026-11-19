@@ -1,6 +1,7 @@
 # libazahar-py status
 
-As of 2026-11-17. v1.1.0. Each item below names the work item (`laz-NNN`) whose
+As of 2026-11-19. v1.2.0 (staged, not yet released). The items new in 1.2.0 ran on the Windows PC; for macOS see
+"macOS in v1.2.0" below. Each item below names the work item (`laz-NNN`) whose
 Evidence, in `docs/status/lazpy/5-done/`, proves it. Nothing is listed as working that no gate ran.
 
 ## What works
@@ -32,12 +33,27 @@ Evidence, in `docs/status/lazpy/5-done/`, proves it. Nothing is listed as workin
   patch 0011; the release core 64026f4a passes the same test in the full pass) and on a user's own self-test (laz-520)
 - Restoring a saved state, then drawing 3D: an Azahar bug crashed the first 3D draw after a state load; our core
   fixes it (patch 0011), with a test-app test, and both user projects pass on it (laz-660)
+- New in 1.2.0: the release check prints SKIP or PEND, not PASS, for a check that could not run (laz-821)
+- New in 1.2.0: what repeats run to run is written down (`docs/USING.md` section 10a) and tested, with `images.digest` (laz-822)
+- New in 1.2.0: errors carry `.workdir` and `.log_path`, and name the log and the newest screenshot (laz-823)
+- New in 1.2.0: `images.compare` with pixel limits, the pass/fail example `examples/verdict.py`, and one exit-code table (USING
+  section 3) (laz-824)
+- New in 1.2.0: the same button pressed twice registers twice when released for one frame between (laz-825)
+- New in 1.2.0: a worker ends when the script that started it dies: a kill-on-close Job object on Windows, a kqueue watch on macOS
+  (laz-826)
+- New in 1.2.0: no window opens on Windows: a window watch during a full run (laz-827)
+- New in 1.2.0: `Pool` with two live copies (laz-828)
+- New in 1.2.0: a command line: `python -m libazahar doctor` and `python -m libazahar run` (USING section 2a) (laz-831)
+- New in 1.2.0: audio capture: `run(..., audio=True)` gives the batch's samples as int16 stereo and the rate (USING section 12b),
+  checked on a two-channel tone app of ours (laz-832)
 
 ## What does not work yet
 
 - macOS before 15, Intel Macs and Linux. The core needs macOS 15 (see Known limits).
 - Windows 11 and AMD and Intel GPUs: untested (see Windows below).
-- Poll-exact movies: our core exports `lazpy_movie_play`; the host and Python do not call it; not in 1.0.
+- Poll-exact movies: our core exports `lazpy_movie_play`, but its playback loses step once an app starts the ZL/ZR
+  service, so the host and Python do not call it. It needs a core patch first (laz-833).
+- Audio playback: nothing plays sound; audio is captured only (USING section 12b).
 - Guest memory and the watch list on Azahar's own core: they raise `NeedsLazpyCore`.
 - Any app that is not homebrew: no console keys, no Nintendo system files, no encrypted titles.
 
@@ -53,6 +69,12 @@ lazpy.1 Windows core, no `LoadWarning`, no nice values, the symlink test while D
 - A GPU driver with Vulkan is required; nothing Vulkan is shipped.
 - No Windows speed figures. The instance cap stays 4.
 - Differences from macOS are in `docs/USING.md` section 15a.
+
+## macOS in v1.2.0
+
+macOS uses the same core as v1.0.0 and v1.1.0. The v1.2.0 changes were built and tested on the Windows PC. On macOS
+they have not run yet: the new host C (audio capture), the kqueue parent watch and the `lsof` slot lookup run first
+in the macOS CI jobs on the release candidate. This section gives their result before the release.
 
 ## macOS in v1.1.0
 
@@ -77,6 +99,9 @@ skip when there is no test-app ELF, a longer boot wait, and the cross-system sta
 - On macOS, the core, `libazhost.dylib` and `azhost` need macOS 15 or later (the core's OpenSSL is built for 15).
 - The guest's HTTPS finds a CA file only at OpenSSL's compiled-in paths: Homebrew's `openssl@3` on macOS. On Windows it finds none: the compiled-in OPENSSLDIR is `/opt/lazpy/openssl-3.6.5-mingw64/C:/Program Files/Common Files/SSL` (the cross build joined its prefix to the Windows path), which is not a usable Windows path.
   Homebrew tests do not need it.
+- On Windows each state load leaves about two Semaphore handles open in the core (laz-829); a long run of loads in one
+  instance grows its handle count. A test tracks it; the fix needs a core patch.
+- `python -m libazahar doctor` shows `pid unknown` for held slots on Windows.
 - `azhost` has no `--help`; an unknown first argument prints the usage and exits with 2.
 - The promise (semantic versioning from 1.0.0): until 2.0, the Python API, the C functions in `host/azhost.h`, the
   `azhost` command line and exit codes, and the input-script and option-profile formats change only in compatible ways.
@@ -95,7 +120,7 @@ skip when there is no test-app ELF, a longer boot wait, and the cross-system sta
   `LAZ_STOCK_CORE`, a file you download yourself.
 - Out of scope (PLAN section 5), one line each:
   - Linux: macOS arm64 first, then Windows (done in 1.1.0, above).
-  - Audio output: not built.
+  - Audio playback: not built (capture is, USING section 12b).
   - Any window: the tool is headless.
   - Patching HID's touch truncation: four rows move by one pixel; documented.
   - Azahar's RPC server and gdb stub: not in libretro builds.
@@ -104,7 +129,6 @@ skip when there is no test-app ELF, a longer boot wait, and the cross-system sta
   - `.cia` installs: the host loads `.3dsx`.
   - Wireless, motion and camera: not built.
   - PyPI: the route is a clone and an editable install.
-  - A Python command line: not built (`azhost` is the host's command line).
   - HOME: not offered.
   - Gen3D's adapter: Gen3D's own work.
 

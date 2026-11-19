@@ -17,6 +17,7 @@ The plan row's gate, run on the PC through runs/p8/bin/pclane; the lane merged o
 
 ## Evidence
 2026-11-19 02:26: lane hostav merged on main (f71627a): run(audio=True), host ABI 5, testapp-tone/. On the PC: test_audio_live.py 2 passed (FFT peak 440 Hz within 2 %, silence before frame 60, no-component silence with the app's init failure logged), make test-host 307983 checks 0 failed, fast suite 302 passed. Not run: make check (clang analyze; no clang on the PC, CI's macOS job). Waits on the phase C gate and review.
+2026-11-19 02:50: the phase C review (docs/reviews/phase-8c-as-built.md, ready with changes) and its fixes merged (lanes fcli, fav). Full PC gate on main: make test-host 307983 checks 0 failed; pytest 439 passed, 12 skipped (each by design), 1 xfailed (laz-829). Done.
 
 ## Pointers
 - Plan row: `docs/plans/phase-8.md:187`

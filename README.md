@@ -7,10 +7,12 @@ Unofficial: not affiliated with or endorsed by the Azahar project. Report libaza
 
 ## Status
 
-v1.1.0, with semantic versioning from 1.0.0 (`docs/USING.md` says what is covered). v1.1.0 adds Windows. It runs 3DS
-homebrew headless, with inputs, shots, SD files, savestates, many instances at once and guest memory reads on our
-core; `STATUS.md` lists each item with the work that proved it. What does not work: macOS before 15 and Intel Macs,
-audio output, anything with a window, and anything that is not homebrew.
+v1.2.0, with semantic versioning from 1.0.0 (`docs/USING.md` says what is covered). v1.1.0 added Windows; v1.2.0 adds
+a command line (`python -m libazahar doctor` and `run`), audio capture, image compare with a pass/fail example, and
+errors that name their log. It runs 3DS homebrew headless, with inputs, shots, SD files, savestates, many instances at
+once and guest memory reads on our core; `STATUS.md` lists each item with the work that proved it. What does not work:
+macOS before 15 and Intel Macs, audio playback (capture works, `docs/USING.md` section 12b), anything with a window,
+and anything that is not homebrew.
 
 **Windows: proven on one PC.** The native Windows build (core, host library and Python layer, no WSL) was tested on
 one machine: Windows 10 Pro 22H2, x64, an NVIDIA GeForce RTX 3060 with driver 610.88, and Python 3.10.11. CI adds Windows

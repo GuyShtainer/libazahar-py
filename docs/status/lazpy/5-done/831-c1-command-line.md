@@ -17,6 +17,7 @@ The plan row's gate, run on the PC through runs/p8/bin/pclane; the lane merged o
 
 ## Evidence
 2026-11-19 02:16: lane cli merged on main (e30a80a): `python -m libazahar doctor` and `run`; test_cli.py 31 passed on the PC, live doctor and run included. Waits on the phase C gate and review.
+2026-11-19 02:50: the phase C review (docs/reviews/phase-8c-as-built.md, ready with changes) and its fixes merged (lanes fcli, fav). Full PC gate on main: make test-host 307983 checks 0 failed; pytest 439 passed, 12 skipped (each by design), 1 xfailed (laz-829). Done.
 
 ## Pointers
 - Plan row: `docs/plans/phase-8.md:186`

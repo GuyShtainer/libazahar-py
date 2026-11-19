@@ -1,7 +1,7 @@
 <!-- handoff: slim v1 | current tasks only | rewritten whole from docs/status/templates/handoff.md | budget 80 lines | never append -->
 # libazahar-py handoff
 
-As of: 2026-11-19 02:45 (session 3ds-toolkit-eb)
+As of: 2026-11-19 02:51 (session 3ds-toolkit-eb)
 
 This file lives in docs/status/lazpy/1-in-progress/, beside its item files. It holds only what
 the next session needs to act now, and points at the rest. Goals, rules, decisions and history live elsewhere.
@@ -9,7 +9,6 @@ the next session needs to act now, and points at the rest. Goals, rules, decisio
 ## Running now
 | What | Where | Agent id | It stops when |
 |---|---|---|---|
-| laz-830 full PC gate with both fix lanes merged | PC lane gate | main (bg bu0d19law) | runs/p8/c/gate2.out ends with "local rc=" |
 
 Phase 8 is under way: Guy, 2026-11-18 ~21:00, "you have my green light. go". He did not answer Q1-Q5, so the
 plan's recommended answers apply (laz-810 notes). Phase A is done: runs/p8/a/decisions.md. All lane PC jobs go
@@ -18,11 +17,11 @@ through runs/p8/bin/pclane under one shared PC lock (one job of ours at a time s
 ## Next steps, in order
 1. Phase B is done (laz-821 to 829 in 5-done). laz-820 stays open for test-windows.yml and test.yml on a pushed
    commit (the push waits on Guy) and the two 3-copy pool tests (CI or the Mac). The core leak fix waits for the next core phase.
-2. Phase C (laz-830): lanes cli (laz-831) and hostav (laz-832) are merged; C3 exact inputs (laz-833, parked) needs
-   a core patch first: parked for the next core phase with the leak fix (notes in 833 and 830). The PC gate is green (laz-830 Evidence). The review
-   (docs/reviews/phase-8c-as-built.md): ready with changes, 4 major, 19 minor; both fix lanes are merged (fcli,
-   fav). The full PC gate runs; then C6, release v1.2.0. The release audit must also read
-   commit 44ad3c5's text (review finding 2).
+2. Phase C (laz-830): C1 command line and C2 audio done (laz-831, 832; the full PC gate 02:50 after the review fixes).
+   C3 exact inputs parked (laz-833) for the next core phase with the leak fix. Next: C6, release v1.2.0, by the list
+   under the plan's phase C table (docs/plans/phase-8.md). Step 1 drafts (version 1.2.0, README, STATUS) are on main.
+   CI (test-windows.yml, test.yml, macos-live.yml) and C6a's core-win64.yml need a push: asked of Guy. The release
+   audit must also read commit 44ad3c5's text (review finding 2).
 3. Not run anywhere yet: make check (clang analyze) on the new C; CI's macOS job runs it after a push.
    docs_check's links check fails on the PC lane only (no .git there); it runs on the Mac.
 

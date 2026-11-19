@@ -7,7 +7,7 @@ from .pool import Pool
 from .memory import Memory
 from .results import RunResult, SaveInfo, Shot, Stats, ThreadInfo, WatchRow
 
-__version__ = "1.1.0"
+__version__ = "1.2.0"
 
 __all__ = ["Emulator", "Buttons", "Touch", "Circle", "RunResult", "Shot", "WatchRow", "Memory", "GuestMemoryError",
            "SaveInfo", "Stats", "ThreadInfo", "LibAzaharError", "ArgumentError", "BootError", "GuestError", "HostTimeout", "HostCrashed", "StateError",

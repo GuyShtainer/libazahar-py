@@ -610,7 +610,7 @@ Evidence on failure and parent death:
 - `.workdir`, `.log_path` on `BootError`, `GuestError`, `HostTimeout`, `HostCrashed`, `StateError`, `HostError` and `GuestMemoryError` once the worker has started: the instance's folder and its `host.log`, both `None` on any other error (`SlotTimeout` too) and on errors raised before the worker exists; the error text names `host.log` and the newest shot (its top and bottom PNG) under `shots/`, read when the text is first asked for (section 8).
 
 Audio (section 12b):
-- `run(frames, *, ..., audio=False)` and `run_until(file, text, max_frames, *, ..., audio=False)`: with `audio=True` the batch's audio is kept in `RunResult.audio` and `RunResult.audio_rate`. Both are keyword-only argument and field names new in of 1.2.0; the host's `azh_audio_capture` and `azh_audio_info` are in `docs/HOST-API.md`.
+- `run(frames, *, ..., audio=False)` and `run_until(file, text, max_frames, *, ..., audio=False)`: with `audio=True` the batch's audio is kept in `RunResult.audio` and `RunResult.audio_rate`. Both are keyword-only argument and field names new in 1.2.0; the host's `azh_audio_capture` and `azh_audio_info` are in `docs/HOST-API.md`.
 
 Command line (section 2a):
 - `python -m libazahar doctor` and `python -m libazahar run APP --frames N [--inputs FILE] [--shot F ...] [--state P] [--save P] [--json] [--workdir DIR] [--sd-seed DIR] [--timeout S]`. Both take `--help`. The module `libazahar._cli` is private; the commands, their flags, the `--json` keys (`ok`, `exit_code`, `workdir`, `result`, `saved`, `error`) and the exit codes of section 3 are the promise.

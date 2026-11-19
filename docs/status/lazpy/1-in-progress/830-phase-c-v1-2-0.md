@@ -19,6 +19,8 @@ v1.2.0 published, audit shippable, post-publish clone check passes.
 skipped, 1 xfailed (laz-829), 4 failed: test_verdict_live.py ran the example with -I, which ignores PYTHONPATH, so it
 imported the venv's installed v1.1.0 (ABI 4). Fixed (the repo's package first on sys.path); 02:34 rerun of the
 verdict, audio and CLI tests: 37 passed. C3 waits on a core patch (laz-833, parked for the next core phase). The review runs.
+2026-11-19 02:50: the review and both fix lanes merged; full PC gate 439 passed, 12 skipped, 1 xfailed. C1, C2 done;
+C3 parked; C4 dropped. Next: C6 (release v1.2.0), with C6a; test-windows.yml and the macOS jobs need a push.
 
 ## Pointers
 - Plan section: `docs/plans/phase-8.md:180`
