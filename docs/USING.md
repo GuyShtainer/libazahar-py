@@ -29,6 +29,32 @@ Reusing `workdir` keeps everything under `sys/`, the SD included; `sd_seed` is c
 a warm shader cache and a clean SD, pass `fresh_sd=True`: it empties `workdir/sys/Azahar/sdmc/` before the seed is
 copied and keeps the rest of `sys/` (it refuses an SD folder that is a symlink).
 
+## 2a. The command line
+
+`python -m libazahar --help` lists two commands, and each has its own `--help`. Nothing here needs more than the
+standard library. The package declares no console script, so use `python -m libazahar`.
+
+`python -m libazahar doctor` prints the OS, Python, the host library (path and ABI number), the core (path), the slots
+in use and, if `build/testapp.3dsx` is present, a 60-frame boot of the test app with the core's name and version and the
+Vulkan device lines from that boot's `host.log` (`vulkan: unknown` when there was no boot or the log has none). It exits
+0 when every part works, else 1. The slot check takes each free slot for a moment to see which are held. The PIDs of the
+holders come from `lsof` where it exists and read `unknown` elsewhere, Windows included.
+
+`python -m libazahar run APP --frames N [--inputs FILE] [--shot F ...] [--state P] [--save P] [--json]` boots `APP`,
+runs `N` frames and prints one summary line (`frames= stop= first= last= vblanks= wall=`), the shot paths, and the
+working folder. `--inputs` reads the script of section 4a; its records are the whole held state, so each becomes the
+button mask, a touch or a lift, and the circle pad on that frame. `--shot` is a batch frame and may repeat. `--state`
+boots from a savestate and `--save` writes one after the run (not after a guest exit). `--workdir DIR`, `--sd-seed DIR`
+and `--timeout S` set the working folder (default: a new temporary one, which is kept), the SD seed and the no-progress
+limit.
+
+`--json` prints one object. On success: `ok`, `exit_code`, `workdir`, `result` (every field of `RunResult`, with the
+paths of the shots; arrays and bytes are left out) and `saved` (or `null`). On an error: `ok` false, `exit_code`,
+`workdir` and `error` with `class`, `message`, `workdir` and `log_path` (the last two are `null` when the error has no
+instance behind it). The exit codes are those of section 3: 0, 2 (a bad argument or flag), 3 (boot failed), 10 (the guest
+exited), 11 (a guest error), 12 (timed out), 13 (the worker or host crashed or could not run). The command never
+returns 1.
+
 ## 3. Frames
 
 One `run` frame is one guest VBlank. Frames are 1-based inside a batch (`run(10, inputs=[(1, ...)])` acts on the
@@ -546,3 +572,6 @@ One line per name in `libazahar.__all__`. Units: seconds in Python, frames are g
 
 Evidence on failure and parent death:
 - `.workdir`, `.log_path` on `BootError`, `GuestError`, `HostTimeout`, `HostCrashed`, `StateError`, `HostError` and `GuestMemoryError` once the worker has started: the instance's folder and its `host.log`, both `None` on any other error (`SlotTimeout` too) and on errors raised before the worker exists; the error text names `host.log` and the newest shot (its top and bottom PNG) under `shots/`, read when the text is first asked for (section 8).
+
+Command line (section 2a):
+- `python -m libazahar doctor` and `python -m libazahar run APP --frames N [--inputs FILE] [--shot F ...] [--state P] [--save P] [--json] [--workdir DIR] [--sd-seed DIR] [--timeout S]`. Both take `--help`. The module `libazahar._cli` is private; the commands, their flags, the `--json` keys (`ok`, `exit_code`, `workdir`, `result`, `saved`, `error`) and the exit codes of section 3 are the promise.
