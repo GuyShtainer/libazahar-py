@@ -1,7 +1,7 @@
 /* azh_internal.h: the one state struct and the prototypes shared by the host's files. Everything else is file-static.
  *
  * Function-pointer exception (C golden rule 9, documented): function pointers appear only for (1) the libretro
- * callbacks and the core's retro_* table, (2) the Vulkan interface callbacks, (3) the two Vulkan proc tables, (4) the two memory exports of our core (mem.c). */
+ * callbacks and the core's retro_* table, (2) the Vulkan interface callbacks, (3) the two Vulkan proc tables, (4) the memory exports of our core (mem.c), (5) its lazpy_movie_play export (movie.c). */
 #ifndef AZH_INTERNAL_H
 #define AZH_INTERNAL_H
 
@@ -250,6 +250,14 @@ void azh_input_poll_cb(void);
 int16_t azh_input_state_cb(unsigned port, unsigned device, unsigned index, unsigned id);
 int azh_frame_write(int32_t screens, const char *prefix);
 void azh_frame_free(void);
+
+/* audio.c (ABI 5): the capture the two audio callbacks feed */
+void azh__audio_push(const int16_t *lr, size_t frames);   /* interleaved L,R int16; a no-op when no capture is armed */
+void azh__audio_close(void);                              /* flush and close the capture file; the count stays */
+
+/* movie.c (ABI 5): the path azh_movie_play stored, handed to the core between retro_load_game and context_reset */
+int azh__movie_apply(void);                               /* 0 when none is set; AZH_E_* from the core's answer */
+void azh__movie_clear(void);
 
 /* vk.c */
 int azh_vk_init(void);

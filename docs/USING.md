@@ -93,7 +93,12 @@ Pressing again: a release of one frame between two presses reaches the guest as 
 on Windows, for A, for ZL and ZR (the other service) and for a touch lift and re-tap, with gaps of 1, 2 and 3 frames:
 the log shows two presses each time, so one frame is enough. Write the release and the second press as two items, for
 example `(f, Buttons.A), (f + 6, Buttons(0)), (f + 7, Buttons.A)`. Two items for one button on the same frame fold into
-one, so a press-release-press needs separate frames. Poll-exact movies: our core exports it; the host and Python do not call it.
+one, so a press-release-press needs separate frames. Inputs are applied by the host at frame boundaries, so a change lands a frame or two after the frame you name (the
+offsets above). A movie that fixes the input at every poll of the guest, from boot, is not available from Python: the
+Azahar movie format stores the pad, touch and extra-pad (ZL, ZR, C-stick) records in one stream, and the order of the
+extra-pad records depends on when the app starts that service, which a caller cannot know. Our core exports the movie
+call and the host can pass it a file (`azh_movie_play`, `docs/HOST-API.md`), but a correct movie needs a change to the core
+first; there is no `exact_inputs` option.
 
 ## 4a. The input script (`azhost --inputs FILE`)
 
@@ -239,7 +244,7 @@ reset so the next run starts clean.
 Stock: SD text stops, guest errors, savestates (the same log fields after a state restore, gated on the test app).
 Repeats are exact only on our core, where the repeat gates run (PLAN 2.4); on the stock core they record the
 difference only. Our patched core adds debug text, memory reads and the watch list (section 12a). It also exports a
-poll-exact movie call; the host and Python do not call it. Calls that need our core raise `NeedsLazpyCore`. The table of
+movie call; the host can pass it a file, Python does not (section 4). Calls that need our core raise `NeedsLazpyCore`. The table of
 both cores is in section 16.
 
 ## 12a. Guest memory (our core only)
@@ -265,6 +270,23 @@ priority, is_current, pc, lr, sp, cpsr)` for every guest thread on every core, r
 thread (`is_current`) is read from the live CPU, every other thread from its saved registers. System-module threads may
 be listed too, so filter by `pid`; `pid` is `0xFFFFFFFF` for a thread with no owner process. Bit 5 of `cpsr` is the
 Thumb bit. On the stock core and on a lazpy.1 core it raises `NeedsLazpyCore`.
+
+## 12b. Audio
+
+`run(frames, audio=True)` keeps the audio the app made during that batch: `result.audio` is int16 stereo (a numpy array of
+shape `(n, 2)` when numpy is installed, else an `array.array('h')` of interleaved left, right values) and
+`result.audio_rate` is the core's sample rate in Hz. Without `audio=True` nothing is captured, `result.audio` is `None`
+and `audio_rate` is 0. `run_until` takes the same argument. After a guest exit the audio is empty. The audio is not part of
+`RunResult` equality and is left out of its `repr`.
+
+What to expect: the batch holds whatever the guest's sound library produced while those frames ran, about the rate times
+the batch's time in seconds, so a short first batch can hold nothing: sound usually starts some frames after boot. The
+capture goes through a file in the instance folder (`audio.raw`), which is removed when the batch returns; a 10 minute
+batch is about 80 MB on disk while it runs.
+
+The app's audio library looks for a component file on the SD card and fails to start without it.
+The tests seed a made-up one (`tests/python/dsp_component.py`), which Azahar's high-level DSP ignores apart from logging
+its hash. The tone test app is `testapp-tone/` (`make testapp-tone`); `tests/python/test_audio_live.py` runs it.
 
 ## 12. The Gen3D mapping
 
@@ -439,7 +461,7 @@ Windows 10, an NVIDIA GPU. Windows 11 and AMD and Intel GPUs are untested.
 | Debug-text stop (`debug_text=`) | yes | `NeedsLazpyCore` |
 | Thread registers (`emu.threads()`) | lazpy.2 only (lazpy.1: `NeedsLazpyCore`) | `NeedsLazpyCore` |
 | Exact repeats | yes (gated) | no: recorded as a difference only |
-| Poll-exact movies | our core exports it; the host and Python do not call it | no |
+| Poll-exact movies | our core exports it; the host can pass it a file, Python does not | no |
 | Option profile | `core/options-lazpy.txt` first (section 14) | the default profile only |
 
 States move between the two cores both ways in the gate, but a state may not load across core versions.
@@ -525,7 +547,7 @@ One line per name in `libazahar.__all__`. Units: seconds in Python, frames are g
   - `stats()`: a `Stats` snapshot. `close()`: stop the worker.
 - `Pool(n, app, root, **emulator_kwargs)`: `submit`, `map`, `close`; section 13.
 - `Buttons`: the button bits (libctru names plus `UP`, `DOWN`, `LEFT`, `RIGHT`); a value is the whole held mask. `Touch(x, y)` and `Touch.up`: the touch point; `Circle(x, y)`: the circle pad.
-- `RunResult`: what one batch did (`frames`, `stopped_by`, `first_frame`, `last_frame`, `frame_total`, `vblanks`, `wall_s` in seconds, `message`, `shots`, `watch`). New `stopped_by` values may be added; callers must accept unknown ones.
+- `RunResult`: what one batch did (`frames`, `stopped_by`, `first_frame`, `last_frame`, `frame_total`, `vblanks`, `wall_s` in seconds, `message`, `shots`, `watch`, `audio` and `audio_rate` (section 12b; `audio` is not compared)). New `stopped_by` values may be added; callers must accept unknown ones.
 - `Shot`: `frame` (batch frame), `top` and `bottom` (`Path`), `frame_total` (frames since boot).
 - `WatchRow`: one row of a watch list: `frame`, `status`, `data` (one `bytes` per entry), and `u32(entry, word)`.
 - `Memory`: the type of `Emulator.memory`, exported for type hints; users never construct it. `read`, `write`, `u8` to `u64`, `s8` to `s64`, `write_u8` to `write_u64`, `raw_read`, `raw_write`.

@@ -71,15 +71,19 @@ void azh_video_cb(const void *data, unsigned w, unsigned h, size_t pitch)
     azh_g.frame_kind = 2;
 }
 
+/* audio is never played; azh_audio_capture (audio.c) keeps it in a file when armed, else it is dropped here */
 void azh_audio_sample_cb(int16_t l, int16_t r)
 {
-    (void)l;     /* audio is discarded: the host never plays it */
-    (void)r;
+    int16_t lr[2];
+
+    lr[0] = l;
+    lr[1] = r;
+    azh__audio_push(lr, 1u);
 }
 
 size_t azh_audio_batch_cb(const int16_t *data, size_t frames)
 {
-    (void)data;
+    azh__audio_push(data, frames);
     return frames;
 }
 

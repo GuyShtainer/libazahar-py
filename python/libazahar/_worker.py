@@ -38,10 +38,13 @@ def option_plan(is_lazpy: bool, lazpy_options: Sequence[Tuple[str, str]],
 
 
 def _op_start(lib: ctypes.CDLL, args: Tuple[Any, ...]) -> Any:
-    core, sysdir, log, mapfile, options, app, state, lazpy_options = args
+    core, sysdir, log, mapfile, options, app, state, lazpy_options = args[:8]
+    movie = args[8] if len(args) > 8 else None
     _host.call(lib, "azh_open", _c_str(core), _c_str(sysdir), _c_str(log), _c_str(mapfile))
     for key, value in option_plan(_stats(lib)["is_lazpy_core"], lazpy_options, options):
         _host.call(lib, "azh_set_option", _c_str(key), _c_str(value))
+    if movie:
+        _host.call(lib, "azh_movie_play", _c_str(movie))
     _host.call(lib, "azh_boot", _c_str(app), _c_str(state) if state else None)
     return _stats(lib)
 
@@ -54,15 +57,28 @@ def _stats(lib: ctypes.CDLL) -> Dict[str, Any]:
             "core_version": out.core_version.decode("utf-8", "replace"), "is_lazpy_core": bool(out.is_lazpy_core)}
 
 
-def _op_run(lib: ctypes.CDLL, args: Tuple[Any, ...]) -> bytes:
-    records, batch_bytes = args
+def _op_run(lib: ctypes.CDLL, args: Tuple[Any, ...]) -> Any:
+    """One batch. With a third argument (a file path) the batch's audio is captured there and the reply is
+    ``(result bytes, stereo frames, rate)``; without it the reply is the result bytes alone."""
+    records, batch_bytes = args[0], args[1]
+    audio_path = args[2] if len(args) > 2 else None
     count = len(records) // _REC_BYTES
     buf = ctypes.create_string_buffer(bytes(records), max(len(records), 1))
     batch = _abi.Batch.from_buffer_copy(batch_bytes)
     result = _abi.Result()
-    _host.call(lib, "azh_run", ctypes.cast(buf, ctypes.c_void_p) if count else None, count, ctypes.byref(batch),
-               ctypes.byref(result))
-    return bytes(result)
+    if audio_path:
+        _host.call(lib, "azh_audio_capture", _c_str(audio_path))
+    try:
+        _host.call(lib, "azh_run", ctypes.cast(buf, ctypes.c_void_p) if count else None, count, ctypes.byref(batch),
+                   ctypes.byref(result))
+        if not audio_path:
+            return bytes(result)
+        frames, rate = ctypes.c_int64(0), ctypes.c_int32(0)
+        _host.call(lib, "azh_audio_info", ctypes.byref(frames), ctypes.byref(rate))
+        return bytes(result), int(frames.value), int(rate.value)
+    finally:
+        if audio_path:
+            lib.azh_audio_capture(None)     # stop and close the file; a failure here must not hide the real error
 
 
 def _op_set_input(lib: ctypes.CDLL, args: Tuple[Any, ...]) -> None:
