@@ -1,7 +1,7 @@
 <!-- handoff: slim v1 | current tasks only | rewritten whole from docs/status/templates/handoff.md | budget 80 lines | never append -->
 # libazahar-py handoff
 
-As of: 2026-11-19 02:20 (session 3ds-toolkit-eb)
+As of: 2026-11-19 02:27 (session 3ds-toolkit-eb)
 
 This file lives in docs/status/lazpy/1-in-progress/, beside its item files. It holds only what
 the next session needs to act now, and points at the rest. Goals, rules, decisions and history live elsewhere.
@@ -9,7 +9,7 @@ the next session needs to act now, and points at the rest. Goals, rules, decisio
 ## Running now
 | What | Where | Agent id | It stops when |
 |---|---|---|---|
-| laz-832 + laz-833: audio capture, exact inputs (host ABI 5) | runs/p8/wt/hostav (p8-hostav) | acc71522513f7ee40 | its final message |
+| laz-830 full PC gate on merged phase C (host ABI 5 and the tone app rebuilt in the lane) | PC lane gate | main (bg bq0wdybqn) | runs/p8/c/gate.out ends with "local rc=" |
 
 Phase 8 is under way: Guy, 2026-11-18 ~21:00, "you have my green light. go". He did not answer Q1-Q5, so the
 plan's recommended answers apply (laz-810 notes). Phase A is done: runs/p8/a/decisions.md. All lane PC jobs go
@@ -18,9 +18,10 @@ through runs/p8/bin/pclane under one shared PC lock (one job of ours at a time s
 ## Next steps, in order
 1. Phase B is done (laz-821 to 829 in 5-done). laz-820 stays open for test-windows.yml and test.yml on a pushed
    commit (the push waits on Guy) and the two 3-copy pool tests (CI or the Mac). The core leak fix is in C6a.
-2. Phase C (laz-830): briefs docs/plans/phase-8c-briefs.md. Lane cli (laz-831) is merged on main. When hostav ends:
-   review its diff, commit on p8-hostav, merge, then the full PC gate (command in docs/plans/phase-8b-briefs.md).
-3. Then the opus review (brief at the end of phase-8c-briefs.md) and its fix lanes; then C6, release v1.2.0.
+2. Phase C (laz-830): lanes cli (laz-831) and hostav (laz-832) are merged; C3 exact inputs (laz-833, in 2-next) needs
+   a core patch first, so it moves into C6a with the leak fix (notes in 833 and 830). When the gate is green: the opus
+   review (brief at the end of docs/plans/phase-8c-briefs.md), its fix lanes, then C6 release v1.2.0.
+3. Not run anywhere yet: make check (clang analyze) on the new C; CI's macOS job runs it after a push.
    docs_check's links check fails on the PC lane only (no .git there); it runs on the Mac.
 
 ## Waiting on Guy (only what blocks a step above)

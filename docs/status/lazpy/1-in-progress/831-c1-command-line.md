@@ -16,7 +16,7 @@ Phase C: a command line (doctor, run) for agents and shell users.
 The plan row's gate, run on the PC through runs/p8/bin/pclane; the lane merged on main; the phase C review passed.
 
 ## Evidence
-none yet
+2026-11-19 02:16: lane cli merged on main (e30a80a): `python -m libazahar doctor` and `run`; test_cli.py 31 passed on the PC, live doctor and run included. Waits on the phase C gate and review.
 
 ## Pointers
 - Plan row: `docs/plans/phase-8.md:186`
@@ -24,3 +24,6 @@ none yet
 
 ## Lessons and notes
 Read this part only when you work on this item.
+- No console script: pyproject declares none and the plan asks for none, so `python -m libazahar` (USING 2a).
+- doctor prints `pid unknown` for held slots on Windows: the slot locks hold no PID. Real PIDs there need a sidecar file
+written by _client.py (a review question).

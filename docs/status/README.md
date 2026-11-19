@@ -23,7 +23,7 @@ publish-ready. What to do this hour: `docs/status/lazpy/1-in-progress/HANDOFF.md
 - in-progress: `docs/status/lazpy/1-in-progress/830-phase-c-v1-2-0.md`
 - in-progress: `docs/status/lazpy/1-in-progress/831-c1-command-line.md`
 - in-progress: `docs/status/lazpy/1-in-progress/832-c2-audio.md`
-- in-progress: `docs/status/lazpy/1-in-progress/833-c3-exact-inputs.md`
+- next: `docs/status/lazpy/2-next/833-c3-exact-inputs.md`
 - files: 0 in `3-waiting-on-guy/`, 1 in `4-not-started/`, 65 in `5-done/`, 0 in `6-parked/`
 <!-- generated:end -->
 
