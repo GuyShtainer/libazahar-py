@@ -26,3 +26,8 @@ The plan row's gate, run on the PC through runs/p8/bin/pclane; the lane merged o
 Read this part only when you work on this item.
 - The sample count: 240 frames gave 130400 stereo frames, about 884 short of 240 * rate / 59.83. The sound starts about 1.6
 guest frames after the app's start call; the steady rate is 59.83 fps. The test allows 3 frames short, 1 frame over.
+- 2026-11-19 02:45, fix lane fav merged (74ef28c): review findings 1-10, 19-23. The tone app now plays 440 Hz left and
+660 Hz right; the live test checks each channel's peak and pitch (2 %), zero samples before the sound starts and
+without the component file. The count window is [-3, +1] guest frames (measured above; USING 12b says so, the plan's
+gate said one frame). New fast test test_audio.py (22). make check (clang analyze) still unrun: CI's macOS job.
+The README line about audio changes at C6 step 1.

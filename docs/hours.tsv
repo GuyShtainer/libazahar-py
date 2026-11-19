@@ -245,3 +245,5 @@ date	bet	phase	agent_id	model	role	kind	start	end	hours	source
 2026-11-19	phase 8 C5 opus as-built review of phase C	phase-8c	a2c24efaeec4b7f9a	opus	agent	review	02:28	02:37	0.15	agent usage duration
 2026-11-19	phase 8 C main loop: the core-phase correction, review intake, fix briefs, two dispatches	phase-8c	main	opus	main	briefs	02:34	02:38	0.07	session clock
 2026-11-19	phase 8 C5 fix lane fcli: review findings 11-18	phase-8c	ad380f23f85d84131	sonnet	agent	fix	02:38	02:40	0.04	agent usage duration
+2026-11-19	phase 8 C5 fix lane fav: review findings 1-10, 19-23	phase-8c	a3f2e5cee65b7cadd	sonnet	agent	fix	02:38	02:44	0.10	agent usage duration
+2026-11-19	phase 8 C main loop: fcli and fav merges, the second phase C gate	phase-8c	main	opus	main	merge	02:38	02:45	0.12	session clock
