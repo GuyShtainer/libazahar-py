@@ -251,6 +251,8 @@ static void teardown(void)
     azh_core_close();
     azh_vk_close();
     azh_frame_free();
+    azh__audio_close();
+    azh__movie_clear();
     azh_opts_free();
     if (azh_g.vk.qmx_ready != 0) {
         (void)pthread_mutex_destroy(&azh_g.vk.qmx);
@@ -375,6 +377,10 @@ static int boot_game(const char *app)
             azh_g.av.timing.fps);
     if (azh_g.have_hw == 0 || azh_g.hw.context_reset == NULL) {
         return azh_fail(AZH_E_CORE, "the core did not ask for a Vulkan render context");
+    }
+    rc = azh__movie_apply();        /* a movie set by azh_movie_play goes to the core before its context_reset boots */
+    if (rc != AZH_OK) {
+        return rc;
     }
     rc = azh_vk_init();
     if (rc != AZH_OK) {

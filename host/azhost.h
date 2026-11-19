@@ -6,8 +6,8 @@
 
 #include <stdint.h>
 
-#define AZH_ABI_VERSION 4                       /* 4: azh_threads (core lazpy.2) */
-#define AZH_STATE_META_ABI 3                    /* the abi= of a state's meta file: states did not change in 4 */
+#define AZH_ABI_VERSION 5                       /* 5: audio capture, movie playback; 4: azh_threads (core lazpy.2) */
+#define AZH_STATE_META_ABI 3                    /* the abi= of a state's meta file: states did not change in 4 or 5 */
 
 enum { AZH_OK = 0, AZH_E_ARG = -1, AZH_E_ORDER = -2 /* call order */, AZH_E_CORE = -3, AZH_E_BOOT = -4,
        AZH_E_VULKAN = -5, AZH_E_IO = -6, AZH_E_NOMEM = -7, AZH_E_UNSUPPORTED = -8, AZH_E_NEEDS_LAZPY_CORE = -9,
@@ -101,6 +101,14 @@ int azh_write(uint32_t addr, uint32_t len, const void *buf);
 int azh_threads(azh_thread *out, int32_t max, int32_t *count);
         /* every guest thread; *count is the total even above max (retry larger); lazpy.2 core only (ABI 4) */
 int azh_set_input(const int32_t rec[AZH_INPUT_INTS]);    /* sets the held state now (frame field ignored) */
+int azh_audio_capture(const char *path_or_null);
+        /* ABI 5. After azh_open: from now on the core's audio is written to path as raw interleaved int16 stereo
+           (the file is truncated); NULL or "" stops and closes it. Off by default: nothing is kept or paid. */
+int azh_audio_info(int64_t *frames_out, int32_t *rate_out);
+        /* ABI 5. After azh_boot: stereo frames written since the last azh_audio_capture(path) and the core's sample
+           rate in Hz; flushes the file. AZH_E_IO if a write failed. */
+int azh_movie_play(const char *path_or_null);
+        /* ABI 5. After azh_open, before azh_boot, our core only: play this .ctm movie from boot. NULL or "" clears it. */
 int azh_stats(struct azh_stats *out);
 int azh_abi_layout(azh_layout *out);
 const char *azh_error(void);

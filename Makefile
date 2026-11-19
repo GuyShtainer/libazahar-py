@@ -46,6 +46,9 @@ build/test-version: tests/test_version.c host/version.c $(HEADERS)
 testapp:
 	$(MAKE) -C testapp
 
+testapp-tone:
+	$(MAKE) -C testapp-tone
+
 # step C's pure-C unit tests: no core, no Vulkan. -ffp-contract=off keeps the float32 touch model exact.
 TEST_SRC = host/input.c host/match.c host/msg.c host/rawcopy.c host/crop.c host/png.c host/sdcopy.c host/statemeta.c host/watch.c host/profile.c \
            $(wildcard tests/host/*.c)
@@ -60,7 +63,7 @@ build/test-host: $(TEST_SRC) $(HEADERS) $(wildcard tests/host/*.h)
 clean:
 	rm -rf build/libazhost.dylib build/azhost build/test-version build/test-host build/obj
 
-.PHONY: all check test-version test-host testapp clean win64 test-version-win test-host-win check-obinary
+.PHONY: all check test-version test-host testapp testapp-tone clean win64 test-version-win test-host-win check-obinary
 
 else
 
@@ -137,9 +140,12 @@ check:
 testapp:
 	$(MAKE) -C testapp
 
+testapp-tone:
+	$(MAKE) -C testapp-tone
+
 clean:
 	rm -rf build/libazhost.dll build/azhost.exe build/test-version.exe build/test-host.exe $(WIN_DIR)
 
-.PHONY: all win64 check test-version test-host testapp clean
+.PHONY: all win64 check test-version test-host testapp testapp-tone clean
 
 endif

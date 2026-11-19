@@ -1,4 +1,4 @@
-"""ctypes mirrors of host/azhost.h (ABI 3) and the layout check against ``azh_abi_layout()``.
+"""ctypes mirrors of host/azhost.h (ABI 5) and the layout check against ``azh_abi_layout()``.
 
 The constants below are plain module integers on purpose: ``check_layout`` reads them by name at call time, so a
 changed value is caught by its ``const.<NAME>`` row of the host's table.
@@ -47,7 +47,7 @@ AZH_STOP_GUEST_BREAK = 3
 AZH_STOP_GUEST_EXITED = 4
 AZH_STOP_GUEST_ERROR = 5
 AZH_STOP_WALL_LIMIT = 6
-AZH_ABI_VERSION = 4
+AZH_ABI_VERSION = 5
 AZH_STATE_META_ABI = 3
 AZH_THREAD_CURRENT = 1
 AZH_MAX_SHOTS = 64

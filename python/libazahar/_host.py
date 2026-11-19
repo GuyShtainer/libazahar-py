@@ -24,6 +24,9 @@ _PROTOTYPES = {
     "azh_write": (_C.c_int, [_C.c_uint32, _C.c_uint32, _C.c_void_p]),
     "azh_threads": (_C.c_int, [_C.c_void_p, _C.c_int32, _C.POINTER(_C.c_int32)]),
     "azh_set_input": (_C.c_int, [_C.POINTER(_C.c_int32)]),
+    "azh_audio_capture": (_C.c_int, [_C.c_char_p]),
+    "azh_audio_info": (_C.c_int, [_C.POINTER(_C.c_int64), _C.POINTER(_C.c_int32)]),
+    "azh_movie_play": (_C.c_int, [_C.c_char_p]),
     "azh_stats": (_C.c_int, [_C.POINTER(_abi.Stats)]),
     "azh_abi_layout": (_C.c_int, [_C.POINTER(_abi.Layout)]),
     "azh_error": (_C.c_char_p, []),
@@ -37,7 +40,7 @@ def load(path: Path) -> Tuple[ctypes.CDLL, _abi.Layout]:
         try:
             fn = getattr(lib, name)
         except AttributeError:
-            raise HostError(f"host {path} lacks {name}: an older libazhost (azh_threads needs the lazpy.2 host)") \
+            raise HostError(f"host {path} lacks {name}: an older libazhost (the audio and movie calls need ABI 5)") \
                 from None
         fn.restype = restype
         fn.argtypes = argtypes

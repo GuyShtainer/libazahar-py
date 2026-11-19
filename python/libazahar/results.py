@@ -4,7 +4,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 import struct
 from pathlib import Path
-from typing import Dict, Tuple
+from typing import Any, Dict, Tuple
 
 __all__ = ["Shot", "WatchRow", "RunResult", "SaveInfo", "Stats", "ThreadInfo"]
 
@@ -38,7 +38,10 @@ class WatchRow:
 @dataclass(frozen=True)
 class RunResult:
     """What one batch did. ``frames`` counts the frame that triggered a stop; ``first_frame`` and ``last_frame`` are
-    absolute (1-based since boot); ``shots`` maps a batch frame to its Shot."""
+    absolute (1-based since boot); ``shots`` maps a batch frame to its Shot. ``audio`` and ``audio_rate`` are filled
+    only by ``run(..., audio=True)``: ``audio`` is the batch's int16 stereo samples (a numpy array of shape
+    ``(n, 2)`` when numpy is present, else an ``array.array('h')`` of interleaved left, right values) and
+    ``audio_rate`` the core's rate in Hz; otherwise ``None`` and 0."""
 
     frames: int
     stopped_by: str
@@ -50,6 +53,8 @@ class RunResult:
     message: str = ""
     shots: Dict[int, Shot] = field(default_factory=dict)
     watch: Tuple[WatchRow, ...] = ()
+    audio: Any = field(default=None, compare=False, repr=False)     # an array: left out of ==, hash and repr
+    audio_rate: int = 0
 
 
 @dataclass(frozen=True)

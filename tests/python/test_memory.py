@@ -180,9 +180,9 @@ def row_of(layout, name):
     raise KeyError(name)
 
 
-def test_layout_is_abi_4(layout):
+def test_layout_is_abi_5(layout):
     _abi.check_layout(layout)
-    assert layout.abi == 4 and layout.size_batch == 3612 and layout.size_result == 312
+    assert layout.abi == 5 and layout.size_batch == 3612 and layout.size_result == 312
     assert layout.n_fields == 151 and layout.map_size == 4890624
 
 

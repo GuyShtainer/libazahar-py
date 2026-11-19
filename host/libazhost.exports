@@ -13,3 +13,6 @@ _azh_set_input
 _azh_stats
 _azh_abi_layout
 _azh_error
+_azh_audio_capture
+_azh_audio_info
+_azh_movie_play

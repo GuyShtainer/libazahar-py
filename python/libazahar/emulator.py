@@ -5,7 +5,9 @@ import operator
 import os
 import shutil
 import struct
+import sys
 import weakref
+from array import array
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple, Union
 
@@ -147,6 +149,41 @@ def _clear_sd(sd: Path) -> None:
         shutil.rmtree(sd)
 
 
+def _take(path: Path, frames: int) -> bytes:
+    """The captured audio file's bytes (and the file removed); ``frames`` is the host's count of stereo frames."""
+    try:
+        data = path.read_bytes()
+    except OSError as exc:
+        raise HostError(f"cannot read the audio file {path}: {exc.strerror or exc}") from exc
+    finally:
+        _drop(path)
+    if len(data) != 4 * frames:
+        raise HostError(f"the audio file holds {len(data)} bytes, the host counted {frames} stereo frames")
+    return data
+
+
+def _drop(path: Optional[Path]) -> None:
+    """Remove a scratch file if it is there."""
+    if path is not None:
+        try:
+            path.unlink()
+        except OSError:
+            pass
+
+
+def _samples(data: bytes) -> Any:
+    """Raw little-endian int16 stereo bytes as a numpy ``(n, 2)`` array, or an ``array('h')`` without numpy."""
+    try:
+        import numpy
+    except ImportError:
+        out = array("h")
+        out.frombytes(data)
+        if sys.byteorder == "big":
+            out.byteswap()
+        return out
+    return numpy.frombuffer(data, dtype="<i2").reshape(-1, 2).astype("=i2")
+
+
 class Emulator:
     """One emulator instance. Use as a context manager, or call :meth:`close`.
 
@@ -270,7 +307,7 @@ class Emulator:
             stop_file: Optional[str] = None, stop_text: Optional[str] = None, stop_every: int = 30,
             stop_new: bool = False, debug_text: Optional[str] = None, wall_limit: Optional[float] = None,
             timeout: Optional[float] = None, watch: Optional[Sequence[Tuple[int, int]]] = None,
-            watch_every: int = 1) -> RunResult:
+            watch_every: int = 1, audio: bool = False) -> RunResult:
         """Run ``frames`` guest frames (one frame = one guest VBlank, 1-based within the batch).
 
         ``inputs`` are ``(frame, item)`` pairs; an item is Buttons/int (the whole button mask), ``Touch(x, y)``,
@@ -283,6 +320,9 @@ class Emulator:
         ``watch_every``-th frame (and after the last frame run) the host reads each entry (``words`` u32 words at guest
         address ``addr``) into ``result.watch``, a tuple of ``WatchRow``; the host refuses a batch whose rows do not
         fit and says the largest frame count that does. The guest may be part-way into a frame at each read.
+        ``audio=True`` keeps the batch's audio in ``result.audio`` (int16 stereo; a numpy array of shape ``(n, 2)`` when
+        numpy is present, else an ``array.array('h')`` of interleaved left, right values) and its rate in
+        ``result.audio_rate``; without it nothing is captured and nothing is paid. After a guest exit the audio is empty.
         ``timeout`` replaces the heartbeat timeout for this call: seconds with no new frame, not the batch's wall
         time, so a long batch needs no big value (``wall_limit`` bounds the wall time). Returns a RunResult;
         a guest exit gives ``stopped_by == "guest_exited"`` and a closed Emulator on both cores (on our core the
@@ -296,19 +336,28 @@ class Emulator:
         batch, shot_frames = self._build_batch(frames, shots, stop_file, stop_text, stop_every, stop_new,
                                                debug_text, wall_limit)
         watch_sizes = self._fill_watch(batch, watch, watch_every)
+        audio_file = self._workdir / "audio.raw" if audio else None
         prev = self._held
         records, _ = fold(inputs, frames, prev)
         before = self.frame_total
         wait = Wait(heartbeat=self.timeout if timeout is None else _seconds(timeout, "timeout"), first_heartbeat=self.boot_timeout)
-        kind, payload = self._client.request("run", (records.tobytes(), bytes(batch)), wait, frame_before=before)
+        request = (records.tobytes(), bytes(batch)) + ((str(audio_file),) if audio_file is not None else ())
+        kind, payload = self._client.request("run", request, wait, frame_before=before)
         if kind == "exited":
             self._held = held_after(records, payload["frames"], prev)
             result = RunResult(frames=payload["frames"], stopped_by="guest_exited", first_frame=before + 1,
                                last_frame=payload["frame_total"], frame_total=payload["frame_total"],
-                               vblanks=payload["vblanks"], wall_s=0.0, message=payload["message"])
+                               vblanks=payload["vblanks"], wall_s=0.0, message=payload["message"],
+                               audio=_samples(b"") if audio else None)
+            _drop(audio_file)
             self.close()
             return result
-        result = self._result(_abi.Result.from_buffer_copy(payload), shot_frames, before, watch_sizes)
+        if audio_file is not None:
+            payload, count, rate = payload
+            samples, rate = _samples(_take(audio_file, count)), rate
+        else:
+            samples, rate = None, 0
+        result = self._result(_abi.Result.from_buffer_copy(payload), shot_frames, before, watch_sizes, samples, rate)
         self._held = held_after(records, result.frames, prev)
         if result.stopped_by == "guest_error":
             raise self._client.annotate(GuestError(result.message or "the guest stopped with a fatal error", result))
@@ -405,7 +454,7 @@ class Emulator:
         return tuple(rows)
 
     def _result(self, raw: _abi.Result, shot_frames: List[int], before: int,
-                watch_sizes: Optional[List[int]] = None) -> RunResult:
+                watch_sizes: Optional[List[int]] = None, audio: Any = None, audio_rate: int = 0) -> RunResult:
         done: Dict[int, Shot] = {}
         for frame in shot_frames[:raw.shots_done]:
             stem = self._shots_dir / f"shot_{before + frame:06d}"
@@ -413,20 +462,21 @@ class Emulator:
         return RunResult(frames=raw.frames_run, stopped_by=_abi.STOP_NAMES.get(raw.stop_reason, str(raw.stop_reason)),
                          first_frame=raw.first_frame, last_frame=raw.last_frame, frame_total=self.frame_total,
                          vblanks=raw.vblanks, wall_s=raw.wall_s, message=raw.message.decode("utf-8", "replace"),
-                         shots=done, watch=self._watch_rows(raw.watch_rows, watch_sizes or []))
+                         shots=done, watch=self._watch_rows(raw.watch_rows, watch_sizes or []), audio=audio,
+                         audio_rate=audio_rate)
 
     def run_until(self, file: str, text: str, max_frames: int, *, stop_every: int = 30, stop_new: bool = False,
                   inputs: Iterable[Tuple[int, Item]] = (), shots: Iterable[int] = (),
                   wall_limit: Optional[float] = None, debug_text: Optional[str] = None,
                   timeout: Optional[float] = None, watch: Optional[Sequence[Tuple[int, int]]] = None,
-                  watch_every: int = 1) -> RunResult:
+                  watch_every: int = 1, audio: bool = False) -> RunResult:
         """Run until ``text`` appears in the SD file ``file`` (checked every ``stop_every`` frames) or ``max_frames``.
 
         Takes the same options as :meth:`run` under the same names. The caller checks ``result.stopped_by == "sd_text"``.
         """
         return self.run(max_frames, inputs=inputs, shots=shots, stop_file=file, stop_text=text, stop_every=stop_every,
                         stop_new=stop_new, debug_text=debug_text, wall_limit=wall_limit, timeout=timeout,
-                        watch=watch, watch_every=watch_every)
+                        watch=watch, watch_every=watch_every, audio=audio)
 
     def run_frame(self) -> RunResult:
         """Run exactly one frame."""

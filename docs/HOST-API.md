@@ -3,7 +3,7 @@
 For C users, and for anyone reading the Python layer's worker. The Python layer (`python/libazahar/`) calls this
 library through `ctypes`; `docs/USING.md` is the guide to the Python side. The promise: the host and the Python layer
 are one unit and ship together, so the layout and the Python-to-host calls are checked at load time and may change in a
-1.x release (each change bumps `AZH_ABI_VERSION`, now 4); the C promise is at source level: the names, argument orders
+1.x release (each change bumps `AZH_ABI_VERSION`, now 5); the C promise is at source level: the names, argument orders
 and meanings of the `azh_*` functions and `AZH_*` constants in `host/azhost.h` do not change in 1.x, and struct
 layouts may grow.
 
@@ -15,15 +15,15 @@ pass to `azh_open`), MoltenVK, and the headers `tools/fetch.sh` puts in `vendor/
 
 ## The ABI version and the layout
 
-`AZH_ABI_VERSION` is 4 (`host/azhost.h` line 9). `azh_abi_layout()` fills an `azh_layout` with the size of every
+`AZH_ABI_VERSION` is 5 (`host/azhost.h` line 9). `azh_abi_layout()` fills an `azh_layout` with the size of every
 struct, the map's size and offsets, and one `fields[]` row (name, offset, size) per struct member. A caller checks
 these against its own view at load time, as `python/libazahar/_abi.py` does, and refuses a host whose layout differs.
 `build/azhost layout` prints the same rows (the full output is at the end of this page).
 
 ## Call order
 
-`azh_open`, then `azh_set_option` (as many as you need), then `azh_boot`, then any of `azh_run`, `azh_shot`,
-`azh_stats`, `azh_read`, `azh_write`, `azh_threads`, `azh_set_input`, `azh_save_state`, `azh_load_state`, then `azh_close`.
+`azh_open`, then `azh_set_option` (as many as you need) and optionally `azh_movie_play`, then `azh_boot`, then any of `azh_run`, `azh_shot`,
+`azh_stats`, `azh_read`, `azh_write`, `azh_threads`, `azh_set_input`, `azh_audio_capture`, `azh_audio_info`, `azh_save_state`, `azh_load_state`, then `azh_close`.
 `azh_error` and `azh_abi_layout` work at any time. One `azh_open` per process: the core and MoltenVK stay mapped after
 `azh_close`, so a second open is refused (`AZH_E_ORDER`). The Python layer runs each Emulator in its own worker process
 for this reason. Every function returns 0 or a negative `AZH_E_*` code; `azh_error()` returns the text of the last
@@ -45,9 +45,12 @@ error.
 | `azh_write` | writes guest memory (our core) | `host/azhost.h` line 100 |
 | `azh_threads` | lists the guest's threads (our core, ABI 4); `*count` is the total even when it is above `max` | `host/azhost.h` line 101 |
 | `azh_set_input` | sets the held input now | `host/azhost.h` line 103 |
-| `azh_stats` | frames, wall and CPU time, peak memory, the core's name and version, whether it is our core | `host/azhost.h` line 104 |
-| `azh_abi_layout` | fills the layout record | `host/azhost.h` line 105 |
-| `azh_error` | the last error text | `host/azhost.h` line 106 |
+| `azh_audio_capture` | (ABI 5) writes the core's audio to a file as raw interleaved 16-bit stereo; off by default; NULL stops it | `host/azhost.h` line 104 |
+| `azh_audio_info` | (ABI 5) stereo frames written so far and the core's sample rate | `host/azhost.h` line 107 |
+| `azh_movie_play` | (ABI 5, our core, before boot) plays a `.ctm` movie from boot | `host/azhost.h` line 110 |
+| `azh_stats` | frames, wall and CPU time, peak memory, the core's name and version, whether it is our core | `host/azhost.h` line 112 |
+| `azh_abi_layout` | fills the layout record | `host/azhost.h` line 113 |
+| `azh_error` | the last error text | `host/azhost.h` line 114 |
 
 ## Errors
 
@@ -104,13 +107,13 @@ The default core of `azhost` is the one `LAZ_CORE` names, else the path in secti
 
 ## `azhost layout`
 
-Taken 2026-11-13 from a build of the 1.0 freeze (ABI 4). Each row is `name offset size`.
+Taken 2026-11-19 from a build of ABI 5 (the struct rows are those of ABI 4; ABI 5 adds calls only). Each row is `name offset size`.
 
 <details>
 <summary>The full output of <code>build/azhost layout</code> (152 lines)</summary>
 
 ```
-abi=4
+abi=5
 shot.frame 0 4
 shot.screens 4 4
 shot.format 8 4
@@ -235,7 +238,7 @@ const.AZH_STOP_GUEST_BREAK 3 0
 const.AZH_STOP_GUEST_EXITED 4 0
 const.AZH_STOP_GUEST_ERROR 5 0
 const.AZH_STOP_WALL_LIMIT 6 0
-const.AZH_ABI_VERSION 4 0
+const.AZH_ABI_VERSION 5 0
 const.AZH_STATE_META_ABI 3 0
 const.AZH_THREAD_CURRENT 1 0
 const.AZH_MAX_SHOTS 64 0
