@@ -3,7 +3,7 @@ import ctypes
 
 import pytest
 
-from libazahar import _abi, _map
+from libazahar import _abi, _host, _map
 from libazahar.errors import HostError
 
 
@@ -38,6 +38,28 @@ def test_wrong_abi(layout):
     bad.abi = 3                          # the host before thread registers
     with pytest.raises(HostError, match="abi"):
         _abi.check_layout(bad)
+
+
+def test_abi_4_host_is_refused(layout):
+    bad = copy(layout)
+    bad.abi = 4                          # the host before the audio calls
+    with pytest.raises(HostError, match="host abi 4, Python abi 5"):
+        _abi.check_layout(bad)
+
+
+def test_host_without_the_audio_calls_is_refused_by_name(monkeypatch, tmp_path):
+    """An ABI 4 library has no azh_audio_capture: load names it and says what to do, before any layout check."""
+    class Old:
+        def __getattr__(self, name):
+            if name == "azh_audio_capture":
+                raise AttributeError(name)
+            return type("Fn", (), {})()
+
+    monkeypatch.setattr(_host.ctypes, "CDLL", lambda path: Old())
+    with pytest.raises(HostError) as info:
+        _host.load(tmp_path / "libazhost.so")
+    text = str(info.value)
+    assert "lacks azh_audio_capture" in text and f"needs ABI {_abi.AZH_ABI_VERSION}" in text and "rebuild with make" in text
 
 
 def test_moved_batch_field(layout):

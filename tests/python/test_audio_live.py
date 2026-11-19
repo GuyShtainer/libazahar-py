@@ -1,4 +1,4 @@
-"""run(..., audio=True) on the tone app: silence before frame 60, then 440 Hz stereo at the core's rate."""
+"""run(..., audio=True) on the tone app: nothing before frame 60, then 440 Hz left and 660 Hz right at the core's rate."""
 from __future__ import annotations
 
 from pathlib import Path
@@ -60,19 +60,23 @@ def test_tone_is_captured(tone_app, workdir):
     assert abs(rate - 32728) < 50
 
     pre_l, pre_r = _rows(before.audio)
-    assert not any(pre_l) and not any(pre_r)
+    assert len(pre_l) == 0 and len(pre_r) == 0                # the core emits no samples until the sound starts
 
     left, right = _rows(rest.audio)
-    assert left == right                                      # the app plays the same sample on both sides
-    # FRAMES guest frames should hold FRAMES * rate / 59.83 stereo frames, within one guest frame's worth. Measured: the
-    # sound starts about 1.6 guest frames after the app calls its sound start (the DSP needs a moment to begin mixing, and
-    # the measured steady rate is 59.83 frames per second), so the count is short by that start lag and never longer.
+    assert len(left) == len(right) > 0                        # one sample per channel per stereo frame
+    # The bound is measured, wider than the plan's one-frame gate: 3 guest frames short and 1 over. The sound starts
+    # about 1.6 guest frames after the app calls its sound start (the DSP needs a moment to begin mixing), and the
+    # steady rate is 59.83 guest frames per second, so the count is short by that start lag and at most one frame long.
     one_frame = rate / GUEST_FPS
     expected = FRAMES * one_frame
     assert expected - 3 * one_frame <= len(left) <= expected + one_frame
-    peak = max(abs(v) for v in left)
-    assert 8000 < peak < 16000
+    # the app plays 440 Hz at amplitude 12000 on the left and 660 Hz at 6000 on the right: a swapped or duplicated
+    # channel fails the pitch and the peak of either side
+    peak_l, peak_r = max(abs(v) for v in left), max(abs(v) for v in right)
+    assert 8000 < peak_l < 16000
+    assert 4000 < peak_r < 8000
     assert abs(_frequency(left, rate) - 440.0) <= 0.02 * 440.0
+    assert abs(_frequency(right, rate) - 660.0) <= 0.02 * 660.0
     assert plain.audio is None and plain.audio_rate == 0
 
 
@@ -84,7 +88,7 @@ def test_no_component_file_gives_silence(tone_app, workdir):
     finally:
         emu.close()
     left, right = _rows(res.audio)
-    assert not any(left) and not any(right)
+    assert len(left) == 0 and len(right) == 0                 # no component file: the sound never starts, no samples
     assert log
     for line in log:
         fields = dict(tok.split("=", 1) for tok in line.split())

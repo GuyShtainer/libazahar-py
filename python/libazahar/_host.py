@@ -26,7 +26,6 @@ _PROTOTYPES = {
     "azh_set_input": (_C.c_int, [_C.POINTER(_C.c_int32)]),
     "azh_audio_capture": (_C.c_int, [_C.c_char_p]),
     "azh_audio_info": (_C.c_int, [_C.POINTER(_C.c_int64), _C.POINTER(_C.c_int32)]),
-    "azh_movie_play": (_C.c_int, [_C.c_char_p]),
     "azh_stats": (_C.c_int, [_C.POINTER(_abi.Stats)]),
     "azh_abi_layout": (_C.c_int, [_C.POINTER(_abi.Layout)]),
     "azh_error": (_C.c_char_p, []),
@@ -40,8 +39,8 @@ def load(path: Path) -> Tuple[ctypes.CDLL, _abi.Layout]:
         try:
             fn = getattr(lib, name)
         except AttributeError:
-            raise HostError(f"host {path} lacks {name}: an older libazhost (the audio and movie calls need ABI 5)") \
-                from None
+            raise HostError(f"host {path} lacks {name}: an older libazhost (this Python needs ABI "
+                            f"{_abi.AZH_ABI_VERSION}); rebuild with make") from None
         fn.restype = restype
         fn.argtypes = argtypes
     layout = _abi.Layout()

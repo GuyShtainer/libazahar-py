@@ -16,6 +16,12 @@ static int64_t vblanks_total;           /* input_poll_cb calls since boot */
 static pthread_t run_thread;            /* the thread inside retro_run, for the callbacks' assert */
 static int run_active;
 
+/* 1 when no batch is running, or when the caller is the thread inside retro_run: the audio callbacks assert it */
+int azh__in_run_thread(void)
+{
+    return run_active == 0 || pthread_equal(pthread_self(), run_thread) ? 1 : 0;
+}
+
 static int16_t input_state_cb(unsigned port, unsigned device, unsigned index, unsigned id)
 {
     assert(run_active == 0 || pthread_equal(pthread_self(), run_thread));

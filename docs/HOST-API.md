@@ -22,7 +22,7 @@ these against its own view at load time, as `python/libazahar/_abi.py` does, and
 
 ## Call order
 
-`azh_open`, then `azh_set_option` (as many as you need) and optionally `azh_movie_play`, then `azh_boot`, then any of `azh_run`, `azh_shot`,
+`azh_open`, then `azh_set_option` (as many as you need), then `azh_boot`, then any of `azh_run`, `azh_shot`,
 `azh_stats`, `azh_read`, `azh_write`, `azh_threads`, `azh_set_input`, `azh_audio_capture`, `azh_audio_info`, `azh_save_state`, `azh_load_state`, then `azh_close`.
 `azh_error` and `azh_abi_layout` work at any time. One `azh_open` per process: the core and MoltenVK stay mapped after
 `azh_close`, so a second open is refused (`AZH_E_ORDER`). The Python layer runs each Emulator in its own worker process
@@ -47,10 +47,9 @@ error.
 | `azh_set_input` | sets the held input now | `host/azhost.h` line 103 |
 | `azh_audio_capture` | (ABI 5) writes the core's audio to a file as raw interleaved 16-bit stereo; off by default; NULL stops it | `host/azhost.h` line 104 |
 | `azh_audio_info` | (ABI 5) stereo frames written so far and the core's sample rate | `host/azhost.h` line 107 |
-| `azh_movie_play` | (ABI 5, our core, before boot) plays a `.ctm` movie from boot | `host/azhost.h` line 110 |
-| `azh_stats` | frames, wall and CPU time, peak memory, the core's name and version, whether it is our core | `host/azhost.h` line 112 |
-| `azh_abi_layout` | fills the layout record | `host/azhost.h` line 113 |
-| `azh_error` | the last error text | `host/azhost.h` line 114 |
+| `azh_stats` | frames, wall and CPU time, peak memory, the core's name and version, whether it is our core | `host/azhost.h` line 110 |
+| `azh_abi_layout` | fills the layout record | `host/azhost.h` line 111 |
+| `azh_error` | the last error text | `host/azhost.h` line 112 |
 
 ## Errors
 

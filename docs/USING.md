@@ -68,7 +68,7 @@ guest exits on counts. `RunResult.wall_s` is the batch's wall time; `azhost run`
 max).
 
 `run` takes the number of frames as its only positional argument; every other option (`inputs`, `shots`, `stop_file`,
-`stop_text`, `stop_every`, `stop_new`, `debug_text`, `wall_limit`, `timeout`, `watch`, `watch_every`) is keyword-only.
+`stop_text`, `stop_every`, `stop_new`, `debug_text`, `wall_limit`, `timeout`, `watch`, `watch_every`, `audio`) is keyword-only.
 `run_until(file, text, max_frames, ...)` takes the same options under the same names. `frames` and every entry of
 `shots`, and `stop_every`, must be whole numbers (a numpy integer is fine; `1.5`, `True` and strings raise
 `ArgumentError`). `wall_limit`, `timeout` and `boot_timeout` must be numbers (not a bool or NaN), else `ArgumentError`.
@@ -120,11 +120,11 @@ on Windows, for A, for ZL and ZR (the other service) and for a touch lift and re
 the log shows two presses each time, so one frame is enough. Write the release and the second press as two items, for
 example `(f, Buttons.A), (f + 6, Buttons(0)), (f + 7, Buttons.A)`. Two items for one button on the same frame fold into
 one, so a press-release-press needs separate frames. Inputs are applied by the host at frame boundaries, so a change lands a frame or two after the frame you name (the
-offsets above). A movie that fixes the input at every poll of the guest, from boot, is not available from Python: the
+offsets above). A movie that fixes the input at every poll of the guest, from boot, is not available: the
 Azahar movie format stores the pad, touch and extra-pad (ZL, ZR, C-stick) records in one stream, and the order of the
-extra-pad records depends on when the app starts that service, which a caller cannot know. Our core exports the movie
-call and the host can pass it a file (`azh_movie_play`, `docs/HOST-API.md`), but a correct movie needs a change to the core
-first; there is no `exact_inputs` option.
+extra-pad records depends on when the app starts that service, which a caller cannot know. Our core exports a movie
+call, but the host does not use it and a correct movie needs a change to the core first; there is no `exact_inputs`
+option.
 
 ## 4a. The input script (`azhost --inputs FILE`)
 
@@ -270,7 +270,7 @@ reset so the next run starts clean.
 Stock: SD text stops, guest errors, savestates (the same log fields after a state restore, gated on the test app).
 Repeats are exact only on our core, where the repeat gates run (PLAN 2.4); on the stock core they record the
 difference only. Our patched core adds debug text, memory reads and the watch list (section 12a). It also exports a
-movie call; the host can pass it a file, Python does not (section 4). Calls that need our core raise `NeedsLazpyCore`. The table of
+movie call; neither the host nor Python uses it (section 4). Calls that need our core raise `NeedsLazpyCore`. The table of
 both cores is in section 16.
 
 ## 12a. Guest memory (our core only)
@@ -302,17 +302,24 @@ Thumb bit. On the stock core and on a lazpy.1 core it raises `NeedsLazpyCore`.
 `run(frames, audio=True)` keeps the audio the app made during that batch: `result.audio` is int16 stereo (a numpy array of
 shape `(n, 2)` when numpy is installed, else an `array.array('h')` of interleaved left, right values) and
 `result.audio_rate` is the core's sample rate in Hz. Without `audio=True` nothing is captured, `result.audio` is `None`
-and `audio_rate` is 0. `run_until` takes the same argument. After a guest exit the audio is empty. The audio is not part of
+and `audio_rate` is 0. `run_until` takes the same argument. After a guest exit the audio may be empty with `audio_rate`
+0 (always on the stock core). The audio is not part of
 `RunResult` equality and is left out of its `repr`.
 
 What to expect: the batch holds whatever the guest's sound library produced while those frames ran, about the rate times
-the batch's time in seconds, so a short first batch can hold nothing: sound usually starts some frames after boot. The
-capture goes through a file in the instance folder (`audio.raw`), which is removed when the batch returns; a 10 minute
-batch is about 80 MB on disk while it runs.
+the batch's time in seconds. The core emits no samples until the app's sound starts, so a first batch that ends before
+then holds nothing (`len(result.audio) == 0`). On the tone test app the sound starts about 1.6 guest frames after the app
+asks for it, so the count of a long batch is up to 3 guest frames short of `frames` times the rate over 59.83, and at
+most 1 frame long; that measured window is what `test_audio_live.py` checks. The samples are interleaved left, right.
+The capture goes through a file in the instance folder (`audio.raw`), which is removed when the batch returns or fails;
+a 10 minute batch is about 80 MB on disk while it runs, and the same again in memory (with numpy the file is read
+straight into the array, so no second copy is made).
 
-The app's audio library looks for a component file on the SD card and fails to start without it.
-The tests seed a made-up one (`tests/python/dsp_component.py`), which Azahar's high-level DSP ignores apart from logging
-its hash. The tone test app is `testapp-tone/` (`make testapp-tone`); `tests/python/test_audio_live.py` runs it.
+The app's audio library looks for a component file on the SD card; the tests seed a made-up one
+(`tests/python/dsp_component.py`), which Azahar's high-level DSP ignores apart from logging its hash.
+`test_no_component_file_gives_silence` shows what happens without it. The tone test app is `testapp-tone/`
+(`make testapp-tone`); it plays 440 Hz on the left and 660 Hz at half the level on the right, and
+`tests/python/test_audio_live.py` runs it.
 
 ## 12. The Gen3D mapping
 
@@ -324,7 +331,7 @@ Rows 1-17 of docs/research/gen3d-harness-needs.md:
 | 2 SD staging | `sd_seed` |
 | 3 locks, focus, bundle clones | dropped (plain processes, own folders) |
 | 4 curtain window | dropped (no pacing) |
-| 5 CTM movies | `inputs` (poll-exact: our core exports it; the host and Python do not call it) |
+| 5 CTM movies | `inputs` (poll-exact: our core exports it; the host and Python do not use it) |
 | 6, 7 SD control channel, netlogs | `emu.sd` files and `run_until` |
 | 8 `voxel.log` flip lines | `emu.sd` file and `run_until` |
 | 9 window screenshots | `shots` / `screens()` (400x240 top, 320x240 bottom) |
@@ -487,7 +494,7 @@ Windows 10, an NVIDIA GPU. Windows 11 and AMD and Intel GPUs are untested.
 | Debug-text stop (`debug_text=`) | yes | `NeedsLazpyCore` |
 | Thread registers (`emu.threads()`) | lazpy.2 only (lazpy.1: `NeedsLazpyCore`) | `NeedsLazpyCore` |
 | Exact repeats | yes (gated) | no: recorded as a difference only |
-| Poll-exact movies | our core exports it; the host can pass it a file, Python does not | no |
+| Poll-exact movies | our core exports it; the host and Python do not use it | no |
 | Option profile | `core/options-lazpy.txt` first (section 14) | the default profile only |
 
 States move between the two cores both ways in the gate, but a state may not load across core versions.
@@ -594,6 +601,9 @@ One line per name in `libazahar.__all__`. Units: seconds in Python, frames are g
 
 Evidence on failure and parent death:
 - `.workdir`, `.log_path` on `BootError`, `GuestError`, `HostTimeout`, `HostCrashed`, `StateError`, `HostError` and `GuestMemoryError` once the worker has started: the instance's folder and its `host.log`, both `None` on any other error (`SlotTimeout` too) and on errors raised before the worker exists; the error text names `host.log` and the newest shot (its top and bottom PNG) under `shots/`, read when the text is first asked for (section 8).
+
+Audio (section 12b):
+- `run(frames, *, ..., audio=False)` and `run_until(file, text, max_frames, *, ..., audio=False)`: with `audio=True` the batch's audio is kept in `RunResult.audio` and `RunResult.audio_rate`. Both are keyword-only argument and field names new in of 1.2.0; the host's `azh_audio_capture` and `azh_audio_info` are in `docs/HOST-API.md`.
 
 Command line (section 2a):
 - `python -m libazahar doctor` and `python -m libazahar run APP --frames N [--inputs FILE] [--shot F ...] [--state P] [--save P] [--json] [--workdir DIR] [--sd-seed DIR] [--timeout S]`. Both take `--help`. The module `libazahar._cli` is private; the commands, their flags, the `--json` keys (`ok`, `exit_code`, `workdir`, `result`, `saved`, `error`) and the exit codes of section 3 are the promise.
