@@ -1,7 +1,7 @@
 <!-- handoff: slim v1 | current tasks only | rewritten whole from docs/status/templates/handoff.md | budget 80 lines | never append -->
 # libazahar-py handoff
 
-As of: 2026-11-19 02:51 (session 3ds-toolkit-eb)
+As of: 2026-11-19 07:14 (session 3ds-toolkit-eb)
 
 This file lives in docs/status/lazpy/1-in-progress/, beside its item files. It holds only what
 the next session needs to act now, and points at the rest. Goals, rules, decisions and history live elsewhere.
@@ -9,6 +9,7 @@ the next session needs to act now, and points at the rest. Goals, rules, decisio
 ## Running now
 | What | Where | Agent id | It stops when |
 |---|---|---|---|
+| laz-830: the macOS live tests on the pushed main | GitHub CI | run 44462572191 | the run ends (best effort; read the pytest step) |
 
 Phase 8 is under way: Guy, 2026-11-18 ~21:00, "you have my green light. go". He did not answer Q1-Q5, so the
 plan's recommended answers apply (laz-810 notes). Phase A is done: runs/p8/a/decisions.md. All lane PC jobs go
@@ -20,8 +21,13 @@ through runs/p8/bin/pclane under one shared PC lock (one job of ours at a time s
 2. Phase C (laz-830): C1 command line and C2 audio done (laz-831, 832; the full PC gate 02:50 after the review fixes).
    C3 exact inputs parked (laz-833) for the next core phase with the leak fix. Next: C6, release v1.2.0, by the list
    under the plan's phase C table (docs/plans/phase-8.md). Step 1 drafts (version 1.2.0, README, STATUS) are on main.
-   CI (test-windows.yml, test.yml, macos-live.yml) and C6a's core-win64.yml need a push: asked of Guy. The release
-   audit must also read commit 44ad3c5's text (review finding 2).
+   Main pushed 07:03 (Guy's yes). CI round 1: test-windows and test (macOS) red on two guards only: the skip
+   lists lacked phase 8's new Windows skips, and the macOS Makefile guard did not allow host/audio.c. Both fixed
+   locally and proven on the PC (fast tier + skips_check; the w7 rules on the real junit). C6a's prefix fix is
+   written (tools/build-core-win64.sh: the three OpenSSL folders on the make line, the build fails if any is not
+   under C:/Program Files/; mkrelease's zip SOURCE.md names the snapshot). The next push asks Guy first (red rule),
+   then test-windows, test and core-win64 (C6a's one round); then fetch.sh's new Windows pin and the docs.
+   The release audit must also read commit 44ad3c5's text (review finding 2).
 3. Not run anywhere yet: make check (clang analyze) on the new C; CI's macOS job runs it after a push.
    docs_check's links check fails on the PC lane only (no .git there); it runs on the Mac.
 

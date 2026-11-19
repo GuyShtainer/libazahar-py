@@ -13,6 +13,14 @@ test_threads_live.py::test_k_threads => ^no build/testapp.elf
 # by design on Windows (the twin test runs in its place)
 test_slots.py::test_s5_load_warning => ^no load average on Windows
 test_lazpy_profile.py::test_worker_nice_floor => ^no nice values on Windows
+test_cli.py::test_holder_pid_survives_a_slow_or_broken_lsof => ^no lsof on Windows
+test_handles_live.py::test_descriptors_flat_over_loads => ^the Windows variant is the one above
+
+# the run is over SSH or a service, not a logged-in desktop: the foreground window means nothing
+test_windows_windows.py::test_focus_is_not_taken => ^not an interactive desktop session
+
+# strict xfail (junit writes it as a skip): the core's Semaphore leak per state load, item 829, fixed in a later core phase
+test_handles_live.py::test_handles_flat_over_loads_windows => ^item 829: the core leaves
 
 # the batch ended inside the timeout on a fast machine
 test_api.py::test_long_batch_outlives_a_short_timeout => not longer than the timeout

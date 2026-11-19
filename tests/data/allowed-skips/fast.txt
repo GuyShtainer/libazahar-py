@@ -10,4 +10,5 @@ test_slots.py::test_s5_load_warning => ^no load average on Windows
 test_slots.py::test_s5_windows_has_no_load_warning => ^Windows twin of test_s5
 test_client.py::test_windows_worker_runs_below_normal => ^the Windows priority class
 test_lazpy_profile.py::test_worker_nice_floor => ^no nice values on Windows
+test_cli.py::test_holder_pid_survives_a_slow_or_broken_lsof => ^no lsof on Windows
 test_windows_cli.py::* => ^Windows only

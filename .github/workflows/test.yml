@@ -25,7 +25,7 @@ jobs:
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0  # v7.1.0
         with:
           python-version: ${{ matrix.python }}
-      - name: Makefile commands match v1.0.0 (make -B -n, before any build)
+      - name: Makefile commands match v1.0.0 apart from the audio file (make -B -n, before any build)
         run: |
           set -eu
           root="$RUNNER_TEMP/mk"
@@ -38,11 +38,15 @@ jobs:
             ( cd "$root/$t/src" && make -B -n HOST_OS=Darwin all test-host test-version check ) > "$root/$t.raw"
             sed "s|$root/$t/src|<root>|g" "$root/$t.raw" > "$root/$t.txt"
           done
-          # the one allowed difference is the check-obinary line the owner asked for
-          diff "$root/a.txt" "$root/b.txt" > "$root/ab.diff" || true
+          # the allowed differences: the check-obinary line the owner asked for, and v1.2.0's audio capture file
+          # (host/audio.c: its compile line and its mkdir, and its object on the library's link line, taken out here)
+          sed 's| build/obj/audio\.o||' "$root/b.txt" > "$root/b2.txt"
+          diff "$root/a.txt" "$root/b2.txt" > "$root/ab.diff" || true
           cat "$root/ab.diff"
           grep '^[<>]' "$root/ab.diff" > "$root/ab.lines" || true
-          printf '> tools/check-obinary.sh\n' > "$root/want.lines"
+          printf '%s\n' \
+            '> clang -std=c11 -O2 -g -Wall -Wextra -Werror -Wshadow -Wstrict-prototypes -Wmissing-prototypes -isystem vendor -isystem vendor/include -Ihost -c -o build/obj/audio.o host/audio.c' \
+            '> mkdir -p build/obj' '> tools/check-obinary.sh' > "$root/want.lines"
           diff "$root/ab.lines" "$root/want.lines"
       - name: headers (libretro and Vulkan, pinned by sha256)
         run: sh tools/fetch.sh --headers

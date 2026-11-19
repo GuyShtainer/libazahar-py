@@ -95,6 +95,12 @@ OSSL_TAR="$ROOT/dl/openssl-src/openssl-$SSL_VER.tar.gz"
 OSSL_URL="https://github.com/GuyShtainer/libazahar-py/releases/download/v1.0.0/openssl-$SSL_VER.tar.gz"
 OPENSSLDIR_ARG="C:/Program Files/Common Files/SSL"
 CONFIGURE_LINE="CC=gcc-posix ./Configure mingw64 no-shared no-tests no-ssl3 no-ssl3-method no-zlib --cross-compile-prefix=x86_64-w64-mingw32- --prefix=$SSL_PIN --openssldir=\"$OPENSSLDIR_ARG\" --libdir=lib"
+# Configure runs on Linux and joins the prefix to a "C:/" path (not absolute there), and ENGINESDIR and MODULESDIR come
+# from the Linux prefix: on Windows both would be C:\opt\..., which a plain user can create (CVE-2019-1552 class). So
+# the three compiled-in folders are set on the make line, to OpenSSL's own Windows defaults (admin-only folders).
+ENGINESDIR_ARG="C:/Program Files/OpenSSL/lib/engines-3"
+MODULESDIR_ARG="C:/Program Files/OpenSSL/lib/ossl-modules"
+MAKE_DIRS_LINE="make build_libs OPENSSLDIR=\"$OPENSSLDIR_ARG\" ENGINESDIR=\"$ENGINESDIR_ARG\" MODULESDIR=\"$MODULESDIR_ARG\""
 mkdir -p "$(dirname "$OSSL_TAR")"
 if [ ! -f "$OSSL_TAR" ]; then
   say "fetch $OSSL_URL"
@@ -102,7 +108,7 @@ if [ ! -f "$OSSL_TAR" ]; then
   mv "$OSSL_TAR.part" "$OSSL_TAR"
 fi
 [ "$(sha_of "$OSSL_TAR")" = "$OSSL_SHA" ] || die "SHA256 MISMATCH for $OSSL_TAR (core/OPENSSL.md says $OSSL_SHA); file kept"
-OSSL_STAMP="$SSL_PIN/.lazpy-built-$(printf '%s\n%s\n' "$OSSL_SHA" "$CONFIGURE_LINE" | sha_of /dev/stdin)"
+OSSL_STAMP="$SSL_PIN/.lazpy-built-$(printf '%s\n%s\n%s\n' "$OSSL_SHA" "$CONFIGURE_LINE" "$MAKE_DIRS_LINE" | sha_of /dev/stdin)"
 if [ ! -f "$OSSL_STAMP" ]; then
   say "build OpenSSL $SSL_VER (mingw64, static) into $SSL_PIN"
   OSSL_WORK="$ROOT/build-core/ossl"
@@ -114,7 +120,7 @@ if [ ! -f "$OSSL_STAMP" ]; then
     # CC gets the cross prefix prepended by Configure, so it names the posix-threads gcc without it
     CC=gcc-posix ./Configure mingw64 no-shared no-tests no-ssl3 no-ssl3-method no-zlib \
       --cross-compile-prefix=x86_64-w64-mingw32- --prefix="$SSL_PIN" --openssldir="$OPENSSLDIR_ARG" --libdir=lib
-    make -j"${LAZ_CORE_JOBS:-4}" build_libs
+    make -j"${LAZ_CORE_JOBS:-4}" build_libs OPENSSLDIR="$OPENSSLDIR_ARG" ENGINESDIR="$ENGINESDIR_ARG" MODULESDIR="$MODULESDIR_ARG"
     make install_dev
   ) >build-core/openssl-build.log 2>&1 || { tail -n 30 build-core/openssl-build.log; die "the OpenSSL build failed"; }
   rm -rf "$OSSL_WORK"
@@ -224,6 +230,7 @@ CLEAN=no
   echo "openssl_libcrypto_sha256=$(sha "$SSL_ROOT/lib/libcrypto.a")"
   echo "openssl_src_sha256=$OSSL_SHA"
   echo "openssl_configure=$CONFIGURE_LINE"
+  echo "openssl_make_dirs=$MAKE_DIRS_LINE"
   echo "target=win64 def=$(sha build-core/libretro.win.def)"
   echo "head=$HEAD_SHA"
   echo "image=$IMAGE"
@@ -267,6 +274,10 @@ dll_ossl() { strings -a "$DLL" | sed -n "s/^$1: //p" | head -n 1; }
   for K in OPENSSLDIR ENGINESDIR MODULESDIR; do
     V="$(dll_ossl $K)"
     echo "openssl_$(echo "$K" | tr 'A-Z' 'a-z')=${V:-absent}"
+    case "$V" in
+      '"C:/Program Files/'*) ;;    # the DLL quotes it: OPENSSLDIR: "C:/..."
+      *) die "the DLL's $K is '${V:-absent}', not under C:/Program Files/ (the prefix fix did not take)" ;;
+    esac
   done
   for P in gcc-mingw-w64-base gcc-mingw-w64-x86-64-posix g++-mingw-w64-x86-64-posix gcc-mingw-w64-x86-64-posix-runtime \
     binutils-mingw-w64-x86-64 mingw-w64-x86-64-dev; do
