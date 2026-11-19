@@ -38,7 +38,8 @@ def load() -> str:
 
 def hold_real_then_private(monkeypatch, repo_root, private_cap: int):
     """Rule 1: hold the real machine-wide slots (real folder, default cap) while the gate runs; rule 2: then a
-    private folder with cap 3 for the Emulators under test. Order matters: the real ones are taken first.
+    private folder with cap ``private_cap`` (3 in the callers) for the Emulators under
+    test. Order matters: the real ones are taken first.
 
     The gate holds every real slot (cap(), 2 by default) and runs 3 workers, one over the cap, on purpose. Never run
     it under tools/hold_slot.py: an outer slot plus the fixture's would exceed the cap and wait 1800 s."""
@@ -63,7 +64,7 @@ def hold_real_then_private(monkeypatch, repo_root, private_cap: int):
 
 @pytest.fixture
 def gate_slots(monkeypatch, repo_root):
-    """The private folder with cap 3 (see hold_real_then_private)."""
+    """The private folder with the private cap (see hold_real_then_private)."""
     yield from hold_real_then_private(monkeypatch, repo_root, 3)
 
 
@@ -94,7 +95,7 @@ def slot_txt(workdir: Path) -> dict:
 
 
 def test_g1_g2_g4_cap_kill_and_nice(host_paths, workdir, seed, gate_slots):
-    """g1: three boot, a fourth waits; g2: a kill frees its slot within 1 s; g4: every worker's nice is 10 or more."""
+    """g1: three boot, a past_cap waits; g2: a kill frees its slot within 1 s; g4: every worker's nice is 10 or more."""
     check_cap_kill_and_nice(host_paths, workdir, seed, 3)
 
 
@@ -108,14 +109,14 @@ def check_cap_kill_and_nice(host_paths, workdir, seed, cap: int) -> None:
     """Boot ``cap`` copies, check a job beyond the cap waits (g1), a kill frees its slot in time (g2) and the nice (g4)."""
     info(f"start: {load()}")
     emus = []
-    fourth = {}
+    past_cap = {}
 
-    def boot_fourth():
+    def boot_past_cap():
         try:
-            fourth["emu"] = Emulator(host_paths.app, workdir / "waiter", sd_seed=seed(ready_at=400))
-            fourth["result"] = fourth["emu"].run(RUN_FRAMES)
+            past_cap["emu"] = Emulator(host_paths.app, workdir / "waiter", sd_seed=seed(ready_at=400))
+            past_cap["result"] = past_cap["emu"].run(RUN_FRAMES)
         except BaseException as error:  # noqa: BLE001  (stored, then asserted on in the main thread)
-            fourth["error"] = error
+            past_cap["error"] = error
 
     try:
         for k in range(cap):
@@ -125,11 +126,11 @@ def check_cap_kill_and_nice(host_paths, workdir, seed, cap: int) -> None:
         niceness = [worker_nice(emu.pid) for emu in emus]
         info(f"g4: worker nice values {niceness}")
         assert all(value >= 10 for value in niceness)
-        thread = threading.Thread(target=boot_fourth)
+        thread = threading.Thread(target=boot_past_cap)
         thread.start()
         time.sleep(STARTS_WAIT_S)
         waiting = workdir / "waiter"
-        assert thread.is_alive(), f"the 4th should wait for a slot: {fourth}"
+        assert thread.is_alive(), f"the 4th should wait for a slot: {past_cap}"
         assert not (waiting / "slot.txt").exists() and not (waiting / "host.map").exists()
         victim = 1 if cap > 1 else 0
         killed = slot_txt(workdir / f"i{victim}")["slot"]
@@ -137,14 +138,14 @@ def check_cap_kill_and_nice(host_paths, workdir, seed, cap: int) -> None:
         hard_kill(emus[victim].pid)
         thread.join(timeout=emus[0].boot_timeout + RUN_FRAMES)
         assert not thread.is_alive(), "the 4th never finished"
-        assert "error" not in fourth, fourth.get("error")
+        assert "error" not in past_cap, past_cap.get("error")
         acquired = float(slot_txt(waiting)["acquired"])
         info(f"g2: kill to acquire {acquired - t_kill:.3f} s; slot {slot_txt(waiting)['slot']} (killed one: {killed})")
         assert 0 <= acquired - t_kill < KILL_TO_ACQUIRE_S
         assert slot_txt(waiting)["slot"] == killed
-        assert fourth["result"].frames == RUN_FRAMES
+        assert past_cap["result"].frames == RUN_FRAMES
     finally:
-        for emu in [*emus, fourth.get("emu")]:
+        for emu in [*emus, past_cap.get("emu")]:
             if emu is not None:
                 emu.close()
 

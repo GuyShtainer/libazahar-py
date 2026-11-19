@@ -1,4 +1,4 @@
-"""B6 (docs/plans/phase-8.md): during a live run on Windows, no top-level window belongs to the worker.
+"""B6 (docs/plans/phase-8.md): during a live run on Windows, no top-level window belongs to the worker or azhost.exe.
 
 Every top-level window of the desktop is listed, hidden ones included. A positive control makes a hidden window of the
 test's own first and requires the list to hold it, so the check cannot pass on an empty list.
@@ -8,7 +8,11 @@ Run: LAZ_REQUIRE_EMULATOR=1 python3 -m pytest -q -rs tests/python/test_windows_w
 from __future__ import annotations
 
 import os
+import subprocess
 import sys
+import threading
+import time
+from pathlib import Path
 from typing import Dict, Iterator, List, Set
 
 import pytest
@@ -19,6 +23,9 @@ pytestmark = [pytest.mark.slow,
               pytest.mark.skipif(sys.platform != "win32", reason="Windows only: top-level windows are a Windows idea")]
 
 RUN_FRAMES = 60
+LONG_RUN_FRAMES = 600
+AZHOST_FRAMES = 300
+REPO = Path(__file__).resolve().parents[2]
 TH32CS_SNAPPROCESS = 2
 WS_POPUP = 0x80000000
 UOI_NAME = 2
@@ -88,10 +95,10 @@ def process_table() -> Dict[int, tuple]:
     return table
 
 
-def worker_pids(worker: int) -> Set[int]:
-    """The worker, its descendants, and every azhost.exe that is a child of this test process."""
+def family_of(root: int) -> Set[int]:
+    """``root`` and all its descendants, from one process snapshot."""
     table = process_table()
-    family = {worker}
+    family = {root}
     grew = True
     while grew:
         grew = False
@@ -99,8 +106,47 @@ def worker_pids(worker: int) -> Set[int]:
             if parent in family and pid not in family:
                 family.add(pid)
                 grew = True
-    family |= {pid for pid, (parent, exe) in table.items() if exe.lower() == "azhost.exe" and parent == os.getpid()}
     return family
+
+
+class WindowWatch:
+    """A thread that lists every top-level window over and over while a long call runs in the test's main thread."""
+
+    def __init__(self, hwnd: int, root: int) -> None:
+        self.hwnd, self.root = hwnd, root
+        self.lists = 0
+        self.control_missing = 0
+        self.theirs: List[Dict[str, int]] = []
+        self.error: List[BaseException] = []
+        self._stop = threading.Event()
+        self._thread = threading.Thread(target=self._loop, daemon=True)
+
+    def _loop(self) -> None:
+        try:
+            while not self._stop.is_set():
+                owners = family_of(self.root)
+                windows = top_level_windows()
+                self.lists += 1
+                if self.hwnd not in {w["hwnd"] for w in windows}:
+                    self.control_missing += 1
+                self.theirs += [w for w in windows if w["pid"] in owners]
+                self._stop.wait(0.05)
+        except BaseException as error:  # reported by check(), never lost in the thread
+            self.error.append(error)
+
+    def __enter__(self) -> "WindowWatch":
+        self._thread.start()
+        return self
+
+    def __exit__(self, *exc: object) -> None:
+        self._stop.set()
+        self._thread.join(10)
+
+    def check(self, what: str) -> None:
+        assert not self.error, f"the window watch failed: {self.error[0]!r}"
+        assert self.lists >= 3, f"{what}: the window list ran only {self.lists} times"
+        assert self.control_missing == 0, f"{what}: the positive control was missing from {self.control_missing} lists"
+        assert not self.theirs, f"{what}: windows owned by it: {self.theirs[:5]}"
 
 
 class HiddenWindow:
@@ -142,18 +188,41 @@ def test_positive_control_is_found():
 
 
 def test_no_window_belongs_to_the_worker(host_paths, workdir, seed):
-    """During a live run (before, mid-run and after a batch) no top-level window, hidden or not, is the worker's."""
+    """Before a batch, during one long batch (listed from a thread) and after it, no top-level window, hidden or not,
+    is the worker's or its descendants'."""
     with HiddenWindow() as hidden, dh.boot(host_paths, workdir, seed(ready_at=0)) as emu:
         emu.run(RUN_FRAMES)
-        owners = worker_pids(emu.pid)
-        assert emu.pid in owners
         assert emu.pid in process_table(), "the worker is not a running process"
-        for _ in range(2):
-            windows = top_level_windows()
-            assert int(hidden.hwnd) in {w["hwnd"] for w in windows}, "the positive control was not listed"
-            theirs = [w for w in windows if w["pid"] in owners]
-            assert not theirs, f"windows owned by the worker {sorted(owners)}: {theirs}"
-            emu.run(RUN_FRAMES)
+        owners = family_of(emu.pid)
+        assert emu.pid in owners
+        with WindowWatch(int(hidden.hwnd), emu.pid) as watch:
+            emu.run(LONG_RUN_FRAMES)
+        watch.check("worker, during a batch")
+        windows = top_level_windows()
+        assert int(hidden.hwnd) in {w["hwnd"] for w in windows}, "the positive control was not listed"
+        assert not [w for w in windows if w["pid"] in owners]
+
+
+def test_no_window_belongs_to_azhost(host_paths, tmp_path):
+    """The real azhost.exe runs the test app for a short time; neither it nor its children own a window."""
+    exe = REPO / "build" / "azhost.exe"
+    if not exe.is_file():
+        pytest.skip("needs_core: build/azhost.exe is missing (run make)")
+    cmd = [str(exe), "run", str(host_paths.app), "--core", str(host_paths.core), "--sys", str(tmp_path / "sys"),
+           "--out", str(tmp_path / "out"), "--frames", str(AZHOST_FRAMES)]
+    with HiddenWindow() as hidden:
+        proc = subprocess.Popen(cmd, cwd=REPO, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        try:
+            with WindowWatch(int(hidden.hwnd), proc.pid) as watch:
+                deadline = time.monotonic() + 240
+                while proc.poll() is None and time.monotonic() < deadline:
+                    time.sleep(0.05)
+        finally:
+            if proc.poll() is None:
+                proc.kill()
+            proc.wait(30)
+    assert proc.returncode == 0, f"azhost.exe exited {proc.returncode}"
+    watch.check("azhost.exe")
 
 
 def test_focus_is_not_taken(host_paths, workdir, seed):
