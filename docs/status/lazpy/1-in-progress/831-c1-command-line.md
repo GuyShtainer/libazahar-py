@@ -27,3 +27,6 @@ Read this part only when you work on this item.
 - No console script: pyproject declares none and the plan asks for none, so `python -m libazahar` (USING 2a).
 - doctor prints `pid unknown` for held slots on Windows: the slot locks hold no PID. Real PIDs there need a sidecar file
 written by _client.py (a review question).
+- 2026-11-19 02:40, fix lane fcli merged (4038fd5): review findings 11-18; test_cli.py 40 passed, 1 skipped (no lsof on
+Windows) on the PC, live included. Left for later: the core version in `doctor` without a boot (the worker would
+report it from azh_open). The lsof PID branch has never run (the Mac runs no pytest); CI's macOS job runs it.
