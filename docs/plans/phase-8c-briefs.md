@@ -92,3 +92,29 @@ Also check:
 - the ABI bump: old states still load; an ABI 4 host is refused with a clear error;
 - the C diff, for anything that breaks the macOS build;
 - the audio and movie docs against the legal rules above.
+
+## The fixes (sonnet), after the review
+
+`docs/reviews/phase-8c-as-built.md`, findings 1-23. Two lanes, each with its own files; the phase B lane rules apply.
+Main-loop decisions:
+- Finding 1: take the movie call out now, whole: `azh_movie_play` from `host/azhost.h`, `host/libazhost.exports`,
+  `host/api.c`, `boot_game`, `_PROTOTYPES` and `_host.load`'s symbol check, the worker's `args[8]`, HOST-API and
+  USING. Delete `host/movie.c`. The core patch belongs to the next core phase after phase 8, not C6a (C6a is one CI
+  rebuild of the same patches). The code stays in commit 44ad3c5 (branch `p8-hostav`), named in item 833. ABI stays
+  5 (the audio calls).
+- Finding 2: write no size field; the file is our tag and a fixed pattern only. Rerun `test_audio_live.py` on the PC.
+- Finding 20: keep the measured bound (3 frames short, 1 over; the sound starts about 1.6 guest frames late) and say
+  so in the test's comment and USING 12b; the main loop notes it in item 832.
+
+### Lane `fav`: findings 1-10 and 19-23 (audio, host, tone app)
+Files: `host/`, `python/libazahar/{_abi,_host,_worker,emulator,results}.py`, `testapp-tone/`,
+`tests/python/{dsp_component,test_audio_live,test_memory,test_host_load}.py` (or wherever the ABI refusal test
+fits), a new fast test `tests/python/test_audio.py`, `docs/HOST-API.md`, USING 4, 11, 12b, 16 and the audio lines of
+20. For finding 4: the tone app plays different left and right channels (for example 440 Hz left, 660 Hz right) and
+the live test checks each channel's peak and the exact sample counts. Rebuild the tone app with the pinned r67.1
+(`DEVKITPRO=/c/devkitPro-r67.1`). Rebuild the host in your lane before any test. Run `make test-host`, the fast suite,
+and `test_audio_live.py`, `test_c_checks.py`, `test_live_errors.py` on the PC.
+
+### Lane `fcli`: findings 11-18 (the command line)
+Files: `python/libazahar/_cli.py`, `tests/python/test_cli.py`, USING 2a and the CLI block of 20. Run `test_cli.py`
+(fast and live) on the PC.

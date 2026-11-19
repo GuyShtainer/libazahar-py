@@ -242,3 +242,5 @@ date	bet	phase	agent_id	model	role	kind	start	end	hours	source
 2026-11-19	phase 8 C2/C3 lane hostav: audio capture, ABI 5, tone app; C3 stopped (core patch)	phase-8c	acc71522513f7ee40	sonnet	agent	build	02:12	02:25	0.22	agent usage duration
 2026-11-19	phase 8 C main loop: cli merge, hostav review and follow-up, merge, gate	phase-8c	main	opus	main	merge	02:20	02:28	0.13	session clock
 2026-11-19	phase 8 C main loop: gate read, the verdict test import fix, rerun, review dispatch	phase-8c	main	opus	main	gate	02:28	02:34	0.10	session clock
+2026-11-19	phase 8 C5 opus as-built review of phase C	phase-8c	a2c24efaeec4b7f9a	opus	agent	review	02:28	02:37	0.15	agent usage duration
+2026-11-19	phase 8 C main loop: the core-phase correction, review intake, fix briefs, two dispatches	phase-8c	main	opus	main	briefs	02:34	02:38	0.07	session clock
