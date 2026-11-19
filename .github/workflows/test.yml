@@ -56,6 +56,8 @@ jobs:
           [ "$(lipo -archs build/libazhost.dylib)" = arm64 ]
       - name: host C tests
         run: make test-host
+      - name: the release check tests itself
+        run: python3 -I tools/release_check.py --self-test
       - name: Python layer
         run: |
           python -m venv .venv
