@@ -144,8 +144,8 @@ def test_images_names_are_frozen():
     params = inspect.signature(images.compare).parameters
     for name in ("max_delta", "max_pixels"):
         assert params[name].kind is inspect.Parameter.KEYWORD_ONLY and params[name].default == 0, name
-    assert [f.name for f in dataclasses.fields(images.CompareResult)] == ["largest_delta", "pixels", "over", "within",
-                                                                           "_differs"]
+    public = [f.name for f in dataclasses.fields(images.CompareResult) if not f.name.startswith("_")]
+    assert public == ["largest_delta", "pixels", "over", "within"]           # private masks may change freely
 
 
 def test_error_evidence_names_are_frozen():
