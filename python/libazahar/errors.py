@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import signal as _signal
 from pathlib import Path
-from typing import Optional
+from typing import List, Optional
 
 from . import _abi
 
@@ -16,45 +16,63 @@ class LibAzaharError(Exception):
 
     An error raised by a live instance (BootError, GuestError, HostTimeout, HostCrashed, StateError, HostError,
     GuestMemoryError) also carries ``workdir`` and ``log_path`` (both None on the others); its text then names
-    ``host.log`` and the newest PNG under ``shots/``, if any."""
+    ``host.log`` and the newest shot under ``shots/`` (both PNGs of a top and bottom pair), if any. The shot folder
+    is read the first time the text is asked for, not when the error is made."""
 
     workdir: Optional[Path] = None
     log_path: Optional[Path] = None
     _shot_name: Optional[str] = None
+    _shot_looked: bool = False
 
     def __str__(self) -> str:
         text = super().__str__()
         if self.log_path is not None:
+            if not self._shot_looked and self.workdir is not None:
+                shots = newest_shots(self.workdir)
+                self._shot_name = ", ".join(str(p.relative_to(self.workdir)) for p in shots) if shots else None
+                self._shot_looked = True
             text += f"\n(evidence: {self.log_path}"
             text += f"; newest shot taken: {self._shot_name})" if self._shot_name else "; no shot taken)"
         return text
 
 
-EVIDENCE_TYPES: tuple = ()      # filled below, after the classes exist
-
-
 def _state(exc: LibAzaharError) -> dict:
     """The evidence fields, so a pickled error keeps them (a custom ``__reduce__`` would drop ``__dict__``)."""
-    return {k: v for k, v in exc.__dict__.items() if k in ("workdir", "log_path", "_shot_name")}
+    return {k: v for k, v in exc.__dict__.items() if k in ("workdir", "log_path", "_shot_name", "_shot_looked")}
 
 
-def newest_shot(workdir: Path) -> Optional[Path]:
-    """The newest PNG under ``<workdir>/shots/`` (by modification time, then name), or None."""
+def _shot_key(path: Path) -> tuple:
+    """(folder, the shot's prefix): ``<prefix>_top.png`` and ``<prefix>_bottom.png`` share one."""
+    stem = path.stem
+    for tail in ("_top", "_bottom"):
+        if stem.endswith(tail):
+            stem = stem[:-len(tail)]
+    return (path.parent, stem)
+
+
+def newest_shots(workdir: Path) -> List[Path]:
+    """The files of the newest shot under ``<workdir>/shots/``: the PNGs sharing one prefix (a top and a bottom file,
+    which the host writes one after the other), sorted by name; empty when there is none. The newest is the prefix with
+    the latest file time, so it does not matter which of the pair a file system stamps later."""
     try:
-        shots = [p for p in (Path(workdir) / "shots").rglob("*.png") if p.is_file()]
-        return max(shots, key=lambda p: (p.stat().st_mtime_ns, p.name)) if shots else None
+        groups: dict = {}
+        for path in (Path(workdir) / "shots").rglob("*.png"):
+            if path.is_file():
+                groups.setdefault(_shot_key(path), []).append((path.stat().st_mtime_ns, path))
+        if not groups:
+            return []
+        best = max(groups, key=lambda key: (max(t for t, _ in groups[key]), str(key[0]), key[1]))
+        return sorted(p for _, p in groups[best])
     except OSError:
-        return None
+        return []
 
 
 def attach_evidence(exc: BaseException, workdir: Path, log_path: Path) -> BaseException:
-    """Give a live-instance error its ``workdir`` and ``log_path`` and the newest shot's name. Other errors, and an
-    error already marked, pass through unchanged. Returns ``exc``."""
-    if isinstance(exc, EVIDENCE_TYPES) and exc.log_path is None:
+    """Give a live-instance error its ``workdir`` and ``log_path``. Other errors (and ``SlotTimeout``, raised before any
+    worker exists), and an error already marked, pass through unchanged. Returns ``exc``."""
+    if isinstance(exc, EVIDENCE_TYPES) and not isinstance(exc, SlotTimeout) and exc.log_path is None:
         exc.workdir = Path(workdir)
         exc.log_path = Path(log_path)
-        shot = newest_shot(workdir)
-        exc._shot_name = str(shot.relative_to(workdir)) if shot is not None else None
     return exc
 
 

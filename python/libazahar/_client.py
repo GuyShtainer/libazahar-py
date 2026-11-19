@@ -192,7 +192,12 @@ class WorkerClient:
             proc = subprocess.Popen(argv, close_fds=True, startupinfo=info, creationflags=flags,
                                     stdin=subprocess.DEVNULL, stdout=err_file, stderr=err_file, env=self._env,
                                     cwd=self.workdir)
-            _job.assign(proc)           # the kill-on-close job (one warning if it fails); the worker starts no children
+            try:
+                _job.assign(proc)       # the kill-on-close job (one warning if it fails); the worker starts no children
+            except BaseException:       # never leave a started worker that nothing tracks: it would hold its slot
+                proc.kill()
+                proc.wait()
+                raise
             return proc
         finally:
             for handle in handles:

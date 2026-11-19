@@ -56,7 +56,7 @@ def test_crash_error_names_the_log_and_the_newest_shot(host_paths, workdir):
             killer.cancel()
         error = caught.value
         assert error.workdir == emu.workdir and error.log_path == emu.workdir / "host.log"
-        assert "host.log" in str(error) and taken[0].name in str(error)
+        assert "host.log" in str(error) and any(p.name in str(error) for p in taken)    # the pair; any file system
 
 
 def test_sigstop_raises_host_timeout(host_paths, workdir):
