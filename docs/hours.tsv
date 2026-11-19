@@ -241,3 +241,4 @@ date	bet	phase	agent_id	model	role	kind	start	end	hours	source
 2026-11-19	phase 8 B main loop: second gate read, the m5 flake rerun, phase B close	phase-8b	main	opus	main	merge	02:17	02:20	0.05	session clock
 2026-11-19	phase 8 C2/C3 lane hostav: audio capture, ABI 5, tone app; C3 stopped (core patch)	phase-8c	acc71522513f7ee40	sonnet	agent	build	02:12	02:25	0.22	agent usage duration
 2026-11-19	phase 8 C main loop: cli merge, hostav review and follow-up, merge, gate	phase-8c	main	opus	main	merge	02:20	02:28	0.13	session clock
+2026-11-19	phase 8 C main loop: gate read, the verdict test import fix, rerun, review dispatch	phase-8c	main	opus	main	gate	02:28	02:34	0.10	session clock

@@ -15,7 +15,10 @@ Steps C1-C6a of the plan, then the v1.2.0 release.
 v1.2.0 published, audit shippable, post-publish clone check passes.
 
 ## Evidence
-none yet (started 2026-11-19 02:15: lanes cli and hostav; C4 dropped by phase A)
+2026-11-19 02:32: full PC gate on merged phase C (host ABI 5 and the tone app built in the lane): 409 passed, 11
+skipped, 1 xfailed (laz-829), 4 failed: test_verdict_live.py ran the example with -I, which ignores PYTHONPATH, so it
+imported the venv's installed v1.1.0 (ABI 4). Fixed (the repo's package first on sys.path); 02:34 rerun of the
+verdict, audio and CLI tests: 37 passed. C3 waits on a core patch (laz-833, into C6a). The review runs.
 
 ## Pointers
 - Plan section: `docs/plans/phase-8.md:180`

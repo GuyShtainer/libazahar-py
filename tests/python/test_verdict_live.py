@@ -13,7 +13,12 @@ pytestmark = pytest.mark.slow
 def run_example(host_paths, repo_root, **env: str) -> subprocess.CompletedProcess:
     """Run the example from the repo root with the test hooks in ``env``; the call is bounded to 3 minutes."""
     full = dict(os.environ, **env)
-    return subprocess.run([sys.executable, "-I", str(repo_root / "examples" / "verdict.py"), str(host_paths.app)],
+    # -I ignores PYTHONPATH, so put the repo's package first by hand: else an installed libazahar (an older release, its
+    # own ABI) is the one imported, and the test checks that release, not this tree.
+    script = repo_root / "examples" / "verdict.py"
+    boot = ("import runpy, sys; sys.path.insert(0, sys.argv.pop(1)); sys.argv[0] = sys.argv[1]; del sys.argv[1]; "
+            "runpy.run_path(sys.argv[0], run_name='__main__')")
+    return subprocess.run([sys.executable, "-I", "-c", boot, str(repo_root / "python"), str(script), str(host_paths.app)],
                           cwd=repo_root, env=full, capture_output=True, text=True, timeout=180, check=False)
 
 
