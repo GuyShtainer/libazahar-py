@@ -236,3 +236,4 @@ date	bet	phase	agent_id	model	role	kind	start	end	hours	source
 2026-11-19	phase 8 B8 fix lane flife: review findings 2, 6-11, 13-16, 18, 20, 21, 24, 25	phase-8b	acb8353bc38f3613a	sonnet	agent	fix	01:55	02:06	0.18	agent usage duration
 2026-11-19	phase 8 B8 fix lane fimg: review findings 1, 4, 12, 17, 19, 23-25	phase-8b	ac7dccfb948ffcf0c	sonnet	agent	fix	01:55	02:08	0.22	agent usage duration
 2026-11-19	phase 8 B main loop: review intake, fix briefs, fix merges, second gate	phase-8b	main	opus	main	merge	01:51	02:10	0.32	session clock
+2026-11-19	phase 8 C main loop: phase C briefs, items 831-833, two dispatches	phase-8c	main	opus	main	briefs	02:10	02:17	0.12	session clock

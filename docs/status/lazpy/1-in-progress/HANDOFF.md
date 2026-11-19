@@ -1,7 +1,7 @@
 <!-- handoff: slim v1 | current tasks only | rewritten whole from docs/status/templates/handoff.md | budget 80 lines | never append -->
 # libazahar-py handoff
 
-As of: 2026-11-19 01:56 (session 3ds-toolkit-eb)
+As of: 2026-11-19 02:16 (session 3ds-toolkit-eb)
 
 This file lives in docs/status/lazpy/1-in-progress/, beside its item files. It holds only what
 the next session needs to act now, and points at the rest. Goals, rules, decisions and history live elsewhere.
@@ -10,6 +10,8 @@ the next session needs to act now, and points at the rest. Goals, rules, decisio
 | What | Where | Agent id | It stops when |
 |---|---|---|---|
 | laz-820 second full PC gate, after the review fixes | PC lane gate | main (bg bo8pg3b6d) | runs/p8/b/gate2.out ends with "local rc=" |
+| laz-831 command line (doctor, run) | runs/p8/wt/cli (p8-cli) | a6db1bb0928aaba55 | its final message |
+| laz-832 + laz-833: audio capture, exact inputs (host ABI 5) | runs/p8/wt/hostav (p8-hostav) | acc71522513f7ee40 | its final message |
 
 Phase 8 is under way: Guy, 2026-11-18 ~21:00, "you have my green light. go". He did not answer Q1-Q5, so the
 plan's recommended answers apply (laz-810 notes). Phase A is done: runs/p8/a/decisions.md. All lane PC jobs go
@@ -20,8 +22,9 @@ through runs/p8/bin/pclane under one shared PC lock (one job of ours at a time s
 2. The full PC gate passed (laz-820 Evidence). The two 3-copy pool tests run in CI or on the Mac, not on the PC.
 3. The review's fixes are merged (fimg, flife, fmisc). After gate2 passes: laz-820 and 821-828 to 5-done; 829
    to 5-done too (cause found, guard in place) with the core fix carried into C6a's item (laz-830's notes).
-4. test-windows.yml on the merge needs a push: ask Guy.
-   docs_check's links check fails on the PC lane only (no .git there); it runs on the Mac. Then phase C (laz-830).
+4. Phase C (laz-830) runs: briefs docs/plans/phase-8c-briefs.md; merge both lanes, the PC gate, the opus review
+   (its brief at the end of that file), fixes. test-windows.yml and test.yml on the result need a push: ask Guy.
+   docs_check's links check fails on the PC lane only (no .git there); it runs on the Mac.
 
 ## Waiting on Guy (only what blocks a step above)
 - Pushes: each one needs his word. Local main is ahead of origin, and phase 8 commits stay local until he says so.

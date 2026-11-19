@@ -15,7 +15,7 @@ Steps C1-C6a of the plan, then the v1.2.0 release.
 v1.2.0 published, audit shippable, post-publish clone check passes.
 
 ## Evidence
-none yet
+none yet (started 2026-11-19 02:15: lanes cli and hostav; C4 dropped by phase A)
 
 ## Pointers
 - Plan section: `docs/plans/phase-8.md:180`

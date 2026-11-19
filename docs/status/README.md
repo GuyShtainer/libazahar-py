@@ -29,7 +29,11 @@ publish-ready. What to do this hour: `docs/status/lazpy/1-in-progress/HANDOFF.md
 - in-progress: `docs/status/lazpy/1-in-progress/827-b6-window-test.md`
 - in-progress: `docs/status/lazpy/1-in-progress/828-b7-pool-two.md`
 - in-progress: `docs/status/lazpy/1-in-progress/829-b9-load-handle-leak.md`
-- files: 0 in `3-waiting-on-guy/`, 2 in `4-not-started/`, 56 in `5-done/`, 0 in `6-parked/`
+- in-progress: `docs/status/lazpy/1-in-progress/830-phase-c-v1-2-0.md`
+- in-progress: `docs/status/lazpy/1-in-progress/831-c1-command-line.md`
+- in-progress: `docs/status/lazpy/1-in-progress/832-c2-audio.md`
+- in-progress: `docs/status/lazpy/1-in-progress/833-c3-exact-inputs.md`
+- files: 0 in `3-waiting-on-guy/`, 1 in `4-not-started/`, 56 in `5-done/`, 0 in `6-parked/`
 <!-- generated:end -->
 
 ## How to change a status (one step)
