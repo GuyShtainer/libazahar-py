@@ -37,23 +37,30 @@ standard library. The package declares no console script, so use `python -m liba
 `python -m libazahar doctor` prints the OS, Python, the host library (path and ABI number), the core (path), the slots
 in use and, if `build/testapp.3dsx` is present, a 60-frame boot of the test app with the core's name and version and the
 Vulkan device lines from that boot's `host.log` (`vulkan: unknown` when there was no boot or the log has none). It exits
-0 when every part works, else 1. The slot check takes each free slot for a moment to see which are held. The PIDs of the
-holders come from `lsof` where it exists and read `unknown` elsewhere, Windows included.
+0 when every part works, else 1. Without the test app the boot is skipped, the core's version is not shown, and the last
+line reads `doctor: ok (boot skipped: no test app)`. The slot check tries one slot at a time and lets go of it at once,
+so at most one is held, for a moment; an acquirer with a zero timeout can still lose that moment. The PIDs of the
+holders come from `lsof` where it exists and read `unknown` elsewhere (Windows included, and when `lsof` fails or is
+slow).
 
 `python -m libazahar run APP --frames N [--inputs FILE] [--shot F ...] [--state P] [--save P] [--json]` boots `APP`,
 runs `N` frames and prints one summary line (`frames= stop= first= last= vblanks= wall=`), the shot paths, and the
 working folder. `--inputs` reads the script of section 4a; its records are the whole held state, so each becomes the
 button mask, a touch or a lift, and the circle pad on that frame. `--shot` is a batch frame and may repeat. `--state`
-boots from a savestate and `--save` writes one after the run (not after a guest exit). `--workdir DIR`, `--sd-seed DIR`
-and `--timeout S` set the working folder (default: a new temporary one, which is kept), the SD seed and the no-progress
-limit.
+boots from a savestate and `--save` writes one after the run (not after a guest exit). `--frames` and `--shot` must be 1 or
+more, and a shot or input frame beyond `--frames` is a bad argument; all of that, and the script, is checked before the
+working folder is made or anything boots. `--workdir DIR`, `--sd-seed DIR` and `--timeout S` set the working folder
+(default: a new temporary one, which is kept), the SD seed and the no-progress limit. A default folder holds the shots
+and also the instance files (a 4.9 MB `host.map`, the SD and the shader cache), and every run without `--workdir`
+boots cold: pass `--workdir` to reuse a warm cache.
 
 `--json` prints one object. On success: `ok`, `exit_code`, `workdir`, `result` (every field of `RunResult`, with the
-paths of the shots; arrays and bytes are left out) and `saved` (or `null`). On an error: `ok` false, `exit_code`,
-`workdir` and `error` with `class`, `message`, `workdir` and `log_path` (the last two are `null` when the error has no
-instance behind it). The exit codes are those of section 3: 0, 2 (a bad argument or flag), 3 (boot failed), 10 (the guest
-exited), 11 (a guest error), 12 (timed out), 13 (the worker or host crashed or could not run). The command never
-returns 1.
+paths of the shots; arrays and bytes are left out) and `saved` (or `null`). After a guest exit: `ok` false, `exit_code`
+10, `result` and `saved` `null`, with no `error`. On an error: `ok` false, `exit_code`, `workdir` (`null` when the error
+came before the folder was made) and `error` with `class`, `message`, `workdir` and `log_path` (the last two are `null`
+when the error has no instance behind it). The exit codes are those of section 3: 0, 2 (a bad argument or flag), 3 (boot failed), 10 (the guest
+exited), 11 (a guest error), 12 (timed out), 13 (the worker or host crashed or could not run, including an
+`OSError` such as a folder that cannot be made). `run` exits 1 only for a bug (a Python traceback).
 
 ## 3. Frames
 

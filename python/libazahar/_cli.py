@@ -8,6 +8,7 @@ from __future__ import annotations
 import argparse
 import dataclasses
 import json
+import os
 import platform
 import re
 import shutil
@@ -19,9 +20,12 @@ from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 from . import __version__, _host, _paths, _slots
 from .emulator import Emulator
-from .errors import ArgumentError, BootError, GuestError, HostError, HostTimeout, LibAzaharError
+from .errors import ArgumentError, BootError, GuestError, HostTimeout, LibAzaharError
 from .inputs import Buttons, Circle, Item, Touch
 from .results import RunResult
+
+if sys.platform != "win32":
+    import fcntl
 
 __all__ = ["main", "parse_script", "to_jsonable"]
 
@@ -53,12 +57,12 @@ def parse_script(path: Path) -> List[Tuple[int, Item]]:
     One record per line, ``frame buttons touch_x touch_y touch_down circle_x circle_y``, 7 int32 fields split on spaces,
     tabs or commas; ``#`` starts a comment. A record is the whole held state, so it becomes up to three items on its
     frame: the button mask, ``Touch(x, y)`` or ``Touch.up``, and ``Circle(x, y)``. Raises ArgumentError
-    ``<file> line N: ...`` for a bad line and HostError when the file cannot be read.
+    ``<file> line N: ...`` for a bad line or a file that cannot be read.
     """
     try:
         raw = Path(path).read_bytes()
     except OSError as exc:
-        raise HostError(f"cannot read the input script {path}: {exc.strerror or exc}") from exc
+        raise ArgumentError(f"cannot read the input script {path}: {exc.strerror or exc}") from exc
     pairs: List[Tuple[int, Item]] = []
     for number, line in enumerate(raw.split(b"\n"), 1):
         where = f"{path} line {number}"
@@ -121,9 +125,18 @@ def exit_code_of(exc: BaseException) -> int:
     return EXIT_CRASHED          # HostCrashed, HostError, StateError, SlotTimeout and any other library error
 
 
-def _run_once(args: argparse.Namespace, workdir: Path) -> Tuple[RunResult, Optional[Any]]:
-    """Boot, run, save; returns the result and the SaveInfo (None unless ``--save``)."""
-    inputs = parse_script(args.inputs) if args.inputs else []
+def _check_batch(frames: int, shots: Sequence[int], inputs: Sequence[Tuple[int, Item]]) -> None:
+    """Refuse a shot or an input frame outside 1..frames before anything boots (the Emulator would, after the boot)."""
+    for shot in shots:
+        if not 1 <= shot <= frames:
+            raise ArgumentError(f"--shot {shot} is outside the batch frames 1..{frames}")
+    for frame, _ in inputs:
+        if not 1 <= frame <= frames:
+            raise ArgumentError(f"the input script has frame {frame}, outside the batch frames 1..{frames}")
+
+
+def _run_once(args: argparse.Namespace, inputs: List[Tuple[int, Item]], workdir: Path) -> Tuple[RunResult, Optional[Any]]:
+    """Boot, run, save; returns the result and the SaveInfo (None unless ``--save`` and the guest did not exit)."""
     kwargs: Dict[str, Any] = {"state": args.state, "sd_seed": args.sd_seed}
     if args.timeout is not None:
         kwargs["timeout"] = args.timeout
@@ -144,20 +157,35 @@ def _print_result(result: RunResult, saved: Optional[Any], workdir: Path) -> Non
     print(f"workdir: {workdir}")
 
 
+def _report_failure(args: argparse.Namespace, exc: BaseException, workdir: Optional[Path]) -> int:
+    """Print an error (one JSON object with ``--json``, else two lines on stderr); returns its exit code."""
+    code = exit_code_of(exc)
+    shown = None if workdir is None else str(workdir.resolve())
+    if args.json:
+        print(json.dumps({"ok": False, "exit_code": code, "workdir": shown, "error": _error_json(exc)}))
+    else:
+        print(f"{type(exc).__name__}: {exc}", file=sys.stderr)
+        if shown is not None:
+            print(f"workdir: {shown}", file=sys.stderr)
+    return code
+
+
 def command_run(args: argparse.Namespace) -> int:
-    """``run``: boot APP, run ``--frames`` frames, print one summary (or one JSON object); returns the exit code."""
-    made = args.workdir is None
-    workdir = Path(tempfile.mkdtemp(prefix="libazahar-run-")) if made else Path(args.workdir)
+    """``run``: boot APP, run ``--frames`` frames, print one summary (or one JSON object); returns the exit code.
+
+    The arguments and the script are checked before the working folder is made or anything boots. A library error or an
+    ``OSError`` (a folder that cannot be made) exits by the table; only a bug in this code exits 1.
+    """
+    workdir: Optional[Path] = None
     try:
-        result, saved = _run_once(args, workdir)
+        inputs = parse_script(args.inputs) if args.inputs else []
+        _check_batch(args.frames, args.shot, inputs)
+        workdir = Path(args.workdir) if args.workdir is not None else Path(tempfile.mkdtemp(prefix="libazahar-run-"))
+        result, saved = _run_once(args, inputs, workdir)
     except LibAzaharError as exc:
-        code = exit_code_of(exc)
-        if args.json:
-            print(json.dumps({"ok": False, "exit_code": code, "workdir": str(workdir.resolve()), "error": _error_json(exc)}))
-        else:
-            print(f"{type(exc).__name__}: {exc}", file=sys.stderr)
-            print(f"workdir: {workdir.resolve()}", file=sys.stderr)
-        return code
+        return _report_failure(args, exc, workdir)
+    except OSError as exc:
+        return _report_failure(args, exc, workdir)
     code = EXIT_GUEST_EXITED if result.stopped_by == "guest_exited" else EXIT_OK
     if args.json:
         print(json.dumps({"ok": code == EXIT_OK, "exit_code": code, "workdir": str(workdir.resolve()),
@@ -178,34 +206,58 @@ def vulkan_lines(log: Path) -> List[str]:
             and "ready" not in line]
 
 
-def slot_report() -> Tuple[str, bool]:
-    """The slots: how many are in use and the PIDs holding them. Probes by taking every free slot for a moment, so a
-    free slot is briefly held. PIDs come from ``lsof`` where it exists, else ``unknown`` (Windows has no stock tool)."""
-    cap, folder = _slots.cap(), _slots.slot_dir()
-    taken: List[_slots.Slot] = []
+def _win_slot_is_free(path: Path) -> bool:
+    """Windows probe: open the lock file with share mode 0, as ``_slots`` does; a sharing violation means held."""
+    import _winapi
     try:
-        while len(taken) < cap:
-            found = _slots._try_round(folder, cap)
-            if found is None:
-                break
-            taken.append(_slots.Slot(found[0], found[1], found[2], 0.0))
-        free = {slot.index for slot in taken}
-    finally:
-        for slot in taken:
-            slot.release()
-    lines = [f"{cap - len(free)} of {cap} in use ({folder})"]
-    for index in range(cap):
-        if index not in free:
-            lines.append(f"  slot {index}: pid {_holder_pid(folder / f'slot-{index}.lock')}")
+        handle = _winapi.CreateFile(str(path), _winapi.GENERIC_READ | _winapi.GENERIC_WRITE, 0, 0,
+                                    _slots.OPEN_ALWAYS, _slots.FILE_ATTRIBUTE_NORMAL, 0)
+    except OSError as exc:
+        if getattr(exc, "winerror", None) in (_slots.ERROR_SHARING_VIOLATION, _slots.ERROR_LOCK_VIOLATION):
+            return False
+        raise
+    _winapi.CloseHandle(handle)
+    return True
+
+
+def _slot_is_free(folder: Path, index: int) -> bool:
+    """Try slot ``index`` and let go at once: True when it was free. At most this one slot is held, for a moment."""
+    path = folder / f"slot-{index}.lock"
+    if sys.platform == "win32":
+        free = _win_slot_is_free(path)
+    else:
+        fd = os.open(path, os.O_RDWR | os.O_CREAT | os.O_CLOEXEC, 0o600)
+        try:
+            fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            free = True
+        except BlockingIOError:
+            free = False
+        finally:
+            os.close(fd)
+    return free
+
+
+def slot_report() -> Tuple[str, bool]:
+    """The slots: how many are in use and the PIDs holding them. Probes one slot at a time, taking it and letting go
+    at once, so a free slot is held for microseconds and never two together. PIDs come from ``lsof`` where it exists,
+    else ``unknown`` (Windows has no stock tool)."""
+    cap, folder = _slots.cap(), _slots.slot_dir()
+    held = [index for index in range(cap) if not _slot_is_free(folder, index)]
+    lines = [f"{len(held)} of {cap} in use ({folder})"]
+    lines.extend(f"  slot {index}: pid {_holder_pid(folder / f'slot-{index}.lock')}" for index in held)
     return "\n".join(lines), True
 
 
 def _holder_pid(lock: Path) -> str:
-    """The pid holding a lock file, via ``lsof -t`` (not on Windows); ``unknown`` when it cannot be told."""
+    """The pid holding a lock file, via ``lsof -t`` (not on Windows); ``unknown`` when it cannot be told or ``lsof``
+    fails or is slow."""
     tool = shutil.which("lsof")
     if tool is None or sys.platform == "win32":
         return "unknown"
-    done = subprocess.run([tool, "-t", "--", str(lock)], capture_output=True, text=True, check=False, timeout=20)
+    try:
+        done = subprocess.run([tool, "-t", "--", str(lock)], capture_output=True, text=True, check=False, timeout=20)
+    except (subprocess.TimeoutExpired, OSError):
+        return "unknown"
     pids = done.stdout.split()
     return ",".join(pids) if pids else "unknown"
 
@@ -224,11 +276,11 @@ def _check_core() -> Tuple[str, bool]:
     return f"{core} (version in the boot below)", True
 
 
-def _check_boot() -> Tuple[List[str], bool]:
-    """Boot the test app for 60 frames; returns the report lines and whether it worked."""
+def _check_boot() -> Tuple[List[str], bool, bool]:
+    """Boot the test app for 60 frames; returns the report lines, whether it worked, and whether it was skipped."""
     app = _paths.repo_root() / "build" / "testapp.3dsx"
     if not app.is_file():
-        return ["skipped (no test app at " + str(app) + ")", "vulkan: unknown"], True
+        return ["skipped (no test app at " + str(app) + ")", "vulkan: unknown"], True, True
     workdir = Path(tempfile.mkdtemp(prefix="libazahar-doctor-"))
     lines: List[str] = []
     ok = True
@@ -247,14 +299,14 @@ def _check_boot() -> Tuple[List[str], bool]:
         shutil.rmtree(workdir, ignore_errors=True)
     else:
         lines.append(f"kept: {workdir}")
-    return lines, ok
+    return lines, ok, False
 
 
 def command_doctor(args: argparse.Namespace) -> int:
     """``doctor``: print what works; returns 0 when every part works, else 1."""
     del args
     print(f"libazahar {__version__}; {platform.platform()}; Python {platform.python_version()}")
-    ok = True
+    ok, skipped = True, False
     for name, check in (("host", _check_host), ("core", _check_core), ("slots", slot_report)):
         try:
             text, part = check()
@@ -263,18 +315,32 @@ def command_doctor(args: argparse.Namespace) -> int:
         print(f"{name}: {text}" + ("" if part else "   [FAIL]"))
         ok = ok and part
     if ok:
-        lines, part = _check_boot()
+        lines, part, skipped = _check_boot()
         print(f"boot: {lines[0]}" + ("" if part else "   [FAIL]"))
         for line in lines[1:]:
             print(f"  {line}")
         ok = ok and part
     else:
         print("boot: skipped (the host or the core is not usable)\n  vulkan: unknown")
-    print("doctor: ok" if ok else "doctor: FAILED")
+    if not ok:
+        print("doctor: FAILED")
+    else:
+        print("doctor: ok (boot skipped: no test app)" if skipped else "doctor: ok")
     return EXIT_OK if ok else EXIT_FAILED
 
 
 # ---- parser ----
+def _positive_int(text: str) -> int:
+    """argparse type: a whole number of 1 or more."""
+    try:
+        value = int(text)
+    except ValueError:
+        raise argparse.ArgumentTypeError(f"{text!r} is not a whole number") from None
+    if value < 1:
+        raise argparse.ArgumentTypeError(f"{value} is not 1 or more")
+    return value
+
+
 def build_parser() -> argparse.ArgumentParser:
     """The argument parser: ``doctor`` and ``run``."""
     parser = argparse.ArgumentParser(prog="python -m libazahar", description="A headless, scriptable Azahar (docs/USING.md).")
@@ -286,9 +352,9 @@ def build_parser() -> argparse.ArgumentParser:
     run = sub.add_parser("run", help="boot an app and run frames", description="Boot APP, run --frames frames, print one "
                          "summary (or one JSON object with --json). Exit codes: USING section 3.")
     run.add_argument("app", metavar="APP", help="the .3dsx / .cia / .elf file to run")
-    run.add_argument("--frames", type=int, required=True, metavar="N", help="guest frames to run (one frame = one VBlank)")
+    run.add_argument("--frames", type=_positive_int, required=True, metavar="N", help="guest frames to run (one frame = one VBlank)")
     run.add_argument("--inputs", type=Path, metavar="FILE", help="an azhost input script (USING section 4a)")
-    run.add_argument("--shot", type=int, action="append", default=[], metavar="F", help="save both screens at batch frame F (repeatable)")
+    run.add_argument("--shot", type=_positive_int, action="append", default=[], metavar="F", help="save both screens at batch frame F (repeatable)")
     run.add_argument("--state", type=Path, metavar="P", help="boot from this savestate")
     run.add_argument("--save", type=Path, metavar="P", help="save a state here after the run")
     run.add_argument("--json", action="store_true", help="print one JSON object instead of the summary")
