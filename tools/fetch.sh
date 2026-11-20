@@ -68,8 +68,8 @@ TESTAPP_SHA=ba10699831f2a1c88b56de119bd2f8caab465e051eb350954b7be1cd7b027ccd
 LAZPY_CORE_ZIP_WIN=azahar_lazpy_libretro-2126.2-lazpy.2-windows-x64.zip
 LAZPY_CORE_SHA_WIN=fe0bbfd1d6a7930e70309b0c97de162ec78b4e4fcc67e4e9c3eea04281ddf370
 # the prebuilt host zips (filled at release time; TBD makes --host die). No fallback: each release carries its own.
-LAZPY_HOST_SHA_WIN=TBD
-LAZPY_HOST_SHA_MAC=TBD
+LAZPY_HOST_SHA_WIN=3d86da7321004070eca7d4c4a35596252fd9d0212d8e9a764d6bcf7b41ee640d
+LAZPY_HOST_SHA_MAC=6e62f7e7a83a603bf48fd1d032faa3f0df27d5ee562b7ca55a6f0a05cef8c4db
 # ------------------------------------------------------------------------------------------------------------------
 
 FORCE=0; DO_MVK=0; DO_HEADERS=0; DO_CORE=0; DO_APP=0; DO_HOST=0
