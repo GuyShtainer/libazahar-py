@@ -245,8 +245,8 @@ fi
 if [ "$DO_HOST" -eq 1 ]; then
   HOST_DIR="$DL/lazpy-host"
   case "$OS_KIND" in
-    mac) HOST_OS_NAME=macos-arm64; HOST_SHA=$LAZPY_HOST_SHA_MAC; HOST_FILES="libazhost.dylib azhost" ;;
-    win) HOST_OS_NAME=windows-x64; HOST_SHA=$LAZPY_HOST_SHA_WIN; HOST_FILES="libazhost.dll azhost.exe" ;;
+    mac) HOST_OS_NAME=macos-arm64; HOST_SHA=$LAZPY_HOST_SHA_MAC; HOST_FILES="libazhost.dylib azhost"; HOST_DOCS="LICENSE SOURCE.md" ;;
+    win) HOST_OS_NAME=windows-x64; HOST_SHA=$LAZPY_HOST_SHA_WIN; HOST_FILES="libazhost.dll azhost.exe"; HOST_DOCS="NOTICES.md LICENSE SOURCE.md" ;;
     *) die "no prebuilt host is released for this OS (macOS arm64 and Windows x64 only)" ;;
   esac
   HOST_ZIP="libazahar-py-host-${REL_TAG#v}-$HOST_OS_NAME.zip"
@@ -255,12 +255,16 @@ if [ "$DO_HOST" -eq 1 ]; then
   MISSING_HINT="$REL_TAG may not carry the host zips"
   get "$REL_BASE/$HOST_ZIP" "$HOST_SHA" "$HOST_DIR/$HOST_ZIP"
   MISSING_HINT=""
-  _have=1; for f in $HOST_FILES; do [ -f "$ROOT/build/$f" ] || _have=0; done
-  if [ "$_have" -eq 0 ] || [ "$(cat "$HOST_DIR/.unpacked-sha256" 2>/dev/null)" != "$HOST_SHA" ]; then
+  # unpack unless build/ already holds exactly the pinned files: a host built with make (or an older one) differs from the
+  # unpacked zip, so a plain --host replaces it; the same bytes are left alone ("have")
+  _have=1
+  [ "$(cat "$HOST_DIR/.unpacked-sha256" 2>/dev/null)" = "$HOST_SHA" ] || _have=0
+  for f in $HOST_FILES; do cmp -s "$ROOT/build/$f" "$HOST_DIR/unpacked/$f" 2>/dev/null || _have=0; done
+  if [ "$_have" -eq 0 ]; then
     verify "$HOST_DIR/$HOST_ZIP" "$HOST_SHA"
     mkdir -p "$ROOT/build"
     # shellcheck disable=SC2086  # intentional split: two file names
-    unzip -q -o "$HOST_DIR/$HOST_ZIP" $HOST_FILES LICENSE SOURCE.md -d "$HOST_DIR/unpacked"
+    unzip -q -o "$HOST_DIR/$HOST_ZIP" $HOST_FILES $HOST_DOCS -d "$HOST_DIR/unpacked"
     for f in $HOST_FILES; do
       [ -f "$HOST_DIR/unpacked/$f" ] || die "zip did not contain $f"
       cp "$HOST_DIR/unpacked/$f" "$ROOT/build/$f"
@@ -284,7 +288,7 @@ if [ "$DO_CORE" -eq 1 ]; then
   echo "  core        our core is at dl/lazpy-core/$CORE_FILE, the default core path (LAZ_CORE overrides it)"
 fi
 if [ "$DO_HOST" -eq 1 ]; then
-  echo "  host        the prebuilt host is in $ROOT/build/ (SOURCE.md and LICENSE: dl/lazpy-host/unpacked/)"
+  echo "  host        the prebuilt host is in $ROOT/build/ (SOURCE.md, LICENSE and, on Windows, NOTICES.md: dl/lazpy-host/unpacked/)"
 fi
 if [ "$DO_APP" -eq 1 ]; then
   echo "  test app    $ROOT/build/testapp.3dsx"

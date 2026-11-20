@@ -7,19 +7,22 @@ The recipe is `examples/ci/macos.yml`; copy it to `.github/workflows/` in your r
 ## What the recipe does
 
 1. Checks out your repository and, in a sub-folder, libazahar-py at a release tag you choose.
-2. Runs `sh tools/fetch.sh --moltenvk --host --lazpy-core`: the prebuilt host, our core and MoltenVK, each checked
+2. Runs `sh tools/fetch.sh --moltenvk --host --lazpy-core --testapp`: the prebuilt host, our core, MoltenVK and our test app, each checked
    against a sha256 pinned inside `fetch.sh`. No compiler and no `make`. (`--host` needs a libazahar-py release that
    carries the host zips: v1.3.0 or later. On an earlier tag, build the host with `make`, as the README says.)
 3. Makes a venv and installs the Python layer (`pip install -e .`; the package finds its host and core from the
    checkout).
-4. Runs your copy of `examples/verdict.py` (see "Make your app report") on your app. It boots the app, runs until the app writes a pass line to a file on its SD
+4. Runs `examples/verdict.py` on our test app once, as a smoke check that the setup works before your app is involved.
+5. Runs your copy of `examples/verdict.py` (see "Make your app report") on your app. It boots the app, runs until the app writes a pass line to a file on its SD
    card, and exits by the table in `docs/USING.md` section 3: 0 for a pass, 1 for a failed test, 12 for a timeout, and
    so on.
 
 ## Make your app report
 
 The guest side is one line in an SD file. Have your app write `PASS` (or `FAIL <why>`) to a file under its SD root, then
-copy `examples/verdict.py` into your repository (the recipe expects `ci/verdict.py`) and set `RESULT_FILE`, `PASS_TEXT` and `FAIL_TEXT` at the top to match.
+copy `examples/verdict.py` into your repository (the recipe expects `ci/verdict.py`) and set `RESULT_FILE`, `PASS_TEXT` and `FAIL_TEXT` at the top to match. The copy also seeds our test app's own control
+file (the `control.txt` line in `main()`, `boot_frames=60`) and stops after `MAX_FRAMES` (600) frames: replace the seed
+with your app's own, and raise `MAX_FRAMES` (or set `LAZ_VERDICT_FRAMES`) if your app needs longer to report.
 Run it with the path to your built app as its one argument.
 
 ## Reading the result
@@ -34,8 +37,8 @@ If a run is not started within about half an hour, cancel it once and try later;
 
 ## State-boot timing on hosted runners
 
-Our own test suite bounds a state boot on the test app (`docs/USING.md` section 10). On a hosted runner
-(`GITHUB_ACTIONS=true` and `CI` set) that bound only records the time and does not fail; off a hosted runner it is a
+Our own test suite bounds a state boot on the test app (`docs/USING.md` section 10). On a GitHub-hosted runner
+(`RUNNER_ENVIRONMENT=github-hosted`; a self-hosted runner sets `self-hosted`) that bound only records the time and does not fail; off a hosted runner it is a
 gate. If you time your own states in CI, do the same: record on shared runners, gate on a machine you control.
 
 ## Pinning

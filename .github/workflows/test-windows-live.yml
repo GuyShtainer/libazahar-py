@@ -1,7 +1,7 @@
 # Best effort: the slow tests (they boot the emulator) on a Windows runner, on lavapipe, a software Vulkan driver. The
-# runner has no GPU, so the job unpacks MSYS2's Mesa (sha256-pinned, tools/fetch-mesa.sh) into a folder of the
+# runner has no GPU, so the job unpacks MSYS2's Mesa and Vulkan loader (sha256-pinned, tools/fetch-mesa.sh) into a folder of the
 # workspace, never into the MSYS2 install, and registers lavapipe's ICD file under HKLM\SOFTWARE\Khronos\Vulkan\Drivers
-# (the runner is thrown away; the Vulkan loader ignores VK_DRIVER_FILES in an elevated process, so the registry is the
+# (LAZ_MVK names the unpacked vulkan-1.dll, since the host would look in System32 only for a bare name; the runner is thrown away; the Vulkan loader ignores VK_DRIVER_FILES in an elevated process, so the registry is the
 # route). continue-on-error is set on the job, so a red result mails no one and blocks nothing: the result is read from
 # the "lavapipe" step's outcome, the pytest step's outcome and its summary line (passed above 0, failed 0), never from
 # the run's conclusion. A pass counts only when the host.log Vulkan device line names lavapipe (llvmpipe).
@@ -49,19 +49,21 @@ jobs:
         shell: msys2 {0}
         run: |
           sh tools/fetch-mesa.sh dl/mesa | tee mesa.out
-          sed -n 's/^icd=/MESA_ICD=/p;s/^bin=/MESA_BIN=/p' mesa.out >> "$GITHUB_ENV"
+          sed -n 's/^icd=/MESA_ICD=/p;s/^bin=/MESA_BIN=/p;s/^loader=/MESA_LOADER=/p' mesa.out >> "$GITHUB_ENV"
       - name: register lavapipe's ICD file with the Vulkan loader
         run: |
           New-Item -Path HKLM:\SOFTWARE\Khronos\Vulkan\Drivers -Force | Out-Null
           New-ItemProperty -Path HKLM:\SOFTWARE\Khronos\Vulkan\Drivers -Name $env:MESA_ICD -PropertyType DWord -Value 0 -Force | Out-Null
           Get-Item HKLM:\SOFTWARE\Khronos\Vulkan\Drivers | Format-List
-          "loader in System32: " + (Test-Path "$env:SystemRoot\System32\vulkan-1.dll")
+          "loader in System32 (not used; the host gets LAZ_MVK): " + (Test-Path "$env:SystemRoot\System32\vulkan-1.dll")
+          if (-not (Test-Path $env:MESA_LOADER)) { throw "no Vulkan loader at $env:MESA_LOADER" }
       - name: Python layer
         run: python -m pip install -e . pytest numpy
       - name: one short boot must name lavapipe
         id: lavapipe
         run: |
           $env:PATH = "$env:MESA_BIN;$env:PATH"
+          $env:LAZ_MVK = $env:MESA_LOADER
           $out = (python -m libazahar doctor 2>&1 | Out-String)
           Write-Host $out
           if ($out -notmatch '(?im)^\s*vulkan: .*(lavapipe|llvmpipe)') { throw "the Vulkan device line does not name lavapipe" }
@@ -71,6 +73,7 @@ jobs:
           LAZ_REQUIRE_EMULATOR: "1"
         run: |
           $env:PATH = "$env:MESA_BIN;$env:PATH"
+          $env:LAZ_MVK = $env:MESA_LOADER
           python -m pytest -q -rs -m slow --ignore=tests/python/test_pool_live.py tests/python 2>&1 | Tee-Object -FilePath pytest.out
           exit $LASTEXITCODE
       - name: result (read this, not the run's conclusion)

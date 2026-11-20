@@ -22,7 +22,7 @@ our core and the test app, each sha256-pinned. The README's Install section is t
 `fetch.sh` takes these flags: `--moltenvk` (macOS only), `--headers`, `--lazpy-core`, `--testapp`, `--host` and
 `--force`. `--host` (from v1.3.0) downloads the prebuilt host for your system, checks it against its pinned sha256 and
 puts `libazhost` and `azhost` in `build/` (`.dylib` and no suffix on macOS, `.dll` and `.exe` on Windows), so no
-compiler is needed; it is never part of the default set, and it replaces a host you built with `make`. The README's
+compiler is needed; it is never part of the default set, and a plain `--host` replaces a host you built with `make` (a host already identical to the release's is left alone). The README's
 "No compiler" section has the steps.
 
 ## 2. Paths and environment
@@ -245,7 +245,7 @@ may not survive a core change. NAND files are not snapshotted (they reopen from 
 app's RomFS reopens from the new app path. `load_state` replaces the SD folder: read logs before it. Restore steps
 are timed in `host.log` (`state load ...`). Reusing an instance's `sys/` folder (without `Azahar/sdmc/`) keeps the
 shader cache. Gate on the test app (Guy's ruling): a state boot takes under 2.5 s (1.6 s
-measured); on a hosted CI runner (`GITHUB_ACTIONS=true` and `CI` set) our test records the time and does not fail on it;
+measured); on a GitHub-hosted CI runner (`RUNNER_ENVIRONMENT=github-hosted`) our test records the time and does not fail on it;
 a real game's state is larger, so time your own. A `load_state` that fails after the SD folder was replaced
 leaves the instance unusable (later calls raise HostError); close it and boot again. The meta's `app=` is the absolute
 app path, so a shared state carries it. An I/O failure while saving is a HostError, not a StateError.

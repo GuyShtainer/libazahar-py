@@ -29,8 +29,9 @@ STATE_BOUND = 2.5      # seconds on the test app (Guy's ruling)
 
 
 def on_hosted_runner() -> bool:
-    """True on a GitHub-hosted runner (GITHUB_ACTIONS is "true" and CI is set); everywhere else the bound is a gate."""
-    return os.environ.get("GITHUB_ACTIONS") == "true" and bool(os.environ.get("CI"))
+    """True on a GitHub-hosted runner (GitHub sets RUNNER_ENVIRONMENT to "github-hosted" there, and "self-hosted" on
+    your own machine, where CI and GITHUB_ACTIONS are set too); everywhere else the bound is a gate."""
+    return os.environ.get("RUNNER_ENVIRONMENT") == "github-hosted"
 
 
 def check_state_bound(t_state: float, record_property) -> None:

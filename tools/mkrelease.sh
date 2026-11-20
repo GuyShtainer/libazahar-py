@@ -20,7 +20,7 @@
 # The prebuilt host zips (v1.3.0 and later; both modes): --host-artifact-win DIR and --host-artifact-mac DIR each name the
 # folder of one host-bin.yml artifact. A folder holds exactly one zip, libazahar-py-host-<version>-windows-x64.zip or
 # -macos-arm64.zip (<version> is the tag without the v); it must hold exactly the two binaries, LICENSE and a SOURCE.md
-# that names a commit. The zip is copied byte for byte into the release and listed in SHA256SUMS. Without either flag
+# that names a commit (the Windows zip also NOTICES.md). The zip is copied byte for byte into the release and listed in SHA256SUMS. Without either flag
 # nothing changes: the release is staged as before (v1.2.0's command lines work unchanged).
 set -eu
 
@@ -73,7 +73,7 @@ inp() { sed -n "s/^$1=//p" "$INPUTS"; }
 add_host_zips() {
   [ -n "$HOST_WIN_DIR$HOST_MAC_DIR" ] || return 0
   _ver=${TAG#v}
-  for _pair in "win|$HOST_WIN_DIR|windows-x64|libazhost.dll azhost.exe" "mac|$HOST_MAC_DIR|macos-arm64|libazhost.dylib azhost"; do
+  for _pair in "win|$HOST_WIN_DIR|windows-x64|libazhost.dll azhost.exe NOTICES.md" "mac|$HOST_MAC_DIR|macos-arm64|libazhost.dylib azhost"; do
     _oldifs=$IFS; IFS='|'; set -- $_pair; IFS=$_oldifs
     _kind=$1; _dir=$2; _os=$3; _bins=$4
     [ -n "$_dir" ] || continue
@@ -82,7 +82,7 @@ add_host_zips() {
     [ -d "$_dir" ] || die "--host-artifact-$_kind $_dir is not a folder"
     _n=$(ls "$_dir" | wc -l | tr -d ' ')
     [ "$_n" -eq 1 ] && [ -f "$_dir/$_name" ] || die "$_dir must hold exactly $_name (it holds $_n file(s))"
-    # the members: exactly the two binaries, LICENSE and SOURCE.md
+    # the members: exactly the two binaries, LICENSE and SOURCE.md (the Windows zip also NOTICES.md: static zlib/runtime)
     _want=$(printf '%s\n' $_bins LICENSE SOURCE.md | LC_ALL=C sort)
     _have=$(unzip -Z1 "$_dir/$_name" | LC_ALL=C sort)
     [ "$_have" = "$_want" ] || die "$_name holds [$(echo $_have)], expected [$(echo $_want)]"

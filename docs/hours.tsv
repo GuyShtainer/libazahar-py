@@ -270,3 +270,5 @@ date	bet	phase	agent_id	model	role	kind	start	end	hours	source
 2026-11-20	phase 8 D4 lane gym: examples/gym_env.py and its fast import test	phase-8d	ab8253f4c88a008d2	sonnet	builder	build	16:04	16:31	0.45	transcript
 2026-11-20	phase 8 D main loop: lane briefs out, the PC base fixed to v1.2.0, lanes read and checked, merged, PC checks on the merged tree	phase-8d	main	opus	main	build	15:59	16:34	0.58	session clock
 2026-11-20	phase 8 D5 review of the merged phase D	phase-8d	a60222a9ce0913557	opus	reviewer	review	16:35	16:47	0.2	transcript
+2026-11-20	phase 8 D5 fix lane relfix: macOS host strip, Windows host notices, build commit tied to the tag, fetch --host replaces a make-built host	phase-8d	aa9ee286dad15bdca	sonnet	builder	build	16:49	16:55	0.1	transcript
+2026-11-20	phase 8 D5 fix lane cifix: pinned Vulkan loader for the Windows emulator CI, README macOS claim, recipe and docs fixes, github-hosted check, gym close	phase-8d	ad23c2a1a273a62b4	sonnet	builder	build	16:49	16:53	0.07	transcript

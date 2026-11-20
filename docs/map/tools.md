@@ -15,6 +15,8 @@
   overrides its URL). `tools/fetch-mesa.sh`: the pinned MSYS2 Mesa (lavapipe) packages for the Windows emulator CI.
 - `tools/mknotices.py`: writes `NOTICES.md` from the link line, the `.o.d` dependency files and the licence texts;
   exits 1 on an unknown path, component or notice.
+- `tools/mkhostnotices.sh`: writes the Windows host zip's `NOTICES.md` from the MSYS2 licence texts of what the host
+  links statically (zlib, winpthreads, the mingw-w64 runtime, libgcc).
 - `tools/mkrelease.sh <tag>`: stages the release assets deterministically in `runs/release/<tag>/`
   (`--host-artifact-win DIR`, `--host-artifact-mac DIR` add the prebuilt host zips).
 - `tools/release_check.py <dir>`: the release's machine checks (`--skip-pins`, `--pre-push`, `--plant-red`).

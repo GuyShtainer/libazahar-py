@@ -1,7 +1,8 @@
 # Best effort: the slow tests (they boot the emulator) on a macOS runner, with our public v1.0.0 core. A hosted runner
 # may have no usable Vulkan path, so a red result here never blocks anything: continue-on-error is set on the job, and
 # the result is read from the pytest step's own outcome and its summary line (passed above 0, failed 0), never from the
-# run's conclusion.
+# run's conclusion. The step "the user recipe's run-and-verdict part, on our test app" (id: recipe) is read the same
+# way: its own outcome must be success and its log must end with a "verdict ok" line.
 name: macos-live
 
 # Started by hand only: macOS runners often never start here, and each cancelled run mails the owner.

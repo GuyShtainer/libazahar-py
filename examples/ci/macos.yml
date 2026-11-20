@@ -20,7 +20,7 @@ jobs:
     steps:
       # Your app and its test script live in your repository.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
-      # libazahar-py itself, into a sub-folder. CHANGE: pin a release tag (or a full commit sha) you have checked.
+      # libazahar-py itself, into a sub-folder. CHANGE: pin a release tag you have checked, or better its full commit sha (a tag can move).
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           repository: GuyShtainer/libazahar-py
@@ -31,13 +31,16 @@ jobs:
           python-version: "3.14"
       - name: host, core and MoltenVK (each pinned by sha256 inside fetch.sh)
         working-directory: libazahar-py
-        # --testapp is for the smoke check below; drop it once your own app is the only one you run.
+        # --testapp fetches our test app for the smoke check below; drop both once you trust the setup.
         run: sh tools/fetch.sh --moltenvk --host --lazpy-core --testapp
       - name: Python layer
         working-directory: libazahar-py
         run: |
           python -m venv .venv
           .venv/bin/pip install -e .
+      - name: smoke check, our test app (shows the setup works before your app is involved)
+        working-directory: libazahar-py
+        run: .venv/bin/python examples/verdict.py build/testapp.3dsx
       - name: run my app and read the verdict
         id: verdict
         working-directory: libazahar-py

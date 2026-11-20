@@ -27,14 +27,15 @@ echo "test app stand-in" > "$PREV/testapp.3dsx"
 HOSTREL="$T/hostrel"; mkdir -p "$HOSTREL"
 HOST_MAC_ZIP=libazahar-py-host-1.1.0-macos-arm64.zip
 HOST_WIN_ZIP=libazahar-py-host-1.1.0-windows-x64.zip
-hostpack() {  # hostpack ZIP LIB EXE
+hostpack() {  # hostpack ZIP LIB EXE [NOTICES.md]  (the Windows zip carries NOTICES.md, the macOS zip does not)
   rm -rf "$T/pack"; mkdir -p "$T/pack"
   echo "lib stand-in" > "$T/pack/$2"; echo "exe stand-in" > "$T/pack/$3"; echo "licence" > "$T/pack/LICENSE"
   echo "built at commit 0123456789abcdef0123456789abcdef01234567" > "$T/pack/SOURCE.md"
-  rm -f "$HOSTREL/$1"; (cd "$T/pack" && zip -q -X "$HOSTREL/$1" "$2" "$3" LICENSE SOURCE.md)
+  [ -z "${4:-}" ] || echo "notices" > "$T/pack/$4"
+  rm -f "$HOSTREL/$1"; (cd "$T/pack" && zip -q -X "$HOSTREL/$1" "$2" "$3" ${4:-} LICENSE SOURCE.md)
 }
 hostpack "$HOST_MAC_ZIP" libazhost.dylib azhost
-hostpack "$HOST_WIN_ZIP" libazhost.dll azhost.exe
+hostpack "$HOST_WIN_ZIP" libazhost.dll azhost.exe NOTICES.md
 MAC_SHA=$(sha "$PREV/$MAC_ZIP"); WIN_SHA=$(sha "$PREV/$WIN_ZIP"); APP_SHA=$(sha "$PREV/testapp.3dsx")
 
 # a copy of fetch.sh with the pins of these stand-ins, as the release would have them
@@ -123,28 +124,37 @@ RC=0; env -u LAZ_RELEASE_BASE_PREV LAZ_ROOT="$T/root" LAZ_RELEASE_BASE="file://$
 if [ "$RC" -eq 0 ] && has "have   " && ! has "fetch  "; then
   pass "--host a second time: downloads nothing"; else fail "host again"; cat "$T/out"; fi
 
+# a host built with make (other bytes in build/) is replaced by a plain --host, as docs/USING.md says
+echo "built with make" > "$T/root/build/azhost"
+RC=0; env -u LAZ_RELEASE_BASE_PREV LAZ_ROOT="$T/root" LAZ_RELEASE_BASE="file://$T/nowhere" LAZ_FETCH_OS=Darwin \
+  sh "$T/tools/fetch.sh" --host > "$T/out" 2>&1 || RC=$?
+if [ "$RC" -eq 0 ] && has "unpack " && [ "$(cat "$T/root/build/azhost")" = "exe stand-in" ]; then
+  pass "--host over a make-built host: replaces it with the release's file"; else fail "host replaces make build"; cat "$T/out"; fi
+
 # 8: --host on Windows
 host_run "$T/tools/fetch.sh" MINGW64_NT-10.0 "$HOSTREL" --host
 if [ "$RC" -eq 0 ] && [ -f "$T/root/build/libazhost.dll" ] && [ -f "$T/root/build/azhost.exe" ] \
-   && [ ! -e "$T/root/build/libazhost.dylib" ]; then
-  pass "--host on Windows: libazhost.dll and azhost.exe land in build/"; else fail "host win"; cat "$T/out"; fi
+   && [ ! -e "$T/root/build/libazhost.dylib" ] && [ -f "$T/root/dl/lazpy-host/unpacked/NOTICES.md" ]; then
+  pass "--host on Windows: libazhost.dll and azhost.exe land in build/, NOTICES.md is unpacked beside SOURCE.md"; else fail "host win"; cat "$T/out"; fi
 
 # 9: a TBD pin dies with one clear line and downloads nothing
 host_run "$T/tools/fetch-tbd.sh" Darwin "$HOSTREL" --host
 if [ "$RC" -ne 0 ] && has "pins are filled at release time" && [ "$(grep -c . "$T/out")" -eq 1 ] && [ ! -e "$T/root/dl/lazpy-host" ]; then
   pass "--host with a TBD pin: one clear line, nothing fetched"; else fail "host tbd"; cat "$T/out"; fi
 
-# 10: a wrong-sha zip dies, deletes the file and unpacks nothing; a missing zip does not fall back to the previous page
+# 10: a wrong-sha zip dies, deletes the file and unpacks nothing; a missing zip does not fall back to the previous page,
+# even when the previous page holds a host zip with the right bytes
 cp "$HOSTREL/$HOST_MAC_ZIP" "$T/good.zip"; echo tampered > "$HOSTREL/$HOST_MAC_ZIP"
 host_run "$T/tools/fetch.sh" Darwin "$HOSTREL" --host
 if [ "$RC" -ne 0 ] && has "SHA256 MISMATCH" && [ ! -e "$T/root/build/azhost" ] && [ ! -e "$T/root/dl/lazpy-host/$HOST_MAC_ZIP" ]; then
   pass "--host with a wrong sha256: dies, deletes the zip, unpacks nothing"; else fail "host mismatch"; cat "$T/out"; fi
-cp "$T/good.zip" "$HOSTREL/$HOST_MAC_ZIP"; rm -f "$HOSTREL/$HOST_MAC_ZIP"
+rm -f "$HOSTREL/$HOST_MAC_ZIP"; cp "$T/good.zip" "$PREV/$HOST_MAC_ZIP"
 rm -rf "$T/root"; mkdir -p "$T/root"; RC=0
 LAZ_ROOT="$T/root" LAZ_RELEASE_BASE="file://$HOSTREL" LAZ_RELEASE_BASE_PREV="file://$PREV" LAZ_FETCH_OS=Darwin \
   sh "$T/tools/fetch.sh" --host > "$T/out" 2>&1 || RC=$?
-if [ "$RC" -ne 0 ] && has "download failed" && ! has "fell back"; then
-  pass "--host with the zip missing: dies, no fallback to the previous release"; else fail "host missing"; cat "$T/out"; fi
+if [ "$RC" -ne 0 ] && has "download failed" && ! has "fell back" && [ ! -e "$T/root/build/azhost" ]; then
+  pass "--host with the zip missing: dies, no fallback to the previous release (which holds a good zip)"; else fail "host missing"; cat "$T/out"; fi
+rm -f "$PREV/$HOST_MAC_ZIP"
 
 echo "fetch_fallback: $N cases passed, $BAD failed"
 [ "$BAD" -eq 0 ]

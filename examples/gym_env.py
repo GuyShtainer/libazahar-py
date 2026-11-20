@@ -52,7 +52,11 @@ class TestAppEnv(BASE):
         self._steps = 0
         self._state = Path(state) if state is not None else None
         self._emu = Emulator(app, workdir)
-        self._record = self._find_record()
+        try:
+            self._record = self._find_record()
+        except BaseException:
+            self._emu.close()           # do not leave the emulator running when the constructor fails
+            raise
 
     def _find_record(self):
         """The record's guest address, from the app's start line."""

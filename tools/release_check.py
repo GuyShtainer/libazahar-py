@@ -14,13 +14,16 @@ artifact's gate_f2.txt: shared contract 1) instead of the live tree. --plant-red
 its own reason, 2 when one did not.
 
 python3 -I tools/release_check.py --self-test checks check 13 with the reading copy absent (SKIP, PEND under --pre-push),
-and the "1c host zips" row on staged stand-ins.
+and the "1c host zips" row on staged stand-ins (including a throwaway git repo for the commit rule).
 
 Check 1c (both release kinds): the prebuilt host zips libazahar-py-host-<version>-windows-x64.zip and -macos-arm64.zip
 (<version> is the tag without the v). A zip that is absent is a SKIP, never a PASS (and, as for every SKIP, a FAIL under
 --pre-push). A zip that is present must be listed in SHA256SUMS with its own sha256, equal fetch.sh's pin
 (LAZPY_HOST_SHA_WIN / LAZPY_HOST_SHA_MAC; TBD is a PEND, --skip-pins a SKIP), hold exactly its two binaries, LICENSE
-and SOURCE.md, and its SOURCE.md must name a commit (a 40-hex id).
+and SOURCE.md (the Windows zip also NOTICES.md), and its SOURCE.md must name a commit (a 40-hex id). That commit must be
+an ancestor of the tag (HEAD when the tag does not exist yet) and host/ and the Makefile must be identical at the commit
+and at the tag; otherwise FAIL. A repo with no history (or without that commit) is a SKIP with its reason. A host
+binary holding a /Users/ path (a macOS build that was not stripped) is a FAIL.
 
 Prints one line per check: PASS, FAIL, SKIP or PEND, plus NOTE lines for the audit. Any FAIL exits 1; under
 --pre-push every SKIP and PEND is a FAIL. --plant-red plants one fault per check in a temp folder outside the repo
@@ -162,8 +165,8 @@ def zip_findings(zip_path: Path) -> Items:
 
 
 # ------------------------------------------------------------------------------------------- 1c host zips
-HOST_KINDS = {  # key: (file name part, the two binaries, fetch.sh pin name)
-    "win": ("windows-x64", ["azhost.exe", "libazhost.dll"], "LAZPY_HOST_SHA_WIN"),
+HOST_KINDS = {  # key: (file name part, the zip members besides LICENSE and SOURCE.md (Windows adds NOTICES.md), fetch.sh pin name)
+    "win": ("windows-x64", ["NOTICES.md", "azhost.exe", "libazhost.dll"], "LAZPY_HOST_SHA_WIN"),
     "mac": ("macos-arm64", ["azhost", "libazhost.dylib"], "LAZPY_HOST_SHA_MAC"),
 }
 HOST_GLOB = "libazahar-py-host-*.zip"
@@ -178,7 +181,28 @@ def host_names_present(rel: Path) -> list[str]:
     return sorted(p.name for p in rel.glob(HOST_GLOB))
 
 
-def host_one_findings(rel: Path, tag: str, key: str, fetch_values: dict[str, str], skip_pins: bool) -> Items:
+def host_commit_findings(repo: Path | None, tag: str, name: str, source: str) -> Items:
+    """The commit SOURCE.md names must be an ancestor of the tag and leave host/ and the Makefile as they are at the tag."""
+    found = re.search(r"\b[0-9a-f]{40}\b", source)
+    if found is None:
+        return []
+    if repo is None:
+        return [("SKIP", f"{name}: no repo given, so the build commit was not compared with the tag")]
+    commit = found.group(0)
+    # no ^{commit} peel in these arguments: the MSYS git on Windows expands the braces
+    if run(["git", "-C", str(repo), "cat-file", "-t", commit]).stdout.strip() != b"commit":
+        return [("SKIP", f"{name}: commit {commit[:12]} is not in this repo (no history, or a shallow clone), so it was not compared with the tag")]
+    ref = tag if run(["git", "-C", str(repo), "rev-parse", "-q", "--verify", f"refs/tags/{tag}"]).returncode == 0 else "HEAD"
+    out: Items = []
+    if run(["git", "-C", str(repo), "merge-base", "--is-ancestor", commit, ref]).returncode != 0:
+        out.append(("FAIL", f"{name}: build commit {commit[:12]} is not an ancestor of {ref}"))
+    elif run(["git", "-C", str(repo), "diff", "--quiet", commit, ref, "--", "host", "Makefile"]).returncode != 0:
+        out.append(("FAIL", f"{name}: host/ or the Makefile changed between the build commit {commit[:12]} and {ref}: build the host again"))
+    return out
+
+
+def host_one_findings(rel: Path, tag: str, key: str, fetch_values: dict[str, str], skip_pins: bool,
+                      repo: Path | None = None) -> Items:
     name = host_zip_name(tag, key)
     path = rel / name
     if not path.is_file():
@@ -202,7 +226,9 @@ def host_one_findings(rel: Path, tag: str, key: str, fetch_values: dict[str, str
         out.append(("FAIL", f"{name}'s LICENSE is not the GPLv3 text"))
     if not re.search(r"\b[0-9a-f]{40}\b", source):
         out.append(("FAIL", f"{name}'s SOURCE.md names no commit"))
-    # private strings in the text and the binaries (a runner path from a hosted build is a NOTE: the debug info carries it)
+    out += host_commit_findings(repo, tag, name, source)
+    # private strings in the text and the binaries. A Windows runner path is a NOTE (the debug info carries it); a /Users/
+    # path stays a FAIL: the macOS job runs `strip -S`, so any path left in a Mach-O file means it did not.
     with zipfile.ZipFile(path) as archive:
         for member in members:
             if member == "LICENSE":
@@ -223,12 +249,12 @@ def host_one_findings(rel: Path, tag: str, key: str, fetch_values: dict[str, str
     return out
 
 
-def host_findings(rel: Path, tag: str, fetch_text: str, skip_pins: bool) -> Items:
+def host_findings(rel: Path, tag: str, fetch_text: str, skip_pins: bool, repo: Path | None = None) -> Items:
     values = dict(re.findall(r"^([A-Z_]+)=(\S+)$", fetch_text, re.M))
     wanted = {host_zip_name(tag, key) for key in HOST_KINDS}
     out: Items = [("FAIL", f"{name} is not a host zip of {tag}") for name in host_names_present(rel) if name not in wanted]
     for key in HOST_KINDS:
-        out += host_one_findings(rel, tag, key, values, skip_pins)
+        out += host_one_findings(rel, tag, key, values, skip_pins, repo)
     return out
 
 
@@ -1175,7 +1201,7 @@ def run_checks_v11(ctx: "Ctx", tmp: Path) -> list[tuple[str, Items]]:
         guard("2 gate_f2", lambda: gate_f2_findings(Path(args.gate_f2).read_text(), sha256_bytes(win_dll), inputs))
     else:
         results.append(("2 gate_f2", [("SKIP", "--gate-f2 FILE not given: the Windows keyblob check did not run")]))
-    results.append(("1c host zips", host_findings(rel, rel.name, ctx.fetch_text, args.skip_pins)))
+    results.append(("1c host zips", host_findings(rel, rel.name, ctx.fetch_text, args.skip_pins, repo)))
     results.append(("2 keyblob (macOS)", [("NOTE", "inherited from v1.0.0: the macOS core is the v1.0.0 bytes (see 1b)")]))
     dll_strings = texts["win core strings"]
     results.append(("3-5 binary", ([("NOTE", "macOS exports, version and linkage: inherited from v1.0.0 (see 1b)")]
@@ -1475,7 +1501,7 @@ def run_checks(ctx: Ctx, tmp: Path) -> list[tuple[str, Items]]:
     needles = load_needles(os.environ.get("LAZ_PRIVATE_NEEDLES"))
     results: list[tuple[str, Items]] = [
         ("1 assets", assets_findings(rel, expected_assets(ctx.pin, rel.name))),
-        ("1c host zips", host_findings(rel, rel.name, ctx.fetch_text, args.skip_pins)),
+        ("1c host zips", host_findings(rel, rel.name, ctx.fetch_text, args.skip_pins, repo)),
         ("2 keyblob", keyblob_check(rel, repo, ctx.inputs_path)),
         ("3 exports", exports_findings(ctx.nm_text)),
         ("4 version", version_findings(core_strings)),
@@ -1524,7 +1550,8 @@ def report(results: list[tuple[str, Items]], pre_push: bool) -> int:
 
 
 HOST_LICENCE = "GNU GENERAL PUBLIC LICENSE\n Version 3, 29 June 2007\n"
-HOST_COMMIT = "0123456789abcdef0123456789abcdef01234567"
+HOST_COMMIT = "0123456789abcdef0123456789abcdef01234567"  # not in any repo: the commit rule SKIPs on it
+HOST_STAND = {"commit": HOST_COMMIT}  # the commit host_stage writes; host_self_test points it at a throwaway repo's commit
 
 
 def host_stage(rel: Path, key: str, tag: str = "v9.9.9", extra: dict[str, bytes] | None = None, drop: tuple[str, ...] = (),
@@ -1533,7 +1560,7 @@ def host_stage(rel: Path, key: str, tag: str = "v9.9.9", extra: dict[str, bytes]
     name = host_zip_name(tag, key)
     members = {b: b"stand-in binary\n" for b in HOST_KINDS[key][1]}
     members["LICENSE"] = HOST_LICENCE.encode()
-    members["SOURCE.md"] = (source if source is not None else f"# SOURCE\nBuilt at commit {HOST_COMMIT}\n").encode()
+    members["SOURCE.md"] = (source if source is not None else f"# SOURCE\nBuilt at commit {HOST_STAND['commit']}\n").encode()
     members.update(extra or {})
     with zipfile.ZipFile(rel / name, "w") as archive:
         for member, data in members.items():
@@ -1546,13 +1573,61 @@ def host_stage(rel: Path, key: str, tag: str = "v9.9.9", extra: dict[str, bytes]
     return digest
 
 
+def _git_try(repo: Path, *argv: str) -> str | None:
+    """A git command's stdout, or None when git is missing or the command fails (the self-test then skips its repo cases)."""
+    try:
+        done = subprocess.run(["git", "-C", str(repo), "-c", "user.name=t", "-c", "user.email=t@example.invalid",
+                               "-c", "commit.gpgsign=false", *argv], capture_output=True, check=False)
+    except OSError:
+        return None
+    return done.stdout.decode().strip() if done.returncode == 0 else None
+
+
+def _make_host_repo(root: Path) -> dict[str, str] | None:
+    """A throwaway repo: commit a (host/, Makefile), b (docs only), c (host/ edited), and a side commit s from a.
+    Returns the commit ids, or None if git is not usable here."""
+    (root / "host").mkdir(parents=True)
+    (root / "host/a.c").write_text("int a;\n")
+    (root / "Makefile").write_text("all:\n")
+    if _git_try(root, "init", "-q") is None:
+        return None
+    ids: dict[str, str] = {}
+    _git_try(root, "add", "-A")
+    if _git_try(root, "commit", "-q", "-m", "a") is None:
+        return None
+    ids["a"] = _git_try(root, "rev-parse", "HEAD") or ""
+    _git_try(root, "checkout", "-q", "-b", "side")
+    (root / "side.txt").write_text("s\n")
+    _git_try(root, "add", "-A")
+    _git_try(root, "commit", "-q", "-m", "s")
+    ids["s"] = _git_try(root, "rev-parse", "HEAD") or ""
+    _git_try(root, "checkout", "-q", "-")
+    (root / "doc.txt").write_text("b\n")
+    _git_try(root, "add", "-A")
+    _git_try(root, "commit", "-q", "-m", "b")
+    ids["b"] = _git_try(root, "rev-parse", "HEAD") or ""
+    (root / "host/a.c").write_text("int a, c;\n")
+    _git_try(root, "add", "-A")
+    _git_try(root, "commit", "-q", "-m", "c")
+    ids["c"] = _git_try(root, "rev-parse", "HEAD") or ""
+    return ids if all(len(v) == 40 for v in ids.values()) and len(ids) == 4 else None
+
+
 def host_self_test() -> tuple[int, int]:
     """Check 1c on stand-in zips in a temp folder: (cases, failed). Each case names the kinds it expects."""
     import contextlib
     tag = "v9.9.9"
     cases: list[tuple[str, dict[str, object]]] = []
+    repo_dir = tempfile.TemporaryDirectory(prefix="release_check.hostrepo.")
+    ids = _make_host_repo(Path(repo_dir.name) / "r")
+    repo: Path | None = Path(repo_dir.name) / "r"
 
-    def run(label: str, build, want: set[str], pin_of=None, skip_pins: bool = False) -> None:  # type: ignore[no-untyped-def]
+    def run(label: str, build, want: set[str], pin_of=None, skip_pins: bool = False,  # type: ignore[no-untyped-def]
+            at: str | None = None, with_repo: bool = True) -> None:
+        # at: the commit to check out in the throwaway repo before the case (HEAD is what the tag stands for)
+        if ids is not None and at is not None:
+            _git_try(repo, "checkout", "-q", "-f", ids[at])  # type: ignore[arg-type]
+        HOST_STAND["commit"] = ids["a"] if ids is not None else HOST_COMMIT
         with tempfile.TemporaryDirectory(prefix="release_check.host.") as name:
             rel = Path(name)
             (rel / "SHA256SUMS").write_text("")
@@ -1560,7 +1635,7 @@ def host_self_test() -> tuple[int, int]:
             win, mac = digests.get("win", "0" * 64), digests.get("mac", "0" * 64)
             pins = pin_of(win, mac) if pin_of else (win, mac)
             fetch = f"LAZPY_HOST_SHA_WIN={pins[0]}\nLAZPY_HOST_SHA_MAC={pins[1]}\n"
-            items = host_findings(rel, tag, fetch, skip_pins)
+            items = host_findings(rel, tag, fetch, skip_pins, repo if with_repo and ids is not None else None)
             out = io.StringIO()
             with contextlib.redirect_stdout(out):
                 code = report([("1c host zips", items)], False)
@@ -1571,7 +1646,8 @@ def host_self_test() -> tuple[int, int]:
         print(f"{'ok  ' if ok else 'FAIL'} 1c host zips, {label}: {sorted(kinds)}, exit {code}")
         cases.append((label, {"ok": ok}))
 
-    run("no host zip at all is SKIP, never PASS", lambda rel: {}, {"SKIP"})
+    # the default repo state: HEAD is commit a, the build commit (no tag ref exists, so HEAD stands for the tag)
+    run("no host zip at all is SKIP, never PASS", lambda rel: {}, {"SKIP"}, at="a")
     run("both zips right is PASS", lambda rel: {"win": host_stage(rel, "win"), "mac": host_stage(rel, "mac")}, set())
     run("one zip right, the other absent is SKIP", lambda rel: {"win": host_stage(rel, "win")}, {"SKIP"})
     run("an extra member", lambda rel: {"win": host_stage(rel, "win", extra={"stray.txt": b"x"}), "mac": host_stage(rel, "mac")}, {"FAIL"})
@@ -1584,16 +1660,41 @@ def host_self_test() -> tuple[int, int]:
     run("the pin is TBD", lambda rel: {"win": host_stage(rel, "win"), "mac": host_stage(rel, "mac")}, {"PEND"},
         pin_of=lambda win, mac: ("TBD", "TBD"))
     run("--skip-pins", lambda rel: {"win": host_stage(rel, "win"), "mac": host_stage(rel, "mac")}, {"SKIP"}, skip_pins=True)
-    run("a private path in SOURCE.md", lambda rel: {"win": host_stage(rel, "win", source=f"commit {HOST_COMMIT} in /Users/someone/x\n"),
+    run("a private path in SOURCE.md", lambda rel: {"win": host_stage(rel, "win", source=f"commit {HOST_STAND['commit']} in /Users/someone/x\n"),
                                                      "mac": host_stage(rel, "mac")}, {"FAIL"})
-    run("a runner path is only a NOTE", lambda rel: {"win": host_stage(rel, "win", source=f"commit {HOST_COMMIT} in D:\\a\\r\\r\n"),
+    run("a runner path is only a NOTE", lambda rel: {"win": host_stage(rel, "win", source=f"commit {HOST_STAND['commit']} in D:\\a\\r\\r\n"),
                                                       "mac": host_stage(rel, "mac")}, set())
+
+    run("a runner path inside a Windows binary is only a NOTE", lambda rel: {"win": host_stage(rel, "win",
+        extra={"libazhost.dll": b"\x00D:/a/r/r/build/obj/x.o\x00more\x00"}), "mac": host_stage(rel, "mac")}, set())
+    run("a /Users/runner path inside a macOS binary is a FAIL", lambda rel: {"win": host_stage(rel, "win"),
+        "mac": host_stage(rel, "mac", extra={"libazhost.dylib": b"\x00/Users/runner/work/r/r/build/obj/x.o\x00more\x00"})}, {"FAIL"})
+    run("the Windows zip has no NOTICES.md", lambda rel: {"win": host_stage(rel, "win", drop=("NOTICES.md",)),
+                                                           "mac": host_stage(rel, "mac")}, {"FAIL"})
+    run("no repo given: the commit rule SKIPs", lambda rel: {"win": host_stage(rel, "win"), "mac": host_stage(rel, "mac")}, {"SKIP"},
+        with_repo=False)
+    run("the build commit is not in the repo: SKIP with a reason", lambda rel: {"win": host_stage(rel, "win", source=f"commit {HOST_COMMIT}\n"),
+                                                                              "mac": host_stage(rel, "mac", source=f"commit {HOST_COMMIT}\n")}, {"SKIP"})
+    if ids is not None:
+        run("a docs-only change after the build commit is fine", lambda rel: {"win": host_stage(rel, "win"), "mac": host_stage(rel, "mac")},
+            set(), at="b")
+        run("host/ changed after the build commit", lambda rel: {"win": host_stage(rel, "win"), "mac": host_stage(rel, "mac")},
+            {"FAIL"}, at="c")
+        run("the build commit is not an ancestor of the tag", lambda rel: {"win": host_stage(rel, "win", source=f"commit {ids['s']}\n"),
+                                                                           "mac": host_stage(rel, "mac")}, {"FAIL"}, at="b")
+        _git_try(repo, "tag", "v9.9.9", ids["b"])  # type: ignore[arg-type]
+        run("a tag ref wins over HEAD (tag at b, HEAD at c)", lambda rel: {"win": host_stage(rel, "win"), "mac": host_stage(rel, "mac")},
+            set(), at="c")
 
     def other_tag(rel: Path) -> dict[str, str]:
         host_stage(rel, "win", tag="v1.0.0")  # a zip of another version
         return {"mac": host_stage(rel, "mac")}
     run("a zip of another version", other_tag, {"FAIL", "SKIP"})
+    HOST_STAND["commit"] = HOST_COMMIT
+    repo_dir.cleanup()
     bad = sum(1 for _l, r in cases if not r["ok"])
+    if ids is None:
+        print("note  the repo cases of check 1c did not run: git is not usable here")
     return len(cases), bad
 
 

@@ -1,5 +1,6 @@
 # Builds the prebuilt host binaries for a release: libazhost + azhost, once on Windows (MSYS2 MINGW64) and once on macOS
-# 15 (arm64), zips each with LICENSE and a SOURCE.md that names the commit, uploads the zips as artifacts, and attests
+# 15 (arm64), zips each with LICENSE and a SOURCE.md that names the commit (the Windows zip also NOTICES.md: it links
+# zlib, winpthreads, the mingw-w64 runtime and libgcc statically; the macOS host links only system libraries), uploads the zips as artifacts, and attests
 # them (a permanent record; logs expire). Runs only by hand (workflow_dispatch), on the commit the release is cut from.
 # The steps repeat test-windows.yml's and test.yml's host build on purpose: those two workflows stay as they are.
 # The main loop downloads the two zips, pins their sha256 in tools/fetch.sh (LAZPY_HOST_SHA_WIN, LAZPY_HOST_SHA_MAC) and
@@ -47,7 +48,13 @@ jobs:
       - name: host C tests
         shell: msys2 {0}
         run: make test-host
-      - name: zip the two binaries, LICENSE and SOURCE.md
+      - name: strip the debug info (no build path stays in a binary)
+        shell: msys2 {0}
+        run: |
+          set -eu
+          strip --strip-debug build/libazhost.dll build/azhost.exe
+          build/azhost.exe layout > /dev/null   # still runs after the strip
+      - name: zip the two binaries, NOTICES.md, LICENSE and SOURCE.md
         id: zip
         shell: msys2 {0}
         run: |
@@ -56,14 +63,15 @@ jobs:
           name="libazahar-py-host-$version-windows-x64.zip"
           rm -rf stage && mkdir stage
           cp build/libazhost.dll build/azhost.exe LICENSE stage/
+          sh tools/mkhostnotices.sh > stage/NOTICES.md
           {
             echo "# SOURCE"
             echo
             echo "What the files are: libazhost.dll and azhost.exe, the libazahar-py host for Windows x64, built with mingw-w64 (MSYS2 MINGW64) on a GitHub-hosted runner. Version $version."
             echo
-            echo "Built at repository commit $GITHUB_SHA of https://github.com/GuyShtainer/libazahar-py. The corresponding source is that commit: the host is host/*.c with the Makefile, and it links zlib statically. This zip holds no core: the core is a separate release asset."
+            echo "Built at repository commit $GITHUB_SHA of https://github.com/GuyShtainer/libazahar-py. The corresponding source is that commit: the host is host/*.c with the Makefile, and it links zlib, winpthreads, the mingw-w64 C runtime and libgcc statically (NOTICES.md holds their licence texts). This zip holds no core: the core is a separate release asset."
           } > stage/SOURCE.md
-          (cd stage && zip -X -9 -q "../$name" libazhost.dll azhost.exe LICENSE SOURCE.md)
+          (cd stage && zip -X -9 -q "../$name" libazhost.dll azhost.exe NOTICES.md LICENSE SOURCE.md)
           unzip -l "$name"
           sha=$(sha256sum "$name" | cut -d' ' -f1)
           echo "$name sha256 $sha"
@@ -96,7 +104,14 @@ jobs:
           vtool -show-build build/libazhost.dylib | tee "$RUNNER_TEMP/vtool.txt"
           grep -q 'minos 15.0' "$RUNNER_TEMP/vtool.txt"
           [ "$(lipo -archs build/libazhost.dylib)" = arm64 ]
-      - name: sign both files ad hoc (the last step that touches them)
+      - name: strip the debug map (it holds the absolute path of every object file)
+        run: |
+          set -eu
+          strip -S build/libazhost.dylib build/azhost
+          if strings -a build/libazhost.dylib build/azhost | grep -q '/Users/'; then
+            echo "a /Users/ path is still in a binary" >&2; exit 1
+          fi
+      - name: sign both files ad hoc (the last step that touches them; strip invalidates a signature)
         run: |
           set -eu
           codesign --force -s - build/libazhost.dylib

@@ -20,6 +20,10 @@ As C6, plus the no-compiler clone check on both systems.
 its first run), the macOS CI recipe and the hosted-runner state-boot rule, the Windows emulator CI workflow, the
 gymnasium-style example. PC on the merged tree: fast tests 359 passed, 6 skipped; release_check self-test 15 of 15;
 fetch_fallback 13 of 13; test_state live 4 passed. No workflow has run yet. Next: D5 review.
+2026-11-20 16:57: D5 review (1 high, 4 medium, 12 low) and its two fix lanes merged: the macOS host stripped of build paths
+before signing, a NOTICES.md in the Windows host zip, release_check 1c ties the host zip's commit to the tag, a pinned
+Vulkan loader for the Windows emulator CI. PC: fast tests 359 passed, 6 skipped; release_check self-test 24 of 24;
+fetch_fallback 14 of 14; doctor ok with the pinned loader; test_state live 4 passed. No workflow has run yet.
 
 ## Pointers
 - Plan section: `docs/plans/phase-8.md:208`

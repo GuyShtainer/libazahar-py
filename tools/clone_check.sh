@@ -23,7 +23,9 @@
 #   --no-build          the README's no-compiler route instead of the build route: the steps are the block after
 #                       <!-- docs_check: steps-nocc --> (macOS) or steps-nocc-win (Windows), which fetches the prebuilt
 #                       host with `fetch.sh --host`. No `make` runs (so no `make test-host` on Windows and no build
-#                       block on macOS), and the log says so. Needs a release (or --release-base) that carries the host
+#                       block on macOS), and the log says so. What it proves: the README's no-compiler steps need no make step and
+#                       leave no build/obj or build/win64 behind. It does NOT prove no compiler is installed (the
+#                       machine running it usually has one on PATH). Needs a release (or --release-base) that carries the host
 #                       zips and pins that are filled. Not combined with --until host.
 # --dry-run prints each command instead of running it. Every step's output goes to <out>/clone.log and the exit code to
 # <out>/rc. No timing from this run belongs in a document.
@@ -163,7 +165,7 @@ nocc_emit() { printf '%s' 'awk -v m="<!-- docs_check: '"$1"' -->" '"'"'f == 0 &&
 
 if [ "$NOBUILD" -eq 1 ]; then
   if [ "$WIN" -eq 1 ]; then NOCC_MARK=steps-nocc-win; else NOCC_MARK=steps-nocc; fi
-  note "--no-build: the README's no-compiler route ($NOCC_MARK): fetch.sh --host, no make, no compiler step"
+  note "--no-build: the README's no-compiler route ($NOCC_MARK): fetch.sh --host, no make, no compiler step (proves no make line runs and nothing is built; a compiler may still be on PATH here)"
   run_step steps "quickstart ok" "cd \"$CLONE\" && $(nocc_emit "$NOCC_MARK") > \"$OUT/steps.sh\" && [ -s \"$OUT/steps.sh\" ] && ! grep -Eq '(^|[^-])make( |\$)|MSBuild|pacman' \"$OUT/steps.sh\" && $CENV sh -eux \"$OUT/steps.sh\""
   run_step host-files "" "cd \"$CLONE\" && if [ $WIN -eq 1 ]; then test -f build/libazhost.dll && test -f build/azhost.exe; else test -f build/libazhost.dylib && test -x build/azhost; fi && ! test -d build/obj && ! test -d build/win64"
 elif [ "$WIN" -eq 1 ]; then

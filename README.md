@@ -76,8 +76,11 @@ python3 -m venv .venv && .venv/bin/pip install -e .             # the Python lay
 
 A release from v1.3.0 on carries the host, already built: `libazhost` and `azhost`, attested by the release workflow.
 `fetch.sh --host` downloads the zip for your system, checks its sha256 against a pin in `tools/fetch.sh`, and puts the
-two files where the Python layer looks for them (`build/`). You then need no Xcode command-line tools and no MSYS2
-compiler, only `git`, `curl`, `unzip` and Python 3.10 or newer. A checkout from before that release has no pins for
+two files where the Python layer looks for them (`build/`). You then need no compiler and no `make`
+(no Xcode command-line tools to build with, no MSYS2 compiler), only `git`, `curl`, `unzip` and Python 3.10 or newer.
+On a stock Mac, `git` and `python3` are shims for the command-line tools (the first `git clone` offers to install them,
+and their Python is 3.9, too old): get git from Homebrew or take the repository as a GitHub source zip, and Python 3.10+
+from python.org or Homebrew. This route has not run on a hosted or a clean Mac yet; the first run comes with v1.3.0. A checkout from before that release has no pins for
 it: `--host` stops with one line saying so, and the build routes above still work.
 
 macOS 15 or later on Apple silicon, from the repository folder:

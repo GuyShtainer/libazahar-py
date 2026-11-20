@@ -1,10 +1,11 @@
 #!/bin/sh
-# fetch-mesa.sh DEST: download MSYS2's Mesa (lavapipe, a software Vulkan driver) and its 15 runtime packages, check
+# fetch-mesa.sh DEST: download MSYS2's Mesa (lavapipe, a software Vulkan driver) and its 16 runtime packages (the last is the Vulkan loader: a GPU-less runner has no vulkan-1.dll), check
 # each sha256 BEFORE unpacking, and unpack them into DEST (a folder of your own, never an MSYS2 install). Used by
-# .github/workflows/test-windows-live.yml; prints "icd=<path to lvp_icd.x86_64.json>" and "bin=<folder of the DLLs>".
+# .github/workflows/test-windows-live.yml; prints "icd=<path to lvp_icd.x86_64.json>", "bin=<folder of the DLLs>" and "loader=<path to vulkan-1.dll>"
+# (give that last one to the host as LAZ_MVK: a path with a separator is loaded from its own folder, not System32).
 #   DEST            the folder to unpack into (default dl/mesa)
 #   LAZ_MESA_BASE   use this URL instead of https://repo.msys2.org/mingw/mingw64 (for tests, file://)
-# Pins: the packages and sha256 below are the ones trialled on 2026-11-19 (Mesa 26.2.7-1). Change a version only
+# Pins: the packages and sha256 below are the ones trialled on 2026-11-19 (Mesa 26.2.7-1); the loader (1.4.363.0-1) was added 2026-11-20. Change a version only
 # together with its sha256. Downloads are untrusted data: each package is hashed before tar sees it, the member list
 # is refused if any name is absolute or holds "..", and nothing from a package is run here.
 set -eu
@@ -28,7 +29,8 @@ mingw-w64-x86_64-xz-5.8.4-1-any.pkg.tar.zst 2de0f26da60b7ff7aa192a226330d7de6b10
 mingw-w64-x86_64-gcc-libs-16.2.0-7-any.pkg.tar.zst 2df8a63906d569892b49719fb8ff73b7c5c8abb49bdaccf9a35dc709f182b7e2
 mingw-w64-x86_64-libstdc++-16.2.0-7-any.pkg.tar.zst 578db695632bdb5bafd716958c4caa62560f3de2633680b258ae6f684201276d
 mingw-w64-x86_64-gettext-runtime-1.0-1-any.pkg.tar.zst be68d7f260633284b910c588c6d82ee304a81c8817a686d2cd9df83f872c27af
-mingw-w64-x86_64-libgcc-16.2.0-7-any.pkg.tar.zst 6d1311b397ba33be542fd46bae3de60338bfd967e95e221847f01269e98983b8'
+mingw-w64-x86_64-libgcc-16.2.0-7-any.pkg.tar.zst 6d1311b397ba33be542fd46bae3de60338bfd967e95e221847f01269e98983b8
+mingw-w64-x86_64-vulkan-loader-1~1.4.363.0-1-any.pkg.tar.zst 281fa31b1a023485d4fd04a092a8b5e9ca2f59804df7fcf9f2d4e5aaa5438af0'
 
 die() { echo "fetch-mesa: $*" >&2; exit 1; }
 sha_of() { if command -v sha256sum >/dev/null 2>&1; then sha256sum "$1" | cut -d' ' -f1; else shasum -a 256 "$1" | cut -d' ' -f1; fi; }
@@ -55,9 +57,11 @@ done
 
 ICD="$DEST/mingw64/share/vulkan/icd.d/lvp_icd.x86_64.json"
 [ -f "$ICD" ] || die "no lavapipe ICD at $ICD after unpacking"
+[ -f "$DEST/mingw64/bin/vulkan-1.dll" ] || die "no vulkan-1.dll after unpacking"
 [ -f "$DEST/mingw64/bin/vulkan_lvp.dll" ] || die "no vulkan_lvp.dll after unpacking"
 if command -v cygpath >/dev/null 2>&1; then
   echo "icd=$(cygpath -w "$ICD")"; echo "bin=$(cygpath -w "$DEST/mingw64/bin")"
+  echo "loader=$(cygpath -w "$DEST/mingw64/bin/vulkan-1.dll")"
 else
-  echo "icd=$ICD"; echo "bin=$DEST/mingw64/bin"
+  echo "icd=$ICD"; echo "bin=$DEST/mingw64/bin"; echo "loader=$DEST/mingw64/bin/vulkan-1.dll"
 fi
