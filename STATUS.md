@@ -1,7 +1,8 @@
 # libazahar-py status
 
-As of 2026-11-20. v1.2.0. The items new in 1.2.0 ran on the Windows PC; for macOS see
-"macOS in v1.2.0" below. Each item below names the work item (`laz-NNN`) whose
+As of 2026-11-20. v1.3.0. The cores, the host's code and the Python layer are as in v1.2.0; the items new in 1.3.0
+are the prebuilt host, CI for outside users and an example (see "macOS in v1.3.0" below). The items new in 1.2.0 ran
+on the Windows PC; for macOS see "macOS in v1.2.0". Each item below names the work item (`laz-NNN`) whose
 Evidence, in `docs/status/lazpy/5-done/`, proves it. Nothing is listed as working that no gate ran.
 
 ## What works
@@ -50,6 +51,16 @@ Evidence, in `docs/status/lazpy/5-done/`, proves it. Nothing is listed as workin
   seed gives one clock on every machine (USING section 10a) (laz-834)
 - New in 1.2.0: a rebuilt Windows core with OpenSSL's folders at their Windows defaults (`C:/Program Files/...`)
   instead of paths inside the build's own prefix; the same source and patches as v1.1.0's (laz-835)
+- New in 1.3.0: the host, prebuilt: two release zips (macOS arm64, Windows x64) built by `host-bin.yml`, and
+  `fetch.sh --host`, which fetches the one for your system against its sha256 pin; no compiler needed (README, "No
+  compiler") (laz-841)
+- New in 1.3.0: a recipe for running your own app in GitHub Actions on a hosted macOS runner (`examples/ci/macos.yml`,
+  `docs/CI.md`), run in this repository's `macos-live.yml` on the test app (laz-842)
+- New in 1.3.0: `examples/gym_env.py`, a gymnasium-style environment over the test app, outside the promise (laz-844)
+- New in 1.3.0: the state-boot time bound only records the time on a GitHub-hosted runner; elsewhere it is a gate
+  (laz-842)
+- New in 1.3.0: the emulator tests in Windows CI, on lavapipe (software Vulkan), best effort (see Windows below)
+  (laz-843)
 
 ## What does not work yet
 
@@ -71,10 +82,20 @@ lazpy.1 Windows core, no `LoadWarning`, no nice values, the symlink test while D
 test app that no release ships). For v1.2.0 the two 3-copy `Pool` tests were left out there (that PC runs at most two
 copies); they passed in the macOS CI emulator suite.
 - CI adds Windows Server 2025 for the build, the fast tests and the core load test.
+- Since v1.3.0 CI also runs the emulator tests there (`test-windows-live.yml`) on lavapipe, MSYS2's software Vulkan
+  driver (pinned by sha256), best effort: the job's result is read from its own result step. It passed three
+  dispatches in a row and runs on pushes to main. One test is left out there: on lavapipe the depth of cleared pixels
+  reads back other than the clear value, while the stencil counts match (`test_stencil_readback_counts`; it runs on
+  the PC's GPU and in the macOS CI). The tests that need a second copy (`test_pool_live.py`) are left out too.
 - Windows 11 and AMD and Intel GPUs are untested.
 - A GPU driver with Vulkan is required; nothing Vulkan is shipped.
 - No Windows speed figures. The instance cap stays 4.
 - Differences from macOS are in `docs/USING.md` section 15a.
+
+## macOS in v1.3.0
+
+macOS uses the same core as v1.0.0, v1.1.0 and v1.2.0. TO BE FILLED: the release candidate's hosted CI results (fast
+tests, the emulator suite with the recipe step, and the no-compiler route).
 
 ## macOS in v1.2.0
 

@@ -7,17 +7,19 @@ Unofficial: not affiliated with or endorsed by the Azahar project. Report libaza
 
 ## Status
 
-v1.2.0, with semantic versioning from 1.0.0 (`docs/USING.md` says what is covered). v1.1.0 added Windows; v1.2.0 adds
+v1.3.0, with semantic versioning from 1.0.0 (`docs/USING.md` says what is covered). v1.1.0 added Windows; v1.2.0 added
 a command line (`python -m libazahar doctor` and `run`), audio capture, image compare with a pass/fail example, and
-errors that name their log. It runs 3DS homebrew headless, with inputs, shots, SD files, savestates, many instances at
+errors that name their log; v1.3.0 adds the host prebuilt (no compiler needed), a recipe for running your own app in
+GitHub Actions (`docs/CI.md`) and a gymnasium-style example. It runs 3DS homebrew headless, with inputs, shots, SD files, savestates, many instances at
 once and guest memory reads on our core; `STATUS.md` lists each item with the work that proved it. What does not work:
 macOS before 15 and Intel Macs, audio playback (capture works on Windows, not yet tested on macOS: `docs/USING.md` section 12b), anything with a window,
 and anything that is not homebrew.
 
 **Windows: proven on one PC.** The native Windows build (core, host library and Python layer, no WSL) was tested on
 one machine: Windows 10 Pro 22H2, x64, an NVIDIA GeForce RTX 3060 with driver 610.88, and Python 3.10.11. CI adds Windows
-Server 2025 for the build, the fast tests and a load test of the core. Windows 11 and AMD and Intel GPUs are untested.
-You build the host yourself in MSYS2; the core comes from the release. A GPU driver with Vulkan is required.
+Server 2025 for the build, the fast tests and a load test of the core, and since v1.3.0 the emulator tests on a software
+Vulkan driver (best effort). Windows 11 and AMD and Intel GPUs are untested.
+You build the host yourself in MSYS2, or take the prebuilt one ("No compiler" below); the core comes from the release. A GPU driver with Vulkan is required.
 Linux is not supported.
 
 ## Measured numbers
@@ -80,7 +82,7 @@ two files where the Python layer looks for them (`build/`). You then need no com
 (no Xcode command-line tools to build with, no MSYS2 compiler), only `git`, `curl`, `unzip` and Python 3.10 or newer.
 On a stock Mac, `git` and `python3` are shims for the command-line tools (the first `git clone` offers to install them,
 and their Python is 3.9, too old): get git from Homebrew or take the repository as a GitHub source zip, and Python 3.10+
-from python.org or Homebrew. This route has not run on a hosted or a clean Mac yet; the first run comes with v1.3.0. A checkout from before that release has no pins for
+from python.org or Homebrew. TO BE FILLED: where this route has run (hosted and clean machines). A checkout from before v1.3.0 has no pins for
 it: `--host` stops with one line saying so, and the build routes above still work.
 
 macOS 15 or later on Apple silicon, from the repository folder:
