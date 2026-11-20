@@ -59,7 +59,7 @@ LAZPY_CORE_SHA=ced9a36283ec72318b20f9686601335a2e57699ffb9278f31885697161bb609e
 TESTAPP_SHA=ba10699831f2a1c88b56de119bd2f8caab465e051eb350954b7be1cd7b027ccd
 # the Windows core zip (in the release only; no fallback)
 LAZPY_CORE_ZIP_WIN=azahar_lazpy_libretro-2126.2-lazpy.2-windows-x64.zip
-LAZPY_CORE_SHA_WIN=791efc1a1cf77d65b58812ca89c509cc5442124ffa24cdcbdbcf8668339311bf
+LAZPY_CORE_SHA_WIN=404583fa1d4d0152877d44b025f0a6b4da724f809616b953aa1c12b309a77ed3
 # ------------------------------------------------------------------------------------------------------------------
 
 FORCE=0; DO_MVK=0; DO_HEADERS=0; DO_CORE=0; DO_APP=0
