@@ -1,6 +1,6 @@
 # libazahar-py status
 
-As of 2026-11-20. v1.2.0 (staged, not yet released). The items new in 1.2.0 ran on the Windows PC; for macOS see
+As of 2026-11-20. v1.2.0. The items new in 1.2.0 ran on the Windows PC; for macOS see
 "macOS in v1.2.0" below. Each item below names the work item (`laz-NNN`) whose
 Evidence, in `docs/status/lazpy/5-done/`, proves it. Nothing is listed as working that no gate ran.
 
