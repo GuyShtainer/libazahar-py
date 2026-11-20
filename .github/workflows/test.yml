@@ -40,7 +40,8 @@ jobs:
           done
           # the allowed differences: the check-obinary line the owner asked for, and v1.2.0's audio capture file
           # (host/audio.c: its compile line and its mkdir, and its object on the library's link line, taken out here)
-          sed 's| build/obj/audio\.o||' "$root/b.txt" > "$root/b2.txt"
+          # (only off the link line: the audio file's own compile line, which also names the object, stays as it is)
+          sed '/ -c -o build\/obj\/audio\.o /!s| build/obj/audio\.o||' "$root/b.txt" > "$root/b2.txt"
           diff "$root/a.txt" "$root/b2.txt" > "$root/ab.diff" || true
           cat "$root/ab.diff"
           grep '^[<>]' "$root/ab.diff" > "$root/ab.lines" || true
