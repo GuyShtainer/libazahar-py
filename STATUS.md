@@ -79,10 +79,10 @@ copies); they passed in the macOS CI emulator suite.
 ## macOS in v1.2.0
 
 macOS uses the same core as v1.0.0 and v1.1.0. The v1.2.0 changes were built and tested on the Windows PC. On macOS
-they ran in the hosted CI jobs on the release candidate (commit 845f6a4): the fast tests passed on Python 3.10 and
-3.14 (354 passed, 9 skipped each, `test.yml` run 44715294673), and the emulator suite passed with 430 passed, 25
-skipped and none failed (`macos-live.yml` run 44715249847), the kqueue parent watch and the `lsof` slot lookup among
-them. Its skips are Windows-only tests, the comparisons with Azahar's own core (not given to that job), four inputs that
+they ran in the hosted CI jobs on the release candidate (commit 2f959c0): the fast tests passed on Python 3.10 and
+3.14 (354 passed, 9 skipped each, `test.yml` run 44741219449), and the emulator suite (`macos-live.yml` run
+44741224096) had 429 passed, 25 skipped and 1 failed in both attempts, `test_state_boot` (3.3 and 3.4 s against its
+2.5 s bound on that shared runner, as at v1.1.0). The kqueue parent watch and the `lsof` slot lookup passed there. Its skips are Windows-only tests, the comparisons with Azahar's own core (not given to that job), four inputs that
 job lacks (a release fixture, the test app's ELF, two older cores), and the two audio tests: CI has no tone test app
 (no release ships it), so audio capture is not yet tested on macOS.
 

@@ -50,6 +50,12 @@ Guy's ruling judged enough. R1 (the sentence in published history) waits on an I
 2026-11-20 15:04: R1 closed on Guy's choice ("Rewrite history"): main rewritten and force-pushed (head 0257fcd),
 tags unchanged; the Windows core rebuilt on 0257fcd (laz-835: run 44737890394, zip fe0bbfd1..., pinned);
 test-windows run 44737848948 green on 0257fcd. Next: CI, re-stage and clone check on the pinned head.
+2026-11-20 15:40: on pushed 2f959c0 (the pin): test-windows 44741192320 and test.yml 44741219449 green (354
+passed, 9 skipped each); macos-live 44741224096 429 passed, 25 skipped, 1 failed in both attempts (test_state_boot's
+2.5 s bound on the hosted runner, 3.3 and 3.4 s; said in STATUS and the notes). PC re-stage (SHA256SUMS fe729508...,
+Windows zip fe0bbfd1...): release_check 15 PASS, 12 and 13 as ruled; check 13 on the Mac 0 hits; clone_check rc 0
+(439 passed, 13 skipped, 1 xfailed); fixture v1.2.0 remade on core 81845090.... The 14 CI runs on rewritten commits
+deleted (private list in runs/p8/c6/); the p8 lane branches moved onto their rewritten commits.
 
 ## Pointers
 - Plan section: `docs/plans/phase-8.md:180`

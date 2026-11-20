@@ -215,7 +215,7 @@ long batch ends with its caller; if the job cannot be made, one `RuntimeWarning`
 when the caller dies between batches. On macOS the worker watches its caller's process through `kqueue` and exits at
 once, mid-batch too. On Linux a worker ends only between batches (when the pipe closes); a caller that may be killed
 mid-batch should end the worker itself first (`close()`). The macOS path is covered by unit tests with a stand-in
-`kqueue`, and its live check passed in the macOS CI emulator suite (`macos-live.yml` run 44715249847).
+`kqueue`, and its live check passed in the macOS CI emulator suite (`macos-live.yml` run 44741224096).
 
 A missing `sd_seed` folder is an `ArgumentError`; a `workdir` that cannot be made is a `HostError` naming the path; an
 unreadable option profile is a `HostError`; a profile line that
