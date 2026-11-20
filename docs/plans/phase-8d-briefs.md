@@ -102,3 +102,23 @@ Read the D4 row (line 215) and do what it says.
 ## Review: D5 (opus, after the four lanes merge)
 
 The main loop writes this brief at merge time from the four lanes' final messages, as `phase-8c-briefs.md` did.
+
+Written at merge time (main 66b8fd5, the four lanes merged on 7331109). Review only: you never commit, push or
+dispatch, and you edit no tracked file. Your findings go to `runs/p8/d/d5-review.md` (gitignored), saved as you go,
+each with file:line, what fails, a concrete case, and a fix; severity high / medium / low.
+- Scope: `git diff 7331109 66b8fd5`. Read the D1-D4 rows (plan line 212-215) and the lane sections above.
+- Check the rules: every new workflow is `workflow_dispatch` only (macos-live keeps its triggers); every action pinned
+  by full sha with the version comment our other workflows use; every download sha256-checked; no secret, token or
+  machine path in a workflow; `continue-on-error` and how results are read, as briefed; the v1.2.0 promise unchanged
+  (`tests/python/test_api.py`'s lists, `host/azhost.h`, the `azhost` command line, exit codes, file formats).
+- Check the code: `fetch.sh --host` (TBD pin dies with one line, sha check before unzip, safe unzip, the paths the
+  Python layer reads); `mkrelease.sh` (v1.2.0's command line unchanged, the zips in `SHA256SUMS`); `release_check.py`
+  row 1c (SKIP vs PASS vs FAIL, `--pre-push`); `clone_check.sh --no-build`; `fetch-mesa.sh`; the state-boot rule;
+  `examples/gym_env.py` against gymnasium's API (reset/step return shapes, seeding, spaces, close).
+- Known, judge them: the recipe pins `ref: v1.3.0` before that tag exists; a hosted `-g` build may embed runner paths
+  (release_check NOTE vs FAIL); the PC lane's `.base-v1.2.0` marker survives a job that deletes `build/`.
+- The docs: README's no-compiler route, `docs/CI.md`, `docs/USING.md`'s changed lines; claims that outrun what ran
+  (nothing has run in CI yet).
+- You may run read-only checks on the Mac (`python3 -I tools/docs_check.py`, `ruby -ryaml`, `sh -n`, `bash -n`); no
+  `make`, pytest or emulator on the Mac. Fast PC checks only through `runs/p8/bin/pclane . d5 -- '<cmd>'`.
+- Final message: the findings by severity, one line each, and the three the main loop must fix before v1.3.0.
