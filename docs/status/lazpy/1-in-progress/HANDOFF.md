@@ -1,7 +1,7 @@
 <!-- handoff: slim v1 | current tasks only | rewritten whole from docs/status/templates/handoff.md | budget 80 lines | never append -->
 # libazahar-py handoff
 
-As of: 2026-11-20 15:40 (session 3ds-toolkit-eb)
+As of: 2026-11-20 15:59 (session 3ds-toolkit-eb)
 
 This file lives in docs/status/lazpy/1-in-progress/, beside its item files. It holds only what
 the next session needs to act now, and points at the rest. Goals, rules, decisions and history live elsewhere.
@@ -11,25 +11,23 @@ the next session needs to act now, and points at the rest. Goals, rules, decisio
 |---|---|---|---|
 
 Phase 8 is under way: Guy, 2026-11-18 ~21:00, "you have my green light. go". He did not answer Q1-Q5, so the
-plan's recommended answers apply (laz-810 notes). Phase A is done: runs/p8/a/decisions.md. All lane PC jobs go
-through runs/p8/bin/pclane under one shared PC lock (one job of ours at a time since the 2026-11-18 PC crash).
+plan's recommended answers apply (laz-840 notes). v1.2.0 is published (laz-830 done 15:58, clone check from GitHub
+passed). All PC jobs go through one shared PC lock (D:/lazpy/p8/pc.lock; one job of ours at a time since the
+2026-11-18 PC crash).
 
 ## Next steps, in order
-1. Phase C (laz-830): C1 command line and C2 audio done (laz-831, 832). C3 exact inputs parked (laz-833) for the
-   next core phase with the leak fix. Phase B closed 11:01 (laz-820: CI green on pushed 934dd94, both workflows; the
-   3-copy pool tests passed in macos-live). The clock fix (laz-834) is merged and proven on a UTC host.
-2. C6 (laz-830 Evidence): steps 1-8 done and redone on the rewritten history (Guy chose "Rewrite history"; the
-   private commit map is runs/p8/c6/commit-map-private.txt). Main pinned at 2f959c0 (Windows zip fe0bbfd1..., core
-   rebuilt in laz-835); CI, PC re-stage, clone check and check 13 done 15:40; the old CI runs deleted. The docs commit
-   after it changes only the macOS run ids, so re-stage once more from it (scratchpad stage4.sh: mkrelease, then
-   release_check --pre-push --inherit v1.0.0 --gate-f2 art/gate_f2.txt, needles on stdin as path forms), refresh
-   runs/p8/c6/staged/. Next: 9 Guy's publish word: push, tag v1.2.0, publish (the release page from
-   runs/p8/c6/staged/ and the notes), STATUS:3 at the tag (N11); 10 clone_check from GitHub.
+1. Phase D (laz-840, plan `docs/plans/phase-8.md:208`): four sonnet lanes, briefs in `docs/plans/phase-8d-briefs.md`,
+   worktrees `runs/p8/wt/<lane>` made at main: hostbin (D1 prebuilt host), ci (D2 the user CI recipe and the
+   hosted-runner state-boot rule), wincilive (D3 Windows emulator CI, best effort until 3 of 3), gym (D4). Lanes
+   never push or dispatch; the main loop merges, then dispatches the new workflows once the PC proved their steps.
+2. Then D5: opus review, fixes, merge, release v1.3.0 by C6's list plus the no-compiler clone check on both systems.
 3. The PC STAMP (C:\lazpy\STAMP.json) got a quick refresh about 11:00 on Guy's word ("Quick refresh, redeploy later"):
-   only core/options-lazpy.txt's drift hash changed, in all three stanzas (old copy STAMP.before-tz.json). The
-   full redeploy (deploy_py.py + deploy_win.py with the new profile) waits for a quiet PC moment; then tell Gen3D
-   and 3DP the new deploy ids. The dzn stanza's python/libazahar/_abi.py drift is older and not ours to fix.
+   only core/options-lazpy.txt's drift hash changed. The full redeploy (deploy_py.py + deploy_win.py with the new
+   profile) waits for a quiet PC moment; then tell Gen3D and 3DP the new deploy ids.
 4. docs_check's links check fails on the PC lane only (no .git there); it runs on the Mac.
+5. History rewrite leftovers (private): the commit map runs/p8/c6/commit-map-private.txt and the deleted CI run list
+   runs/p8/c6/deleted-ci-runs-private.txt stay out of git. Old ids survive only inside GitHub's cached objects until
+   its own clean-up; Guy may ask GitHub Support for a purge.
 
 ## Waiting on Guy (only what blocks a step above)
 - Pushes: each one needs his word, and after a red CI run he is asked again before the next push.
@@ -37,9 +35,10 @@ through runs/p8/bin/pclane under one shared PC lock (one job of ours at a time s
 The full list is generated into `docs/status/README.md`.
 
 ## Pointers
-- Plan: `docs/plans/phase-8.md` (rev 1; phase B rows at lines 165-173). Lane briefs: `docs/plans/phase-8b-briefs.md`.
-- Items: laz-830 in 1-in-progress; 840 in 4-not-started; 820-829 and 834 in 5-done.
-- PC commands: `docs/map/runners.md` (Windows PC section); the helpers runs/p8/bin/pc and pclane are outside git.
+- Plan: `docs/plans/phase-8.md` (rev 1; phase D at line 208, Q4 at line 314).
+- Items: laz-840 in 1-in-progress; 830 and 835 in 5-done; 833 parked (next core phase, with laz-829's leak fix).
+- PC commands: `docs/map/runners.md` (Windows PC section); the release staging dir D:/lazpy/p8/c6 (art = the
+  v1.2.0 Windows core's CI artifact, rel/v1.2.0 = the published files).
 - Progress page: https://claude.ai/artifact/TFaGBKNbr5pDFZGDCNJUgH. Republish it only inside the progress command
   or when Guy asks.
 - Rules that bite every turn, and the stop list's place: `docs/map/rules.md`. Everything else: `docs/map/README.md`.
