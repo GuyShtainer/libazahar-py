@@ -27,12 +27,12 @@ new test shows two runs under different parent time zones give the same records.
 
 ## Pointers
 - Plan section: `docs/plans/phase-8.md:180` (phase C); found in C6 step 5 (the macOS CI read)
-- Review: runs/p8/reviews/tz-as-built.md (opus, 2026-11-20 02:35: merge after fixes; fixes in 81fdcbc)
+- Review: runs/p8/reviews/tz-as-built.md (opus, 2026-11-20 02:35: merge after fixes; fixes in 71abcfb)
 
 ## Lessons and notes
 - 2026-11-20 02:15, the PC: `TZ=GMT0` makes `test_two_tick_seeds_differ` fail exactly as on the macOS runner (t moved
   by 0); the PC's own zone (+0200) passes. Cause confirmed.
-- A night decision (Guy asleep): built in lane p8-tz (runs/p8/wt/tz, commit bc51552), not merged until he says so.
+- A night decision (Guy asleep): built in lane p8-tz (runs/p8/wt/tz, commit 7877ef0), not merged until he says so.
 - 2026-11-20 02:27, the PC lane tz: determinism + profile tests 104 passed under the PC's zone and under GMT0 (the new
   3-zone test included); the full suite 440 passed, 14 skipped (lane setup: no tone app, fixture or old core), 1 xfailed.
   02:36: after the review fixes, test_determinism 4 passed under both zones again. Left for the merge: move this

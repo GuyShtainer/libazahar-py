@@ -260,3 +260,5 @@ date	bet	phase	agent_id	model	role	kind	start	end	hours	source
 2026-11-20	phase 8 C main loop: push, CI read (all green), check 13 on the Mac, the notes and STATUS macOS lines, the audit brief	phase-8c	main	opus	main	release	11:37	12:15	0.63	session clock
 2026-11-20	phase 8 C main loop: re-stage, the legal audit dispatched and read, its blocker and notes fixed, the IP consult dispatched	phase-8c	main	opus	main	release	12:15	12:37	0.37	session clock
 2026-11-20	phase 8 C6 step 8: release-legal-audit of v1.2.0	phase-8c	adf3e9b572647a545	opus	release-legal-audit	release	12:22	12:36	0.23	transcript
+2026-11-20	phase 8 C6 step 8: IP consult on the published plan sentence	phase-8c	ae2a21cd1ecc4d6b8	opus	ip-legal	release	12:36	12:43	0.12	transcript
+2026-11-20	phase 8 C main loop: the consult read, Guy asked, history rewritten and force-pushed, ids in docs remapped, the Windows core rebuild dispatched	phase-8c	main	opus	main	release	12:37	14:45	2.13	session clock

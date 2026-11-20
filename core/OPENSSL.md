@@ -75,7 +75,7 @@ make install_dev
   match the value in this file.
 - The two archives the link used (sha256, also in `build.inputs`): `libssl.a`
   `fea821959f1eb178eea43358ae25d7163344e9acbdae696acd1953690aee686b`, `libcrypto.a`
-  `85a29a994da0ccd6f5f644998e5a9ff2aa0b6aa9c60f66a4a5b0a042f0d6fd2a` (core-win64 run 44691632561, the v1.2.0 core).
+  `d3443ae639472cf27ae42c50e611200ba4ff8f427a6561da8847bf82c5f4bfa0` (core-win64 run 44737890394, the v1.2.0 core).
   libcrypto.a is not byte-identical between CI runs; the release pins the DLL, not the archives.
 - `--openssldir` is given a Windows path, but Configure runs on Linux and does not see `C:/` as absolute, so it joins
   the prefix. The v1.1.0 core shipped that joined path (`/opt/lazpy/openssl-3.6.5-mingw64/C:/Program Files/Common

@@ -21,11 +21,15 @@ One `core-win64.yml` run, green, with an attested artifact whose DLL holds the t
 again with the reason written.
 
 ## Evidence
-2026-11-20 06:59 UTC: core-win64 run 44691632561 on pushed 5cf51cf (the one round) green; artifact core-win64, the
+2026-11-20 06:59 UTC: core-win64 run 44691632561 on pushed 638f2a8 (the one round) green; artifact core-win64, the
 DLL's sha256 ee3e9e0a76fa8a5a..., attestation verify rc 0; build.inputs openssl_openssldir "C:/Program Files/Common
 Files/SSL", openssl_enginesdir "C:/Program Files/OpenSSL/lib/engines-3", openssl_modulesdir "C:/Program
-Files/OpenSSL/lib/ossl-modules"; gate_f2.txt starts `gate_f2 1 target=win64`, head=5cf51cf. The code: 587c171.
+Files/OpenSSL/lib/ossl-modules"; gate_f2.txt starts `gate_f2 1 target=win64`, head=638f2a8. The code: 8e20b17.
 The release's clone checks (C6 steps 3-4) run on this core. Done.
+2026-11-20 13:00 UTC: rebuilt on the new main head (core-win64 run 44737890394 on 0257fcd, green): the DLL's
+sha256 81845090cfcbb0af..., attestation verify rc 0, the three Windows OpenSSL paths in it and no prefix path,
+gate_f2.txt head=0257fcd, libcrypto.a d3443ae6... (core/OPENSSL.md). Windows zip fe0bbfd1..., pinned in
+tools/fetch.sh. v1.2.0 ships this core.
 
 ## Pointers
 - Plan: `docs/plans/phase-8.md:192` (C6a), Q1 at line 311

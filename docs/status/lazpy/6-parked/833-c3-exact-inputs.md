@@ -53,5 +53,5 @@ live test were added; USING section 4 says the option does not exist.
 Source files read (Azahar commit 219d743a; the scratch copies are gone, fetch them again at that commit): `movie.cpp`, `movie.h`, `hid.cpp`, `ir_rst.cpp`,
 `extra_hid.cpp`. The last three were needed because the record interleaving cannot be read from the movie files alone.
 - 2026-11-19 02:45: the movie call is out of the host again (review finding 1; lane fav). Its code (host/movie.c,
-azh_movie_play, the worker's movie argument) is in commit 44ad3c5 on branch p8-hostav: bring it back with the core
+azh_movie_play, the worker's movie argument) is in commit 1ad80b8 on branch p8-hostav: bring it back with the core
 patch, in one ABI bump.

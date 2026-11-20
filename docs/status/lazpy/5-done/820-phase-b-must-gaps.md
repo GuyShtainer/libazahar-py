@@ -15,13 +15,13 @@ Steps B0-B8 of the plan: every Must row becomes have. Python, tests, docs, one r
 The full PC gate passes with only the known skips; test-windows.yml green on the merge commit.
 
 ## Evidence
-2026-11-19 01:50: the full PC gate on merged main (2777af1 + handoff commits), fast + live, the two 3-copy pool tests
+2026-11-19 01:50: the full PC gate on merged main (6540a30 + handoff commits), fast + live, the two 3-copy pool tests
 excluded (PC rule: 2 copies): 357 passed, 11 skipped (each with its reason), 1 xfailed (the core's handle leak,
 laz-829) in 6 min 16 s. The review runs.
 2026-11-19 02:16: second full PC gate after the review fixes: 379 passed, 11 skipped, 1 xfailed, 1 failed (a load flake in test_m5_stock_core_refuses, 3 of 3 alone; retry doubled). Steps 821-829 done. Still open: test-windows.yml and test.yml on a pushed commit (the push waits on Guy), and the two 3-copy pool tests (CI or the Mac).
-2026-11-20 11:01: done. On pushed main: test-windows.yml green on 4bb6f43 (run 44698486054, after 5cf51cf and d449db0 also
-green), test.yml green on 4bb6f43 (run 44698485569; d449db0's red was the skips list, fixed in 4bb6f43). The two
-3-copy pool tests ran and passed in macos-live on 5cf51cf (run 44691639523: 429 passed, its one failure test_state's
+2026-11-20 11:01: done. On pushed main: test-windows.yml green on 934dd94 (run 44698486054, after 638f2a8 and ff8a6f8 also
+green), test.yml green on 934dd94 (run 44698485569; ff8a6f8's red was the skips list, fixed in 934dd94). The two
+3-copy pool tests ran and passed in macos-live on 638f2a8 (run 44691639523: 429 passed, its one failure test_state's
 2.5 s bound, phase D's record-only case).
 
 ## Pointers

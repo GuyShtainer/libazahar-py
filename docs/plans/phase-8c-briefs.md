@@ -100,7 +100,7 @@ Main-loop decisions:
 - Finding 1: take the movie call out now, whole: `azh_movie_play` from `host/azhost.h`, `host/libazhost.exports`,
   `host/api.c`, `boot_game`, `_PROTOTYPES` and `_host.load`'s symbol check, the worker's `args[8]`, HOST-API and
   USING. Delete `host/movie.c`. The core patch belongs to the next core phase after phase 8, not C6a (C6a is one CI
-  rebuild of the same patches). The code stays in commit 44ad3c5 (branch `p8-hostav`), named in item 833. ABI stays
+  rebuild of the same patches). The code stays in commit 1ad80b8 (branch `p8-hostav`), named in item 833. ABI stays
   5 (the audio calls).
 - Finding 2: write no size field; the file is our tag and a fixed pattern only. Rerun `test_audio_live.py` on the PC.
 - Finding 20: keep the measured bound (3 frames short, 1 over; the sound starts about 1.6 guest frames late) and say

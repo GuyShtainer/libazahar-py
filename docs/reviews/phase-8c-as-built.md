@@ -12,8 +12,8 @@ The majors:
 Fix findings 2-4 before item 832 (C2) moves to done. C1 (item 831) has no majors. Fix finding 1 before C6 stages v1.2.0. The minors can
 land in the same sonnet pass.
 
-Reviewed: `git diff 22ceb34..HEAD -- python host tests testapp-tone Makefile docs/USING.md docs/HOST-API.md` on local
-main (head c29d1fb): lane `cli` (C1, merge e30a80a) and lane `hostav` (C2, with the C3 host call, merge f71627a). Also
+Reviewed: `git diff 16c900a..HEAD -- python host tests testapp-tone Makefile docs/USING.md docs/HOST-API.md` on local
+main (head 5bbe68a): lane `cli` (C1, merge eaa814d) and lane `hostav` (C2, with the C3 host call, merge c40fda5). Also
 read: the Phase C rows of `docs/plans/phase-8.md`, `docs/plans/phase-8c-briefs.md`, item 833's notes,
 `runs/p8/a4/notes.md` (for one point of finding 2), `~/.claude/c-golden-rules.md`, and `host/api.c`, `host/run.c`,
 `host/core.c`, `host/state.c`, `python/libazahar/_slots.py`, `_client.py` and `_paths.py` where they back a claim.
@@ -63,7 +63,7 @@ and its live test land first.**
   - Drop line 20 and the "size word at 0x104" words. The docstring becomes: "Our own bytes: an ASCII tag and a fixed
     pattern. Azahar's high-level DSP only logs a hash of the file."
   - Rerun `test_audio_live.py` on the PC to confirm.
-  - The text is in local commit 44ad3c5. Ask `release-legal-audit` at C6 step 8 whether history needs rewriting before
+  - The text is in local commit 1ad80b8. Ask `release-legal-audit` at C6 step 8 whether history needs rewriting before
     the first push of this range.
 
 **3. The audio plumbing in Python has no fast test, and one of its two documented return types has never run.**

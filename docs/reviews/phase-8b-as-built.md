@@ -7,7 +7,7 @@ tests show, a few tests cannot fail or will fail on another file system, and the
 seventh is the verdict example, which does not follow the exit table it is cited for. Fix the majors before the
 phase B items move to done. The minors can land in the same sonnet pass or go to Phase C.
 
-Reviewed: `git diff f1af6f0..HEAD -- python tests tools docs/USING.md examples` on main (merge 9aca368). Also read: the
+Reviewed: `git diff 637d911..HEAD -- python tests tools docs/USING.md examples` on main (merge ee6b04d). Also read: the
 plan's B rows (`docs/plans/phase-8.md`), the lane briefs, items 821 to 829, the Python golden rules, and `host/png.c`,
 `host/frame.c` and `host/azhost_main.c`, where they back a claim. Read-only: nothing was run (no emulator, no pytest).
 

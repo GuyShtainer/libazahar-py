@@ -1,7 +1,7 @@
 <!-- handoff: slim v1 | current tasks only | rewritten whole from docs/status/templates/handoff.md | budget 80 lines | never append -->
 # libazahar-py handoff
 
-As of: 2026-11-20 12:37 (session 3ds-toolkit-eb)
+As of: 2026-11-20 15:04 (session 3ds-toolkit-eb)
 
 This file lives in docs/status/lazpy/1-in-progress/, beside its item files. It holds only what
 the next session needs to act now, and points at the rest. Goals, rules, decisions and history live elsewhere.
@@ -9,7 +9,7 @@ the next session needs to act now, and points at the rest. Goals, rules, decisio
 ## Running now
 | What | Where | Agent id | It stops when |
 |---|---|---|---|
-| laz-830: C6 step 8 follow-up, an IP-law consult on one published plan sentence (keep in history or rewrite history before the tag); private report runs/reviews/ip-legal-v1.2.0-history.md | main checkout, read-only | ae2a21cd1ecc4d6b8 | it writes the report and replies |
+| laz-830: C6, the pin commit for the rebuilt Windows core (core-win64 run 44737890394), then CI, re-stage and clone check on the new head | main checkout, the PC (D:/lazpy/p8/c6), GitHub CI | main | CI is green on the pinned head and the re-stage passes |
 
 Phase 8 is under way: Guy, 2026-11-18 ~21:00, "you have my green light. go". He did not answer Q1-Q5, so the
 plan's recommended answers apply (laz-810 notes). Phase A is done: runs/p8/a/decisions.md. All lane PC jobs go
@@ -17,17 +17,17 @@ through runs/p8/bin/pclane under one shared PC lock (one job of ours at a time s
 
 ## Next steps, in order
 1. Phase C (laz-830): C1 command line and C2 audio done (laz-831, 832). C3 exact inputs parked (laz-833) for the
-   next core phase with the leak fix. Phase B closed 11:01 (laz-820: CI green on pushed 4bb6f43, both workflows; the
+   next core phase with the leak fix. Phase B closed 11:01 (laz-820: CI green on pushed 934dd94, both workflows; the
    3-copy pool tests passed in macos-live). The clock fix (laz-834) is merged and proven on a UTC host.
-2. C6 (laz-830 Evidence): steps 1-7 done (5: CI green on pushed 1b2b2e2, all three; 7: check 13 on the Mac, 0
-   hits). Staging: D:/lazpy/p8/c6 (repo = bundle clone, identity set; rel/v1.2.0; art = core-win64's artifact;
-   fixture kept at D:/lazpy/p8/fixtures/v1.2.0). Re-stage after every commit (mkrelease, then release_check
-   --pre-push --inherit v1.0.0 --gate-f2 art/gate_f2.txt, needles on stdin as path forms). Re-staged from d189d0d 12:2x (release_check 15
-   PASS; 12 and 13 as ruled), copied to runs/p8/c6/staged/. 8 release-legal-audit done 12:37: not shippable as staged (private report
-   runs/reviews/release-legal-audit-v1.2.0.md): B1, one plan sentence, fixed in the tree with the should-fix and
-   note items; its copy in published history (R1) waits on the IP consult, then Guy's choice (keep, or rewrite
-   history before the tag: a new Windows core build, pin, re-stage, clone check, CI). Then re-stage; 9 Guy's
-   publish word, push, tag, publish; 10 clone_check from GitHub.
+2. C6 (laz-830 Evidence): steps 1-8 done. Guy chose to rewrite history (the plan sentence is gone from main;
+   tags v1.0.0 and v1.1.0 unchanged; the private commit map is runs/p8/c6/commit-map-private.txt). The Windows core
+   was rebuilt on the new head 0257fcd (laz-835) and pinned (fe0bbfd1...). Now: push the pin commit, CI (test.yml
+   and macos-live dispatched; test-windows on push), set the run ids and the commit in STATUS and the release notes,
+   re-stage on the PC (scratchpad stage4.sh: mkrelease, then release_check --pre-push --inherit v1.0.0 --gate-f2
+   art/gate_f2.txt, needles on stdin as path forms), clone_check (cc.sh), check 13 on the Mac, copy the staged
+   files to runs/p8/c6/staged/. Then delete the CI runs on rewritten commits (14 of them; keep a private list in
+   runs/p8/c6/), and remove the local p8-* branches and runs/p8/wt worktrees that hold old commits (never push
+   them). Then 9 Guy's publish word, push, tag, publish; 10 clone_check from GitHub.
 3. The PC STAMP (C:\lazpy\STAMP.json) got a quick refresh about 11:00 on Guy's word ("Quick refresh, redeploy later"):
    only core/options-lazpy.txt's drift hash changed, in all three stanzas (old copy STAMP.before-tz.json). The
    full redeploy (deploy_py.py + deploy_win.py with the new profile) waits for a quiet PC moment; then tell Gen3D
