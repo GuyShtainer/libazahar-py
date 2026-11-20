@@ -1,7 +1,7 @@
 <!-- handoff: slim v1 | current tasks only | rewritten whole from docs/status/templates/handoff.md | budget 80 lines | never append -->
 # libazahar-py handoff
 
-As of: 2026-11-20 20:46 (session 3ds-toolkit-eb)
+As of: 2026-11-20 21:55 (session 3ds-toolkit-eb)
 
 This file lives in docs/status/lazpy/1-in-progress/, beside its item files. It holds only what
 the next session needs to act now, and points at the rest. Goals, rules, decisions and history live elsewhere.
@@ -9,6 +9,7 @@ the next session needs to act now, and points at the rest. Goals, rules, decisio
 ## Running now
 | What | Where | Agent id | It stops when |
 |---|---|---|---|
+| laz-840 the v1.3.0 release-legal-audit (brief runs/p8/c6/audit-brief-v1.3.0.md) | Mac, read-only | a86ab729607f17d77 | it writes runs/reviews/release-legal-audit-v1.3.0.md |
 
 Phase 8 is under way: Guy, 2026-11-18 ~21:00, "you have my green light. go". He did not answer Q1-Q5, so the
 plan's recommended answers apply (laz-840 notes). v1.2.0 is published (laz-830 done 15:58, clone check from GitHub
@@ -16,14 +17,13 @@ passed). All PC jobs go through one shared PC lock (D:/lazpy/p8/pc.lock; one job
 2026-11-18 PC crash).
 
 ## Next steps, in order
-1. Phase D (laz-840, plan `docs/plans/phase-8.md:208`; briefs `docs/plans/phase-8d-briefs.md`): D1-D4 merged,
-   reviewed (D5, runs/p8/d/d5-review.md), fixed and pushed (Guy: "Push and run them"); every new workflow has run
-   (laz-840 Evidence). test-windows-live passed three of three on lavapipe and now runs on pushes to main (its first
-   push run printed RESULT: PASS). PC lanes copy the v1.2.0 host, test app and core from D:/lazpy/p8/base-v1.2.0.
-2. Release v1.3.0 by C6's list (`docs/status/lazpy/5-done/830-phase-c-v1-2-0.md`), Guy's publish word needed: bump
-   the version; dispatch host-bin on that commit and fill LAZPY_HOST_SHA_WIN/MAC in tools/fetch.sh from its zips (a
-   1.2.0-named zip fails row 1c); release notes and STATUS (the lavapipe stencil-depth difference); release-legal-audit
-   (it may judge the compiled-in libretro and Vulkan headers' notices); the no-compiler clone check on both systems.
+1. Release v1.3.0 (laz-840; Guy: "Release v1.3.0", and "Stop asking every little thing ... I wanna share it"): the
+   candidate f1cc46f (pushed up to db83f99) passed CI, the PC clone checks by both routes, release_check and a private
+   side test (laz-840 Evidence). Staged files: D:/lazpy/p8/c6/rel/v1.3.0 and runs/p8/c6/staged3 (SHA256SUMS 29640eaf...).
+   After the audit: fix and restage if it asks, then push, tag v1.3.0 at the candidate, publish with all 15 staged
+   files, check the published digests, clone check from GitHub on the PC (scratchpad gh.sh with the tag).
+2. After publishing: macos-live gets a `host: release` dispatch input (`fetch.sh --host`, no make) and one run: the
+   macOS no-compiler check; record it in STATUS. Then close laz-840 (git mv to 5-done), STATUS line 3 at the tag.
 3. The PC STAMP (C:\lazpy\STAMP.json) got a quick refresh about 11:00 on Guy's word ("Quick refresh, redeploy later"):
    only core/options-lazpy.txt's drift hash changed. The full redeploy (deploy_py.py + deploy_win.py with the new
    profile) waits for a quiet PC moment. Tell Gen3D and 3DP the new deploy ids a little BEFORE it (Gen3D's lanes
