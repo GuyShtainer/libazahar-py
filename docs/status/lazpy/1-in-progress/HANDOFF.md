@@ -1,7 +1,7 @@
 <!-- handoff: slim v1 | current tasks only | rewritten whole from docs/status/templates/handoff.md | budget 80 lines | never append -->
 # libazahar-py handoff
 
-As of: 2026-11-20 15:59 (session 3ds-toolkit-eb)
+As of: 2026-11-20 16:04 (session 3ds-toolkit-eb)
 
 This file lives in docs/status/lazpy/1-in-progress/, beside its item files. It holds only what
 the next session needs to act now, and points at the rest. Goals, rules, decisions and history live elsewhere.
@@ -9,6 +9,10 @@ the next session needs to act now, and points at the rest. Goals, rules, decisio
 ## Running now
 | What | Where | Agent id | It stops when |
 |---|---|---|---|
+| laz-840: lane hostbin, D1 prebuilt host binaries | runs/p8/wt/hostbin | a9b96dc5bcc3bdd61 | it sends its final message |
+| laz-840: lane ci, D2 the user CI recipe | runs/p8/wt/ci | a7fb65a75eee252d1 | it sends its final message |
+| laz-840: lane wincilive, D3 Windows emulator CI | runs/p8/wt/wincilive | aaf86f691e590a9e7 | it sends its final message |
+| laz-840: lane gym, D4 the gym-style example | runs/p8/wt/gym | ab8253f4c88a008d2 | it sends its final message |
 
 Phase 8 is under way: Guy, 2026-11-18 ~21:00, "you have my green light. go". He did not answer Q1-Q5, so the
 plan's recommended answers apply (laz-840 notes). v1.2.0 is published (laz-830 done 15:58, clone check from GitHub
