@@ -1,6 +1,6 @@
 # libazahar-py status
 
-As of 2026-11-20. v1.3.0. The cores, the host's code and the Python layer are as in v1.2.0; the items new in 1.3.0
+As of 2026-11-20. v1.3.0 (tag v1.3.0, published). The cores, the host's code and the Python layer are as in v1.2.0; the items new in 1.3.0
 are the prebuilt host, CI for outside users and an example (see "macOS in v1.3.0" below). The items new in 1.2.0 ran
 on the Windows PC; for macOS see "macOS in v1.2.0". Each item below names the work item (`laz-NNN`) whose
 Evidence, in `docs/status/lazpy/5-done/`, proves it. Nothing is listed as working that no gate ran.
@@ -53,7 +53,7 @@ Evidence, in `docs/status/lazpy/5-done/`, proves it. Nothing is listed as workin
   instead of paths inside the build's own prefix; the same source and patches as v1.1.0's (laz-835)
 - New in 1.3.0: the host, prebuilt: two release zips (macOS arm64, Windows x64) built by `host-bin.yml`, and
   `fetch.sh --host`, which fetches the one for your system against its sha256 pin; no compiler needed (README, "No
-  compiler"); run on Windows (a fresh-clone check on the PC); macOS not yet run (laz-841)
+  compiler"); run on Windows (a fresh-clone check on the PC) and on macOS (a hosted runner from the published release) (laz-841)
 - New in 1.3.0: a recipe for running your own app in GitHub Actions on a hosted macOS runner (`examples/ci/macos.yml`,
   `docs/CI.md`), run in this repository's `macos-live.yml` on the test app (laz-842)
 - New in 1.3.0: `examples/gym_env.py`, a gymnasium-style environment over the test app, outside the promise (laz-844)
@@ -103,8 +103,8 @@ passed, 25 skipped and 0 failed, with the state-boot bound only recording its ti
 recipe's run-and-verdict part printed `verdict ok` on our test app. The skips are Windows-only tests, the comparisons
 with Azahar's own core (not given to that job), four inputs that job lacks (a release fixture, the test app's ELF, two
 older cores), and the two audio tests (CI has no tone test app). That job builds the host with `make`; the macOS host
-zip was built and signed in `host-bin.yml`. The no-compiler route on macOS has not run yet: it can run only from the
-published release (a hosted runner fetches the zip from the release page); its result will be recorded here.
+zip was built and signed in `host-bin.yml`. After publishing, the no-compiler route ran on macOS too: the macOS hosted runner (`macos-live.yml` run 44809085327, dispatched with `host: release`) fetched the published 1.3.0 host zip with `fetch.sh --host` against its pin, ran no `make` (no `build/obj`), and the emulator suite had 432 passed, 25 skipped and 0 failed, the recipe step `verdict ok` (a hosted runner has
+Xcode's compiler, so this shows that no build step runs, not that none is installed).
 On Windows, the no-compiler route passed the full suite from a fresh clone on the PC (see Windows above).
 
 ## macOS in v1.2.0

@@ -45,6 +45,15 @@ passed, 25 skipped, 0 failed, recipe "verdict ok"; test-windows 44803598764 gree
 placeholders then filled; clone checks from the bundle, build route and no-compiler route (`--no-build`), each 441
 passed, 13 skipped (by design), 1 xfailed, the v1.2.0 fixture loaded; a v1.3.0 fixture made; a private side test,
 details kept outside the repo, passed. Next: the legal audit, then tag and publish.
+2026-11-20 22:24: the release-legal-audit said shippable (runs/reviews/release-legal-audit-v1.3.0.md, private): two
+wording fixes (the licence line; the macOS no-compiler claim read as already run) and the gym notes, in c2b0bb1;
+restaged from it (only the build-files tarball changed), release_check --pre-push 16 PASS, FAIL 12 (Guy's ruling) and
+13 (run on the Mac: 2212 blobs, 0 hits). Tag v1.3.0 at c2b0bb1; the release published with 15 files, its 14 digests
+equal SHA256SUMS. After publishing: a fresh clone from GitHub at the tag on the PC, no-compiler route, 441 passed, 13
+skipped, 1 xfailed, the host, core and test app fetched from the release and nothing built; macos-live run
+44809085327 with `host: release` (7900501): no `make`, 432 passed, 25 skipped, 0 failed, `verdict ok`;
+test-windows-live 44808996867 on the published core: RESULT: PASS (lavapipe), 76 passed. The no-compiler clone
+check passed on both systems. Done.
 
 ## Pointers
 - Plan section: `docs/plans/phase-8.md:208`
