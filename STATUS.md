@@ -53,7 +53,7 @@ Evidence, in `docs/status/lazpy/5-done/`, proves it. Nothing is listed as workin
   instead of paths inside the build's own prefix; the same source and patches as v1.1.0's (laz-835)
 - New in 1.3.0: the host, prebuilt: two release zips (macOS arm64, Windows x64) built by `host-bin.yml`, and
   `fetch.sh --host`, which fetches the one for your system against its sha256 pin; no compiler needed (README, "No
-  compiler") (laz-841)
+  compiler"); run on Windows (a fresh-clone check on the PC); macOS not yet run (laz-841)
 - New in 1.3.0: a recipe for running your own app in GitHub Actions on a hosted macOS runner (`examples/ci/macos.yml`,
   `docs/CI.md`), run in this repository's `macos-live.yml` on the test app (laz-842)
 - New in 1.3.0: `examples/gym_env.py`, a gymnasium-style environment over the test app, outside the promise (laz-844)
@@ -103,8 +103,8 @@ passed, 25 skipped and 0 failed, with the state-boot bound only recording its ti
 recipe's run-and-verdict part printed `verdict ok` on our test app. The skips are Windows-only tests, the comparisons
 with Azahar's own core (not given to that job), four inputs that job lacks (a release fixture, the test app's ELF, two
 older cores), and the two audio tests (CI has no tone test app). That job builds the host with `make`; the macOS host
-zip was built and signed in `host-bin.yml`, and the no-compiler route on macOS is checked on a hosted runner from the
-published release (STATUS.md records the result).
+zip was built and signed in `host-bin.yml`. The no-compiler route on macOS has not run yet: it can run only from the
+published release (a hosted runner fetches the zip from the release page); its result will be recorded here.
 On Windows, the no-compiler route passed the full suite from a fresh clone on the PC (see Windows above).
 
 ## macOS in v1.2.0

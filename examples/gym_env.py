@@ -1,6 +1,6 @@
 """A gymnasium-style environment around the test app. Run from the repo root: python examples/gym_env.py
 
-This example is outside the v1.2.0 promise: its names can change in any release, and nothing in the package imports
+This example is outside the 1.0 promise: its names can change in any release, and nothing in the package imports
 it. gymnasium is optional and is imported only here; without it the class refuses to build, with a plain line saying
 how to install it (``pip install gymnasium``).
 
