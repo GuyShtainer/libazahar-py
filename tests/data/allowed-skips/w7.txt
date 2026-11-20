@@ -10,6 +10,11 @@ test_threads_live.py::test_k_states_both_ways => ^set LAZ_CORE_OLD to a lazpy.1 
 # a clone fetches the release test app, which ships no ELF for the symbol and .text lookups
 test_threads_live.py::test_k_threads => ^no build/testapp.elf
 
+# a clone has no devkitARM and no release ships the tone app (make testapp-tone builds it); both tests ran on the PC
+# with a tone app built on the Mac (item 832)
+test_audio_live.py::test_tone_is_captured => ^needs .*testapp-tone\.3dsx: run make testapp-tone
+test_audio_live.py::test_no_component_file_gives_silence => ^needs .*testapp-tone\.3dsx: run make testapp-tone
+
 # by design on Windows (the twin test runs in its place)
 test_slots.py::test_s5_load_warning => ^no load average on Windows
 test_lazpy_profile.py::test_worker_nice_floor => ^no nice values on Windows
