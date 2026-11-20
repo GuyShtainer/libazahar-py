@@ -9,6 +9,7 @@ the next session needs to act now, and points at the rest. Goals, rules, decisio
 ## Running now
 | What | Where | Agent id | It stops when |
 |---|---|---|---|
+| laz-820/830: CI on pushed 5cf51cf (08:59): test-windows 44691620543, test 44691636117, macos-live 44691639523, core-win64 44691632561 | GitHub Actions | main | all four finish |
 
 Phase 8 is under way: Guy, 2026-11-18 ~21:00, "you have my green light. go". He did not answer Q1-Q5, so the
 plan's recommended answers apply (laz-810 notes). Phase A is done: runs/p8/a/decisions.md. All lane PC jobs go
