@@ -1,7 +1,7 @@
 <!-- handoff: slim v1 | current tasks only | rewritten whole from docs/status/templates/handoff.md | budget 80 lines | never append -->
 # libazahar-py handoff
 
-As of: 2026-11-20 02:30 (session 3ds-toolkit-eb)
+As of: 2026-11-20 02:37 (session 3ds-toolkit-eb)
 
 This file lives in docs/status/lazpy/1-in-progress/, beside its item files. It holds only what
 the next session needs to act now, and points at the rest. Goals, rules, decisions and history live elsewhere.
@@ -9,7 +9,6 @@ the next session needs to act now, and points at the rest. Goals, rules, decisio
 ## Running now
 | What | Where | Agent id | It stops when |
 |---|---|---|---|
-| laz-834: opus as-built review of the clock fix (bc51552), started 02:30 | runs/p8/reviews/tz-as-built.md | a596b5b7ea35b4a47 | its report is written |
 
 Phase 8 is under way: Guy, 2026-11-18 ~21:00, "you have my green light. go". He did not answer Q1-Q5, so the
 plan's recommended answers apply (laz-810 notes). Phase A is done: runs/p8/a/decisions.md. All lane PC jobs go
@@ -34,7 +33,8 @@ through runs/p8/bin/pclane under one shared PC lock (one job of ours at a time s
    Cause found (laz-834): the core counts the clock from 2000-01-01 in the HOST's local zone; our start time is just
    before that midnight in UTC, so a UTC host reads 0. Fix built in lane p8-tz (runs/p8/wt/tz), unmerged: the worker
    runs with TZ=UTC0, the start time is 946688477 (the clock UTC+2 machines saw), USING 10a, a 3-zone test.
-   Commit bc51552; PC full suite 440 passed 02:27. Merge on Guy's morning word, then macOS live after the push.
+   Commits bc51552 + 81fdcbc (review fixes; opus review: merge after fixes, done). PC full suite 440 passed.
+   Merge on Guy's morning word, moving laz-834 to 5-done in that commit; then macOS live after the push.
    The release audit must also read commit 44ad3c5's text (review finding 2).
 3. Not run anywhere yet: make check (clang analyze) on the new C; CI's macOS job runs it after a push.
    docs_check's links check fails on the PC lane only (no .git there); it runs on the Mac.

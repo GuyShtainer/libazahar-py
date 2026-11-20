@@ -27,7 +27,7 @@ none yet
 
 ## Pointers
 - Plan section: `docs/plans/phase-8.md:180` (phase C); found in C6 step 5 (the macOS CI read)
-- Review: none yet
+- Review: runs/p8/reviews/tz-as-built.md (opus, 2026-11-20 02:35: merge after fixes; fixes in 81fdcbc)
 
 ## Lessons and notes
 - 2026-11-20 02:15, the PC: `TZ=GMT0` makes `test_two_tick_seeds_differ` fail exactly as on the macOS runner (t moved
@@ -35,5 +35,8 @@ none yet
 - A night decision (Guy asleep): built in lane p8-tz (runs/p8/wt/tz, commit bc51552), not merged until he says so.
 - 2026-11-20 02:27, the PC lane tz: determinism + profile tests 104 passed under the PC's zone and under GMT0 (the new
   3-zone test included); the full suite 440 passed, 14 skipped (lane setup: no tone app, fixture or old core), 1 xfailed.
-  Left for the merge: the macOS live run after a push, which is the real proof on a UTC host.
-- `azhost` (the C command line) does not set TZ itself: whoever runs it directly sets `TZ=UTC0` to match.
+  02:36: after the review fixes, test_determinism 4 passed under both zones again. Left for the merge: move this
+  item to 5-done with its Evidence in the merge commit (the STATUS bullet's docs_check rule, review M1), and the macOS live run after a push, which is the real proof on a UTC host.
+- `azhost` (the C command line) does not set TZ itself: whoever runs it directly sets `TZ=UTC0` to match. gate_c and
+  gate_f2 run it directly; they compare runs within one zone, so they hold. Pinning TZ inside azhost (review L2) is
+  left as an option for Guy.
