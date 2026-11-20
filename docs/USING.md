@@ -257,12 +257,21 @@ named here so a test does not lean on it. The last column of the table says, for
 
 | Input | Fixed? | What reaches it | Basis |
 |---|---|---|---|
-| Tick seed and clock base (`core/options-lazpy.txt`: fixed ticks, fixed start time) | Fixed on our core. `citra_init_ticks_override` picks the seed (section 14); two seeds give a different tick count, and the guest's clock reading shifts with it (a seed of 1000000 ticks moves `osGetTime` by about 3 to 4 ms) | `svcGetSystemTick`, `osGetTime`, `time()` | measured (tick count and `osGetTime` reading; `time()` from the code) |
+| Tick seed and clock base (`core/options-lazpy.txt`: fixed ticks, fixed start time) | Fixed on our core. `citra_init_ticks_override` picks the seed (section 14); two seeds give a different tick count, and the guest's clock reading shifts with it (a seed of 1000000 ticks moves `osGetTime` by about 3 to 4 ms). The host's time zone does not reach the guest: see below the table | `svcGetSystemTick`, `osGetTime`, `time()` | measured (tick count, `osGetTime` reading, three host time zones; `time()` from the code) |
 | Asynchronous file and service timing (deterministic async operations, async file system off) | Fixed on our core. The stock core ignores some of these options, so the profile in force is itself an input: compare runs only under one core and one profile | any call that waits on the file system or a service | from the code |
 | Random bytes from the process and SSL services | Not fixed. They come from the host's own randomness; fixing them needs a core change | `PS_GenerateRandomBytes`, `SSLC_GenerateRandomData` | from the code |
 | Console ID and Wi-Fi MAC | A fresh working folder draws them at random, so they are not fixed there. A reused folder keeps the ones it drew | the services that return the console's unique ID and MAC | from the code |
 | Working folder reuse (SD, NAND, config, shader cache) | Fixed only if the folder is the same. Use a new folder for each run you want to repeat (`fresh_sd=True` clears just the SD) | every file the app reads or writes | measured (fresh folders repeat); the rest from the code |
 | Held input across `load_state` | Kept: `load_state` does not change the held buttons, touch or circle pad, and does not restore the ones in the state. A new `Emulator(state=...)` starts with nothing held | `run` inputs, `set_input` | measured |
+
+The host's time zone: the core counts the guest clock from its fixed start time minus 2000-01-01 00:00 in the
+host's local time, so without a pin, machines in different zones would see different clocks (and on a machine at UTC
+or west of it, a start time before that midnight reads as 0, so the tick seed would not move the clock at all).
+`Emulator` therefore starts its worker with `TZ=UTC0` whatever the caller's zone, and the profile's start time
+(946688477) is one hour and a little after 2000-01-01 UTC. If you run the `azhost` command line yourself, set
+`TZ=UTC0` in its environment to get the same clock. The pin also applies when the clock is not fixed (the stock core,
+or our core without its profile): the guest then shows the host's wall-clock time in UTC, not in your local zone, and
+there is no way to turn the pin off.
 
 For an app that reads the console ID or MAC: a fresh folder gives a different ID each run, so keep one folder and reset
 only the SD. Run the first time in that folder to draw the ID, then boot each repeat in the same folder with
@@ -279,6 +288,7 @@ Repeats are exact only on our core, where the repeat gates run (PLAN 2.4); on th
 difference only. Our patched core adds debug text, memory reads and the watch list (section 12a). It also exports a
 movie call; neither the host nor Python uses it (section 4). Calls that need our core raise `NeedsLazpyCore`. The table of
 both cores is in section 16.
+On the stock core the guest clock is the host's wall clock, read in UTC (section 10a).
 
 ## 12a. Guest memory (our core only)
 

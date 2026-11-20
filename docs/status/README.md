@@ -21,8 +21,7 @@ publish-ready. What to do this hour: `docs/status/lazpy/1-in-progress/HANDOFF.md
 - in-progress: `docs/status/lazpy/1-in-progress/500-phase-5-user-asks.md`
 - in-progress: `docs/status/lazpy/1-in-progress/820-phase-b-must-gaps.md`
 - in-progress: `docs/status/lazpy/1-in-progress/830-phase-c-v1-2-0.md`
-- in-progress: `docs/status/lazpy/1-in-progress/834-guest-clock-time-zone.md`
-- files: 0 in `3-waiting-on-guy/`, 1 in `4-not-started/`, 67 in `5-done/`, 1 in `6-parked/`
+- files: 0 in `3-waiting-on-guy/`, 1 in `4-not-started/`, 68 in `5-done/`, 1 in `6-parked/`
 <!-- generated:end -->
 
 ## How to change a status (one step)

@@ -15,6 +15,7 @@ pytestmark = pytest.mark.slow
 INPUTS = [(40, Buttons.A), (90, Buttons(0)), (150, Buttons.X | Buttons.L), (200, Buttons(0))]
 SAME = ("v", "s", "k", "t", "tx", "ty", "td", "cx", "cy")   # every record field; t is the app's osGetTime reading
 CHECKPOINTS = (300, 600)
+MS_1900_TO_2000 = 3155673600000   # 100 years in ms, the offset of osGetTime's epoch
 
 
 def record_rows(emu: Emulator) -> List[tuple]:
@@ -67,6 +68,22 @@ def test_two_tick_seeds_differ(host_paths, lazpy_core, workdir):
         assert big[1][stop][t] - zero[1][stop][t] == shift, f"the clock shift is not steady at frame {stop}"
     again = one_run(host_paths, lazpy_core, workdir / "again", "1000000")
     assert again[1] == big[1] and again[0] == big[0]
+
+
+def test_host_time_zone_does_not_reach_the_guest(host_paths, lazpy_core, workdir, monkeypatch):
+    """The core measures its start time against 2000-01-01 in local time; the worker runs in UTC (USING 10a)."""
+    needs_rev2(lazpy_core)
+    runs = {}
+    for zone in ("GMT0", "EST5EDT", "IST-2"):
+        monkeypatch.setenv("TZ", zone)
+        runs[zone] = one_run(host_paths, lazpy_core, workdir / zone.replace("-", "m"), "1000000")
+    assert runs["GMT0"] == runs["EST5EDT"] == runs["IST-2"], "the host's time zone reached the guest"
+    seconds = (runs["GMT0"][1][300][field_index("t")] - MS_1900_TO_2000) // 1000    # osGetTime counts from 1900
+    assert 3677 <= seconds <= 3707, f"the guest clock should start at 2000-01-01 01:01:17, it reads {seconds} s past 2000"
+    zero = one_run(host_paths, lazpy_core, workdir / "zero", "0")        # still under IST-2
+    t = field_index("t")
+    shift = runs["GMT0"][1][300][t] - zero[1][300][t]
+    assert 3 <= shift <= 4, f"under a UTC parent the seed should still move the clock, t moved by {shift}"
 
 
 def last_keys(emu: Emulator) -> int:

@@ -23,7 +23,7 @@ saw in winter, now on every machine).
 new test shows two runs under different parent time zones give the same records. The full PC gate stays green.
 
 ## Evidence
-none yet
+2026-11-20 08:58: lane p8-tz merged on main (Guy's word): the worker runs with TZ=UTC0, start time 946688477, USING 10a/11, STATUS, a 3-zone test with an absolute-clock check. On the PC: test_determinism + profile tests 104 passed under the PC's zone and under GMT0 (the macOS case, which failed before); full suite 440 passed, 14 skipped (lane setup), 1 xfailed; after the review fixes test_determinism 4 passed under both zones. Review: runs/p8/reviews/tz-as-built.md (merge after fixes; fixed). The macOS live run after the push is the check on a UTC host. Done.
 
 ## Pointers
 - Plan section: `docs/plans/phase-8.md:180` (phase C); found in C6 step 5 (the macOS CI read)
