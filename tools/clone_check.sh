@@ -16,14 +16,16 @@
 #   --release-base URL  sets LAZ_RELEASE_BASE (a release that is not published yet)
 #   --stock-core PATH   sets LAZ_STOCK_CORE in the clean environment (Azahar's own core, for the comparison tests)
 #   --fixture DIR       copies DIR (a release's state fixture) to runs/release-fixtures/<name>/ in the clone
+#   --deselect NODEID   passes pytest --deselect NODEID (repeatable; a test the machine may not run, such as a 3-copy
+#                       pool test on a PC limited to 2 copies); the log names each one
 #   --until host        stops after the host build and `make test-host`: fetch.sh gets no --lazpy-core and no
 #                       --testapp (the Windows pin may not exist yet), and the venv, quickstart and pytest do not run
 # --dry-run prints each command instead of running it. Every step's output goes to <out>/clone.log and the exit code to
 # <out>/rc. No timing from this run belongs in a document.
 set -eu
 
-REPO=""; BRANCH=""; OUT=""; BASE=""; DRY=0; UNTIL=""; STOCK=""; FIXTURE=""
-usage() { echo "usage: sh tools/clone_check.sh --repo <path|url> --branch <name> --out <dir> [--release-base <url>] [--until host] [--stock-core <path>] [--fixture <dir>] [--dry-run]" >&2; exit 2; }
+REPO=""; BRANCH=""; OUT=""; BASE=""; DRY=0; UNTIL=""; STOCK=""; FIXTURE=""; DESEL=""
+usage() { echo "usage: sh tools/clone_check.sh --repo <path|url> --branch <name> --out <dir> [--release-base <url>] [--until host] [--stock-core <path>] [--fixture <dir>] [--deselect <nodeid>]... [--dry-run]" >&2; exit 2; }
 while [ $# -gt 0 ]; do
   case "$1" in
     --repo) [ $# -ge 2 ] || usage; REPO=$2; shift 2 ;;
@@ -33,6 +35,10 @@ while [ $# -gt 0 ]; do
     --until) [ $# -ge 2 ] || usage; UNTIL=$2; shift 2 ;;
     --stock-core) [ $# -ge 2 ] || usage; STOCK=$2; shift 2 ;;
     --fixture) [ $# -ge 2 ] || usage; FIXTURE=$2; shift 2 ;;
+    --deselect) [ $# -ge 2 ] || usage
+      case "$2" in tests/python/*::*) ;; *) echo "clone_check: --deselect takes tests/python/<file>::<test>" >&2; exit 2 ;; esac
+      case "$2" in *[!A-Za-z0-9_./:-]*) echo "clone_check: --deselect $2 holds an odd character" >&2; exit 2 ;; esac
+      DESEL="$DESEL --deselect $2"; shift 2 ;;
     --dry-run) DRY=1; shift ;;
     *) usage ;;
   esac
@@ -138,11 +144,12 @@ n=$(grep -c "^FAILED" "$OUT/pytest1.log"); o=$(grep "^FAILED" "$OUT/pytest1.log"
 echo "time-bound failure; load: $(sh "$LOADSH")"; eval "$CENV $PYTEST --lf" && echo "time-bound rerun passed (load $(sh "$LOADSH"))"'
 
 if [ "$WIN" -eq 1 ]; then
-  PYTEST="LAZ_REQUIRE_EMULATOR=1 $VENVPY -m pytest -q --junitxml=\"$OUT/junit.xml\" tests/python"
+  PYTEST="LAZ_REQUIRE_EMULATOR=1 $VENVPY -m pytest -q --junitxml=\"$OUT/junit.xml\" tests/python$DESEL"
 else
-  PYTEST="LAZ_REQUIRE_EMULATOR=1 nice -n 10 $VENVPY -m pytest -q tests/python"
+  PYTEST="LAZ_REQUIRE_EMULATOR=1 nice -n 10 $VENVPY -m pytest -q tests/python$DESEL"
 fi
 run_step clone "" "git clone --branch \"$BRANCH\" \"$REPO\" \"$CLONE\""
+[ -z "$DESEL" ] || note "deselected (not run here):$DESEL"
 
 if [ "$WIN" -eq 1 ]; then
   # the README's Windows block, as steps.sh. The pacman line and the clone line are the reader's own setup, not ours.
