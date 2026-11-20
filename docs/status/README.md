@@ -1,5 +1,5 @@
 ---
-asof: 2026-11-18 20:04
+asof: 2026-11-20 22:55
 ---
 # libazahar-py status: read this first
 
@@ -7,13 +7,14 @@ A headless, scriptable host for the Azahar 3DS emulator's libretro core, plus a 
 publish-ready. What to do this hour: `docs/status/lazpy/1-in-progress/HANDOFF.md`.
 
 ## Now
-- v1.1.0 (Windows x64 proven) was published 2026-11-18 00:07. Its assets matched their checksums when downloaded
-  back from GitHub, and a fresh clone from GitHub passed the full emulator suite on Windows. Phase 7 is done.
-- Nothing runs. Guy approved deleting the private pre-rewrite backups and the superseded CI artifact (done
-  2026-11-18), and pushing the status commits.
+- v1.3.0 (for outside users: the prebuilt host, a CI recipe for your own app, a gymnasium-style example) was
+  published 2026-11-20 ~22:08. Its files matched their checksums on GitHub; after publishing, the no-compiler route
+  passed on both systems (a fresh clone from GitHub on the PC; a hosted macOS runner) and the Windows emulator CI
+  passed on the published core. Phase 8 is done (v1.1.0 to v1.3.0).
+- Nothing runs.
 
 ## Next
-- A new phase only on Guy's word: an opus plan and two review loops first.
+- A new phase only on Guy's word: the parked exact-frame inputs (laz-833) needs an opus plan and two review loops.
 
 ## Where each item is
 <!-- generated:begin (python3 -I tools/mkprogress.py; do not edit by hand) -->
