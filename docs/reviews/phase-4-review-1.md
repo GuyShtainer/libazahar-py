@@ -321,7 +321,7 @@ scope 403 before anything half-pushes); (3) push `main` and the tag only (as wri
   adds the new repo to it, or approves `gh auth setup-git` (git then uses gh's token). Default: Guy creates the repo
   on the web and adds it to the PAT.
 - **G6, G7:** well posed; safe (nothing happens without them). G7's hygiene choices: the artifact links and
-  `/Users/guyshtainer` paths are a fair "keep" default (username = GitHub handle). **Add G8: approve the history
+  `/Users/<user>` paths are a fair "keep" default (username = GitHub handle). **Add G8: approve the history
   rewrite for B2** (not optional; the default if he does not answer is "do not push").
 
 ## H. Review questions Q1-Q4

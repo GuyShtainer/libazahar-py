@@ -10,7 +10,7 @@ builder in its own worktree:
 | A | laz-120 | `docs/plans/phase-a.md` | `build/libazhost.dylib` and `build/azhost` (boot, run frames, two-screen PNGs, options profile, version check, boot errors) | 1.15 |
 | B | laz-130 | `docs/plans/phase-b.md` | `build/testapp.3dsx` (markers, per-frame log, record, break/exit/ready/busy-boot modes) and its checker with `read_png_rgba` | 0.9 |
 
-MAIN = `/Users/guyshtainer/VSCodeProjects/3ds-toolkit/projects/libazahar-py`, the main checkout.
+MAIN = `~/VSCodeProjects/3ds-toolkit/projects/libazahar-py`, the main checkout.
 
 ## Hours
 

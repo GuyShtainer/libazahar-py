@@ -8,7 +8,7 @@ and reports. Phase 2 (`docs/plans/phase-2.md` section 5) uses the control keys, 
 a change to them is a change to Phase 2.
 
 Where you are: in the worktree the main loop made, branch `step-b` (create no branch). The main checkout, read and
-copy only, is `/Users/guyshtainer/VSCodeProjects/3ds-toolkit/projects/libazahar-py` (called MAIN below).
+copy only, is `~/VSCodeProjects/3ds-toolkit/projects/libazahar-py` (called MAIN below).
 
 Builder reads first: `docs/map/rules.md`, PLAN.md section 3 "Phase B" and 2.2 (the frame layout and stop reasons
 the app must exercise), `docs/research/spike-1-headless-core.md` (the emulated SD folder), `~/.claude/c-golden-rules.md`,

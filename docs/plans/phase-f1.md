@@ -19,7 +19,7 @@ first full build is started by the main loop in MAIN, after the as-built review 
 and launch"), so no build runs on unreviewed hunks. The build's result is step F2's job.
 
 Where you are: in the worktree the main loop made, branch `step-f1` (create no branch). The main checkout, read and
-copy only, is `/Users/guyshtainer/VSCodeProjects/3ds-toolkit/projects/libazahar-py` (called MAIN below).
+copy only, is `~/VSCodeProjects/3ds-toolkit/projects/libazahar-py` (called MAIN below).
 
 Gate (PLAN.md section 3, "Phase F1"), made concrete. From the worktree root, after a clean `rm -rf
 dl/azahar-src/build-src build-core` (the tarball may be seeded by copy, see step 0):

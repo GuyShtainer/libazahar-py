@@ -17,7 +17,7 @@ file, output line, report or commit message. Say "the key blob" and "the ClCertA
 the repo and deletes it.
 
 You work in `../libazahar-py-i` (branch `step-i`, made at main after Phase 3 merged and G8b ran). "MAIN" is
-`/Users/guyshtainer/VSCodeProjects/3ds-toolkit/projects/libazahar-py`. After your step 0's links: "CORE" is
+`~/VSCodeProjects/3ds-toolkit/projects/libazahar-py`. After your step 0's links: "CORE" is
 `build-core/azahar_lazpy_libretro.dylib` (the 01:06 build), "INPUTS" `build-core/build.inputs`, "BUILD"
 `build-core/build/`, "LINK" `BUILD/src/citra_libretro/CMakeFiles/citra_libretro.dir/link.txt`, "DEPS" every `*.o.d`
 under BUILD, "TREE" `dl/azahar-src/build-src/azahar-unified-source-2126.2/` (the stripped tree the core was built
@@ -655,7 +655,7 @@ code and where the game file sat (consult section 8, reworded at HEAD in section
 ### 8.2 The push and the release (only on Guy's word)
 
 ```
-cd /Users/guyshtainer/VSCodeProjects/3ds-toolkit/projects/libazahar-py
+cd ~/VSCodeProjects/3ds-toolkit/projects/libazahar-py
 git config user.name "Guy Shtainer"
 git config user.email "293649481+GuyShtainer@users.noreply.github.com"
 LAZ_PRIVATE_NEEDLES=<the private file> python3 -I tools/release_check.py runs/release/v0.1.0 --pre-push   # all PASS

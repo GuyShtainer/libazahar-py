@@ -124,7 +124,7 @@ worktree, a bounded loop on `build-core/build.exit` (at most 3 h, 60 s polls, no
 **S13 (F1/index) Names the builder needs.** phase-f1.md step 0 says branch `phase-f1`, while the index says `step-f1`
 (and the builder should create no branch at all). Every brief uses `<main checkout>`. Fix: step 0 says "you are
 in the worktree the main loop made (branch `step-f1`); the main checkout is
-`/Users/guyshtainer/VSCodeProjects/3ds-toolkit/projects/libazahar-py`". Same for A and B.
+`~/VSCodeProjects/3ds-toolkit/projects/libazahar-py`". Same for A and B.
 
 ## Nice
 

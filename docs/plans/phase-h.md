@@ -12,7 +12,7 @@ of every default (step I changes the code; **you document it**: section 2); the 
 the main loop's I2 (review 1 S8): you write `tools/clone_check.sh`, the main loop runs it.
 
 You work in `../libazahar-py-h` (branch `step-h`, made at main **after Phase 3 merged**). "MAIN" is
-`/Users/guyshtainer/VSCodeProjects/3ds-toolkit/projects/libazahar-py`. After step 0's link, "OURS" is
+`~/VSCodeProjects/3ds-toolkit/projects/libazahar-py`. After step 0's link, "OURS" is
 `build-core/azahar_lazpy_libretro.dylib` (a link to MAIN's P9b core, the 01:06 build; read only) and "STOCK" is
 `dl/azahar/azahar_libretro.dylib` (a link to MAIN's local copy of Azahar's own core; after P17 no script of ours
 fetches it; you use it only in gate 2, with `LAZ_CORE` set to it, and never name its download in a doc). **Never commit, never edit item files, never write in MAIN, never push, never call

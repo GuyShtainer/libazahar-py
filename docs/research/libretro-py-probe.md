@@ -19,7 +19,7 @@ inside the wheel's `libretro/` package.
 | Frame loop | Python per frame: `for _ in range(frames): session.run()` calls `retro_run` through ctypes | `py/runs.py:96-98`, `core.py:490-496` |
 
 ## Real try (macOS arm64, Python 3.14 venv in scratch, `-I`, one instance, core dl/azahar_libretro.dylib, ROM Gen3D.3dsx)
-Script: `/private/tmp/claude-501/-Users-guyshtainer-VSCodeProjects-3ds-toolkit/27a3b0de-48d1-4ae4-9576-db27c1f9f28c/scratchpad/lrpy/try.py`.
+Script: `/private/tmp/claude-501/-Users-<user>-VSCodeProjects-3ds-toolkit/27a3b0de-48d1-4ae4-9576-db27c1f9f28c/scratchpad/lrpy/try.py`.
 Temp-dir system/save path driver (default); no window opened.
 * `citra_graphics_api=Vulkan`: the core logs `Using Vulkan hw renderer`, then `Session` raises `RuntimeError: Failed to
   load game` (libretro.py answers SET_HW_RENDER for Vulkan with false). Confirms the source reading. Same for Auto.

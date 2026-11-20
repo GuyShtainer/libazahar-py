@@ -7,7 +7,7 @@ disagrees with PLAN.md on a goal, PLAN.md wins: stop and report (except the appr
 R1-R4 of phase-3.md section 5 and phase-2.md section 5, which you follow; P7, approved by Guy, and R1 are this step's).
 
 You work in `../libazahar-py-g` (branch `step-g`, made at main **after step F2 merged**, with step E's E1 commit merged
-in; phase-3.md section 2). "MAIN" is `/Users/guyshtainer/VSCodeProjects/3ds-toolkit/projects/libazahar-py`. "OURS" is
+in; phase-3.md section 2). "MAIN" is `~/VSCodeProjects/3ds-toolkit/projects/libazahar-py`. "OURS" is
 `MAIN/build-core/azahar_lazpy_libretro.dylib` (absolute; read only; step 0's build, which F2 gated); "STOCK" is
 `dl/azahar/azahar_libretro.dylib`. **Never commit, never edit item files, never write in MAIN, never run
 `tools/build-core.sh`** (in a worktree its build tree is the linked `dl/azahar-src/build-src`, MAIN's: a run would

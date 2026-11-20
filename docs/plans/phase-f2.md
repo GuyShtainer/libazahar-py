@@ -7,7 +7,7 @@ approved departures P1-P8 and refinements R1-R4 of phase-3.md section 5 and phas
 what "exact" means for the debug-text stop, is this step's).
 
 You work in `../libazahar-py-f2` (branch `step-f2`, made at main after Phase 2 merged). "MAIN" is
-`/Users/guyshtainer/VSCodeProjects/3ds-toolkit/projects/libazahar-py`. "OURS" is
+`~/VSCodeProjects/3ds-toolkit/projects/libazahar-py`. "OURS" is
 `MAIN/build-core/azahar_lazpy_libretro.dylib` (absolute path; **read only**), the core the main loop is rebuilding
 in step 0 (phase-3.md section 4 step 0: key blob off, patch 0007 no default ClCertA, patch 0008 no key loading, the
 three Nintendo headers and `externals/libressl` dropped from the build tree, static OpenSSL 3.6.5 from Homebrew in

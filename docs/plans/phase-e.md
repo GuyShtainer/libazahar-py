@@ -7,7 +7,7 @@ departures P1-P8 and refinements R1-R4 of phase-3.md section 5 and phase-2.md se
 4-instance row, and R3, no Gen3D row, are this step's).
 
 You work in `../libazahar-py-e` (branch `step-e`, made at main after Phase 2 merged; before E2 the main loop merges
-main, with step F2, into it). "MAIN" is `/Users/guyshtainer/VSCodeProjects/3ds-toolkit/projects/libazahar-py`.
+main, with step F2, into it). "MAIN" is `~/VSCodeProjects/3ds-toolkit/projects/libazahar-py`.
 **Never commit, never edit item files, never write in MAIN, never run `tools/build-core.sh`** (in a worktree its
 build tree is the linked `dl/azahar-src/build-src`, MAIN's: a run would delete it and start a full build; the core
 build is the main loop's, and step 0's rebuild runs while you do E1). Read first: the repo's `CLAUDE.md`,

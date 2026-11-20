@@ -8,7 +8,7 @@ by the main loop at step C's checkpoint C1 commit). It refines `docs/PLAN.md` se
 stops and reports, **except for phase-2.md section 5's approved departures** (P2: `LAZ_REQUIRE_EMULATOR`; P3: the
 worker's start line; P4: the app identity in a state; P6: `HostError`), which this brief follows without stopping.
 
-MAIN = `/Users/guyshtainer/VSCodeProjects/3ds-toolkit/projects/libazahar-py` (the main checkout: read and copy only).
+MAIN = `~/VSCodeProjects/3ds-toolkit/projects/libazahar-py` (the main checkout: read and copy only).
 
 Builder reads first, in this order: `docs/map/rules.md`; PLAN.md 2.1, 2.2, 2.3, 2.5, 2.9 and section 3's Phase D
 paragraph; `docs/plans/phase-2.md` section 5 (the departures); `docs/plans/phase-c.md` sections 2, 3 and 8 (the

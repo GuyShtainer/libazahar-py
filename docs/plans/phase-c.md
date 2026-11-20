@@ -8,7 +8,7 @@ where they disagree on a goal, PLAN.md wins and the builder stops and reports, *
 approved departures** (P1: the input-offset rule of gate (a); P5: debug text refused on the stock core), which this
 brief follows without stopping.
 
-MAIN = `/Users/guyshtainer/VSCodeProjects/3ds-toolkit/projects/libazahar-py` (the main checkout: read and copy only).
+MAIN = `~/VSCodeProjects/3ds-toolkit/projects/libazahar-py` (the main checkout: read and copy only).
 
 Builder reads first, in this order: `docs/map/rules.md`; PLAN.md 2.1-2.4 and section 3's Phase C paragraph;
 `docs/plans/phase-2.md` section 5 (the departures); `docs/plans/phase-a.md` sections "3. The API" and "4. Files"

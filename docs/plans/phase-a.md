@@ -8,7 +8,7 @@ PLAN.md wins and the builder stops and reports. Phase 2's plan (`docs/plans/phas
 interfaces in section 3 below; a change to them is a change to Phase 2.
 
 Where you are: in the worktree the main loop made, branch `step-a` (create no branch). The main checkout, read and
-copy only, is `/Users/guyshtainer/VSCodeProjects/3ds-toolkit/projects/libazahar-py` (called MAIN below).
+copy only, is `~/VSCodeProjects/3ds-toolkit/projects/libazahar-py` (called MAIN below).
 
 Builder reads first: `docs/map/rules.md`, PLAN.md 2.1-2.6, `prototype/fe2.c` and `prototype/fe3.c` (what works;
 not how to write it), `docs/research/spike-1-headless-core.md`, `docs/research/libretro-py-probe.md` (its
@@ -54,7 +54,7 @@ unless `KEEP=1`. Checks 2-6 all run inside `$COPY` (its `build/azhost`, its `run
    `any_core` ok.
 
 The gate's app: Phase B's test app does not exist yet in this worktree. Use a copy of Gen3D's own homebrew build
-`/Users/guyshtainer/VSCodeProjects/3ds-toolkit/projects/Gen3D/Gen3D.3dsx` (read-only; copy it into `runs/a-gate/`
+`~/VSCodeProjects/3ds-toolkit/projects/Gen3D/Gen3D.3dsx` (read-only; copy it into `runs/a-gate/`
 first, because another session may rebuild it; its menu shows "CHOOSE TWO GAMES / No games found" with no SD data,
 spike 1). The Gen3D path appears in no file you create (rules.md 8: a test fixture, not a dependency); never commit
 the app or its shots (`runs/` and `*.3dsx` are ignored). On the integration branch (A and B merged, before main), the main loop reruns the gate with
