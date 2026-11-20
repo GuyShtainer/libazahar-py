@@ -1,7 +1,7 @@
 <!-- handoff: slim v1 | current tasks only | rewritten whole from docs/status/templates/handoff.md | budget 80 lines | never append -->
 # libazahar-py handoff
 
-As of: 2026-11-20 02:18 (session 3ds-toolkit-eb)
+As of: 2026-11-20 02:20 (session 3ds-toolkit-eb)
 
 This file lives in docs/status/lazpy/1-in-progress/, beside its item files. It holds only what
 the next session needs to act now, and points at the rest. Goals, rules, decisions and history live elsewhere.
@@ -39,9 +39,11 @@ through runs/p8/bin/pclane under one shared PC lock (one job of ours at a time s
 
 ## Waiting on Guy (only what blocks a step above)
 - Pushes: each one needs his word. Local main is ahead of origin, and phase 8 commits stay local until he says so.
-- (night) Push 587c171 (CI guard fixes + C6a's OpenSSL folder fix) and start core-win64's one round? Asked via the
-  goodnight session 2026-11-20 02:12; a push is never a night default, so it waits for his word.
-- (night) Hold v1.2.0 until the macOS clock-shift failure is understood? Recommended yes; cause found (laz-834).
+- Push main (587c171 + status commits) and start core-win64's one round: Guy said yes, "Push and rebuild"
+  (relayed by the goodnight session, 2026-11-20 02:20). The push was blocked by the Mac's permission check (a yes
+  relayed by another session does not count there), so it waits for him to say it here, or he runs
+  `git push origin main` himself; then `gh workflow run core-win64.yml` and test.yml. Docs check passed 02:20.
+- v1.2.0 waits for the clock cause: Guy said yes, "find cause first" (relayed 02:20). Cause found (laz-834).
 - NIGHT DECISION 2026-11-20 02:18: how to fix the host-zone clock | took: worker TZ=UTC0 + start time 946688477
   (recommended) | others: ship it as a known macOS limit; pin TZ in the tests only | switch costs: drop branch p8-tz
   | work: lane p8-tz (runs/p8/wt/tz), its commits, not merged
