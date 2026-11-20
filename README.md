@@ -72,6 +72,33 @@ python3 -m venv .venv && .venv/bin/pip install -e .             # the Python lay
 .venv/bin/python examples/quickstart.py                         # prints "quickstart ok" (on our core, the default)
 ```
 
+### No compiler (the prebuilt host)
+
+A release from v1.3.0 on carries the host, already built: `libazhost` and `azhost`, attested by the release workflow.
+`fetch.sh --host` downloads the zip for your system, checks its sha256 against a pin in `tools/fetch.sh`, and puts the
+two files where the Python layer looks for them (`build/`). You then need no Xcode command-line tools and no MSYS2
+compiler, only `git`, `curl`, `unzip` and Python 3.10 or newer. A checkout from before that release has no pins for
+it: `--host` stops with one line saying so, and the build routes above still work.
+
+macOS 15 or later on Apple silicon, from the repository folder:
+
+<!-- docs_check: steps-nocc -->
+```sh
+sh tools/fetch.sh --moltenvk --host --lazpy-core --testapp      # MoltenVK, the prebuilt host, our core, the test app (sha256-pinned)
+python3 -m venv .venv && .venv/bin/pip install -e .             # the Python layer (editable install only)
+.venv/bin/python examples/quickstart.py                         # prints "quickstart ok" (on our core, the default)
+```
+
+Windows x64, in a shell that has `sh`, `curl` and `unzip` (the MSYS2 MINGW64 shell, or Git Bash), from the repository folder
+(the python.org Python 3.10 or newer must be first on `PATH`):
+
+<!-- docs_check: steps-nocc-win -->
+```sh
+sh tools/fetch.sh --host --lazpy-core --testapp                 # the prebuilt host, the Windows core, the test app (sha256-pinned)
+python -m venv .venv && .venv/Scripts/pip install -e .          # the Python layer (editable install only)
+.venv/Scripts/python examples/quickstart.py                     # prints "quickstart ok"
+```
+
 ### Windows
 
 Open the MSYS2 MINGW64 shell (not MSYS, UCRT64 or CLANG64). Clone into a short path with ASCII letters only, such as

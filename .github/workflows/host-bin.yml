@@ -1,0 +1,185 @@
+# Builds the prebuilt host binaries for a release: libazhost + azhost, once on Windows (MSYS2 MINGW64) and once on macOS
+# 15 (arm64), zips each with LICENSE and a SOURCE.md that names the commit, uploads the zips as artifacts, and attests
+# them (a permanent record; logs expire). Runs only by hand (workflow_dispatch), on the commit the release is cut from.
+# The steps repeat test-windows.yml's and test.yml's host build on purpose: those two workflows stay as they are.
+# The main loop downloads the two zips, pins their sha256 in tools/fetch.sh (LAZPY_HOST_SHA_WIN, LAZPY_HOST_SHA_MAC) and
+# stages them with tools/mkrelease.sh --host-artifact-win DIR --host-artifact-mac DIR.
+name: host-bin
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-win:
+    name: build (Windows x64)
+    runs-on: windows-2025
+    outputs:
+      zip_name: ${{ steps.zip.outputs.zip_name }}
+      zip_sha256: ${{ steps.zip.outputs.zip_sha256 }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - uses: msys2/setup-msys2@ec48f7c5447b3140e2b088413ae3a55687bccb6e  # v2.33.0
+        with:
+          msystem: MINGW64
+          path-type: inherit
+          update: false
+          install: >-
+            make
+            zip
+            mingw-w64-x86_64-gcc
+            mingw-w64-x86_64-zlib
+            mingw-w64-x86_64-clang
+      - name: headers (libretro and Vulkan, pinned by sha256)
+        shell: msys2 {0}
+        run: sh tools/fetch.sh --headers
+      - name: check-obinary and the clang analysis of the Windows sources
+        shell: msys2 {0}
+        run: make check
+      - name: build the host
+        shell: msys2 {0}
+        run: make
+      - name: version test
+        shell: msys2 {0}
+        run: make test-version
+      - name: host C tests
+        shell: msys2 {0}
+        run: make test-host
+      - name: zip the two binaries, LICENSE and SOURCE.md
+        id: zip
+        shell: msys2 {0}
+        run: |
+          set -eu
+          version=$(sed -n 's/^version *= *"\(.*\)"/\1/p' pyproject.toml | head -1)
+          name="libazahar-py-host-$version-windows-x64.zip"
+          rm -rf stage && mkdir stage
+          cp build/libazhost.dll build/azhost.exe LICENSE stage/
+          {
+            echo "# SOURCE"
+            echo
+            echo "What the files are: libazhost.dll and azhost.exe, the libazahar-py host for Windows x64, built with mingw-w64 (MSYS2 MINGW64) on a GitHub-hosted runner. Version $version."
+            echo
+            echo "Built at repository commit $GITHUB_SHA of https://github.com/GuyShtainer/libazahar-py. The corresponding source is that commit: the host is host/*.c with the Makefile, and it links zlib statically. This zip holds no core: the core is a separate release asset."
+          } > stage/SOURCE.md
+          (cd stage && zip -X -9 -q "../$name" libazhost.dll azhost.exe LICENSE SOURCE.md)
+          unzip -l "$name"
+          sha=$(sha256sum "$name" | cut -d' ' -f1)
+          echo "$name sha256 $sha"
+          echo "zip_name=$name" >> "$GITHUB_OUTPUT"
+          echo "zip_sha256=$sha" >> "$GITHUB_OUTPUT"
+      - name: upload the zip
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
+        with:
+          name: host-win64
+          path: libazahar-py-host-*-windows-x64.zip
+          if-no-files-found: error
+
+  build-mac:
+    name: build (macOS arm64)
+    runs-on: macos-15
+    outputs:
+      zip_name: ${{ steps.zip.outputs.zip_name }}
+      zip_sha256: ${{ steps.zip.outputs.zip_sha256 }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - name: headers (libretro and Vulkan, pinned by sha256)
+        run: sh tools/fetch.sh --headers
+      - name: build the host
+        run: make check && make && make test-version
+      - name: host C tests
+        run: make test-host
+      - name: the library targets macOS 15 on arm64
+        run: |
+          set -eu
+          vtool -show-build build/libazhost.dylib | tee "$RUNNER_TEMP/vtool.txt"
+          grep -q 'minos 15.0' "$RUNNER_TEMP/vtool.txt"
+          [ "$(lipo -archs build/libazhost.dylib)" = arm64 ]
+      - name: sign both files ad hoc (the last step that touches them)
+        run: |
+          set -eu
+          codesign --force -s - build/libazhost.dylib
+          codesign --force -s - build/azhost
+          codesign --verify --verbose build/libazhost.dylib
+          codesign --verify --verbose build/azhost
+      - name: zip the two binaries, LICENSE and SOURCE.md
+        id: zip
+        run: |
+          set -eu
+          version=$(sed -n 's/^version *= *"\(.*\)"/\1/p' pyproject.toml | head -1)
+          name="libazahar-py-host-$version-macos-arm64.zip"
+          rm -rf stage && mkdir stage
+          cp build/libazhost.dylib build/azhost LICENSE stage/
+          {
+            echo "# SOURCE"
+            echo
+            echo "What the files are: libazhost.dylib and azhost, the libazahar-py host for macOS 15 or later on Apple silicon (arm64), signed ad hoc, built with the Xcode command-line tools on a GitHub-hosted runner. Version $version."
+            echo
+            echo "Built at repository commit $GITHUB_SHA of https://github.com/GuyShtainer/libazahar-py. The corresponding source is that commit: the host is host/*.c with the Makefile. This zip holds no core and no MoltenVK: the core is a separate release asset, and MoltenVK is fetched by tools/fetch.sh."
+          } > stage/SOURCE.md
+          (cd stage && zip -X -9 -q "../$name" libazhost.dylib azhost LICENSE SOURCE.md)
+          unzip -l "$name"
+          sha=$(shasum -a 256 "$name" | cut -d' ' -f1)
+          echo "$name sha256 $sha"
+          echo "zip_name=$name" >> "$GITHUB_OUTPUT"
+          echo "zip_sha256=$sha" >> "$GITHUB_OUTPUT"
+      - name: upload the zip
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
+        with:
+          name: host-macos
+          path: libazahar-py-host-*-macos-arm64.zip
+          if-no-files-found: error
+
+  attest-win:
+    name: attest (Windows zip)
+    # last, and only when both builds passed: no attestation for a half-built release
+    needs: [build-win, build-mac]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333  # v8.0.2
+        with:
+          name: host-win64
+          path: ${{ runner.temp }}/art
+      - name: the zip is the one the build printed
+        env:
+          WANT_SHA: ${{ needs.build-win.outputs.zip_sha256 }}
+          ZIP: ${{ needs.build-win.outputs.zip_name }}
+        run: |
+          set -eu
+          [ "$(sha256sum "$RUNNER_TEMP/art/$ZIP" | cut -d' ' -f1)" = "$WANT_SHA" ]
+          echo "$ZIP sha256 $WANT_SHA"
+      - name: attest the zip (a permanent record; logs expire)
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8  # v4.2.2
+        with:
+          subject-path: ${{ runner.temp }}/art/${{ needs.build-win.outputs.zip_name }}
+
+  attest-mac:
+    name: attest (macOS zip)
+    needs: [build-win, build-mac]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333  # v8.0.2
+        with:
+          name: host-macos
+          path: ${{ runner.temp }}/art
+      - name: the zip is the one the build printed
+        env:
+          WANT_SHA: ${{ needs.build-mac.outputs.zip_sha256 }}
+          ZIP: ${{ needs.build-mac.outputs.zip_name }}
+        run: |
+          set -eu
+          [ "$(sha256sum "$RUNNER_TEMP/art/$ZIP" | cut -d' ' -f1)" = "$WANT_SHA" ]
+          echo "$ZIP sha256 $WANT_SHA"
+      - name: attest the zip (a permanent record; logs expire)
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8  # v4.2.2
+        with:
+          subject-path: ${{ runner.temp }}/art/${{ needs.build-mac.outputs.zip_name }}

@@ -1,0 +1,47 @@
+# Recipe: run your own 3DS homebrew app under libazahar-py on a GitHub-hosted macOS runner, and fail the job when the
+# app does not report success. Copy this file to .github/workflows/ in YOUR repository. Walkthrough: docs/CI.md.
+#
+# What to change is marked CHANGE. The result is best effort: a hosted runner may have no usable Vulkan path, so the
+# job is set to continue-on-error and you read the verdict step's own result (docs/CI.md, "Reading the result").
+name: homebrew-on-libazahar-py
+
+# Started by hand only, so a first try that goes wrong mails no one more than once. Add push or pull_request later.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verdict:
+    runs-on: macos-15            # macOS 15 or later, Apple silicon (the arm64 hosted runner)
+    continue-on-error: true
+    timeout-minutes: 30
+    steps:
+      # Your app and its test script live in your repository.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      # libazahar-py itself, into a sub-folder. CHANGE: pin a release tag (or a full commit sha) you have checked.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          repository: GuyShtainer/libazahar-py
+          ref: v1.3.0
+          path: libazahar-py
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0  # v7.1.0
+        with:
+          python-version: "3.14"
+      - name: host, core and MoltenVK (each pinned by sha256 inside fetch.sh)
+        working-directory: libazahar-py
+        # --testapp is for the smoke check below; drop it once your own app is the only one you run.
+        run: sh tools/fetch.sh --moltenvk --host --lazpy-core --testapp
+      - name: Python layer
+        working-directory: libazahar-py
+        run: |
+          python -m venv .venv
+          .venv/bin/pip install -e .
+      - name: run my app and read the verdict
+        id: verdict
+        working-directory: libazahar-py
+        # CHANGE: the path to your built app (a .3dsx you committed or built in an earlier step), and your own copy
+        # of verdict.py (here ci/verdict.py in your repository) with RESULT_FILE and PASS_TEXT edited, see the top of
+        # libazahar-py/examples/verdict.py. Exit 0 is a pass; any other code is in the table in docs/USING.md section 3.
+        run: .venv/bin/python "$GITHUB_WORKSPACE/ci/verdict.py" "$GITHUB_WORKSPACE/build/myapp.3dsx"

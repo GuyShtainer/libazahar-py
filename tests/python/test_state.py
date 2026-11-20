@@ -25,7 +25,24 @@ def keyed(frames, floor, shift=0):
     return {row["v"] + shift: tuple(row[k] for k in FIELDS) for row in frames if row["v"] > floor}
 
 
-def test_state_boot(host_paths, workdir, seed):
+STATE_BOUND = 2.5      # seconds on the test app (Guy's ruling)
+
+
+def on_hosted_runner() -> bool:
+    """True on a GitHub-hosted runner (GITHUB_ACTIONS is "true" and CI is set); everywhere else the bound is a gate."""
+    return os.environ.get("GITHUB_ACTIONS") == "true" and bool(os.environ.get("CI"))
+
+
+def check_state_bound(t_state: float, record_property) -> None:
+    """Record the state-boot time (stdout and a junit property); fail above STATE_BOUND unless on a hosted runner."""
+    print(f"state boot {t_state:.2f} s (bound {STATE_BOUND} s)")
+    record_property("state_boot_seconds", f"{t_state:.2f}")
+    if on_hosted_runner():
+        return
+    assert t_state < STATE_BOUND, f"state boot {t_state:.2f} s, Guy's bound {STATE_BOUND} s on the test app"
+
+
+def test_state_boot(host_paths, workdir, seed, record_property):
     plant = os.environ.get("LAZ_TEST_PLANT_RED") == "1"
     wd_a, wd_b = workdir / "a", workdir / "b"
     state = workdir / "st" / "state"
@@ -78,7 +95,7 @@ def test_state_boot(host_paths, workdir, seed):
     mismatches = [(v, x, got.get(v)) for v, x in window.items() if got.get(v) != x]
     assert not mismatches, f"{len(mismatches)} lines differ, first {mismatches[:2]}"
     assert result_a.frames == result_b.frames == 600 and frames_before
-    assert t_state < 2.5, f"state boot {t_state:.2f} s, Guy's bound 2.5 s on the test app"
+    check_state_bound(t_state, record_property)
 
 
 def quick_state(host_paths, workdir):

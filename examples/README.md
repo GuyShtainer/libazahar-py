@@ -2,9 +2,9 @@
 
 Run each from the repository folder, with the Python layer installed (`.venv/bin/pip install -e .`; on Windows the
 venv's programs are in `.venv/Scripts/`, so `.venv/Scripts/python examples/quickstart.py`) and
-`build/testapp.3dsx` in place (see the README's Install). Each uses only the standard library and the package, prints
-`<name> ok` as its last line, and exits non-zero with one plain line when a check fails. Each reads the core from
-`LAZ_CORE`, else the library's default.
+`build/testapp.3dsx` in place (see the README's Install). Each uses only the standard library and the package (except
+`gym_env.py`, below), prints `<name> ok` as its last line, and exits non-zero with one plain line when a check fails.
+Each reads the core from `LAZ_CORE`, else the library's default.
 
 - `quickstart.py`: boots the test app, holds A, takes a shot, checks the frame count, both screen sizes and A in the
   app's log. Either core. `.venv/bin/python examples/quickstart.py`
@@ -19,5 +19,10 @@ venv's programs are in `.venv/Scripts/`, so `.venv/Scripts/python examples/quick
   out, 13 the worker or host crashed (or could not run). The test app writes no PASS or FAIL
   line, so the example waits for that log line; point `RESULT_FILE` and `PASS_TEXT` at your own app's result file.
   `.venv/bin/python examples/verdict.py`
+- `ci/macos.yml`: a GitHub Actions workflow that fetches the prebuilt host and core and runs your app through your copy of
+  `verdict.py` on a hosted macOS runner. Not run from here; the walkthrough is `docs/CI.md`.
+- `gym_env.py`: a gymnasium-style environment over the test app (top screen as observation, reward read with
+  `emu.memory`, `reset` loads a state and releases every input). Outside the promise; needs `pip install gymnasium`
+  and our core. `.venv/bin/python examples/gym_env.py`
 
 Run `nice -n 10` on a shared machine. Each example makes its folder under `runs/`, which git ignores.

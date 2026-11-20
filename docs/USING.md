@@ -19,6 +19,11 @@ Editable install only: the package finds the repo (`build/`, `dl/`, `host/`) fro
 must set `LAZ_ROOT`. Needs macOS 15 or later on Apple silicon, or Windows x64 (section 15a), and Python 3.10 or newer (macOS's own `python3` is 3.9).
 `make` builds the host; `sh tools/fetch.sh --moltenvk --headers --lazpy-core --testapp` fetches MoltenVK, the headers,
 our core and the test app, each sha256-pinned. The README's Install section is the full route, with its own Windows steps.
+`fetch.sh` takes these flags: `--moltenvk` (macOS only), `--headers`, `--lazpy-core`, `--testapp`, `--host` and
+`--force`. `--host` (from v1.3.0) downloads the prebuilt host for your system, checks it against its pinned sha256 and
+puts `libazhost` and `azhost` in `build/` (`.dylib` and no suffix on macOS, `.dll` and `.exe` on Windows), so no
+compiler is needed; it is never part of the default set, and it replaces a host you built with `make`. The README's
+"No compiler" section has the steps.
 
 ## 2. Paths and environment
 
@@ -240,7 +245,8 @@ may not survive a core change. NAND files are not snapshotted (they reopen from 
 app's RomFS reopens from the new app path. `load_state` replaces the SD folder: read logs before it. Restore steps
 are timed in `host.log` (`state load ...`). Reusing an instance's `sys/` folder (without `Azahar/sdmc/`) keeps the
 shader cache. Gate on the test app (Guy's ruling): a state boot takes under 2.5 s (1.6 s
-measured); a real game's state is larger, so time your own. A `load_state` that fails after the SD folder was replaced
+measured); on a hosted CI runner (`GITHUB_ACTIONS=true` and `CI` set) our test records the time and does not fail on it;
+a real game's state is larger, so time your own. A `load_state` that fails after the SD folder was replaced
 leaves the instance unusable (later calls raise HostError); close it and boot again. The meta's `app=` is the absolute
 app path, so a shared state carries it. An I/O failure while saving is a HostError, not a StateError.
 
@@ -537,7 +543,7 @@ emulator). The full set needs our core and the test app: `LAZ_REQUIRE_EMULATOR=1
 tests/python`. On Windows use `.venv/Scripts/` for `.venv/bin/`. `make check` runs the rest (on Windows it also
 needs `mingw-w64-x86_64-clang` from pacman). To compare with Azahar's own core, download Azahar's libretro core for
 macOS from Azahar's releases page yourself and set `LAZ_STOCK_CORE` to the file. Tests that compare the two cores skip
-without it. Build the test app with the line in the README (`make testapp` needs `DEVKITPRO` and `DEVKITARM` set and
+without it. To run your own app in GitHub Actions, see `docs/CI.md`. Build the test app with the line in the README (`make testapp` needs `DEVKITPRO` and `DEVKITARM` set and
 devkitARM first in `PATH`).
 
 ## 19. Troubleshooting

@@ -1,0 +1,83 @@
+# Best effort: the slow tests (they boot the emulator) on a Windows runner, on lavapipe, a software Vulkan driver. The
+# runner has no GPU, so the job unpacks MSYS2's Mesa (sha256-pinned, tools/fetch-mesa.sh) into a folder of the
+# workspace, never into the MSYS2 install, and registers lavapipe's ICD file under HKLM\SOFTWARE\Khronos\Vulkan\Drivers
+# (the runner is thrown away; the Vulkan loader ignores VK_DRIVER_FILES in an elevated process, so the registry is the
+# route). continue-on-error is set on the job, so a red result mails no one and blocks nothing: the result is read from
+# the "lavapipe" step's outcome, the pytest step's outcome and its summary line (passed above 0, failed 0), never from
+# the run's conclusion. A pass counts only when the host.log Vulkan device line names lavapipe (llvmpipe).
+# Left out on purpose: tests that need a second copy (test_pool_live.py). test-windows.yml already runs the host's C
+# tests and the clang analysis, so they are not repeated here.
+name: test-windows-live
+
+# Started by hand only until three dispatches in a row are green; each failed or cancelled run mails the owner.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  live:
+    runs-on: windows-2025
+    continue-on-error: true
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0  # v7.1.0
+        with:
+          python-version: "3.14"
+      - uses: msys2/setup-msys2@ec48f7c5447b3140e2b088413ae3a55687bccb6e  # v2.33.0
+        with:
+          msystem: MINGW64
+          path-type: inherit
+          update: false
+          install: >-
+            make
+            zstd
+            mingw-w64-x86_64-gcc
+            mingw-w64-x86_64-zlib
+      - name: headers (libretro and Vulkan, pinned by sha256)
+        shell: msys2 {0}
+        run: sh tools/fetch.sh --headers
+      - name: build the host
+        shell: msys2 {0}
+        run: make
+      - name: our core and the test app (pinned by sha256)
+        shell: msys2 {0}
+        run: sh tools/fetch.sh --lazpy-core --testapp
+      - name: lavapipe (MSYS2's Mesa, pinned by sha256, unpacked into dl/mesa)
+        shell: msys2 {0}
+        run: |
+          sh tools/fetch-mesa.sh dl/mesa | tee mesa.out
+          sed -n 's/^icd=/MESA_ICD=/p;s/^bin=/MESA_BIN=/p' mesa.out >> "$GITHUB_ENV"
+      - name: register lavapipe's ICD file with the Vulkan loader
+        run: |
+          New-Item -Path HKLM:\SOFTWARE\Khronos\Vulkan\Drivers -Force | Out-Null
+          New-ItemProperty -Path HKLM:\SOFTWARE\Khronos\Vulkan\Drivers -Name $env:MESA_ICD -PropertyType DWord -Value 0 -Force | Out-Null
+          Get-Item HKLM:\SOFTWARE\Khronos\Vulkan\Drivers | Format-List
+          "loader in System32: " + (Test-Path "$env:SystemRoot\System32\vulkan-1.dll")
+      - name: Python layer
+        run: python -m pip install -e . pytest numpy
+      - name: one short boot must name lavapipe
+        id: lavapipe
+        run: |
+          $env:PATH = "$env:MESA_BIN;$env:PATH"
+          $out = (python -m libazahar doctor 2>&1 | Out-String)
+          Write-Host $out
+          if ($out -notmatch '(?im)^\s*vulkan: .*(lavapipe|llvmpipe)') { throw "the Vulkan device line does not name lavapipe" }
+      - name: the slow tests that need no second copy, emulator required
+        id: pytest
+        env:
+          LAZ_REQUIRE_EMULATOR: "1"
+        run: |
+          $env:PATH = "$env:MESA_BIN;$env:PATH"
+          python -m pytest -q -rs -m slow --ignore=tests/python/test_pool_live.py tests/python 2>&1 | Tee-Object -FilePath pytest.out
+          exit $LASTEXITCODE
+      - name: result (read this, not the run's conclusion)
+        if: always()
+        run: |
+          $line = (Select-String -Path pytest.out -Pattern '^=* ?\d+ (passed|failed|skipped|error)|^\d+ (passed|failed|skipped|error)' -ErrorAction SilentlyContinue | Select-Object -Last 1).Line
+          "lavapipe step : ${{ steps.lavapipe.outcome }}"
+          "pytest step   : ${{ steps.pytest.outcome }}"
+          "summary line  : $line"
+          if ("${{ steps.lavapipe.outcome }}" -eq "success" -and "${{ steps.pytest.outcome }}" -eq "success" -and $line -match '\d+ passed' -and $line -notmatch 'failed') { "RESULT: PASS (lavapipe)" } else { "RESULT: NOT A PASS" }

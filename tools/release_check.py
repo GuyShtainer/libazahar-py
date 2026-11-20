@@ -13,7 +13,14 @@ page, or --inherit-sums FILE; either way it must match the pin); the Windows zip
 artifact's gate_f2.txt: shared contract 1) instead of the live tree. --plant-red exits 0 when every plant failed on
 its own reason, 2 when one did not.
 
-python3 -I tools/release_check.py --self-test checks check 13 with the reading copy absent (SKIP, PEND under --pre-push).
+python3 -I tools/release_check.py --self-test checks check 13 with the reading copy absent (SKIP, PEND under --pre-push),
+and the "1c host zips" row on staged stand-ins.
+
+Check 1c (both release kinds): the prebuilt host zips libazahar-py-host-<version>-windows-x64.zip and -macos-arm64.zip
+(<version> is the tag without the v). A zip that is absent is a SKIP, never a PASS (and, as for every SKIP, a FAIL under
+--pre-push). A zip that is present must be listed in SHA256SUMS with its own sha256, equal fetch.sh's pin
+(LAZPY_HOST_SHA_WIN / LAZPY_HOST_SHA_MAC; TBD is a PEND, --skip-pins a SKIP), hold exactly its two binaries, LICENSE
+and SOURCE.md, and its SOURCE.md must name a commit (a 40-hex id).
 
 Prints one line per check: PASS, FAIL, SKIP or PEND, plus NOTE lines for the audit. Any FAIL exits 1; under
 --pre-push every SKIP and PEND is a FAIL. --plant-red plants one fault per check in a temp folder outside the repo
@@ -126,6 +133,7 @@ def expected_assets(pin: dict[str, str], tag: str) -> list[str]:
 
 def assets_findings(rel: Path, names: list[str]) -> Items:
     have = sorted(p.name for p in rel.iterdir())
+    names = sorted(names + host_names_present(rel))
     out: Items = []
     if have != names:
         out.append(("FAIL", f"asset set differs: extra {sorted(set(have) - set(names))}, missing {sorted(set(names) - set(have))}"))
@@ -150,6 +158,77 @@ def zip_findings(zip_path: Path) -> Items:
         out.append(("FAIL", f"core zip members are {names}"))
     if not licence or "GNU GENERAL PUBLIC LICENSE" not in licence[0] or "Version 3" not in licence[1]:
         out.append(("FAIL", "the zip's LICENSE is not the GPLv3 text"))
+    return out
+
+
+# ------------------------------------------------------------------------------------------- 1c host zips
+HOST_KINDS = {  # key: (file name part, the two binaries, fetch.sh pin name)
+    "win": ("windows-x64", ["azhost.exe", "libazhost.dll"], "LAZPY_HOST_SHA_WIN"),
+    "mac": ("macos-arm64", ["azhost", "libazhost.dylib"], "LAZPY_HOST_SHA_MAC"),
+}
+HOST_GLOB = "libazahar-py-host-*.zip"
+
+
+def host_zip_name(tag: str, key: str) -> str:
+    return f"libazahar-py-host-{tag.removeprefix('v')}-{HOST_KINDS[key][0]}.zip"
+
+
+def host_names_present(rel: Path) -> list[str]:
+    """The host zips in a staged release (any name that matches the glob), for the asset set of check 1."""
+    return sorted(p.name for p in rel.glob(HOST_GLOB))
+
+
+def host_one_findings(rel: Path, tag: str, key: str, fetch_values: dict[str, str], skip_pins: bool) -> Items:
+    name = host_zip_name(tag, key)
+    path = rel / name
+    if not path.is_file():
+        return [("SKIP", f"{name} is not in this release (the host zips come with v1.3.0 and later)")]
+    out: Items = []
+    digest = sha256_file(path)
+    sums = parse_sums(read_text(rel / "SHA256SUMS"))
+    if sums.get(name) != digest:
+        out.append(("FAIL", f"SHA256SUMS has no matching line for {name}"))
+    binaries = HOST_KINDS[key][1]
+    try:
+        with zipfile.ZipFile(path) as archive:
+            members = sorted(archive.namelist())
+            source = archive.read("SOURCE.md").decode(errors="replace") if "SOURCE.md" in members else ""
+            licence = archive.read("LICENSE").decode(errors="replace").splitlines()[:2] if "LICENSE" in members else []
+    except zipfile.BadZipFile:
+        return out + [("FAIL", f"{name} is not a zip")]
+    if members != sorted(binaries + ["LICENSE", "SOURCE.md"]):
+        out.append(("FAIL", f"{name} members are {members}"))
+    if not licence or "GNU GENERAL PUBLIC LICENSE" not in licence[0] or "Version 3" not in licence[1]:
+        out.append(("FAIL", f"{name}'s LICENSE is not the GPLv3 text"))
+    if not re.search(r"\b[0-9a-f]{40}\b", source):
+        out.append(("FAIL", f"{name}'s SOURCE.md names no commit"))
+    # private strings in the text and the binaries (a runner path from a hosted build is a NOTE: the debug info carries it)
+    with zipfile.ZipFile(path) as archive:
+        for member in members:
+            if member == "LICENSE":
+                continue
+            data = archive.read(member)
+            text = data.decode(errors="replace") if member == "SOURCE.md" else strings_py(data)
+            for label, regex in PRIVATE_RES:
+                if regex.search(text):
+                    out.append(("NOTE" if label == "GitHub runner path" else "FAIL", f"{name}: {member} holds a {label}"))
+    pin_name = HOST_KINDS[key][2]
+    pin = fetch_values.get(pin_name, "")
+    if skip_pins:
+        out.append(("SKIP", f"{pin_name}: --skip-pins"))
+    elif not pin or pin.startswith("TBD"):
+        out.append(("PEND", f"fetch.sh {pin_name} is TBD (the main loop sets it when the release is staged)"))
+    elif pin != digest:
+        out.append(("FAIL", f"fetch.sh {pin_name} differs from the staged {name}"))
+    return out
+
+
+def host_findings(rel: Path, tag: str, fetch_text: str, skip_pins: bool) -> Items:
+    values = dict(re.findall(r"^([A-Z_]+)=(\S+)$", fetch_text, re.M))
+    wanted = {host_zip_name(tag, key) for key in HOST_KINDS}
+    out: Items = [("FAIL", f"{name} is not a host zip of {tag}") for name in host_names_present(rel) if name not in wanted]
+    for key in HOST_KINDS:
+        out += host_one_findings(rel, tag, key, values, skip_pins)
     return out
 
 
@@ -858,6 +937,7 @@ def mkrelease_pin(repo: Path, name: str) -> str:
 
 def assets_findings_v11(rel: Path, names: list[str], pin: dict[str, str]) -> Items:
     have = sorted(p.name for p in rel.iterdir())
+    names = sorted(names + host_names_present(rel))
     if have != names:
         return [("FAIL", f"asset set differs: extra {sorted(set(have) - set(names))}, missing {sorted(set(names) - set(have))}")]
     out: Items = []
@@ -1083,7 +1163,7 @@ def run_checks_v11(ctx: "Ctx", tmp: Path) -> list[tuple[str, Items]]:
     needles = load_needles(os.environ.get("LAZ_PRIVATE_NEEDLES"))
     mac_notices = texts["NOTICES.md"]
     allowed = frozenset(a for a in EMAIL_RE.findall(mac_notices) if a.lower().endswith("@gmail.com"))
-    names = expected_assets_v11(pin, rel.name, runtime)
+    names = sorted(expected_assets_v11(pin, rel.name, runtime) + host_names_present(rel))
 
     guard("1 assets", lambda: assets_findings_v11(rel, names, pin))
     try:
@@ -1095,6 +1175,7 @@ def run_checks_v11(ctx: "Ctx", tmp: Path) -> list[tuple[str, Items]]:
         guard("2 gate_f2", lambda: gate_f2_findings(Path(args.gate_f2).read_text(), sha256_bytes(win_dll), inputs))
     else:
         results.append(("2 gate_f2", [("SKIP", "--gate-f2 FILE not given: the Windows keyblob check did not run")]))
+    results.append(("1c host zips", host_findings(rel, rel.name, ctx.fetch_text, args.skip_pins)))
     results.append(("2 keyblob (macOS)", [("NOTE", "inherited from v1.0.0: the macOS core is the v1.0.0 bytes (see 1b)")]))
     dll_strings = texts["win core strings"]
     results.append(("3-5 binary", ([("NOTE", "macOS exports, version and linkage: inherited from v1.0.0 (see 1b)")]
@@ -1394,6 +1475,7 @@ def run_checks(ctx: Ctx, tmp: Path) -> list[tuple[str, Items]]:
     needles = load_needles(os.environ.get("LAZ_PRIVATE_NEEDLES"))
     results: list[tuple[str, Items]] = [
         ("1 assets", assets_findings(rel, expected_assets(ctx.pin, rel.name))),
+        ("1c host zips", host_findings(rel, rel.name, ctx.fetch_text, args.skip_pins)),
         ("2 keyblob", keyblob_check(rel, repo, ctx.inputs_path)),
         ("3 exports", exports_findings(ctx.nm_text)),
         ("4 version", version_findings(core_strings)),
@@ -1441,6 +1523,80 @@ def report(results: list[tuple[str, Items]], pre_push: bool) -> int:
     return 1 if failed else 0
 
 
+HOST_LICENCE = "GNU GENERAL PUBLIC LICENSE\n Version 3, 29 June 2007\n"
+HOST_COMMIT = "0123456789abcdef0123456789abcdef01234567"
+
+
+def host_stage(rel: Path, key: str, tag: str = "v9.9.9", extra: dict[str, bytes] | None = None, drop: tuple[str, ...] = (),
+               source: str | None = None, listed: bool = True) -> str:
+    """Write one stand-in host zip into rel (and its SHA256SUMS line); return its sha256."""
+    name = host_zip_name(tag, key)
+    members = {b: b"stand-in binary\n" for b in HOST_KINDS[key][1]}
+    members["LICENSE"] = HOST_LICENCE.encode()
+    members["SOURCE.md"] = (source if source is not None else f"# SOURCE\nBuilt at commit {HOST_COMMIT}\n").encode()
+    members.update(extra or {})
+    with zipfile.ZipFile(rel / name, "w") as archive:
+        for member, data in members.items():
+            if member not in drop:
+                archive.writestr(member, data)
+    digest = sha256_file(rel / name)
+    if listed:
+        with (rel / "SHA256SUMS").open("a") as handle:
+            handle.write(f"{digest}  {name}\n")
+    return digest
+
+
+def host_self_test() -> tuple[int, int]:
+    """Check 1c on stand-in zips in a temp folder: (cases, failed). Each case names the kinds it expects."""
+    import contextlib
+    tag = "v9.9.9"
+    cases: list[tuple[str, dict[str, object]]] = []
+
+    def run(label: str, build, want: set[str], pin_of=None, skip_pins: bool = False) -> None:  # type: ignore[no-untyped-def]
+        with tempfile.TemporaryDirectory(prefix="release_check.host.") as name:
+            rel = Path(name)
+            (rel / "SHA256SUMS").write_text("")
+            digests = build(rel)
+            win, mac = digests.get("win", "0" * 64), digests.get("mac", "0" * 64)
+            pins = pin_of(win, mac) if pin_of else (win, mac)
+            fetch = f"LAZPY_HOST_SHA_WIN={pins[0]}\nLAZPY_HOST_SHA_MAC={pins[1]}\n"
+            items = host_findings(rel, tag, fetch, skip_pins)
+            out = io.StringIO()
+            with contextlib.redirect_stdout(out):
+                code = report([("1c host zips", items)], False)
+        kinds = {kind for kind, _m in items}
+        line = out.getvalue()
+        ok = want <= kinds and not (kinds - want - {"NOTE"}) and ("PASS 1c" in line) == (not kinds - {"NOTE"}) \
+            and (code == 1) == ("FAIL" in kinds)
+        print(f"{'ok  ' if ok else 'FAIL'} 1c host zips, {label}: {sorted(kinds)}, exit {code}")
+        cases.append((label, {"ok": ok}))
+
+    run("no host zip at all is SKIP, never PASS", lambda rel: {}, {"SKIP"})
+    run("both zips right is PASS", lambda rel: {"win": host_stage(rel, "win"), "mac": host_stage(rel, "mac")}, set())
+    run("one zip right, the other absent is SKIP", lambda rel: {"win": host_stage(rel, "win")}, {"SKIP"})
+    run("an extra member", lambda rel: {"win": host_stage(rel, "win", extra={"stray.txt": b"x"}), "mac": host_stage(rel, "mac")}, {"FAIL"})
+    run("a binary missing", lambda rel: {"mac": host_stage(rel, "mac", drop=("azhost",)), "win": host_stage(rel, "win")}, {"FAIL"})
+    run("SOURCE.md names no commit", lambda rel: {"win": host_stage(rel, "win", source="# SOURCE\nbuilt somewhere\n"),
+                                                    "mac": host_stage(rel, "mac")}, {"FAIL"})
+    run("not listed in SHA256SUMS", lambda rel: {"win": host_stage(rel, "win", listed=False), "mac": host_stage(rel, "mac")}, {"FAIL"})
+    run("the pin differs", lambda rel: {"win": host_stage(rel, "win"), "mac": host_stage(rel, "mac")}, {"FAIL"},
+        pin_of=lambda win, mac: ("1" * 64, mac))
+    run("the pin is TBD", lambda rel: {"win": host_stage(rel, "win"), "mac": host_stage(rel, "mac")}, {"PEND"},
+        pin_of=lambda win, mac: ("TBD", "TBD"))
+    run("--skip-pins", lambda rel: {"win": host_stage(rel, "win"), "mac": host_stage(rel, "mac")}, {"SKIP"}, skip_pins=True)
+    run("a private path in SOURCE.md", lambda rel: {"win": host_stage(rel, "win", source=f"commit {HOST_COMMIT} in /Users/someone/x\n"),
+                                                     "mac": host_stage(rel, "mac")}, {"FAIL"})
+    run("a runner path is only a NOTE", lambda rel: {"win": host_stage(rel, "win", source=f"commit {HOST_COMMIT} in D:\\a\\r\\r\n"),
+                                                      "mac": host_stage(rel, "mac")}, set())
+
+    def other_tag(rel: Path) -> dict[str, str]:
+        host_stage(rel, "win", tag="v1.0.0")  # a zip of another version
+        return {"mac": host_stage(rel, "mac")}
+    run("a zip of another version", other_tag, {"FAIL", "SKIP"})
+    bad = sum(1 for _l, r in cases if not r["ok"])
+    return len(cases), bad
+
+
 def self_test() -> int:
     """Check 13 with the reading copy absent must report SKIP (PEND under --pre-push), with no NOTE and no PASS."""
     import contextlib
@@ -1459,7 +1615,10 @@ def self_test() -> int:
             print(f"{'ok  ' if ok else 'FAIL'} 13 history-bytes, reading copy absent{' (--pre-push)' if pre_push else ''}: "
                   f"{want} item, exit {code}")
             failed += not ok
-    print(f"release_check self-test: {2 - failed} of 2 cases passed")
+    total, bad = host_self_test()
+    failed += bad
+    total += 2
+    print(f"release_check self-test: {total - failed} of {total} cases passed")
     return 1 if failed else 0
 
 

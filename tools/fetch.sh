@@ -7,6 +7,10 @@
 #     --lazpy-core   our core from the release: the zip, verified; the core, NOTICES.md and SOURCE.md unpacked into
 #                    dl/lazpy-core/ (the core there is the default core path; LAZ_CORE overrides it)
 #     --testapp      the test app from the release, into dl/testapp/ and build/testapp.3dsx
+#     --host         the prebuilt host for this system from the release (libazhost + azhost, sha256-pinned): the zip is
+#                    kept in dl/lazpy-host/ and the two binaries are unpacked into build/ (build/libazhost.dll and
+#                    build/azhost.exe on Windows, build/libazhost.dylib and build/azhost on macOS), the paths the
+#                    Python layer reads. Never part of the default set; it replaces a host built by `make`.
 #     --force        delete and refetch what the chosen parts fetch
 #   No part flag means --moltenvk --headers on macOS, and --headers --lazpy-core --testapp on Windows (MoltenVK is
 #   macOS only and is skipped there). A second run downloads nothing.
@@ -16,6 +20,9 @@
 #                           LAZ_RELEASE_BASE is set and this is not, there is no fallback
 #   LAZ_FETCH_OS=<name>     use <name> instead of `uname -s` (Darwin: the macOS zip; MINGW64_NT, MSYS_NT or
 #                           Windows: the Windows zip)
+#
+# The host zip, libazahar-py-host-<version>-windows-x64.zip or -macos-arm64.zip (<version> is REL_TAG without the v),
+# exists in the release that built it and has no fallback to an older release.
 #
 # The fallback: the macOS core zip and the test app have the same bytes in the previous release. When one of them
 # cannot be downloaded from the current release (any curl failure), it is fetched once from the previous release
@@ -60,9 +67,12 @@ TESTAPP_SHA=ba10699831f2a1c88b56de119bd2f8caab465e051eb350954b7be1cd7b027ccd
 # the Windows core zip (in the release only; no fallback)
 LAZPY_CORE_ZIP_WIN=azahar_lazpy_libretro-2126.2-lazpy.2-windows-x64.zip
 LAZPY_CORE_SHA_WIN=fe0bbfd1d6a7930e70309b0c97de162ec78b4e4fcc67e4e9c3eea04281ddf370
+# the prebuilt host zips (filled at release time; TBD makes --host die). No fallback: each release carries its own.
+LAZPY_HOST_SHA_WIN=TBD
+LAZPY_HOST_SHA_MAC=TBD
 # ------------------------------------------------------------------------------------------------------------------
 
-FORCE=0; DO_MVK=0; DO_HEADERS=0; DO_CORE=0; DO_APP=0
+FORCE=0; DO_MVK=0; DO_HEADERS=0; DO_CORE=0; DO_APP=0; DO_HOST=0
 for arg in "$@"; do
   case "$arg" in
     --force) FORCE=1 ;;
@@ -70,7 +80,8 @@ for arg in "$@"; do
     --headers) DO_HEADERS=1 ;;
     --lazpy-core) DO_CORE=1 ;;
     --testapp) DO_APP=1 ;;
-    *) echo "usage: $0 [--moltenvk] [--headers] [--lazpy-core] [--testapp] [--force]" >&2; exit 2 ;;
+    --host) DO_HOST=1 ;;
+    *) echo "usage: $0 [--moltenvk] [--headers] [--lazpy-core] [--testapp] [--host] [--force]" >&2; exit 2 ;;
   esac
 done
 
@@ -88,7 +99,7 @@ case "${LAZ_FETCH_OS:-$(uname -s)}" in
   MINGW*|MSYS*|CYGWIN*|Windows*) OS_KIND=win ;;
   *) OS_KIND=other ;;
 esac
-if [ $((DO_MVK + DO_HEADERS + DO_CORE + DO_APP)) -eq 0 ]; then
+if [ $((DO_MVK + DO_HEADERS + DO_CORE + DO_APP + DO_HOST)) -eq 0 ]; then
   # no part flag: macOS gets MoltenVK and the headers; Windows gets the headers, our core and the test app
   if [ "$OS_KIND" = win ]; then DO_HEADERS=1; DO_CORE=1; DO_APP=1; else DO_MVK=1; DO_HEADERS=1; fi
 fi
@@ -230,6 +241,36 @@ if [ "$DO_APP" -eq 1 ]; then
   fi
 fi
 
+# ---- the prebuilt host (release asset) ---------------------------------------------------------------------------
+if [ "$DO_HOST" -eq 1 ]; then
+  HOST_DIR="$DL/lazpy-host"
+  case "$OS_KIND" in
+    mac) HOST_OS_NAME=macos-arm64; HOST_SHA=$LAZPY_HOST_SHA_MAC; HOST_FILES="libazhost.dylib azhost" ;;
+    win) HOST_OS_NAME=windows-x64; HOST_SHA=$LAZPY_HOST_SHA_WIN; HOST_FILES="libazhost.dll azhost.exe" ;;
+    *) die "no prebuilt host is released for this OS (macOS arm64 and Windows x64 only)" ;;
+  esac
+  HOST_ZIP="libazahar-py-host-${REL_TAG#v}-$HOST_OS_NAME.zip"
+  pin_set "$HOST_SHA" --host
+  [ "$FORCE" -eq 0 ] || rm -f "$HOST_DIR/$HOST_ZIP" "$HOST_DIR/.unpacked-sha256"
+  MISSING_HINT="$REL_TAG may not carry the host zips"
+  get "$REL_BASE/$HOST_ZIP" "$HOST_SHA" "$HOST_DIR/$HOST_ZIP"
+  MISSING_HINT=""
+  _have=1; for f in $HOST_FILES; do [ -f "$ROOT/build/$f" ] || _have=0; done
+  if [ "$_have" -eq 0 ] || [ "$(cat "$HOST_DIR/.unpacked-sha256" 2>/dev/null)" != "$HOST_SHA" ]; then
+    verify "$HOST_DIR/$HOST_ZIP" "$HOST_SHA"
+    mkdir -p "$ROOT/build"
+    # shellcheck disable=SC2086  # intentional split: two file names
+    unzip -q -o "$HOST_DIR/$HOST_ZIP" $HOST_FILES LICENSE SOURCE.md -d "$HOST_DIR/unpacked"
+    for f in $HOST_FILES; do
+      [ -f "$HOST_DIR/unpacked/$f" ] || die "zip did not contain $f"
+      cp "$HOST_DIR/unpacked/$f" "$ROOT/build/$f"
+    done
+    chmod +x "$ROOT/build/azhost" "$ROOT/build/azhost.exe" 2>/dev/null || true
+    echo "$HOST_SHA" > "$HOST_DIR/.unpacked-sha256"
+    echo "unpack $ROOT/build/{$(echo $HOST_FILES | sed 's/ /,/')}"
+  fi
+fi
+
 echo
 echo "Done. Everything verified against its pinned sha256."
 if [ "$DO_MVK" -eq 1 ]; then
@@ -241,6 +282,9 @@ if [ "$DO_HEADERS" -eq 1 ]; then
 fi
 if [ "$DO_CORE" -eq 1 ]; then
   echo "  core        our core is at dl/lazpy-core/$CORE_FILE, the default core path (LAZ_CORE overrides it)"
+fi
+if [ "$DO_HOST" -eq 1 ]; then
+  echo "  host        the prebuilt host is in $ROOT/build/ (SOURCE.md and LICENSE: dl/lazpy-host/unpacked/)"
 fi
 if [ "$DO_APP" -eq 1 ]; then
   echo "  test app    $ROOT/build/testapp.3dsx"

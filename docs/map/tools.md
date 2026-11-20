@@ -10,11 +10,13 @@
   applies `core/patches/` with `--fuzz 0`, configures, and with `--build` or `--detach` builds
   `build-core/azahar_lazpy_libretro.dylib`. `tools/untar_checked.py` pre-scans a tar.xz, refuses unsafe members,
   then extracts with `filter="data"` (Python 3.12+).
-- `tools/fetch.sh`: MoltenVK and headers (no flag), or the parts named (`--moltenvk --headers --lazpy-core --testapp`),
-  sha256-pinned; our core and the test app come from the release (`LAZ_RELEASE_BASE` overrides its URL).
+- `tools/fetch.sh`: MoltenVK and headers (no flag), or the parts named (`--moltenvk --headers --lazpy-core --testapp
+  --host`), sha256-pinned; our core, the test app and the prebuilt host come from the release (`LAZ_RELEASE_BASE`
+  overrides its URL). `tools/fetch-mesa.sh`: the pinned MSYS2 Mesa (lavapipe) packages for the Windows emulator CI.
 - `tools/mknotices.py`: writes `NOTICES.md` from the link line, the `.o.d` dependency files and the licence texts;
   exits 1 on an unknown path, component or notice.
-- `tools/mkrelease.sh <tag>`: stages the release assets deterministically in `runs/release/<tag>/`.
+- `tools/mkrelease.sh <tag>`: stages the release assets deterministically in `runs/release/<tag>/`
+  (`--host-artifact-win DIR`, `--host-artifact-mac DIR` add the prebuilt host zips).
 - `tools/release_check.py <dir>`: the release's machine checks (`--skip-pins`, `--pre-push`, `--plant-red`).
 - `tests/gate-a.sh <app.3dsx>`: step A's gate (8 checks in a temporary fresh copy; `KEEP=1` keeps it).
 - `tests/gate-b.sh`: step B's gate (`RUNNER=fe2` default, or `RUNNER=azhost`); one PASS/FAIL line per check.
@@ -35,4 +37,4 @@
 - `tools/docs_check.py`: step H's gate over the docs: README numbers against their sources, the example and steps
   blocks, links, forbidden claims, the first paragraph; `--plant-red`, `--emit-steps`.
 - `tools/clone_check.sh`: the fresh-clone check (clone, the README's steps and build blocks, the quickstart, the
-  full pytest); `--dry-run` prints the steps.
+  full pytest); `--dry-run` prints the steps, `--no-build` takes the README's no-compiler route (`fetch.sh --host`).

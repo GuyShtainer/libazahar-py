@@ -16,6 +16,12 @@
 # azahar_lazpy_libretro.dll, build.inputs, NOTICES-windows-x64.md, gate_f2.txt, mingw-w64-runtime-source.tar
 # (--no-runtime-source drops the last). The tag is the name of the --out folder; it must be v<pyproject version>.
 # LAZ_INHERIT_BASE=<url> replaces the v1.0.0 page (tests, file://); the pinned digests still apply.
+#
+# The prebuilt host zips (v1.3.0 and later; both modes): --host-artifact-win DIR and --host-artifact-mac DIR each name the
+# folder of one host-bin.yml artifact. A folder holds exactly one zip, libazahar-py-host-<version>-windows-x64.zip or
+# -macos-arm64.zip (<version> is the tag without the v); it must hold exactly the two binaries, LICENSE and a SOURCE.md
+# that names a commit. The zip is copied byte for byte into the release and listed in SHA256SUMS. Without either flag
+# nothing changes: the release is staged as before (v1.2.0's command lines work unchanged).
 set -eu
 
 # the GitHub digest of v1.0.0's SHA256SUMS: the anchor of everything inherited
@@ -26,9 +32,9 @@ SNAP_SHA=faada632bdad4f5d437998aa1ce20a72715e55999387538b7f3ee6aca135d7a3
 # COPYING.NEWLIB of newlib 4.6.0 (the version devkitARM ships), quoted in NOTICES.md for the test app
 NEWLIB_SHA=f3afe48e4bc6ed8466a42e9dacb6be1d8f9cbf5aac15cb8e474a5ccde8b40ef6
 
-usage() { echo "usage: $0 <tag>   (for example v1.0.0)
-       $0 --inherit v1.0.0 --win-artifact DIR --out DIR [--no-runtime-source]" >&2; exit 2; }
-INHERIT=""; WINART=""; WOUT=""; NO_RT=0; TAG=""
+usage() { echo "usage: $0 <tag> [--host-artifact-win DIR] [--host-artifact-mac DIR]   (for example v1.0.0)
+       $0 --inherit v1.0.0 --win-artifact DIR --out DIR [--no-runtime-source] [--host-artifact-win DIR] [--host-artifact-mac DIR]" >&2; exit 2; }
+INHERIT=""; WINART=""; WOUT=""; NO_RT=0; TAG=""; HOST_WIN_DIR=""; HOST_MAC_DIR=""
 if [ "${1:-}" = --inherit ]; then
   while [ $# -gt 0 ]; do
     case "$1" in
@@ -36,13 +42,22 @@ if [ "${1:-}" = --inherit ]; then
       --win-artifact) [ $# -ge 2 ] || usage; WINART=$2; shift 2 ;;
       --out) [ $# -ge 2 ] || usage; WOUT=$2; shift 2 ;;
       --no-runtime-source) NO_RT=1; shift ;;
+      --host-artifact-win) [ $# -ge 2 ] || usage; HOST_WIN_DIR=$2; shift 2 ;;
+      --host-artifact-mac) [ $# -ge 2 ] || usage; HOST_MAC_DIR=$2; shift 2 ;;
       *) usage ;;
     esac
   done
   [ -n "$INHERIT" ] && [ -n "$WINART" ] && [ -n "$WOUT" ] || usage
 else
-  [ $# -eq 1 ] || usage
-  TAG=$1
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --host-artifact-win) [ $# -ge 2 ] || usage; HOST_WIN_DIR=$2; shift 2 ;;
+      --host-artifact-mac) [ $# -ge 2 ] || usage; HOST_MAC_DIR=$2; shift 2 ;;
+      -*) usage ;;
+      *) [ -z "$TAG" ] || usage; TAG=$1; shift ;;
+    esac
+  done
+  [ -n "$TAG" ] || usage
 fi
 ROOT="${LAZ_ROOT:-${LAZPY_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}}"   # LAZPY_ROOT: the old name, kept for 1.x
 cd "$ROOT"
@@ -53,6 +68,29 @@ if command -v shasum >/dev/null 2>&1; then SUM256="shasum -a 256 -t"; else SUM25
 sha_of() { $SUM256 "$1" | cut -d' ' -f1; }
 pin() { sed -n "s/^$1=//p" core/PIN; }
 inp() { sed -n "s/^$1=//p" "$INPUTS"; }
+
+# add_host_zips: copy the host zips named by --host-artifact-win / --host-artifact-mac into $OUT (needs $TAG and $OUT)
+add_host_zips() {
+  [ -n "$HOST_WIN_DIR$HOST_MAC_DIR" ] || return 0
+  _ver=${TAG#v}
+  for _pair in "win|$HOST_WIN_DIR|windows-x64|libazhost.dll azhost.exe" "mac|$HOST_MAC_DIR|macos-arm64|libazhost.dylib azhost"; do
+    _oldifs=$IFS; IFS='|'; set -- $_pair; IFS=$_oldifs
+    _kind=$1; _dir=$2; _os=$3; _bins=$4
+    [ -n "$_dir" ] || continue
+    _name="libazahar-py-host-$_ver-$_os.zip"
+    case "$_dir" in /*|?:*) ;; *) _dir="$ROOT/$_dir" ;; esac
+    [ -d "$_dir" ] || die "--host-artifact-$_kind $_dir is not a folder"
+    _n=$(ls "$_dir" | wc -l | tr -d ' ')
+    [ "$_n" -eq 1 ] && [ -f "$_dir/$_name" ] || die "$_dir must hold exactly $_name (it holds $_n file(s))"
+    # the members: exactly the two binaries, LICENSE and SOURCE.md
+    _want=$(printf '%s\n' $_bins LICENSE SOURCE.md | LC_ALL=C sort)
+    _have=$(unzip -Z1 "$_dir/$_name" | LC_ALL=C sort)
+    [ "$_have" = "$_want" ] || die "$_name holds [$(echo $_have)], expected [$(echo $_want)]"
+    unzip -p "$_dir/$_name" SOURCE.md | grep -Eq '[0-9a-f]{40}' || die "$_name's SOURCE.md names no commit"
+    cp "$_dir/$_name" "$OUT/$_name"
+    echo "ok     $_name added ($(sha_of "$OUT/$_name"))"
+  done
+}
 
 # ---- Windows mode: the v1.1.0 release, the macOS side inherited from v1.0.0 by checksum -------------------------------
 win_release() {
@@ -132,7 +170,8 @@ win_release() {
   # shellcheck disable=SC2046  # intentional split: one repo path per line, none with a space (CR stripped: a Windows checkout may add it)
   git archive --format=tar.gz --prefix=libazahar-py-core-build/ -o "$OUT/$NEW_BUILD" HEAD $(tr -d '\r' < tools/build-files.txt)
 
-  # 5: SOURCE.md (all binaries) and SHA256SUMS
+  # 5: the host zips (when given), SOURCE.md (all binaries) and SHA256SUMS
+  add_host_zips
   top_source_md > "$OUT/SOURCE.md"
   _names=$(cd "$OUT" && ls | LC_ALL=C sort)
   # shellcheck disable=SC2086  # intentional split of the sorted asset names
@@ -185,6 +224,13 @@ top_source_md() {
   echo "## Notices"
   echo
   echo "\`NOTICES.md\` goes with the macOS zip (the same bytes as release $INHERIT). \`NOTICES-windows-x64.md\` goes with the Windows zip."
+  for _h in "$OUT"/libazahar-py-host-*.zip; do
+    [ -f "$_h" ] || continue
+    echo
+    echo "## \`$(basename "$_h")\`"
+    echo
+    echo "The prebuilt host (libazhost and azhost, no core). Source: this repository at the tag $TAG; the zip's own \`SOURCE.md\` names the commit it was built from. Built by the \`host-bin\` workflow and attested there."
+  done
 }
 
 if [ -n "$INHERIT" ]; then win_release; exit 0; fi
@@ -299,6 +345,7 @@ cp "$SNAP" "$OUT/$SNAP_ASSET"
 git archive --format=tar.gz --prefix=libazahar-py-core-build/ -o "$OUT/$BUILD_ASSET" HEAD core tools/build-core.sh tools/untar_checked.py
 cp "$APP" "$OUT/testapp.3dsx"
 cp NOTICES.md "$OUT/NOTICES.md"
+add_host_zips
 _names=$(cd "$OUT" && ls | LC_ALL=C sort)
 # shellcheck disable=SC2086  # intentional split of the sorted asset names
 (cd "$OUT" && shasum -a 256 $_names > "$ROOT/$STG.sums")

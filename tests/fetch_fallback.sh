@@ -23,13 +23,30 @@ pack() {  # pack ZIP CORE_FILE TEXT DEST
 pack "$MAC_ZIP" azahar_lazpy_libretro.dylib "mac stand-in" "$PREV"
 pack "$WIN_ZIP" azahar_lazpy_libretro.dll "windows stand-in" "$PREV"
 echo "test app stand-in" > "$PREV/testapp.3dsx"
+# the host zips of tag v1.1.0 (stand-ins: harmless text), on their own page
+HOSTREL="$T/hostrel"; mkdir -p "$HOSTREL"
+HOST_MAC_ZIP=libazahar-py-host-1.1.0-macos-arm64.zip
+HOST_WIN_ZIP=libazahar-py-host-1.1.0-windows-x64.zip
+hostpack() {  # hostpack ZIP LIB EXE
+  rm -rf "$T/pack"; mkdir -p "$T/pack"
+  echo "lib stand-in" > "$T/pack/$2"; echo "exe stand-in" > "$T/pack/$3"; echo "licence" > "$T/pack/LICENSE"
+  echo "built at commit 0123456789abcdef0123456789abcdef01234567" > "$T/pack/SOURCE.md"
+  rm -f "$HOSTREL/$1"; (cd "$T/pack" && zip -q -X "$HOSTREL/$1" "$2" "$3" LICENSE SOURCE.md)
+}
+hostpack "$HOST_MAC_ZIP" libazhost.dylib azhost
+hostpack "$HOST_WIN_ZIP" libazhost.dll azhost.exe
 MAC_SHA=$(sha "$PREV/$MAC_ZIP"); WIN_SHA=$(sha "$PREV/$WIN_ZIP"); APP_SHA=$(sha "$PREV/testapp.3dsx")
 
 # a copy of fetch.sh with the pins of these stand-ins, as the release would have them
 mkdir -p "$T/tools"
 sed -e "s/^REL_TAG=.*/REL_TAG=v1.1.0/" -e "s/^REL_TAG_PREV=.*/REL_TAG_PREV=v1.0.0/" \
     -e "s/^LAZPY_CORE_SHA=.*/LAZPY_CORE_SHA=$MAC_SHA/" -e "s/^TESTAPP_SHA=.*/TESTAPP_SHA=$APP_SHA/" \
-    -e "s/^LAZPY_CORE_SHA_WIN=.*/LAZPY_CORE_SHA_WIN=$WIN_SHA/" "$HERE/tools/fetch.sh" > "$T/tools/fetch.sh"
+    -e "s/^LAZPY_CORE_SHA_WIN=.*/LAZPY_CORE_SHA_WIN=$WIN_SHA/" \
+    -e "s/^LAZPY_HOST_SHA_MAC=.*/LAZPY_HOST_SHA_MAC=$(sha "$HOSTREL/$HOST_MAC_ZIP")/" \
+    -e "s/^LAZPY_HOST_SHA_WIN=.*/LAZPY_HOST_SHA_WIN=$(sha "$HOSTREL/$HOST_WIN_ZIP")/" "$HERE/tools/fetch.sh" > "$T/tools/fetch.sh"
+# the same script with its host pins left as the repo has them (TBD or filled), for the "TBD dies" case
+sed -e "s/^LAZPY_HOST_SHA_MAC=.*/LAZPY_HOST_SHA_MAC=TBD/" -e "s/^LAZPY_HOST_SHA_WIN=.*/LAZPY_HOST_SHA_WIN=TBD/" \
+    "$T/tools/fetch.sh" > "$T/tools/fetch-tbd.sh"
 
 N=0; BAD=0
 pass() { N=$((N + 1)); echo "ok $1"; }
@@ -88,6 +105,46 @@ cp "$PREV/$WIN_ZIP" "$CUR/"
 PREV_ON=1; run_fetch MINGW64_NT-10.0 --moltenvk --lazpy-core
 if [ "$RC" -eq 0 ] && [ -f "$T/root/dl/lazpy-core/azahar_lazpy_libretro.dll" ] && has "skip   MoltenVK"; then
   pass "Windows zip present: the dll is unpacked and MoltenVK is skipped"; else fail "windows ok"; cat "$T/out"; fi
+
+# 7: --host on macOS: the zip is verified, the two binaries land in build/, the zip stays in dl/lazpy-host/
+host_run() {  # host_run SCRIPT OS BASE ARGS...
+  _s=$1; _os=$2; _b=$3; shift 3
+  rm -rf "$T/root"; mkdir -p "$T/root"; RC=0
+  env -u LAZ_RELEASE_BASE_PREV LAZ_ROOT="$T/root" LAZ_RELEASE_BASE="file://$_b" LAZ_FETCH_OS="$_os" \
+    sh "$_s" "$@" > "$T/out" 2>&1 || RC=$?
+}
+host_run "$T/tools/fetch.sh" Darwin "$HOSTREL" --host
+if [ "$RC" -eq 0 ] && [ -f "$T/root/build/libazhost.dylib" ] && [ -f "$T/root/build/azhost" ] \
+   && [ ! -e "$T/root/build/azhost.exe" ] && [ -f "$T/root/dl/lazpy-host/$HOST_MAC_ZIP" ] && ! has "fell back"; then
+  pass "--host on macOS: libazhost.dylib and azhost land in build/"; else fail "host mac"; cat "$T/out"; fi
+# a second run downloads nothing
+RC=0; env -u LAZ_RELEASE_BASE_PREV LAZ_ROOT="$T/root" LAZ_RELEASE_BASE="file://$T/nowhere" LAZ_FETCH_OS=Darwin \
+  sh "$T/tools/fetch.sh" --host > "$T/out" 2>&1 || RC=$?
+if [ "$RC" -eq 0 ] && has "have   " && ! has "fetch  "; then
+  pass "--host a second time: downloads nothing"; else fail "host again"; cat "$T/out"; fi
+
+# 8: --host on Windows
+host_run "$T/tools/fetch.sh" MINGW64_NT-10.0 "$HOSTREL" --host
+if [ "$RC" -eq 0 ] && [ -f "$T/root/build/libazhost.dll" ] && [ -f "$T/root/build/azhost.exe" ] \
+   && [ ! -e "$T/root/build/libazhost.dylib" ]; then
+  pass "--host on Windows: libazhost.dll and azhost.exe land in build/"; else fail "host win"; cat "$T/out"; fi
+
+# 9: a TBD pin dies with one clear line and downloads nothing
+host_run "$T/tools/fetch-tbd.sh" Darwin "$HOSTREL" --host
+if [ "$RC" -ne 0 ] && has "pins are filled at release time" && [ "$(grep -c . "$T/out")" -eq 1 ] && [ ! -e "$T/root/dl/lazpy-host" ]; then
+  pass "--host with a TBD pin: one clear line, nothing fetched"; else fail "host tbd"; cat "$T/out"; fi
+
+# 10: a wrong-sha zip dies, deletes the file and unpacks nothing; a missing zip does not fall back to the previous page
+cp "$HOSTREL/$HOST_MAC_ZIP" "$T/good.zip"; echo tampered > "$HOSTREL/$HOST_MAC_ZIP"
+host_run "$T/tools/fetch.sh" Darwin "$HOSTREL" --host
+if [ "$RC" -ne 0 ] && has "SHA256 MISMATCH" && [ ! -e "$T/root/build/azhost" ] && [ ! -e "$T/root/dl/lazpy-host/$HOST_MAC_ZIP" ]; then
+  pass "--host with a wrong sha256: dies, deletes the zip, unpacks nothing"; else fail "host mismatch"; cat "$T/out"; fi
+cp "$T/good.zip" "$HOSTREL/$HOST_MAC_ZIP"; rm -f "$HOSTREL/$HOST_MAC_ZIP"
+rm -rf "$T/root"; mkdir -p "$T/root"; RC=0
+LAZ_ROOT="$T/root" LAZ_RELEASE_BASE="file://$HOSTREL" LAZ_RELEASE_BASE_PREV="file://$PREV" LAZ_FETCH_OS=Darwin \
+  sh "$T/tools/fetch.sh" --host > "$T/out" 2>&1 || RC=$?
+if [ "$RC" -ne 0 ] && has "download failed" && ! has "fell back"; then
+  pass "--host with the zip missing: dies, no fallback to the previous release"; else fail "host missing"; cat "$T/out"; fi
 
 echo "fetch_fallback: $N cases passed, $BAD failed"
 [ "$BAD" -eq 0 ]

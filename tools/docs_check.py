@@ -34,8 +34,8 @@ FENCE = re.compile(r"^```")
 def read_docs(base: Path) -> dict[str, str]:
     """The five docs and every file under examples/, by repo-relative name."""
     out = {name: (base / name).read_text(encoding="utf-8") for name in DOCS if (base / name).is_file()}
-    for path in sorted((base / "examples").glob("*")) if (base / "examples").is_dir() else []:
-        out.setdefault(f"examples/{path.name}", path.read_text(encoding="utf-8"))
+    for path in sorted(q for q in (base / "examples").rglob("*") if q.is_file()) if (base / "examples").is_dir() else []:
+        out.setdefault(f"examples/{path.relative_to(base / 'examples').as_posix()}", path.read_text(encoding="utf-8"))
     return out
 
 

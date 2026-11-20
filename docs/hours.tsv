@@ -264,3 +264,8 @@ date	bet	phase	agent_id	model	role	kind	start	end	hours	source
 2026-11-20	phase 8 C main loop: the consult read, Guy asked, history rewritten and force-pushed, ids in docs remapped, the Windows core rebuild dispatched	phase-8c	main	opus	main	release	12:37	14:45	2.13	session clock
 2026-11-20	phase 8 C main loop: the rebuilt Windows core checked and pinned, push, CI read, PC re-stage and clone check, check 13, old CI runs deleted, lane branches moved	phase-8c	main	opus	main	release	14:45	15:40	0.92	session clock
 2026-11-20	phase 8 C main loop: the publish question, STATUS at the tag, re-stage, tag, push, release published and checked, clone check from GitHub, laz-830 closed	phase-8c	main	opus	main	release	15:40	15:59	0.32	session clock
+2026-11-20	phase 8 D1 lane hostbin: host-bin.yml, fetch.sh --host, mkrelease and release_check host zips, clone_check --no-build, README no-compiler route	phase-8d	a9b96dc5bcc3bdd61	sonnet	builder	build	16:04	16:31	0.45	transcript
+2026-11-20	phase 8 D2 lane ci: docs/CI.md, the macOS recipe, macos-live's recipe step, the hosted-runner state-boot rule	phase-8d	a7fb65a75eee252d1	sonnet	builder	build	16:04	16:12	0.13	transcript
+2026-11-20	phase 8 D3 lane wincilive: test-windows-live.yml and the pinned Mesa fetch script	phase-8d	aaf86f691e590a9e7	sonnet	builder	build	16:04	16:12	0.13	transcript
+2026-11-20	phase 8 D4 lane gym: examples/gym_env.py and its fast import test	phase-8d	ab8253f4c88a008d2	sonnet	builder	build	16:04	16:31	0.45	transcript
+2026-11-20	phase 8 D main loop: lane briefs out, the PC base fixed to v1.2.0, lanes read and checked, merged, PC checks on the merged tree	phase-8d	main	opus	main	build	15:59	16:34	0.58	session clock

@@ -1,7 +1,7 @@
 <!-- handoff: slim v1 | current tasks only | rewritten whole from docs/status/templates/handoff.md | budget 80 lines | never append -->
 # libazahar-py handoff
 
-As of: 2026-11-20 16:04 (session 3ds-toolkit-eb)
+As of: 2026-11-20 16:34 (session 3ds-toolkit-eb)
 
 This file lives in docs/status/lazpy/1-in-progress/, beside its item files. It holds only what
 the next session needs to act now, and points at the rest. Goals, rules, decisions and history live elsewhere.
@@ -9,10 +9,6 @@ the next session needs to act now, and points at the rest. Goals, rules, decisio
 ## Running now
 | What | Where | Agent id | It stops when |
 |---|---|---|---|
-| laz-840: lane hostbin, D1 prebuilt host binaries | runs/p8/wt/hostbin | a9b96dc5bcc3bdd61 | it sends its final message |
-| laz-840: lane ci, D2 the user CI recipe | runs/p8/wt/ci | a7fb65a75eee252d1 | it sends its final message |
-| laz-840: lane wincilive, D3 Windows emulator CI | runs/p8/wt/wincilive | aaf86f691e590a9e7 | it sends its final message |
-| laz-840: lane gym, D4 the gym-style example | runs/p8/wt/gym | ab8253f4c88a008d2 | it sends its final message |
 
 Phase 8 is under way: Guy, 2026-11-18 ~21:00, "you have my green light. go". He did not answer Q1-Q5, so the
 plan's recommended answers apply (laz-840 notes). v1.2.0 is published (laz-830 done 15:58, clone check from GitHub
@@ -20,14 +16,18 @@ passed). All PC jobs go through one shared PC lock (D:/lazpy/p8/pc.lock; one job
 2026-11-18 PC crash).
 
 ## Next steps, in order
-1. Phase D (laz-840, plan `docs/plans/phase-8.md:208`): four sonnet lanes, briefs in `docs/plans/phase-8d-briefs.md`,
-   worktrees `runs/p8/wt/<lane>` made at main: hostbin (D1 prebuilt host), ci (D2 the user CI recipe and the
-   hosted-runner state-boot rule), wincilive (D3 Windows emulator CI, best effort until 3 of 3), gym (D4). Lanes
-   never push or dispatch; the main loop merges, then dispatches the new workflows once the PC proved their steps.
+1. Phase D (laz-840, plan `docs/plans/phase-8.md:208`): the four lanes (briefs `docs/plans/phase-8d-briefs.md`)
+   are merged on main and pass on the PC. PC lanes copy the v1.2.0 host, test app and Windows core from
+   D:/lazpy/p8/base-v1.2.0 (runs/p8/bin/pclane). Not run yet: host-bin.yml, test-windows-live.yml (3 of 3 naming
+   lavapipe) and macos-live's recipe step; each needs a push, so Guy's word. The host pins in tools/fetch.sh stay
+   TBD until host-bin.yml's first run. For D5: the recipe pins ref v1.3.0 (works once that tag exists); hostbin's
+   clone check skips step failed only on the lane setup (runs/p8/d/hostbin-notes.md); a hosted -g build may embed
+   runner paths (check the first artifact).
 2. Then D5: opus review, fixes, merge, release v1.3.0 by C6's list plus the no-compiler clone check on both systems.
 3. The PC STAMP (C:\lazpy\STAMP.json) got a quick refresh about 11:00 on Guy's word ("Quick refresh, redeploy later"):
    only core/options-lazpy.txt's drift hash changed. The full redeploy (deploy_py.py + deploy_win.py with the new
-   profile) waits for a quiet PC moment; then tell Gen3D and 3DP the new deploy ids.
+   profile) waits for a quiet PC moment. Tell Gen3D and 3DP the new deploy ids a little BEFORE it (Gen3D's lanes
+   remake their savestate checkpoints after it).
 4. docs_check's links check fails on the PC lane only (no .git there); it runs on the Mac.
 5. History rewrite leftovers (private): the commit map runs/p8/c6/commit-map-private.txt and the deleted CI run list
    runs/p8/c6/deleted-ci-runs-private.txt stay out of git. Old ids survive only inside GitHub's cached objects until

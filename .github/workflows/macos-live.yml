@@ -34,3 +34,10 @@ jobs:
         env:
           LAZ_REQUIRE_EMULATOR: "1"
         run: .venv/bin/python -m pytest -q -rs tests/python
+      # The recipe of docs/CI.md (examples/ci/macos.yml), run on our test app. Until a release carries the host zips,
+      # it uses the host the "build the host" step made; after v1.3.0 this job fetches it with `fetch.sh --host`
+      # instead, as the recipe does. A failure here is read like the step above (continue-on-error on the job).
+      - name: the user recipe's run-and-verdict part, on our test app
+        id: recipe
+        if: ${{ !cancelled() }}      # runs even when the pytest step above failed, and never changes how that step is read
+        run: .venv/bin/python examples/verdict.py build/testapp.3dsx

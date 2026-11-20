@@ -16,6 +16,10 @@ As C6, plus the no-compiler clone check on both systems.
 
 ## Evidence
 2026-11-20 15:59: started after v1.2.0 (Q4's recommended answer, in force). Next: the D lane briefs.
+2026-11-20 16:34: the four lanes (D1-D4) merged on main: the prebuilt-host workflow and `fetch.sh --host` (pins TBD until
+its first run), the macOS CI recipe and the hosted-runner state-boot rule, the Windows emulator CI workflow, the
+gymnasium-style example. PC on the merged tree: fast tests 359 passed, 6 skipped; release_check self-test 15 of 15;
+fetch_fallback 13 of 13; test_state live 4 passed. No workflow has run yet. Next: D5 review.
 
 ## Pointers
 - Plan section: `docs/plans/phase-8.md:208`

@@ -2,7 +2,7 @@
 # clone_check.sh: follow the README from a fresh clone, in a clean environment (step H; the main loop runs it at I2, I5).
 #
 #   sh tools/clone_check.sh --repo <path or URL> --branch <name> --out <dir> [--release-base <url>] [--until host]
-#                           [--stock-core <path>] [--fixture <dir>] [--dry-run]
+#                           [--stock-core <path>] [--fixture <dir>] [--no-build] [--dry-run]
 #
 # macOS: 1 clone; 2 the README's steps block (ends with the quickstart); 3 the build block, then the quickstart on the
 # freshly built test app; 4 the full test suite on the default core.
@@ -20,12 +20,17 @@
 #                       pool test on a PC limited to 2 copies); the log names each one
 #   --until host        stops after the host build and `make test-host`: fetch.sh gets no --lazpy-core and no
 #                       --testapp (the Windows pin may not exist yet), and the venv, quickstart and pytest do not run
+#   --no-build          the README's no-compiler route instead of the build route: the steps are the block after
+#                       <!-- docs_check: steps-nocc --> (macOS) or steps-nocc-win (Windows), which fetches the prebuilt
+#                       host with `fetch.sh --host`. No `make` runs (so no `make test-host` on Windows and no build
+#                       block on macOS), and the log says so. Needs a release (or --release-base) that carries the host
+#                       zips and pins that are filled. Not combined with --until host.
 # --dry-run prints each command instead of running it. Every step's output goes to <out>/clone.log and the exit code to
 # <out>/rc. No timing from this run belongs in a document.
 set -eu
 
-REPO=""; BRANCH=""; OUT=""; BASE=""; DRY=0; UNTIL=""; STOCK=""; FIXTURE=""; DESEL=""
-usage() { echo "usage: sh tools/clone_check.sh --repo <path|url> --branch <name> --out <dir> [--release-base <url>] [--until host] [--stock-core <path>] [--fixture <dir>] [--deselect <nodeid>]... [--dry-run]" >&2; exit 2; }
+REPO=""; BRANCH=""; OUT=""; BASE=""; DRY=0; UNTIL=""; STOCK=""; FIXTURE=""; DESEL=""; NOBUILD=0
+usage() { echo "usage: sh tools/clone_check.sh --repo <path|url> --branch <name> --out <dir> [--release-base <url>] [--until host] [--stock-core <path>] [--fixture <dir>] [--no-build] [--deselect <nodeid>]... [--dry-run]" >&2; exit 2; }
 while [ $# -gt 0 ]; do
   case "$1" in
     --repo) [ $# -ge 2 ] || usage; REPO=$2; shift 2 ;;
@@ -39,12 +44,14 @@ while [ $# -gt 0 ]; do
       case "$2" in tests/python/*::*) ;; *) echo "clone_check: --deselect takes tests/python/<file>::<test>" >&2; exit 2 ;; esac
       case "$2" in *[!A-Za-z0-9_./:-]*) echo "clone_check: --deselect $2 holds an odd character" >&2; exit 2 ;; esac
       DESEL="$DESEL --deselect $2"; shift 2 ;;
+    --no-build) NOBUILD=1; shift ;;
     --dry-run) DRY=1; shift ;;
     *) usage ;;
   esac
 done
 [ -n "$REPO" ] && [ -n "$BRANCH" ] && [ -n "$OUT" ] || usage
 case "$UNTIL" in ""|host) ;; *) echo "clone_check: --until takes host" >&2; exit 2 ;; esac
+[ "$NOBUILD" -eq 0 ] || [ -z "$UNTIL" ] || { echo "clone_check: --no-build and --until host do not go together" >&2; exit 2; }
 case "$OUT" in /|.|..|"") echo "clone_check: refusing --out '$OUT'" >&2; exit 2 ;; esac
 
 WIN=0
@@ -151,7 +158,15 @@ fi
 run_step clone "" "git clone --branch \"$BRANCH\" \"$REPO\" \"$CLONE\""
 [ -z "$DESEL" ] || note "deselected (not run here):$DESEL"
 
-if [ "$WIN" -eq 1 ]; then
+# the README's no-compiler block after a marker, as a shell script (awk, as the Windows route below; docs_check.py has no such block)
+nocc_emit() { printf '%s' 'awk -v m="<!-- docs_check: '"$1"' -->" '"'"'f == 0 && index($0, m) { f = 1; next } f == 1 && /^```/ { if (inb) exit; inb = 1; next } f == 1 && inb { print }'"'"' README.md'; }
+
+if [ "$NOBUILD" -eq 1 ]; then
+  if [ "$WIN" -eq 1 ]; then NOCC_MARK=steps-nocc-win; else NOCC_MARK=steps-nocc; fi
+  note "--no-build: the README's no-compiler route ($NOCC_MARK): fetch.sh --host, no make, no compiler step"
+  run_step steps "quickstart ok" "cd \"$CLONE\" && $(nocc_emit "$NOCC_MARK") > \"$OUT/steps.sh\" && [ -s \"$OUT/steps.sh\" ] && ! grep -Eq '(^|[^-])make( |\$)|MSBuild|pacman' \"$OUT/steps.sh\" && $CENV sh -eux \"$OUT/steps.sh\""
+  run_step host-files "" "cd \"$CLONE\" && if [ $WIN -eq 1 ]; then test -f build/libazhost.dll && test -f build/azhost.exe; else test -f build/libazhost.dylib && test -x build/azhost; fi && ! test -d build/obj && ! test -d build/win64"
+elif [ "$WIN" -eq 1 ]; then
   # the README's Windows block, as steps.sh. The pacman line and the clone line are the reader's own setup, not ours.
   # --until host: no --lazpy-core and no --testapp, and nothing from the venv line on (the Windows pin may not exist yet).
   EMIT='awk -v m="<!-- docs_check: steps-win -->" '"'"'f == 0 && index($0, m) { f = 1; next } f == 1 && /^```/ { if (inb) exit; inb = 1; next } f == 1 && inb { print }'"'"' README.md'
