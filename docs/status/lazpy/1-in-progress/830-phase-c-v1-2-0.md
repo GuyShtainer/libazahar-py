@@ -32,6 +32,11 @@ Makefile guard and the skips list; test and test-windows green on 4bb6f43.
 (the same bytes from 9c06bcb and ddec953), SHA256SUMS 4e2df781... before the pin commit; release_check --pre-push:
 14 PASS; open: 12 history needles (37 hits, all /Users/<mac user> paths in plan docs public since v1.0.0; no line
 added since v1.1.0 holds one), 13 PEND (step 7), 16 the notes' macOS line TO BE FILLED (step 5).
+2026-11-20 11:35: C6 steps 3-4 on the PC from the bundle of 1ea1686: clone_check rc 0 (full suite, the two 3-copy
+pool tests deselected on the 2-copy PC: 439 passed, 13 skipped, 1 xfailed; skips_check --list w7 0 problems). The
+first try (223660c) failed only the skips step: the two tone-app audio tests cannot run in a clone, now allowed in
+w7. mkfixture v1.2.0 rc 0 (win32, core ee3e9e0a..., frame_total 600, k 0) in the clone's runs/release-fixtures.
+2026-11-20 11:36: C6 step 6, a private side test, details kept outside the repo: passed with the 1ea1686 clone.
 
 ## Pointers
 - Plan section: `docs/plans/phase-8.md:180`

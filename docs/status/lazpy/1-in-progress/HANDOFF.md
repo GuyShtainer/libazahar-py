@@ -1,7 +1,7 @@
 <!-- handoff: slim v1 | current tasks only | rewritten whole from docs/status/templates/handoff.md | budget 80 lines | never append -->
 # libazahar-py handoff
 
-As of: 2026-11-20 11:28 (session 3ds-toolkit-eb)
+As of: 2026-11-20 11:37 (session 3ds-toolkit-eb)
 
 This file lives in docs/status/lazpy/1-in-progress/, beside its item files. It holds only what
 the next session needs to act now, and points at the rest. Goals, rules, decisions and history live elsewhere.
@@ -9,7 +9,6 @@ the next session needs to act now, and points at the rest. Goals, rules, decisio
 ## Running now
 | What | Where | Agent id | It stops when |
 |---|---|---|---|
-| laz-830: C6 steps 3-4 on the PC, second try: clone_check from the bundle of main's head (the w7 skip list now allows the tone app's two skips), then mkfixture v1.2.0; ends by writing D:/lazpy/p8/c6/cc.done | PC, pc.lock | main | cc.done exists |
 
 Phase 8 is under way: Guy, 2026-11-18 ~21:00, "you have my green light. go". He did not answer Q1-Q5, so the
 plan's recommended answers apply (laz-810 notes). Phase A is done: runs/p8/a/decisions.md. All lane PC jobs go
@@ -19,12 +18,14 @@ through runs/p8/bin/pclane under one shared PC lock (one job of ours at a time s
 1. Phase C (laz-830): C1 command line and C2 audio done (laz-831, 832). C3 exact inputs parked (laz-833) for the
    next core phase with the leak fix. Phase B closed 11:01 (laz-820: CI green on pushed 4bb6f43, both workflows; the
    3-copy pool tests passed in macos-live). The clock fix (laz-834) is merged and proven on a UTC host.
-2. C6 steps 1-2 done 11:15 (laz-830 Evidence). Staging: D:/lazpy/p8/c6 (repo = bundle clone, identity set; rel/v1.2.0;
-   art = core-win64's artifact). Re-stage after every commit (mkrelease, then release_check --pre-push --inherit v1.0.0
-   --gate-f2 art/gate_f2.txt, needles on stdin as path forms). Steps 3-4: the first try (11:17-11:25) passed pytest (439 passed) but failed the skips step on the two tone-app tests, which a clone cannot run; rerun now. Then: 5 macOS CI on the candidate
-   (needs a push: ask Guy), fill the notes' macOS line; 6 the private real-game check; 7 check 13 (Mac scan or Guy's
-   ruling); 8 release-legal-audit (also commit 44ad3c5's text); ask Guy whether the old /Users/<mac user> paths in
-   docs/plans stay (public since v1.0.0; check 12's 37 hits); 9 his word, push, tag, publish; 10 clone_check from GitHub.
+2. C6 (laz-830 Evidence): steps 1-2 done 11:15, 3-4 done 11:35 (clone_check rc 0 on 1ea1686; fixture kept at
+   D:/lazpy/p8/fixtures/v1.2.0), 6 done 11:36. Staging: D:/lazpy/p8/c6 (repo = bundle clone, identity set;
+   rel/v1.2.0; art = core-win64's artifact). Re-stage after every commit (mkrelease, then release_check --pre-push
+   --inherit v1.0.0 --gate-f2 art/gate_f2.txt, needles on stdin as path forms). Left: 5 macOS CI on the candidate
+   (needs a push: Guy said "Wait" until the PC checks end; ask again), fill the notes' macOS line; 7 check 13 (Mac
+   scan or Guy's ruling); 8 release-legal-audit (also commit 44ad3c5's text and check 12's history-only paths: Guy
+   ruled "scrub current files", done in 94c2693; history stays); 9 his word, push, tag, publish; 10 clone_check
+   from GitHub.
 3. The PC STAMP (C:\lazpy\STAMP.json) got a quick refresh about 11:00 on Guy's word ("Quick refresh, redeploy later"):
    only core/options-lazpy.txt's drift hash changed, in all three stanzas (old copy STAMP.before-tz.json). The
    full redeploy (deploy_py.py + deploy_win.py with the new profile) waits for a quiet PC moment; then tell Gen3D
