@@ -56,6 +56,11 @@ passed, 9 skipped each); macos-live 44741224096 429 passed, 25 skipped, 1 failed
 Windows zip fe0bbfd1...): release_check 15 PASS, 12 and 13 as ruled; check 13 on the Mac 0 hits; clone_check rc 0
 (439 passed, 13 skipped, 1 xfailed); fixture v1.2.0 remade on core 81845090.... The 14 CI runs on rewritten commits
 deleted (private list in runs/p8/c6/); the p8 lane branches moved onto their rewritten commits.
+2026-11-20 15:58: C6 steps 9-10 on Guy's word ("Publish v1.2.0"): STATUS:3 set at the tag (ffdea5a, N11),
+re-staged from it (release_check 15 PASS, 12 and 13 as ruled; check 13 on the Mac 0 hits); main and tag v1.2.0
+pushed, the release published with 13 assets, each published digest = the staged file's sha256; test-windows
+44747772810 and 44747773434 green on ffdea5a; clone_check from GitHub at the tag on the PC rc 0 (439 passed, 13
+skipped, 1 xfailed). Phase C done.
 
 ## Pointers
 - Plan section: `docs/plans/phase-8.md:180`

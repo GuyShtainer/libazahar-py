@@ -15,7 +15,7 @@ Steps D1-D5 of the plan.
 As C6, plus the no-compiler clone check on both systems.
 
 ## Evidence
-none yet
+2026-11-20 15:59: started after v1.2.0 (Q4's recommended answer, in force). Next: the D lane briefs.
 
 ## Pointers
 - Plan section: `docs/plans/phase-8.md:208`
