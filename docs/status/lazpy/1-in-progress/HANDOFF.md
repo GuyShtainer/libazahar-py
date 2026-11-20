@@ -1,7 +1,7 @@
 <!-- handoff: slim v1 | current tasks only | rewritten whole from docs/status/templates/handoff.md | budget 80 lines | never append -->
 # libazahar-py handoff
 
-As of: 2026-11-20 20:24 (session 3ds-toolkit-eb)
+As of: 2026-11-20 20:36 (session 3ds-toolkit-eb)
 
 This file lives in docs/status/lazpy/1-in-progress/, beside its item files. It holds only what
 the next session needs to act now, and points at the rest. Goals, rules, decisions and history live elsewhere.
@@ -16,18 +16,14 @@ passed). All PC jobs go through one shared PC lock (D:/lazpy/p8/pc.lock; one job
 2026-11-18 PC crash).
 
 ## Next steps, in order
-1. Phase D (laz-840, plan `docs/plans/phase-8.md:208`): the four lanes (briefs `docs/plans/phase-8d-briefs.md`)
-   are merged on main and pass on the PC. PC lanes copy the v1.2.0 host, test app and Windows core from
-   D:/lazpy/p8/base-v1.2.0 (runs/p8/bin/pclane). Not run yet: host-bin.yml, test-windows-live.yml (3 of 3 naming
-   lavapipe) and macos-live's recipe step; each needs a push, so Guy's word. The host pins in tools/fetch.sh stay
-   TBD until host-bin.yml's first run. For D5: the recipe pins ref v1.3.0 (works once that tag exists); hostbin's
-   clone check skips step failed only on the lane setup (runs/p8/d/hostbin-notes.md); a hosted -g build may embed
-   runner paths (check the first artifact).
-2. D5: merged and pushed (Guy: "Push and run them"); first runs read (laz-840 Evidence). test-windows-live: three
-   dispatches after the stencil deselect, each must name lavapipe (llvmpipe) and pass; then it may join the push
-   trigger. Then release v1.3.0 by C6's list: bump the version, then dispatch host-bin on that commit and fill
-   LAZPY_HOST_SHA_WIN/MAC from its zips (a 1.2.0-named zip fails row 1c), plus the no-compiler clone check on both
-   systems (release-legal-audit first: the compiled-in libretro and Vulkan headers' notices; the publish word).
+1. Phase D (laz-840, plan `docs/plans/phase-8.md:208`; briefs `docs/plans/phase-8d-briefs.md`): D1-D4 merged,
+   reviewed (D5, runs/p8/d/d5-review.md), fixed and pushed (Guy: "Push and run them"); every new workflow has run
+   (laz-840 Evidence). test-windows-live passed three of three on lavapipe and now runs on pushes to main: read its
+   result line on the next push. PC lanes copy the v1.2.0 host, test app and core from D:/lazpy/p8/base-v1.2.0.
+2. Release v1.3.0 by C6's list (`docs/status/lazpy/5-done/830-phase-c-v1-2-0.md`), Guy's publish word needed: bump
+   the version; dispatch host-bin on that commit and fill LAZPY_HOST_SHA_WIN/MAC in tools/fetch.sh from its zips (a
+   1.2.0-named zip fails row 1c); release notes and STATUS (the lavapipe stencil-depth difference); release-legal-audit
+   (it may judge the compiled-in libretro and Vulkan headers' notices); the no-compiler clone check on both systems.
 3. The PC STAMP (C:\lazpy\STAMP.json) got a quick refresh about 11:00 on Guy's word ("Quick refresh, redeploy later"):
    only core/options-lazpy.txt's drift hash changed. The full redeploy (deploy_py.py + deploy_win.py with the new
    profile) waits for a quiet PC moment. Tell Gen3D and 3DP the new deploy ids a little BEFORE it (Gen3D's lanes

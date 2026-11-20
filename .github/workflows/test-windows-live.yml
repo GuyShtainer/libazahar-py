@@ -9,8 +9,11 @@
 # tests and the clang analysis, so they are not repeated here.
 name: test-windows-live
 
-# Started by hand only until three dispatches in a row are green; each failed or cancelled run mails the owner.
+# Three dispatches in a row passed on lavapipe (2026-11-20), so pushes to main run it too. A test failure does not fail
+# the run (continue-on-error); a cancelled or timed-out run still mails the owner.
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -86,4 +89,4 @@ jobs:
           "lavapipe step : ${{ steps.lavapipe.outcome }}"
           "pytest step   : ${{ steps.pytest.outcome }}"
           "summary line  : $line"
-          if ("${{ steps.lavapipe.outcome }}" -eq "success" -and "${{ steps.pytest.outcome }}" -eq "success" -and $line -match '\d+ passed' -and $line -notmatch 'failed') { "RESULT: PASS (lavapipe)" } else { "RESULT: NOT A PASS" }
+          if ("${{ steps.lavapipe.outcome }}" -eq "success" -and "${{ steps.pytest.outcome }}" -eq "success" -and $line -match '\d+ passed' -and $line -notmatch '\d+ (failed|errors?)\b') { "RESULT: PASS (lavapipe)" } else { "RESULT: NOT A PASS" }

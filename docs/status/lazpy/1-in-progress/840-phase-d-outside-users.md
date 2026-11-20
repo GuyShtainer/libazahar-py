@@ -30,6 +30,11 @@ hold the listed files and no build path, the macOS files signed ad hoc (named 1.
 after the version bump); test-windows-live 44789154862 booted on lavapipe ("llvmpipe (LLVM 23.1.5, 256 bits)"),
 76 passed, 1 failed: test_stencil_readback_counts, cleared pixels' depth reads back other than the clear value (the
 stencil and the quad match), so not a pass; that test is deselected in that workflow only, with the reason.
+2026-11-20 20:36: pushed fdeaa4c (test-windows 44792446481 green); test-windows-live dispatched three times (44792447279,
+44792460742, 44792476117): each named "llvmpipe (LLVM 23.1.5, 256 bits)", the lavapipe and pytest steps succeeded,
+76 passed, 0 failed, 1 xfailed. The result step printed NOT A PASS on all three: its pattern took "1 xfailed" for a
+failure (fixed to count only "N failed" or "N error(s)"). Three of three on the facts, so it joins the push trigger
+(main only). D3 done.
 
 ## Pointers
 - Plan section: `docs/plans/phase-8.md:208`
