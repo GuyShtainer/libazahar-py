@@ -1,7 +1,7 @@
 <!-- handoff: slim v1 | current tasks only | rewritten whole from docs/status/templates/handoff.md | budget 80 lines | never append -->
 # libazahar-py handoff
 
-As of: 2026-11-19 07:21 (session 3ds-toolkit-eb)
+As of: 2026-11-20 02:18 (session 3ds-toolkit-eb)
 
 This file lives in docs/status/lazpy/1-in-progress/, beside its item files. It holds only what
 the next session needs to act now, and points at the rest. Goals, rules, decisions and history live elsewhere.
@@ -30,13 +30,21 @@ through runs/p8/bin/pclane under one shared PC lock (one job of ours at a time s
    macOS live run 44462572191 (the hosted runner, the v1.0.0 macOS core): 427 passed, 2 failed. (a) test_state: state
    boot 3.16 s over the 2.5 s bound: the hosted-runner case Q4 makes record-only in phase D. (b) NEW, not seen on the
    PC: test_determinism two_tick_seeds_differ, the clock field t moved 0 ms for a 1000000-tick seed (3-4 wanted).
-   To find out before the release: the macOS core's osGetTime ignores the tick seed, or the test assumes too much.
+   Cause found (laz-834): the core counts the clock from 2000-01-01 in the HOST's local zone; our start time is just
+   before that midnight in UTC, so a UTC host reads 0. Fix built in lane p8-tz (runs/p8/wt/tz), unmerged: the worker
+   runs with TZ=UTC0, the start time is 946688477 (the clock UTC+2 machines saw), USING 10a, a 3-zone test.
    The release audit must also read commit 44ad3c5's text (review finding 2).
 3. Not run anywhere yet: make check (clang analyze) on the new C; CI's macOS job runs it after a push.
    docs_check's links check fails on the PC lane only (no .git there); it runs on the Mac.
 
 ## Waiting on Guy (only what blocks a step above)
 - Pushes: each one needs his word. Local main is ahead of origin, and phase 8 commits stay local until he says so.
+- (night) Push 587c171 (CI guard fixes + C6a's OpenSSL folder fix) and start core-win64's one round? Asked via the
+  goodnight session 2026-11-20 02:12; a push is never a night default, so it waits for his word.
+- (night) Hold v1.2.0 until the macOS clock-shift failure is understood? Recommended yes; cause found (laz-834).
+- NIGHT DECISION 2026-11-20 02:18: how to fix the host-zone clock | took: worker TZ=UTC0 + start time 946688477
+  (recommended) | others: ship it as a known macOS limit; pin TZ in the tests only | switch costs: drop branch p8-tz
+  | work: lane p8-tz (runs/p8/wt/tz), its commits, not merged
 - The PC install of diffutils and actionlint: the classifier denied it; Guy was asked and has not answered.
 The full list is generated into `docs/status/README.md`.
 
