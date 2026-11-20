@@ -1,7 +1,7 @@
 <!-- handoff: slim v1 | current tasks only | rewritten whole from docs/status/templates/handoff.md | budget 80 lines | never append -->
 # libazahar-py handoff
 
-As of: 2026-11-20 16:57 (session 3ds-toolkit-eb)
+As of: 2026-11-20 20:24 (session 3ds-toolkit-eb)
 
 This file lives in docs/status/lazpy/1-in-progress/, beside its item files. It holds only what
 the next session needs to act now, and points at the rest. Goals, rules, decisions and history live elsewhere.
@@ -23,11 +23,11 @@ passed). All PC jobs go through one shared PC lock (D:/lazpy/p8/pc.lock; one job
    TBD until host-bin.yml's first run. For D5: the recipe pins ref v1.3.0 (works once that tag exists); hostbin's
    clone check skips step failed only on the lane setup (runs/p8/d/hostbin-notes.md); a hosted -g build may embed
    runner paths (check the first artifact).
-2. D5: the review and both fix lanes are merged on main (laz-840 Evidence). Next, with Guy's push word: push main,
-   dispatch host-bin.yml once (fill LAZPY_HOST_SHA_WIN/MAC in tools/fetch.sh from its zips; check the zips for
-   runner paths), test-windows-live.yml three times (each must name lavapipe in its device line), and read
-   macos-live's recipe step. Then release v1.3.0 by C6's list plus the no-compiler clone check on both systems
-   (release-legal-audit first: it may judge the compiled-in libretro and Vulkan headers' notices; the publish word).
+2. D5: merged and pushed (Guy: "Push and run them"); first runs read (laz-840 Evidence). test-windows-live: three
+   dispatches after the stencil deselect, each must name lavapipe (llvmpipe) and pass; then it may join the push
+   trigger. Then release v1.3.0 by C6's list: bump the version, then dispatch host-bin on that commit and fill
+   LAZPY_HOST_SHA_WIN/MAC from its zips (a 1.2.0-named zip fails row 1c), plus the no-compiler clone check on both
+   systems (release-legal-audit first: the compiled-in libretro and Vulkan headers' notices; the publish word).
 3. The PC STAMP (C:\lazpy\STAMP.json) got a quick refresh about 11:00 on Guy's word ("Quick refresh, redeploy later"):
    only core/options-lazpy.txt's drift hash changed. The full redeploy (deploy_py.py + deploy_win.py with the new
    profile) waits for a quiet PC moment. Tell Gen3D and 3DP the new deploy ids a little BEFORE it (Gen3D's lanes
