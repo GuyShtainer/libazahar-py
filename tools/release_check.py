@@ -134,12 +134,18 @@ def expected_assets(pin: dict[str, str], tag: str) -> list[str]:
                    f"libazahar-py-core-build-{tag}.tar.gz", "testapp.3dsx", "NOTICES.md", "SOURCE.md", "SHA256SUMS"])
 
 
-def assets_findings(rel: Path, names: list[str]) -> Items:
+def asset_set(rel: Path, names: list[str]) -> tuple[list[str], Items]:
+    """The expected names plus the host zips found (a caller may already list them), and a FAIL if rel holds another set."""
     have = sorted(p.name for p in rel.iterdir())
-    names = sorted(names + host_names_present(rel))
-    out: Items = []
+    names = sorted(set(names) | set(host_names_present(rel)))
     if have != names:
-        out.append(("FAIL", f"asset set differs: extra {sorted(set(have) - set(names))}, missing {sorted(set(names) - set(have))}"))
+        return names, [("FAIL", f"asset set differs: extra {sorted(set(have) - set(names))}, missing {sorted(set(names) - set(have))}")]
+    return names, []
+
+
+def assets_findings(rel: Path, names: list[str]) -> Items:
+    names, out = asset_set(rel, names)
+    if out:
         return out
     for line in (rel / "SHA256SUMS").read_text().splitlines():
         digest, _sep, name = line.partition("  ")
@@ -962,11 +968,9 @@ def mkrelease_pin(repo: Path, name: str) -> str:
 
 
 def assets_findings_v11(rel: Path, names: list[str], pin: dict[str, str]) -> Items:
-    have = sorted(p.name for p in rel.iterdir())
-    names = sorted(names + host_names_present(rel))
-    if have != names:
-        return [("FAIL", f"asset set differs: extra {sorted(set(have) - set(names))}, missing {sorted(set(names) - set(have))}")]
-    out: Items = []
+    names, out = asset_set(rel, names)
+    if out:
+        return out
     sums = parse_sums((rel / "SHA256SUMS").read_text())
     if set(sums) != set(names) - {"SHA256SUMS"}:
         out.append(("FAIL", "SHA256SUMS lists a different file set"))
@@ -1690,6 +1694,16 @@ def host_self_test() -> tuple[int, int]:
         host_stage(rel, "win", tag="v1.0.0")  # a zip of another version
         return {"mac": host_stage(rel, "mac")}
     run("a zip of another version", other_tag, {"FAIL", "SKIP"})
+    # check 1 with the host zips listed by the caller too (v1.3.0's staging listed them twice and got a FAIL)
+    with tempfile.TemporaryDirectory(prefix="release_check.host1.") as name:
+        rel = Path(name)
+        (rel / "SHA256SUMS").write_text("")
+        host_stage(rel, "win"); host_stage(rel, "mac")
+        listed = sorted(["SHA256SUMS"] + host_names_present(rel))
+        twice = [m for _k, m in asset_set(rel, listed)[1]]
+        ok = not twice
+        print(f"{'ok  ' if ok else 'FAIL'} 1 assets, the host zips listed by the caller and found: {twice or 'no set finding'}")
+        cases.append(("1 assets with host zips listed", {"ok": ok}))
     HOST_STAND["commit"] = HOST_COMMIT
     repo_dir.cleanup()
     bad = sum(1 for _l, r in cases if not r["ok"])
