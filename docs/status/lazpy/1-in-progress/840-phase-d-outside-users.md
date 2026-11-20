@@ -37,6 +37,14 @@ failure (fixed to count only "N failed" or "N error(s)"). Three of three on the 
 (main only). D3 done.
 2026-11-20 20:46: pushed 1426bd1: test-windows 44794501601 green; test-windows-live 44794501534 on the push printed
 "RESULT: PASS (lavapipe)", 76 passed, 0 failed. Phase D's code is done; v1.3.0 is next.
+2026-11-20 21:51: v1.3.0 candidate (Guy: "Release v1.3.0"). Version bumped (8607c2a); host-bin run 44802712717 on it made
+both 1.3.0 host zips (the listed files, no build path), pinned in c646f66; the restaged Windows core zip pinned in db83f99
+(v1.2.0's DLL). CI on db83f99: test.yml 44803599115 356 passed, 9 skipped on 3.10 and 3.14; macos-live 44803605270 432
+passed, 25 skipped, 0 failed, recipe "verdict ok"; test-windows 44803598764 green. PC: staged from db83f99, release_check
+--pre-push 15 PASS, FAIL 12 (the 37 history-only hits, Guy's ruling) and 13 (run on the Mac: 2200 blobs, 0 hits), the
+placeholders then filled; clone checks from the bundle, build route and no-compiler route (`--no-build`), each 441
+passed, 13 skipped (by design), 1 xfailed, the v1.2.0 fixture loaded; a v1.3.0 fixture made; a private side test,
+details kept outside the repo, passed. Next: the legal audit, then tag and publish.
 
 ## Pointers
 - Plan section: `docs/plans/phase-8.md:208`

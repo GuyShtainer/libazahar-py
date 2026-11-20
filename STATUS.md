@@ -87,6 +87,9 @@ copies); they passed in the macOS CI emulator suite.
   dispatches in a row and runs on pushes to main. One test is left out there: on lavapipe the depth of cleared pixels
   reads back other than the clear value, while the stencil counts match (`test_stencil_readback_counts`; it runs on
   the PC's GPU and in the macOS CI). The tests that need a second copy (`test_pool_live.py`) are left out too.
+- v1.3.0's release candidate passed the full suite from fresh clones on that PC by both routes, the build route and
+  the no-compiler one (`fetch.sh --host`): 441 passed, 13 skipped, each by design, 1 expected failure (laz-841). The
+  no-compiler run shows that no build step runs; that PC still has a compiler installed.
 - Windows 11 and AMD and Intel GPUs are untested.
 - A GPU driver with Vulkan is required; nothing Vulkan is shipped.
 - No Windows speed figures. The instance cap stays 4.
@@ -94,8 +97,15 @@ copies); they passed in the macOS CI emulator suite.
 
 ## macOS in v1.3.0
 
-macOS uses the same core as v1.0.0, v1.1.0 and v1.2.0. TO BE FILLED: the release candidate's hosted CI results (fast
-tests, the emulator suite with the recipe step, and the no-compiler route).
+macOS uses the same core as v1.0.0, v1.1.0 and v1.2.0. On the release candidate (commit db83f99) the hosted CI jobs passed: the fast tests on Python 3.10 and 3.14 (356
+passed, 9 skipped each, `test.yml` run 44803599115), and the emulator suite (`macos-live.yml` run 44803605270) had 432
+passed, 25 skipped and 0 failed, with the state-boot bound only recording its time on that shared runner; the
+recipe's run-and-verdict part printed `verdict ok` on our test app. The skips are Windows-only tests, the comparisons
+with Azahar's own core (not given to that job), four inputs that job lacks (a release fixture, the test app's ELF, two
+older cores), and the two audio tests (CI has no tone test app). That job builds the host with `make`; the macOS host
+zip was built and signed in `host-bin.yml`, and the no-compiler route on macOS is checked on a hosted runner from the
+published release (STATUS.md records the result).
+On Windows, the no-compiler route passed the full suite from a fresh clone on the PC (see Windows above).
 
 ## macOS in v1.2.0
 

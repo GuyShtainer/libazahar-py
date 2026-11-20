@@ -82,7 +82,9 @@ two files where the Python layer looks for them (`build/`). You then need no com
 (no Xcode command-line tools to build with, no MSYS2 compiler), only `git`, `curl`, `unzip` and Python 3.10 or newer.
 On a stock Mac, `git` and `python3` are shims for the command-line tools (the first `git clone` offers to install them,
 and their Python is 3.9, too old): get git from Homebrew or take the repository as a GitHub source zip, and Python 3.10+
-from python.org or Homebrew. TO BE FILLED: where this route has run (hosted and clean machines). A checkout from before v1.3.0 has no pins for
+from python.org or Homebrew. On Windows this route passed a fresh-clone check of the full suite on the PC named below (a machine that also has a
+compiler, so it shows that no build step runs, not that none is installed). On macOS it is checked on a hosted runner
+from the published release; `STATUS.md` records the result. A checkout from before v1.3.0 has no pins for
 it: `--host` stops with one line saying so, and the build routes above still work.
 
 macOS 15 or later on Apple silicon, from the repository folder:
