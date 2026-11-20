@@ -66,8 +66,10 @@ Evidence, in `docs/status/lazpy/5-done/`, proves it. Nothing is listed as workin
 The native Windows build (core, host library and Python layer, no WSL) is proven on one PC only: Windows 10 Pro 22H2,
 x64, an NVIDIA GeForce RTX 3060, driver 610.88, Python 3.10.11. There, a fresh clone built from the README's Windows steps
 passes the host C tests and the full pytest with the emulator required; its only skips are the by-design ones (no
-lazpy.1 Windows core, no `LoadWarning`, no nice values, the symlink test while Developer Mode is off, and the thread test that needs
-`build/testapp.elf`, which the release test app does not ship).
+lazpy.1 Windows core, no `LoadWarning`, no nice values, the symlink test while Developer Mode is off, the thread test that needs
+`build/testapp.elf`, which the release test app does not ship, and since v1.2.0 the two audio tests, which need the tone
+test app that no release ships). For v1.2.0 the two 3-copy `Pool` tests were left out there (that PC runs at most two
+copies); they passed in the macOS CI emulator suite.
 - CI adds Windows Server 2025 for the build, the fast tests and the core load test.
 - Windows 11 and AMD and Intel GPUs are untested.
 - A GPU driver with Vulkan is required; nothing Vulkan is shipped.
@@ -80,8 +82,9 @@ macOS uses the same core as v1.0.0 and v1.1.0. The v1.2.0 changes were built and
 they ran in the hosted CI jobs on the release candidate (commit 1b2b2e2): the fast tests passed on Python 3.10 and
 3.14 (354 passed, 9 skipped each, `test.yml` run 44715294673), and the emulator suite passed with 430 passed, 25
 skipped and none failed (`macos-live.yml` run 44715249847), the kqueue parent watch and the `lsof` slot lookup among
-them. Its skips are Windows-only tests, the comparisons with Azahar's own core (not given to that job), and the two
-audio tests: CI has no tone test app (no release ships it), so audio capture is not yet tested on macOS.
+them. Its skips are Windows-only tests, the comparisons with Azahar's own core (not given to that job), four inputs that
+job lacks (a release fixture, the test app's ELF, two older cores), and the two audio tests: CI has no tone test app
+(no release ships it), so audio capture is not yet tested on macOS.
 
 ## macOS in v1.1.0
 
@@ -134,7 +137,7 @@ skip when there is no test-app ELF, a longer boot wait, and the cross-system sta
   - Any window: the tool is headless.
   - Patching HID's touch truncation: four rows move by one pixel; documented.
   - Azahar's RPC server and gdb stub: not in libretro builds.
-  - Commercial 3DS titles: not supported or tested; the tests use our own test app. The real-scene speed rows are a
+  - Commercial 3DS titles: not supported; the tests in this repository use our own test app. The real-scene speed rows are a
     user's homebrew (Gen3D) running a GBA game supplied locally, not distributed.
   - `.cia` installs: the host loads `.3dsx`.
   - Wireless, motion and camera: not built.

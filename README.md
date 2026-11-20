@@ -11,7 +11,7 @@ v1.2.0, with semantic versioning from 1.0.0 (`docs/USING.md` says what is covere
 a command line (`python -m libazahar doctor` and `run`), audio capture, image compare with a pass/fail example, and
 errors that name their log. It runs 3DS homebrew headless, with inputs, shots, SD files, savestates, many instances at
 once and guest memory reads on our core; `STATUS.md` lists each item with the work that proved it. What does not work:
-macOS before 15 and Intel Macs, audio playback (capture works, `docs/USING.md` section 12b), anything with a window,
+macOS before 15 and Intel Macs, audio playback (capture works on Windows, not yet tested on macOS: `docs/USING.md` section 12b), anything with a window,
 and anything that is not homebrew.
 
 **Windows: proven on one PC.** The native Windows build (core, host library and Python layer, no WSL) was tested on

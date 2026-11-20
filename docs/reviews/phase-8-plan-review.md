@@ -326,7 +326,7 @@ manual and may not start. Every gate that needs it should also name its PC fallb
 - No other breaks found:
   - A4 keeps Nintendo's DSP firmware out, and uses only our own component file.
   - A5's driver download follows the pinned-download rule (and asks Guy first).
-  - The private real-game gate is worded as the brief requires.
+  - The private side test is worded as the brief requires.
   - The plan makes no speed claims, and A3's numbers stay private.
   - Clean-room is kept.
   - CI-mail discipline is kept: PC first, manual workflows first. B7's retry loop is the exception (finding 6).

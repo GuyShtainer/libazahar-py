@@ -41,6 +41,12 @@ w7. mkfixture v1.2.0 rc 0 (win32, core ee3e9e0a..., frame_total 600, k 0) in the
 (3.10 and 3.14: 354 passed, 9 skipped), macos-live run 44715249847 green (430 passed, 25 skipped, 0 failed; the tone
 tests skip there: audio capture untested on macOS, said in STATUS and the notes), test-windows run 44715237141 green.
 2026-11-20 11:59: C6 step 7, check 13 run read-only on the Mac (history_bytes_check on 1b2b2e2): 2070 blobs, 0 hits.
+2026-11-20 12:37: C6 step 8, release-legal-audit on d189d0d and the staged copy (SHA256SUMS 36af4ae7..., 12 of 12):
+not shippable as staged; the 13 assets clean (seven inherited = v1.0.0's sums, the DLL = the attested ee3e9e0a...,
+source on the page complete). B1 (one plan sentence) and S1 fixed in the tree 12:37, with notes N1-N5; N7's
+.gitignore names left out (the file name is not written in public files). N10: core/OPENSSL.md differs from the
+build commit 5cf51cf in prose only, its "- Source:" line unchanged (as v1.1.0's P1). Check 12's history-only paths:
+Guy's ruling judged enough. R1 (the sentence in published history) waits on an IP consult and Guy's choice.
 
 ## Pointers
 - Plan section: `docs/plans/phase-8.md:180`

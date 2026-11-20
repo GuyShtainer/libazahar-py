@@ -74,7 +74,7 @@ from at least two research files, or from one file plus a real user of ours. "Pr
 | S9 | Install without a compiler (prebuilt host binaries; wheels later) | T S R | S | R05 M1, R01 §2 N | `clone_check` with no build step (PC; CI) |
 | S10 | A path with no GPU (a pinned software Vulkan driver) | T | S | R03 M7 (a Must there), R05 S1 | A5 trial (PC), then D3 in CI |
 | S11 | Troubleshooting keyed by the exact error text | all | S | R05 S6, M6 | `docs_check` |
-| S12 | A private real-game check before each release | P, us | S | R02 §3, R03 §3 | a private real-game check, run outside the repo (PC) |
+| S12 | A private side test before each release | P, us | S | R02 §3, R03 §3 | a private side test, details kept outside the repo |
 | S13 | Linux | T R | S | R03 §4, R05 §4 | not planned (Q4) |
 | S14 | A hosted-CI recipe users can copy (was M16, F6) | T | S | R03 N5, R05 S1 | one green dispatch plus the same steps on the PC (D2) |
 | N1 | A Gymnasium-style wrapper as an example | R | N | R04 §2 (a Must for RL users; we have none yet) | D4: gymnasium's `check_env` (PC) |
@@ -197,7 +197,7 @@ on the v1.1.0 fixture (on Windows only if the core is unchanged); make the v1.2.
 `clone_check` from a local bundle (PC; full suite, emulator required, `--list w7`). (5) macOS: `test.yml` and
 `macos-live.yml` on the candidate, read from the pytest step's outcome and summary line, never the run's conclusion
 (F21), plus the Darwin-visible diff; a dispatch not started in 30 minutes is cancelled once, then Q2's sitting. (6) A
-private real-game check, run outside the repo (PC; S12). (7) Check 13 closed before the push (F1): Q2's Mac scan or
+private side test, details kept outside the repo (S12). (7) Check 13 closed before the push (F1): Q2's Mac scan or
 Guy's written ruling. (8) **release-legal-audit** on the tree, the history and the staged assets (mandatory). (9) Guy's
 word, push main, CI green, tag, publish. (10) `clone_check` from GitHub and the real release URLs (PC).
 

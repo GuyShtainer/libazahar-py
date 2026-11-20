@@ -183,7 +183,6 @@ per frame grows `host.log` by about a line per frame.
 
 ## 8. Errors and timeouts
 
-The macOS check that a worker ends when its caller dies has not been run live yet (see "When the caller dies" below).
 `LibAzaharError` is the base. `BootError`: core, Vulkan or the app failed to start. `GuestError`: section 7.
 `HostTimeout`: the heartbeat stopped for `timeout` seconds (Emulator-wide default 30, or per call); the worker is
 killed and reaped. `SlotTimeout` is a `HostTimeout` (`.op == "slot"`, `.seconds`) raised when no machine-wide slot
@@ -210,13 +209,13 @@ the newest one taken, not the frame at the failure. The two fields survive pickl
 working folder that cannot be made, an unreadable option profile, and a missing core. The core error cannot name a
 `host.log` that was never written.
 
-**When the caller dies.** On Windows (live check run) and macOS (live check not yet run) a worker ends when its caller
+**When the caller dies.** On Windows and macOS (live checks run on both) a worker ends when its caller
 dies, however the caller dies, and its slot is free again. On Windows each worker is put in one Job object with kill-on-close (made at the first spawn), so even a worker inside a
 long batch ends with its caller; if the job cannot be made, one `RuntimeWarning` says so and the worker then ends only
 when the caller dies between batches. On macOS the worker watches its caller's process through `kqueue` and exits at
 once, mid-batch too. On Linux a worker ends only between batches (when the pipe closes); a caller that may be killed
 mid-batch should end the worker itself first (`close()`). The macOS path is covered by unit tests with a stand-in
-`kqueue`; its live check has not been run yet.
+`kqueue`, and its live check passed in the macOS CI emulator suite (`macos-live.yml` run 44715249847).
 
 A missing `sd_seed` folder is an `ArgumentError`; a `workdir` that cannot be made is a `HostError` naming the path; an
 unreadable option profile is a `HostError`; a profile line that
