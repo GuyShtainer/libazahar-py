@@ -250,3 +250,4 @@ date	bet	phase	agent_id	model	role	kind	start	end	hours	source
 2026-11-19	phase 8 C main loop: the phase C gate, items 831-832 done, v1.2.0 doc drafts	phase-8c	main	opus	main	release	02:45	02:51	0.10	session clock
 2026-11-19	phase 8 C main loop: push, CI round 1 read, guard fixes, C6a prefix fix	phase-8c	main	opus	main	release	07:00	07:14	0.23	session clock
 2026-11-19	phase 8 C main loop: the macOS live run read, push hold recorded	phase-8c	main	opus	main	release	07:15	07:21	0.10	session clock
+2026-11-20	phase 8 C main loop (night): the clock cause found (host time zone), laz-834 fix in lane p8-tz, PC suite green	phase-8c	main	opus	main	release	02:11	02:28	0.28	session clock

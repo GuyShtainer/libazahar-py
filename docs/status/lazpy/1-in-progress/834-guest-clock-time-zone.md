@@ -32,5 +32,8 @@ none yet
 ## Lessons and notes
 - 2026-11-20 02:15, the PC: `TZ=GMT0` makes `test_two_tick_seeds_differ` fail exactly as on the macOS runner (t moved
   by 0); the PC's own zone (+0200) passes. Cause confirmed.
-- A night decision (Guy asleep): built in lane p8-tz (runs/p8/wt/tz), not merged until he says so.
+- A night decision (Guy asleep): built in lane p8-tz (runs/p8/wt/tz, commit bc51552), not merged until he says so.
+- 2026-11-20 02:27, the PC lane tz: determinism + profile tests 104 passed under the PC's zone and under GMT0 (the new
+  3-zone test included); the full suite 440 passed, 14 skipped (lane setup: no tone app, fixture or old core), 1 xfailed.
+  Left for the merge: the macOS live run after a push, which is the real proof on a UTC host.
 - `azhost` (the C command line) does not set TZ itself: whoever runs it directly sets `TZ=UTC0` to match.
