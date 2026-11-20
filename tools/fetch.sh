@@ -47,7 +47,7 @@ VKH_VER=1.4.368
 VKH_URL="https://github.com/KhronosGroup/Vulkan-Headers/archive/refs/tags/v$VKH_VER.tar.gz"
 VKH_SHA=5c5c6f64fcce28a24cc934143a048707af036a858e4ed11d7f71fe016006ecda
 # our release: the tag, the base URL and the two assets' sha256 (filled at release time; TBD makes the flag die)
-REL_TAG=v1.1.0
+REL_TAG=v1.2.0
 REL_TAG_PREV=v1.0.0
 REL_BASE="${LAZ_RELEASE_BASE:-https://github.com/GuyShtainer/libazahar-py/releases/download/$REL_TAG}"
 # the previous release's page: LAZ_RELEASE_BASE_PREV, else (only when LAZ_RELEASE_BASE is not set) the GitHub page

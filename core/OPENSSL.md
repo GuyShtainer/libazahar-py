@@ -67,7 +67,7 @@ The Windows core `azahar_lazpy_libretro.dll` links its own static OpenSSL 3.6.5,
 
 ```sh
 CC=gcc-posix ./Configure mingw64 no-shared no-tests no-ssl3 no-ssl3-method no-zlib --cross-compile-prefix=x86_64-w64-mingw32- --prefix=/opt/lazpy/openssl-3.6.5-mingw64 --openssldir="C:/Program Files/Common Files/SSL" --libdir=lib
-make -j build_libs
+make -j build_libs OPENSSLDIR="C:/Program Files/Common Files/SSL" ENGINESDIR="C:/Program Files/OpenSSL/lib/engines-3" MODULESDIR="C:/Program Files/OpenSSL/lib/ossl-modules"
 make install_dev
 ```
 
@@ -75,11 +75,15 @@ make install_dev
   match the value in this file.
 - The two archives the link used (sha256, also in `build.inputs`): `libssl.a`
   `fea821959f1eb178eea43358ae25d7163344e9acbdae696acd1953690aee686b`, `libcrypto.a`
-  `f138aeb1096e4b41704c12dae49c4f08c7512fa5d29686b9523e32f99345e27a` (core-win64 run 44138010543, the v1.1.0 core).
+  `85a29a994da0ccd6f5f644998e5a9ff2aa0b6aa9c60f66a4a5b0a042f0d6fd2a` (core-win64 run 44691632561, the v1.2.0 core).
   libcrypto.a is not byte-identical between CI runs; the release pins the DLL, not the archives.
 - `--openssldir` is given a Windows path, but Configure runs on Linux and does not see `C:/` as absolute, so it joins
-  the prefix: the compiled-in OPENSSLDIR is `/opt/lazpy/openssl-3.6.5-mingw64/C:/Program Files/Common Files/SSL`. That is not a usable Windows
-  path, so the guest's HTTPS finds no CA file and OpenSSL 3 loads no default config. Nothing is shipped there.
-  The build records the OPENSSLDIR, ENGINESDIR and MODULESDIR strings found in the DLL in `build.inputs`.
+  the prefix. The v1.1.0 core shipped that joined path (`/opt/lazpy/openssl-3.6.5-mingw64/C:/Program Files/Common
+  Files/SSL`), and its ENGINESDIR and MODULESDIR pointed into the build's own prefix. Since v1.2.0 the `make` line
+  above sets all three, so the compiled-in folders are `C:/Program Files/Common Files/SSL` (OPENSSLDIR),
+  `C:/Program Files/OpenSSL/lib/engines-3` (ENGINESDIR) and `C:/Program Files/OpenSSL/lib/ossl-modules` (MODULESDIR),
+  OpenSSL's own Windows defaults. Nothing is shipped there: the guest's HTTPS finds a CA file only if one is installed
+  at `C:/Program Files/Common Files/SSL/cert.pem` (not tested). The build checks the three strings in the DLL and
+  records them in `build.inputs`.
 - Rebuilding: run the `core-win64` workflow, or follow the same steps in a mingw-w64 cross environment. Libraries
   built elsewhere link the same OpenSSL code but will not be byte-identical.

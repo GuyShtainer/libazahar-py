@@ -48,6 +48,8 @@ Evidence, in `docs/status/lazpy/5-done/`, proves it. Nothing is listed as workin
   checked on a two-channel tone app of ours (laz-832)
 - New in 1.2.0: the guest clock no longer depends on the host's time zone: the worker runs in UTC, so on our core one tick
   seed gives one clock on every machine (USING section 10a) (laz-834)
+- New in 1.2.0: a rebuilt Windows core with OpenSSL's folders at their Windows defaults (`C:/Program Files/...`)
+  instead of paths inside the build's own prefix; the same source and patches as v1.1.0's (laz-835)
 
 ## What does not work yet
 
@@ -95,12 +97,15 @@ skip when there is no test-app ELF, a longer boot wait, and the cross-system sta
   `docs/USING.md` section 5 has the table.
 - An ABI-3 host loads ABI-2 and ABI-3 states; an older host refuses newer states, and a state may not load across core
   versions.
+- The Windows core of v1.2.0 is a new build (the OpenSSL folder fix): a state made with the v1.1.0 Windows core may
+  not load with it; make new states. The macOS core is unchanged since v1.0.0.
 - A multi-field record read from guest memory can be torn (some fields from the frame before); the watch list too.
 - One `azh_open` per process: the Python layer runs each Emulator in its own worker process.
 - The slot cap counts only libazahar's own workers, not other emulators on the machine.
 - On macOS, the core, `libazhost.dylib` and `azhost` need macOS 15 or later (the core's OpenSSL is built for 15).
-- The guest's HTTPS finds a CA file only at OpenSSL's compiled-in paths: Homebrew's `openssl@3` on macOS. On Windows it finds none: the compiled-in OPENSSLDIR is `/opt/lazpy/openssl-3.6.5-mingw64/C:/Program Files/Common Files/SSL` (the cross build joined its prefix to the Windows path), which is not a usable Windows path.
-  Homebrew tests do not need it.
+- The guest's HTTPS finds a CA file only at OpenSSL's compiled-in paths: Homebrew's `openssl@3` on macOS. On Windows the
+  compiled-in OPENSSLDIR is `C:/Program Files/Common Files/SSL` (since v1.2.0) and nothing is installed there, so it
+  finds none unless one is put at `cert.pem` in that folder (not tested). Homebrew tests do not need it.
 - On Windows each state load leaves about two Semaphore handles open in the core (laz-829); a long run of loads in one
   instance grows its handle count. A test tracks it; the fix needs a core patch.
 - `python -m libazahar doctor` shows `pid unknown` for held slots on Windows.

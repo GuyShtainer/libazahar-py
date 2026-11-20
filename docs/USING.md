@@ -491,7 +491,8 @@ The 1.0 promise holds on Windows. These are the differences from macOS; nothing 
 | SD folder names | follows the volume | case-insensitive |
 | `runs/` behind a junction | n/a | not supported |
 | Savestates between macOS and Windows | a Windows state is refused (expected; not run) | a macOS state is refused (checked on Windows): `StateError` "the core refused the state", and `host.log` gives the reason, "incompatible native format - size of long" (Azahar's boost archives store `long`, 8 bytes on macOS and 4 on Windows). Make states on the system that loads them |
-| The guest's HTTPS (CA file) | Homebrew's `openssl@3` paths | none: the compiled-in OPENSSLDIR, `/opt/lazpy/openssl-3.6.5-mingw64/C:/Program Files/Common Files/SSL`, is not a usable Windows path |
+| The guest's HTTPS (CA file) | Homebrew's `openssl@3` paths | the compiled-in OPENSSLDIR is `C:/Program Files/Common Files/SSL` (since v1.2.0; v1.1.0's was not a usable Windows path); nothing is installed there, so none unless you put `cert.pem` there (not tested) |
+| States from the v1.1.0 Windows core | n/a (the macOS core is unchanged) | may not load: v1.2.0's Windows core is a new build. Make new states |
 
 No windows: the worker and `azhost.exe` create no top-level window, hidden ones included. A live test on Windows lists
 every top-level window of the desktop during a run and finds none that belongs to the worker. The test first makes a
