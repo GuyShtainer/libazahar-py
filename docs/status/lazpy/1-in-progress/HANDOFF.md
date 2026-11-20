@@ -1,7 +1,7 @@
 <!-- handoff: slim v1 | current tasks only | rewritten whole from docs/status/templates/handoff.md | budget 80 lines | never append -->
 # libazahar-py handoff
 
-As of: 2026-11-20 20:36 (session 3ds-toolkit-eb)
+As of: 2026-11-20 20:46 (session 3ds-toolkit-eb)
 
 This file lives in docs/status/lazpy/1-in-progress/, beside its item files. It holds only what
 the next session needs to act now, and points at the rest. Goals, rules, decisions and history live elsewhere.
@@ -18,8 +18,8 @@ passed). All PC jobs go through one shared PC lock (D:/lazpy/p8/pc.lock; one job
 ## Next steps, in order
 1. Phase D (laz-840, plan `docs/plans/phase-8.md:208`; briefs `docs/plans/phase-8d-briefs.md`): D1-D4 merged,
    reviewed (D5, runs/p8/d/d5-review.md), fixed and pushed (Guy: "Push and run them"); every new workflow has run
-   (laz-840 Evidence). test-windows-live passed three of three on lavapipe and now runs on pushes to main: read its
-   result line on the next push. PC lanes copy the v1.2.0 host, test app and core from D:/lazpy/p8/base-v1.2.0.
+   (laz-840 Evidence). test-windows-live passed three of three on lavapipe and now runs on pushes to main (its first
+   push run printed RESULT: PASS). PC lanes copy the v1.2.0 host, test app and core from D:/lazpy/p8/base-v1.2.0.
 2. Release v1.3.0 by C6's list (`docs/status/lazpy/5-done/830-phase-c-v1-2-0.md`), Guy's publish word needed: bump
    the version; dispatch host-bin on that commit and fill LAZPY_HOST_SHA_WIN/MAC in tools/fetch.sh from its zips (a
    1.2.0-named zip fails row 1c); release notes and STATUS (the lavapipe stencil-depth difference); release-legal-audit

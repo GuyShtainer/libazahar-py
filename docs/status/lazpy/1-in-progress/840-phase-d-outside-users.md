@@ -35,6 +35,8 @@ stencil and the quad match), so not a pass; that test is deselected in that work
 76 passed, 0 failed, 1 xfailed. The result step printed NOT A PASS on all three: its pattern took "1 xfailed" for a
 failure (fixed to count only "N failed" or "N error(s)"). Three of three on the facts, so it joins the push trigger
 (main only). D3 done.
+2026-11-20 20:46: pushed 1426bd1: test-windows 44794501601 green; test-windows-live 44794501534 on the push printed
+"RESULT: PASS (lavapipe)", 76 passed, 0 failed. Phase D's code is done; v1.3.0 is next.
 
 ## Pointers
 - Plan section: `docs/plans/phase-8.md:208`
