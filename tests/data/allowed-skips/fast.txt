@@ -12,3 +12,6 @@ test_client.py::test_windows_worker_runs_below_normal => ^the Windows priority c
 test_lazpy_profile.py::test_worker_nice_floor => ^no nice values on Windows
 test_cli.py::test_holder_pid_survives_a_slow_or_broken_lsof => ^no lsof on Windows
 test_windows_cli.py::* => ^Windows only
+test_parent_death.py::test_two_workers_are_both_in_our_kill_on_close_job => ^the Job object
+test_parent_death.py::test_a_process_outside_our_job_is_reported_outside => ^the Job object
+test_parent_death.py::test_an_assign_that_raises_leaves_no_worker_running => ^the Windows spawn path
