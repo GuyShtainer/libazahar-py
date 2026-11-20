@@ -25,6 +25,13 @@ C3 parked; C4 dropped. Next: C6 (release v1.2.0), with C6a; test-windows.yml and
 host/audio.c), fixed and proven on the PC; C6a's OpenSSL folder fix and the zip SOURCE.md entry written, not yet built.
 2026-11-19 07:21: macos-live run 44462572191 on pushed main: 427 passed, 2 failed: test_state's 2.5 s state boot bound (3.16 s,
 hosted runner; phase D's record-only case) and test_determinism two_tick_seeds_differ (t moved 0 ms on the macOS core; open).
+2026-11-20 08:56-11:01: the clock fix (laz-834) merged and pushed; CI round 2 on 5cf51cf: core-win64 green (C6a,
+laz-835), test-windows green, macos-live 429 passed 1 failed (test_state's bound only); rounds 3-4 fixed the macOS
+Makefile guard and the skips list; test and test-windows green on 4bb6f43.
+2026-11-20 11:15: C6 steps 1-2 on the PC (bundle clone of ddec953): mkrelease rc 0, Windows zip sha256 404583fa...
+(the same bytes from 9c06bcb and ddec953), SHA256SUMS 4e2df781... before the pin commit; release_check --pre-push:
+14 PASS; open: 12 history needles (37 hits, all /Users/<mac user> paths in plan docs public since v1.0.0; no line
+added since v1.1.0 holds one), 13 PEND (step 7), 16 the notes' macOS line TO BE FILLED (step 5).
 
 ## Pointers
 - Plan section: `docs/plans/phase-8.md:180`
