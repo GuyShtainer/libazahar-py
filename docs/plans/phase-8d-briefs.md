@@ -122,3 +122,32 @@ each with file:line, what fails, a concrete case, and a fix; severity high / med
 - You may run read-only checks on the Mac (`python3 -I tools/docs_check.py`, `ruby -ryaml`, `sh -n`, `bash -n`); no
   `make`, pytest or emulator on the Mac. Fast PC checks only through `runs/p8/bin/pclane . d5 -- '<cmd>'`.
 - Final message: the findings by severity, one line each, and the three the main loop must fix before v1.3.0.
+
+## D5 fixes: two sonnet lanes
+
+The review's findings are in `runs/p8/d/d5-review.md` (gitignored; read it whole first). Two lanes, worktrees made at
+main 4df1241, the phase D rules above unchanged. Each lane saves notes in `runs/p8/d/<lane>-notes.md` as it goes.
+
+### Lane `relfix` (the release tools and the host workflow)
+- HIGH: `strip -S` both macOS host files in `host-bin.yml` before the codesign step; a `release_check.py --self-test`
+  case with a runner path inside a binary. Decide and say whether `/Users/runner/` stays a FAIL or becomes the NOTE.
+- MEDIUM: a `NOTICES.md` in the Windows host zip for what the Windows host links statically (find it from the link
+  line and the `.o.d` files, as `tools/mknotices.py` does for the core; reuse it if it fits), listed in all four
+  places (host-bin.yml, `fetch.sh`, `mkrelease.sh`, `release_check.py`). macOS: say whether its zip needs one.
+- MEDIUM: `release_check.py` row 1c: the host zip's `SOURCE.md` commit is an ancestor of the tag and `host/` and the
+  `Makefile` are unchanged between it and the tag (SKIP with a reason when the repo has no history, as on the PC lane).
+- LOW: `fetch.sh:258` versus `docs/USING.md`'s `--host` line (make them agree); `tests/fetch_fallback.sh:138-142`'s
+  weak case; `tools/clone_check.sh:167`'s claim (say what `--no-build` proves).
+- Gate (PC, pclane): `release_check.py --self-test`, `tests/fetch_fallback.sh`, the fast tests; `sh -n` on the shells.
+
+### Lane `cifix` (the CI workflows, the recipe, docs and the example)
+- MEDIUM: `test-windows-live.yml`: the host finds no `vulkan-1.dll` on a GPU-less runner. Read `host/vk.c` for how the
+  host finds the loader (no host change in this lane); add MSYS2's `mingw-w64-x86_64-vulkan-loader` to
+  `tools/fetch-mesa.sh`'s sha256 pins (download it on the PC through pclane to get the sha; record the URL and sha in
+  your notes), and point the host at it the way `host/vk.c` allows. If it allows no way, stop and report.
+- MEDIUM: `README.md:79-80`'s macOS no-compiler claim: say what a stock Mac needs, and that the route has not run yet.
+- LOW: `macos-live.yml`'s header (name the recipe step); `examples/ci/macos.yml:34`'s comment; `docs/CI.md:20-23`
+  (`control.txt` and the 600-frame stop); `tests/python/test_state.py:31-33` (`RUNNER_ENVIRONMENT=github-hosted`;
+  keep the fast test proving both branches); `examples/gym_env.py:54-55` (close the emulator when `__init__` fails).
+- Gate (PC, pclane): the fast tests; `tools/fetch-mesa.sh` run as a fast job; `examples/gym_env.py` in the gym lane's
+  venv (`D:/lazpy/p8/lanes/gym/gymvenv`); `ruby -ryaml` on the workflows on the Mac.

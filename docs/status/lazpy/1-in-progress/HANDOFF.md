@@ -1,7 +1,7 @@
 <!-- handoff: slim v1 | current tasks only | rewritten whole from docs/status/templates/handoff.md | budget 80 lines | never append -->
 # libazahar-py handoff
 
-As of: 2026-11-20 16:35 (session 3ds-toolkit-eb)
+As of: 2026-11-20 16:49 (session 3ds-toolkit-eb)
 
 This file lives in docs/status/lazpy/1-in-progress/, beside its item files. It holds only what
 the next session needs to act now, and points at the rest. Goals, rules, decisions and history live elsewhere.
@@ -9,7 +9,8 @@ the next session needs to act now, and points at the rest. Goals, rules, decisio
 ## Running now
 | What | Where | Agent id | It stops when |
 |---|---|---|---|
-| laz-840: D5 review of the merged phase D (findings to runs/p8/d/d5-review.md) | main checkout, read only | a60222a9ce0913557 | it sends its final message |
+| laz-840: D5 fix lane relfix (release tools, host workflow) | runs/p8/wt/relfix | aa9ee286dad15bdca | it sends its final message |
+| laz-840: D5 fix lane cifix (CI workflows, recipe, docs, example) | runs/p8/wt/cifix | ad23c2a1a273a62b4 | it sends its final message |
 
 Phase 8 is under way: Guy, 2026-11-18 ~21:00, "you have my green light. go". He did not answer Q1-Q5, so the
 plan's recommended answers apply (laz-840 notes). v1.2.0 is published (laz-830 done 15:58, clone check from GitHub
@@ -24,7 +25,8 @@ passed). All PC jobs go through one shared PC lock (D:/lazpy/p8/pc.lock; one job
    TBD until host-bin.yml's first run. For D5: the recipe pins ref v1.3.0 (works once that tag exists); hostbin's
    clone check skips step failed only on the lane setup (runs/p8/d/hostbin-notes.md); a hosted -g build may embed
    runner paths (check the first artifact).
-2. Then D5: the opus review (running; brief at the end of `docs/plans/phase-8d-briefs.md`), fixes, merge, release v1.3.0 by C6's list plus the no-compiler clone check on both systems.
+2. Then D5: the opus review is done (1 high, 4 medium, 12 low; runs/p8/d/d5-review.md); two fix lanes run
+   (briefs: "D5 fixes" in `docs/plans/phase-8d-briefs.md`); then merge, merge, release v1.3.0 by C6's list plus the no-compiler clone check on both systems.
 3. The PC STAMP (C:\lazpy\STAMP.json) got a quick refresh about 11:00 on Guy's word ("Quick refresh, redeploy later"):
    only core/options-lazpy.txt's drift hash changed. The full redeploy (deploy_py.py + deploy_win.py with the new
    profile) waits for a quiet PC moment. Tell Gen3D and 3DP the new deploy ids a little BEFORE it (Gen3D's lanes
