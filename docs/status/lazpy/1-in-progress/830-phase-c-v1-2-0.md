@@ -37,6 +37,10 @@ pool tests deselected on the 2-copy PC: 439 passed, 13 skipped, 1 xfailed; skips
 first try (223660c) failed only the skips step: the two tone-app audio tests cannot run in a clone, now allowed in
 w7. mkfixture v1.2.0 rc 0 (win32, core ee3e9e0a..., frame_total 600, k 0) in the clone's runs/release-fixtures.
 2026-11-20 11:36: C6 step 6, a private side test, details kept outside the repo: passed with the 1ea1686 clone.
+2026-11-20 12:14: C6 step 5, pushed 4bb6f43..1b2b2e2 on Guy's word ("Push main"): test.yml run 44715294673 green
+(3.10 and 3.14: 354 passed, 9 skipped), macos-live run 44715249847 green (430 passed, 25 skipped, 0 failed; the tone
+tests skip there: audio capture untested on macOS, said in STATUS and the notes), test-windows run 44715237141 green.
+2026-11-20 11:59: C6 step 7, check 13 run read-only on the Mac (history_bytes_check on 1b2b2e2): 2070 blobs, 0 hits.
 
 ## Pointers
 - Plan section: `docs/plans/phase-8.md:180`

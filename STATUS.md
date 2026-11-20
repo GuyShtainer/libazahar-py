@@ -1,6 +1,6 @@
 # libazahar-py status
 
-As of 2026-11-19. v1.2.0 (staged, not yet released). The items new in 1.2.0 ran on the Windows PC; for macOS see
+As of 2026-11-20. v1.2.0 (staged, not yet released). The items new in 1.2.0 ran on the Windows PC; for macOS see
 "macOS in v1.2.0" below. Each item below names the work item (`laz-NNN`) whose
 Evidence, in `docs/status/lazpy/5-done/`, proves it. Nothing is listed as working that no gate ran.
 
@@ -45,7 +45,7 @@ Evidence, in `docs/status/lazpy/5-done/`, proves it. Nothing is listed as workin
 - New in 1.2.0: `Pool` with two live copies (laz-828)
 - New in 1.2.0: a command line: `python -m libazahar doctor` and `python -m libazahar run` (USING section 2a) (laz-831)
 - New in 1.2.0: audio capture: `run(..., audio=True)` gives the batch's samples as int16 stereo and the rate (USING section 12b),
-  checked on a two-channel tone app of ours (laz-832)
+  checked on Windows on a two-channel tone app of ours; not yet tested on macOS (laz-832)
 - New in 1.2.0: the guest clock no longer depends on the host's time zone: the worker runs in UTC, so on our core one tick
   seed gives one clock on every machine (USING section 10a) (laz-834)
 - New in 1.2.0: a rebuilt Windows core with OpenSSL's folders at their Windows defaults (`C:/Program Files/...`)
@@ -77,8 +77,11 @@ lazpy.1 Windows core, no `LoadWarning`, no nice values, the symlink test while D
 ## macOS in v1.2.0
 
 macOS uses the same core as v1.0.0 and v1.1.0. The v1.2.0 changes were built and tested on the Windows PC. On macOS
-they have not run yet: the new host C (audio capture), the kqueue parent watch and the `lsof` slot lookup run first
-in the macOS CI jobs on the release candidate. This section gives their result before the release.
+they ran in the hosted CI jobs on the release candidate (commit 1b2b2e2): the fast tests passed on Python 3.10 and
+3.14 (354 passed, 9 skipped each, `test.yml` run 44715294673), and the emulator suite passed with 430 passed, 25
+skipped and none failed (`macos-live.yml` run 44715249847), the kqueue parent watch and the `lsof` slot lookup among
+them. Its skips are Windows-only tests, the comparisons with Azahar's own core (not given to that job), and the two
+audio tests: CI has no tone test app (no release ships it), so audio capture is not yet tested on macOS.
 
 ## macOS in v1.1.0
 

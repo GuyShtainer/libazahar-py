@@ -336,7 +336,8 @@ The app's audio library looks for a component file on the SD card; the tests see
 (`tests/python/dsp_component.py`), which Azahar's high-level DSP ignores apart from logging its hash.
 `test_no_component_file_gives_silence` shows what happens without it. The tone test app is `testapp-tone/`
 (`make testapp-tone`); it plays 440 Hz on the left and 660 Hz at half the level on the right, and
-`tests/python/test_audio_live.py` runs it.
+`tests/python/test_audio_live.py` runs it. No release ships the tone app, so in a clone without devkitARM those two
+tests skip.
 
 ## 12. The Gen3D mapping
 
