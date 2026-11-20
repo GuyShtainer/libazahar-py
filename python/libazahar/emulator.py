@@ -228,6 +228,9 @@ class Emulator:
             raise HostError(f"cannot make the working folder {folder}: {exc.strerror or exc}") from exc
         host = _paths.host_path()
         env = dict(os.environ)
+        # The core measures its fixed start time against 2000-01-01 in the host's local zone (std::mktime), so the
+        # guest clock would differ between machines in different zones: the worker always runs in UTC (USING 10a).
+        env["TZ"] = "UTC0"
         env["LAZ_HOST"] = str(host)
         env["LAZ_MVK"] = str(_paths.mvk_path())
         self._client = WorkerClient(self._workdir, self._workdir / "host.map", self._workdir / "host.log", env)

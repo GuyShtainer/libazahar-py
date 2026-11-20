@@ -69,6 +69,20 @@ def test_two_tick_seeds_differ(host_paths, lazpy_core, workdir):
     assert again[1] == big[1] and again[0] == big[0]
 
 
+def test_host_time_zone_does_not_reach_the_guest(host_paths, lazpy_core, workdir, monkeypatch):
+    """The core measures its start time against 2000-01-01 in local time; the worker runs in UTC (USING 10a)."""
+    needs_rev2(lazpy_core)
+    runs = {}
+    for zone in ("GMT0", "EST5EDT", "IST-2"):
+        monkeypatch.setenv("TZ", zone)
+        runs[zone] = one_run(host_paths, lazpy_core, workdir / zone.replace("-", "m"), "1000000")
+    assert runs["GMT0"] == runs["EST5EDT"] == runs["IST-2"], "the host's time zone reached the guest"
+    zero = one_run(host_paths, lazpy_core, workdir / "zero", "0")        # still under IST-2
+    t = field_index("t")
+    shift = runs["GMT0"][1][300][t] - zero[1][300][t]
+    assert 3 <= shift <= 4, f"under a UTC parent the seed should still move the clock, t moved by {shift}"
+
+
 def last_keys(emu: Emulator) -> int:
     frames, _ = dh.log_of(emu)
     return frames[-1]["k"]

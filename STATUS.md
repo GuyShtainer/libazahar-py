@@ -46,6 +46,8 @@ Evidence, in `docs/status/lazpy/5-done/`, proves it. Nothing is listed as workin
 - New in 1.2.0: a command line: `python -m libazahar doctor` and `python -m libazahar run` (USING section 2a) (laz-831)
 - New in 1.2.0: audio capture: `run(..., audio=True)` gives the batch's samples as int16 stereo and the rate (USING section 12b),
   checked on a two-channel tone app of ours (laz-832)
+- New in 1.2.0: the guest clock no longer depends on the host's time zone: the worker runs in UTC, so one tick seed gives
+  one clock on every machine (USING section 10a) (laz-834)
 
 ## What does not work yet
 
